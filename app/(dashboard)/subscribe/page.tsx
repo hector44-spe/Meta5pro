@@ -334,7 +334,7 @@ export default function SubscribePage() {
             <div className="subscription-balance-box">
               <div>
                 <span className="balance_label_wrapper">
-                  <p className="balance_label">Subscription Balance</p>
+                  <p className="balance_label">Subscription balance</p>
                   <button
                     className="eyes_button"
                     onClick={() => setHideBalance((prev) => !prev)}

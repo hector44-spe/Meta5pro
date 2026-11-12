@@ -143,7 +143,7 @@ export default function ContactPage() {
                   </div>
                   <div style={{ marginTop: "24px", width: "max-content" }}>
                     <a
-                      href="mailto:support@metagold5.com"
+                      href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@platform.internal"}`}
                       className="button-module__Q_cxDG__buttonContainer button-module__Q_cxDG__secondary  button-module__Q_cxDG__outline"
                     >
                       <p className="button-module__Q_cxDG__buttonText inter-alts">

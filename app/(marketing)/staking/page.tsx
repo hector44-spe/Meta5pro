@@ -116,15 +116,15 @@ export default function StakingPage() {
               className="staking-module__8ZBEmW__lockupButtons stagger-4"
               data-animate="true"
             >
-              <a
+              <Link
                 className="button-module__Q_cxDG__buttonContainer button-module__Q_cxDG__primary"
-                href="https://app.metagold5.com/stake"
+                href="/dashboard?action=stake"
               >
                 <div className="button-module__Q_cxDG__overlay"></div>
                 <p className="button-module__Q_cxDG__buttonText inter-alts">
                   Get started
                 </p>
-              </a>
+              </Link>
             </div>
             <div className="stagger-5" data-animate="true">
               <svg
@@ -647,15 +647,15 @@ export default function StakingPage() {
                 reliable.
               </p>
               <div className="staking-module__2GPFPG__introSectionButtonWrapper">
-                <a
+                <Link
                   className="button-module__Q_cxDG__buttonContainer button-module__Q_cxDG__primary"
-                  href="https://app.metagold5.com/stake"
+                  href="/dashboard?action=stake"
                 >
                   <div className="button-module__Q_cxDG__overlay"></div>
                   <p className="button-module__Q_cxDG__buttonText inter-alts">
                     Get started
                   </p>
-                </a>
+                </Link>
               </div>
             </div>
             <div className="section-divider"></div>

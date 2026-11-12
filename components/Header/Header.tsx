@@ -56,7 +56,12 @@ export default function Header() {
     pathname?.startsWith("/withdraw") ||
     pathname?.startsWith("/withdrawals") ||
     pathname?.startsWith("/wallet") ||
-    pathname?.startsWith("/cards")
+    pathname?.startsWith("/cards") ||
+    pathname?.startsWith("/staking") ||
+    pathname?.startsWith("/mining") ||
+    pathname?.startsWith("/real-estate") ||
+    pathname?.startsWith("/copy-trading") ||
+    pathname?.startsWith("/investing")
   ) {
     return null;
   }

@@ -14869,7 +14869,7 @@
   background-color: var(--color-control) !important;
   border: 1px solid var(--color-box-border);
 
-/* emotion-js-expr:   transform: ${er=>er.isStacked? */
+/* emotion-js-expr:   transform: $(er=>er.isStacked? */
 
 /* --- PopupCard --- */
 
@@ -15486,7 +15486,7 @@
   background: var(--color-input-hover);
   border-radius: 12px;
 
-/* emotion-js-expr:   ${er=>er.$isActionInProgress&& */
+/* emotion-js-expr:   $(er=>er.$isActionInProgress&& */
 
 /* --- BalanceCardsContainer --- */
 

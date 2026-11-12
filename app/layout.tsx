@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import GoogleTranslateProvider from "@/components/GoogleTranslateProvider";
 
 export const metadata: Metadata = {
   title: "Meta Gold 5 - Trade With Ease",
@@ -27,6 +28,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
       </head>
       <body className="inter_b65991a8-module__hDb0IG__variable mori_f26f32d3-module__KmV5nG__variable digitalnumbers_d8613293-module__O5KEpG__variable">
+        <GoogleTranslateProvider />
         {children}
       </body>
     </html>

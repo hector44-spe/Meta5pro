@@ -145,7 +145,7 @@ export default function DepositPage() {
                     className="tp-link-action"
                     onClick={() => openModal("deposit")}
                   >
-                    Click here to make a deposit.
+                    click here to make a deposit.
                   </a>
                 </td>
               </tr>
@@ -182,7 +182,7 @@ export default function DepositPage() {
                             : "#f59e0b",
                       }}
                     >
-                      {dep.status.toUpperCase()}
+                      {dep.status.charAt(0).toUpperCase() + dep.status.slice(1).toLowerCase()}
                     </span>
                   </td>
                   <td className="tp-desktop-col" style={{ fontWeight: 600 }}>

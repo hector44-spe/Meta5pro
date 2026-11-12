@@ -1,14 +1,22 @@
 "use client";
 
-import React, { useState, Suspense } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import styles from "../login/auth.module.css";
 
+export const dynamic = "force-dynamic";
+
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const token = searchParams.get("token") || "";
+  const [token, setToken] = useState("");
+
+  useEffect(() => {
+    if (searchParams) {
+      setToken(searchParams.get("token") || "");
+    }
+  }, [searchParams]);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

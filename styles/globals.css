@@ -155,8 +155,12 @@ a {
 }
 
 /* --- MOBILE & RESPONSIVE GLOBAL RULES --- */
+.header-module__BjIITG__desktopNav {
+  display: block !important;
+}
+
 .mobile-menu-btn {
-  display: none;
+  display: none !important;
   background: none;
   border: none;
   color: #fff;
@@ -166,7 +170,8 @@ a {
   justify-content: center;
 }
 
-@media screen and (max-width: 995px) {
+@media screen and (max-width: 991px) {
+  .header-module__BjIITG__desktopNav,
   .index-module__Im9qRG__navLinks {
     display: none !important;
   }
@@ -269,3 +274,26 @@ a {
   box-shadow: none !important;
   border: none !important;
 }
+
+/* Google Translate styling clean-up */
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner-frame,
+iframe.goog-te-banner-frame,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+.goog-text-highlight {
+  background: none !important;
+  box-shadow: none !important;
+}
+

@@ -1,10 +1,15 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, Globe, ChevronDown } from "lucide-react";
-import { LANGUAGES } from "@/data/authData";
+import { Eye, EyeOff, Globe, ChevronDown, Search } from "lucide-react";
+import {
+  ALL_LANGUAGES,
+  getCurrentLanguageCode,
+  changeLanguage,
+  getFlagUrl,
+} from "@/lib/languages";
 import styles from "./auth.module.css";
 
 export default function LoginPage() {
@@ -17,8 +22,26 @@ export default function LoginPage() {
 
   // Language dropdown
   const [langOpen, setLangOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState(
-    LANGUAGES[0] || { code: "en", label: "English" },
+  const [langSearch, setLangSearch] = useState("");
+  const [currentCode, setCurrentCode] = useState("en");
+
+  useEffect(() => {
+    setCurrentCode(getCurrentLanguageCode());
+    const handleChanged = (e: any) => {
+      if (e?.detail) setCurrentCode(e.detail);
+    };
+    window.addEventListener("mg5-lang-changed", handleChanged);
+    return () => window.removeEventListener("mg5-lang-changed", handleChanged);
+  }, []);
+
+  const currentLang =
+    ALL_LANGUAGES.find((l) => l.code === currentCode) || ALL_LANGUAGES[0];
+
+  const filteredLangs = ALL_LANGUAGES.filter(
+    (l) =>
+      !langSearch.trim() ||
+      l.label.toLowerCase().includes(langSearch.toLowerCase()) ||
+      l.code.toLowerCase().includes(langSearch.toLowerCase())
   );
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -102,25 +125,98 @@ export default function LoginPage() {
               {langOpen && (
                 <div
                   className={styles.dropdownMenu}
-                  style={{ width: "160px", right: 0, left: "auto" }}
+                  style={{
+                    width: "220px",
+                    right: 0,
+                    left: "auto",
+                    maxHeight: "320px",
+                    overflowY: "auto",
+                    padding: "4px",
+                    zIndex: 9999,
+                  }}
                 >
-                  {LANGUAGES.slice(0, 15).map((l) => (
+                  <div
+                    style={{
+                      padding: "6px",
+                      position: "sticky",
+                      top: 0,
+                      background: "#18181b",
+                      zIndex: 10,
+                      borderBottom: "1px solid #27272a",
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <input
+                      type="text"
+                      placeholder="Search language..."
+                      value={langSearch}
+                      onChange={(e) => setLangSearch(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "6px 8px",
+                        fontSize: "12px",
+                        background: "#09090b",
+                        border: "1px solid #3f3f46",
+                        borderRadius: "4px",
+                        color: "#fff",
+                        outline: "none",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                  {filteredLangs.map((l) => (
                     <div
                       key={l.code}
                       className={styles.dropdownItem}
                       onClick={() => {
-                        setCurrentLang(l);
+                        changeLanguage(l.code);
+                        setCurrentCode(l.code);
                         setLangOpen(false);
                       }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        padding: "7px 10px",
+                        background:
+                          currentCode === l.code
+                            ? "rgba(79, 70, 229, 0.25)"
+                            : undefined,
+                      }}
                     >
+                      <img
+                        src={getFlagUrl(l.countryCode)}
+                        alt={l.code}
+                        style={{
+                          width: "18px",
+                          height: "13px",
+                          objectFit: "cover",
+                          borderRadius: "2px",
+                        }}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
                       <span
-                        style={{ fontWeight: 600, textTransform: "uppercase" }}
+                        style={{
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          fontSize: "11px",
+                          minWidth: "24px",
+                        }}
                       >
                         {l.code}
                       </span>
-                      <span className={styles.itemSecondary}>{l.label}</span>
+                      <span className={styles.itemSecondary} style={{ fontSize: "12px" }}>
+                        {l.label}
+                      </span>
                     </div>
                   ))}
+                  {filteredLangs.length === 0 && (
+                    <div style={{ padding: "12px", textAlign: "center", fontSize: "12px", color: "#71717a" }}>
+                      No languages found
+                    </div>
+                  )}
                 </div>
               )}
             </div>

@@ -1,16 +1,69 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { usePathname } from "next/navigation";
+import {
+  ALL_LANGUAGES,
+  POPULAR_LANGUAGES,
+  LanguageItem,
+  getFlagUrl,
+  getCurrentLanguageCode,
+  changeLanguage,
+} from "@/lib/languages";
 
 export default function LanguagePicker() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [currentLang, setCurrentLang] = useState({
-    code: "en",
-    label: "English",
-    flag: "/assets/en.svg",
-  });
+  const [search, setSearch] = useState("");
+  const [currentCode, setCurrentCode] = useState("en");
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Sync current language from cookies/localStorage on mount and on custom event
+  useEffect(() => {
+    const code = getCurrentLanguageCode();
+    setCurrentCode(code);
+
+    const handleLangChange = (e: any) => {
+      if (e?.detail) setCurrentCode(e.detail);
+    };
+
+    window.addEventListener("mg5-lang-changed", handleLangChange);
+    return () => {
+      window.removeEventListener("mg5-lang-changed", handleLangChange);
+    };
+  }, []);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [open]);
+
+  const currentLang = useMemo(() => {
+    return (
+      ALL_LANGUAGES.find((l) => l.code === currentCode) ||
+      ALL_LANGUAGES[0] // fallback to English
+    );
+  }, [currentCode]);
+
+  const filteredLanguages = useMemo(() => {
+    if (!search.trim()) return ALL_LANGUAGES;
+    const q = search.toLowerCase();
+    return ALL_LANGUAGES.filter(
+      (l) =>
+        l.label.toLowerCase().includes(q) ||
+        l.code.toLowerCase().includes(q)
+    );
+  }, [search]);
 
   if (
     pathname === "/login" ||
@@ -20,58 +73,18 @@ export default function LanguagePicker() {
     return null;
   }
 
-  const languages = [
-    { code: "en", label: "English", flag: "/assets/en.svg" },
-    {
-      code: "es",
-      label: "Spanish",
-      flag: "https://cdn.gtranslate.net/flags/svg/es.svg",
-    },
-    {
-      code: "de",
-      label: "German",
-      flag: "https://cdn.gtranslate.net/flags/svg/de.svg",
-    },
-    {
-      code: "fr",
-      label: "French",
-      flag: "https://cdn.gtranslate.net/flags/svg/fr.svg",
-    },
-    {
-      code: "it",
-      label: "Italian",
-      flag: "https://cdn.gtranslate.net/flags/svg/it.svg",
-    },
-    {
-      code: "pt",
-      label: "Portuguese",
-      flag: "https://cdn.gtranslate.net/flags/svg/pt.svg",
-    },
-    {
-      code: "ru",
-      label: "Russian",
-      flag: "https://cdn.gtranslate.net/flags/svg/ru.svg",
-    },
-    {
-      code: "zh-CN",
-      label: "Chinese",
-      flag: "https://cdn.gtranslate.net/flags/svg/zh-CN.svg",
-    },
-    {
-      code: "ja",
-      label: "Japanese",
-      flag: "https://cdn.gtranslate.net/flags/svg/ja.svg",
-    },
-    {
-      code: "ar",
-      label: "Arabic",
-      flag: "https://cdn.gtranslate.net/flags/svg/ar.svg",
-    },
-  ];
+  const handleSelect = (lang: LanguageItem) => {
+    setCurrentCode(lang.code);
+    setOpen(false);
+    setSearch("");
+    changeLanguage(lang.code);
+  };
 
   return (
     <div
+      ref={wrapperRef}
       id="gt_float_wrapper"
+      className="notranslate"
       style={{
         position: "fixed",
         bottom: "20px",
@@ -84,10 +97,10 @@ export default function LanguagePicker() {
         className="gt_float_switcher notranslate"
         style={{
           fontSize: "14px",
-          borderRadius: "4px",
+          borderRadius: "6px",
           color: "#333",
           display: "inline-block",
-          boxShadow: "rgba(0, 0, 0, 0.25) 0 4px 15px",
+          boxShadow: "rgba(0, 0, 0, 0.3) 0 4px 18px",
           background: "#fff",
           overflow: "hidden",
           cursor: "pointer",
@@ -98,54 +111,187 @@ export default function LanguagePicker() {
           <div
             className="gt_options gt-open"
             style={{
-              maxHeight: "220px",
+              width: "220px",
+              maxHeight: "320px",
               overflowY: "auto",
               borderBottom: "1px solid #eee",
               background: "#fff",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            {languages.map((lang) => (
-              <div
-                key={lang.code}
-                onClick={() => {
-                  setCurrentLang(lang);
-                  setOpen(false);
-                }}
+            {/* Search Input */}
+            <div
+              style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 10,
+                background: "#f9f9fb",
+                padding: "8px 10px",
+                borderBottom: "1px solid #eee",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <input
+                type="text"
+                placeholder="Search language..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  padding: "8px 12px",
-                  color: "#444",
-                  fontSize: "13px",
-                  transition: "background 0.2s",
-                  background:
-                    currentLang.code === lang.code ? "#f0f0f5" : "transparent",
+                  width: "100%",
+                  padding: "6px 8px",
+                  fontSize: "12px",
+                  border: "1px solid #ccc",
+                  borderRadius: "4px",
+                  outline: "none",
+                  color: "#111",
+                  boxSizing: "border-box",
                 }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#6070a0";
-                  e.currentTarget.style.color = "#fff";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background =
-                    currentLang.code === lang.code ? "#f0f0f5" : "transparent";
-                  e.currentTarget.style.color = "#444";
-                }}
-              >
-                <img
-                  src={lang.flag}
-                  alt={lang.code}
+                autoFocus
+              />
+            </div>
+
+            {/* Language List */}
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              {!search.trim() && (
+                <div
                   style={{
-                    width: "22px",
-                    height: "auto",
-                    marginRight: "8px",
-                    borderRadius: "2px",
+                    padding: "6px 12px 2px",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    color: "#888",
+                    letterSpacing: "0.5px",
                   }}
-                />
-                <span>{lang.label}</span>
-              </div>
-            ))}
+                >
+                  Popular
+                </div>
+              )}
+              {(!search.trim() ? POPULAR_LANGUAGES : []).map((lang) => (
+                <div
+                  key={`pop-${lang.code}`}
+                  onClick={() => handleSelect(lang)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "7px 12px",
+                    color: "#333",
+                    fontSize: "13px",
+                    transition: "background 0.15s",
+                    background:
+                      currentCode === lang.code ? "#eef2ff" : "transparent",
+                    fontWeight: currentCode === lang.code ? 600 : 400,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#4f46e5";
+                    e.currentTarget.style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background =
+                      currentCode === lang.code ? "#eef2ff" : "transparent";
+                    e.currentTarget.style.color = "#333";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <img
+                      src={getFlagUrl(lang.countryCode)}
+                      alt={lang.code}
+                      style={{
+                        width: "20px",
+                        height: "14px",
+                        objectFit: "cover",
+                        marginRight: "8px",
+                        borderRadius: "2px",
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <span>{lang.label}</span>
+                  </div>
+                  {currentCode === lang.code && (
+                    <span style={{ color: "#4f46e5", fontSize: "12px", fontWeight: "bold" }}>✓</span>
+                  )}
+                </div>
+              ))}
+
+              {!search.trim() && (
+                <div
+                  style={{
+                    padding: "8px 12px 2px",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    color: "#888",
+                    borderTop: "1px solid #f0f0f0",
+                    marginTop: "4px",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  All Languages ({ALL_LANGUAGES.length})
+                </div>
+              )}
+
+              {filteredLanguages.map((lang) => (
+                <div
+                  key={lang.code}
+                  onClick={() => handleSelect(lang)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "7px 12px",
+                    color: "#333",
+                    fontSize: "13px",
+                    transition: "background 0.15s",
+                    background:
+                      currentCode === lang.code ? "#eef2ff" : "transparent",
+                    fontWeight: currentCode === lang.code ? 600 : 400,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#4f46e5";
+                    e.currentTarget.style.color = "#fff";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background =
+                      currentCode === lang.code ? "#eef2ff" : "transparent";
+                    e.currentTarget.style.color = "#333";
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center" }}>
+                    <img
+                      src={getFlagUrl(lang.countryCode)}
+                      alt={lang.code}
+                      style={{
+                        width: "20px",
+                        height: "14px",
+                        objectFit: "cover",
+                        marginRight: "8px",
+                        borderRadius: "2px",
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <span>{lang.label}</span>
+                  </div>
+                  {currentCode === lang.code && (
+                    <span style={{ color: "#4f46e5", fontSize: "12px", fontWeight: "bold" }}>✓</span>
+                  )}
+                </div>
+              ))}
+
+              {filteredLanguages.length === 0 && (
+                <div style={{ padding: "16px", textAlign: "center", fontSize: "12px", color: "#888" }}>
+                  No languages found
+                </div>
+              )}
+            </div>
           </div>
         )}
+
+        {/* Selected Trigger Button */}
         <div
           className="gt-selected"
           onClick={() => setOpen(!open)}
@@ -166,9 +312,12 @@ export default function LanguagePicker() {
             }}
           >
             <img
-              src={currentLang.flag}
+              src={getFlagUrl(currentLang.countryCode)}
               alt={currentLang.code}
-              style={{ width: "24px", height: "auto", borderRadius: "2px" }}
+              style={{ width: "22px", height: "15px", objectFit: "cover", borderRadius: "2px" }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
             />
             <span
               className="gt-lang-code"

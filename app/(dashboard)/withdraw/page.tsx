@@ -145,7 +145,7 @@ export default function WithdrawPage() {
                     className="tp-link-action"
                     onClick={() => openModal("withdraw")}
                   >
-                    Click here to make a withdrawal.
+                    click here to make a withdrawal.
                   </a>
                 </td>
               </tr>
@@ -182,7 +182,7 @@ export default function WithdrawPage() {
                             : "#f59e0b",
                       }}
                     >
-                      {wd.status.toUpperCase()}
+                      {wd.status.charAt(0).toUpperCase() + wd.status.slice(1).toLowerCase()}
                     </span>
                   </td>
                   <td className="tp-desktop-col" style={{ fontWeight: 600 }}>

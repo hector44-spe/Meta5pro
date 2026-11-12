@@ -405,15 +405,15 @@ export default function CopyTradingPage() {
               marginTop: "48px",
             }}
           >
-            <a
+            <Link
               className="button-module__Q_cxDG__buttonContainer button-module__Q_cxDG__primary"
-              href="https://app.metagold5.com/copy-trading"
+              href="/dashboard"
             >
               <div className="button-module__Q_cxDG__overlay"></div>
               <p className="button-module__Q_cxDG__buttonText inter-alts">
                 Get started
               </p>
-            </a>
+            </Link>
           </div>
         </div>
       </section>

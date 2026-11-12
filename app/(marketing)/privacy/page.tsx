@@ -81,9 +81,9 @@ export default function PrivacyPage() {
                 information we receive by you or a third party in connection
                 with our provision of services to you or which we collect from
                 your use of our services and/or our website (i.e.,
-                https://metagold5.com) and/or any other related websites and
+                https://platform.internal) and/or any other related websites and
                 applications including, among others, the Client Portal
-                (https://app.metagold5.com). This Privacy Policy also informs
+                (https://platform.internal/dashboard). This Privacy Policy also informs
                 you of your rights with respect to the processing of your
                 personal information. By using Meta Gold 5's websites, you give
                 your consent to the collection and use of personal information
@@ -225,11 +225,10 @@ export default function PrivacyPage() {
                 exceptions or qualifications. In order to exercise any of the
                 rights described below please contact us at{" "}
                 <a
-                  href="mailto:privacy@metagold5.com"
+                  href="mailto:privacy@platform.internal"
                   className="__cf_email__"
-                  data-cfemail="93e0e6e3e3fce1e7d3fef6e7f2f4fcfff7a6bdf0fcfe"
                 >
-                  [email protected]
+                  privacy@platform.internal
                 </a>
               </p>
               <p className="legal-module__LIHIkW__legalContentHeader">

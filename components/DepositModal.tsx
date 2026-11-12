@@ -571,7 +571,7 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
               {isSubmitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Submitting Proof...</span>
+                  <span>Submitting proof...</span>
                 </>
               ) : (
                 "I have made this deposit"

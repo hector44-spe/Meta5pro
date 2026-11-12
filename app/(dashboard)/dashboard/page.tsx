@@ -117,11 +117,77 @@ export default function DashboardPage() {
     accountType,
     currentBalance,
     realBalance,
+    refreshBalance,
   } = useDashboard();
 
+  interface Position {
+    id: string;
+    userId: string;
+    symbol: string;
+    type: "BUY" | "SELL";
+    amount: number;
+    entryPrice: number;
+    leverage: number;
+    margin: number;
+    pnl: number | null;
+    status: "OPEN" | "CLOSED";
+    createdAt: string;
+    closedAt: string | null;
+  }
+
+  const livePrices: Record<string, number> = {
+    BTC: 86900.0,
+    ETH: 2710.0,
+    SOL: 188.0,
+    XRP: 1.48,
+    USDT: 1.0,
+    USDC: 1.0,
+    AAPL: 228.0,
+    NVDA: 135.0,
+    TSLA: 320.0,
+  };
+
   const [mounted, setMounted] = useState(false);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [closingPositionId, setClosingPositionId] = useState<string | null>(null);
+
+  const fetchPositions = async () => {
+    try {
+      const res = await fetch("/api/trades/positions");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.positions)) {
+          setPositions(data.positions);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to fetch positions:", e);
+    }
+  };
+
+  const handleClosePosition = async (id: string) => {
+    setClosingPositionId(id);
+    try {
+      const res = await fetch(`/api/trades/positions/${id}/close`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Failed to close position");
+      } else {
+        await fetchPositions();
+        refreshBalance();
+      }
+    } catch (err) {
+      console.error("Close position error:", err);
+    } finally {
+      setClosingPositionId(null);
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
+    fetchPositions();
   }, []);
 
   // Tabs & Controls state
@@ -247,7 +313,8 @@ export default function DashboardPage() {
 
   const handleTradeAction = async () => {
     setOrderFeedback(null);
-    if (accountType === "real" && (!userProfile?.wallet?.mainBalance || userProfile.wallet.mainBalance <= 0)) {
+    const requiredMargin = (parseFloat(amount) || 100) / (leverage || 5);
+    if (accountType === "real" && realBalance < requiredMargin) {
       openModal("deposit");
       return;
     }
@@ -269,6 +336,9 @@ export default function DashboardPage() {
         throw new Error(data.error || "Order execution failed");
       }
       setOrderFeedback(data.message);
+      await fetchPositions();
+      refreshBalance();
+      setOpenTradesOpen(true);
     } catch (err: unknown) {
       setOrderFeedback(err instanceof Error ? err.message : "Execution failed");
     } finally {
@@ -323,7 +393,7 @@ export default function DashboardPage() {
                   fontWeight: 500,
                 }}
               >
-                <span>Total Balance</span>
+                <span>Total balance</span>
                 <button
                   onClick={() => setHideBalance(!hideBalance)}
                   style={{
@@ -334,7 +404,7 @@ export default function DashboardPage() {
                     padding: 0,
                     display: "flex",
                   }}
-                  title="Toggle Balance Visibility"
+                  title="Toggle balance visibility"
                 >
                   {hideBalance ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
@@ -569,7 +639,7 @@ export default function DashboardPage() {
                   color: "#ffffff",
                 }}
               >
-                Top Assets
+                Top assets
               </div>
               <Link
                 href="/crypto"
@@ -826,7 +896,7 @@ export default function DashboardPage() {
             className={`dashboard-mobile-tab-btn ${activeMobileTab === "assets" ? "active" : ""}`}
             onClick={() => setActiveMobileTab("assets")}
           >
-            Top Assets
+            Top assets
           </button>
           <button
             className={`dashboard-mobile-tab-btn ${activeMobileTab === "overview" ? "active" : ""}`}
@@ -860,7 +930,7 @@ export default function DashboardPage() {
                   color: "#ffffff",
                 }}
               >
-                Top Assets
+                Top assets
               </div>
               <Link
                 href="/crypto"
@@ -1851,111 +1921,269 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Open (0) Accordion */}
-        <div
-          style={{
-            borderRadius: "8px",
-            backgroundColor: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.04)",
-            overflow: "hidden",
-          }}
-        >
-          <button
-            onClick={() => setOpenTradesOpen(!openTradesOpen)}
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              fontSize: "13.5px",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Clock size={15} color="rgba(255, 255, 255, 0.6)" />
-              <span>Open</span>
-              <strong style={{ color: "rgba(255, 255, 255, 0.5)" }}>(0)</strong>
-            </div>
-            <ChevronDown
-              size={14}
-              style={{
-                transition: "transform 0.2s",
-                transform: openTradesOpen ? "rotate(180deg)" : "rotate(0deg)",
-              }}
-            />
-          </button>
-          {openTradesOpen && (
-            <div
-              style={{
-                padding: "14px",
-                fontSize: "12.5px",
-                color: "rgba(255, 255, 255, 0.5)",
-                borderTop: "1px solid rgba(255, 255, 255, 0.04)",
-                textAlign: "center",
-              }}
-            >
-              No open trades at the moment.
-            </div>
-          )}
-        </div>
+        {/* Open Trades Accordion */}
+        {(() => {
+          const openPositions = positions.filter((p) => p.status === "OPEN");
+          const closedPositions = positions.filter((p) => p.status === "CLOSED");
 
-        {/* Closed (0) Accordion */}
-        <div
-          style={{
-            borderRadius: "8px",
-            backgroundColor: "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.04)",
-            overflow: "hidden",
-          }}
-        >
-          <button
-            onClick={() => setClosedTradesOpen(!closedTradesOpen)}
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              background: "transparent",
-              border: "none",
-              color: "#fff",
-              fontSize: "13.5px",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <Check size={15} color="rgba(255, 255, 255, 0.6)" />
-              <span>Closed</span>
-              <strong style={{ color: "rgba(255, 255, 255, 0.5)" }}>(0)</strong>
-            </div>
-            <ChevronDown
-              size={14}
-              style={{
-                transition: "transform 0.2s",
-                transform: closedTradesOpen ? "rotate(180deg)" : "rotate(0deg)",
-              }}
-            />
-          </button>
-          {closedTradesOpen && (
-            <div
-              style={{
-                padding: "14px",
-                fontSize: "12.5px",
-                color: "rgba(255, 255, 255, 0.5)",
-                borderTop: "1px solid rgba(255, 255, 255, 0.04)",
-                textAlign: "center",
-              }}
-            >
-              No closed trades yet.
-            </div>
-          )}
-        </div>
+          return (
+            <>
+              <div
+                style={{
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(255, 255, 255, 0.025)",
+                  border: "1px solid rgba(255, 255, 255, 0.04)",
+                  overflow: "hidden",
+                }}
+              >
+                <button
+                  onClick={() => setOpenTradesOpen(!openTradesOpen)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "transparent",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: "13.5px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Clock size={15} color="rgba(255, 255, 255, 0.6)" />
+                    <span>Open</span>
+                    <strong style={{ color: openPositions.length > 0 ? "#4763f0" : "rgba(255, 255, 255, 0.5)" }}>
+                      ({openPositions.length})
+                    </strong>
+                  </div>
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      transition: "transform 0.2s",
+                      transform: openTradesOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    }}
+                  />
+                </button>
+                {openTradesOpen && (
+                  <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                    {openPositions.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "16px",
+                          fontSize: "12.5px",
+                          color: "rgba(255, 255, 255, 0.5)",
+                          textAlign: "center",
+                        }}
+                      >
+                        No open trades at the moment.
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                          <thead>
+                            <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size (Margin)</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry Price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Mark Price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Unrealized PnL</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {openPositions.map((p) => {
+                              const liveMark = livePrices[p.symbol] || p.entryPrice;
+                              const curPnl = p.type === "BUY"
+                                ? ((liveMark - p.entryPrice) / p.entryPrice) * p.amount
+                                : ((p.entryPrice - liveMark) / p.entryPrice) * p.amount;
+                              const roe = p.margin > 0 ? (curPnl / p.margin) * 100 : 0;
+                              const isProfit = curPnl >= 0;
+
+                              return (
+                                <tr key={p.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                      <AssetBrandIcon symbol={p.symbol} size={20} />
+                                      <span>{p.symbol}</span>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: "12px 14px" }}>
+                                    <span
+                                      style={{
+                                        padding: "2px 8px",
+                                        borderRadius: "4px",
+                                        fontSize: "11px",
+                                        fontWeight: 700,
+                                        backgroundColor: p.type === "BUY" ? "rgba(1, 178, 139, 0.15)" : "rgba(234, 57, 67, 0.15)",
+                                        color: p.type === "BUY" ? "#01b28b" : "#ea3943",
+                                      }}
+                                    >
+                                      {p.type} {p.leverage}x
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "12px 14px", color: "#fff" }}>
+                                    ${Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px", display: "block" }}>
+                                      Margin: ${Number(p.margin).toFixed(2)}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace" }}>
+                                    ${Number(p.entryPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </td>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace" }}>
+                                    ${Number(liveMark).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </td>
+                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600 }}>
+                                    {isProfit ? "+" : ""}${curPnl.toFixed(2)} ({isProfit ? "+" : ""}{roe.toFixed(2)}%)
+                                  </td>
+                                  <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                                    <button
+                                      onClick={() => handleClosePosition(p.id)}
+                                      disabled={closingPositionId === p.id}
+                                      style={{
+                                        padding: "5px 12px",
+                                        borderRadius: "6px",
+                                        backgroundColor: "rgba(234, 57, 67, 0.15)",
+                                        color: "#ea3943",
+                                        border: "1px solid rgba(234, 57, 67, 0.3)",
+                                        fontSize: "11.5px",
+                                        fontWeight: 600,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      {closingPositionId === p.id ? "Closing..." : "Close"}
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Closed Trades Accordion */}
+              <div
+                style={{
+                  borderRadius: "8px",
+                  backgroundColor: "rgba(255, 255, 255, 0.025)",
+                  border: "1px solid rgba(255, 255, 255, 0.04)",
+                  overflow: "hidden",
+                }}
+              >
+                <button
+                  onClick={() => setClosedTradesOpen(!closedTradesOpen)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    background: "transparent",
+                    border: "none",
+                    color: "#fff",
+                    fontSize: "13.5px",
+                    fontWeight: 500,
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <Check size={15} color="rgba(255, 255, 255, 0.6)" />
+                    <span>Closed</span>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.5)" }}>({closedPositions.length})</strong>
+                  </div>
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      transition: "transform 0.2s",
+                      transform: closedTradesOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    }}
+                  />
+                </button>
+                {closedTradesOpen && (
+                  <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                    {closedPositions.length === 0 ? (
+                      <div
+                        style={{
+                          padding: "16px",
+                          fontSize: "12.5px",
+                          color: "rgba(255, 255, 255, 0.5)",
+                          textAlign: "center",
+                        }}
+                      >
+                        No closed trades yet.
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                          <thead>
+                            <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry Price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Realized PnL</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Closed At</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {closedPositions.map((p) => {
+                              const realizedPnl = Number(p.pnl || 0);
+                              const isProfit = realizedPnl >= 0;
+                              return (
+                                <tr key={p.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                      <AssetBrandIcon symbol={p.symbol} size={20} />
+                                      <span>{p.symbol}</span>
+                                    </div>
+                                  </td>
+                                  <td style={{ padding: "12px 14px" }}>
+                                    <span
+                                      style={{
+                                        padding: "2px 8px",
+                                        borderRadius: "4px",
+                                        fontSize: "11px",
+                                        fontWeight: 700,
+                                        backgroundColor: "rgba(255, 255, 255, 0.06)",
+                                        color: p.type === "BUY" ? "#01b28b" : "#ea3943",
+                                      }}
+                                    >
+                                      {p.type} {p.leverage}x
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: "12px 14px", color: "#fff" }}>
+                                    ${Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </td>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace" }}>
+                                    ${Number(p.entryPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  </td>
+                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600 }}>
+                                    {isProfit ? "+" : ""}${realizedPnl.toFixed(2)}
+                                  </td>
+                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.5)", fontSize: "11px", textAlign: "right" }}>
+                                    {p.closedAt ? new Date(p.closedAt).toLocaleDateString() : "-"}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          );
+        })()}
       </div>
     </div>
   );

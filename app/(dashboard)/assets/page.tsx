@@ -70,7 +70,7 @@ export default function AssetsPage() {
         <div className="assets-balance-card">
           <div>
             <div className="assets-balance-label-row">
-              <span className="assets-balance-label">Total Balance</span>
+              <span className="assets-balance-label">Total balance</span>
               <button
                 type="button"
                 className="assets-eye-btn"
@@ -107,7 +107,7 @@ export default function AssetsPage() {
 
         {/* Recent Activity Card */}
         <div className="assets-activity-card">
-          <div className="assets-activity-title">Recent Activity</div>
+          <div className="assets-activity-title">Recent activity</div>
           <div className="assets-activity-list">
             <div className="assets-activity-item">
               <span className="assets-activity-item-text">

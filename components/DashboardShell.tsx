@@ -42,6 +42,13 @@ import {
 import "@/styles/dashboard.css";
 import DepositModal from "@/components/DepositModal";
 import StakeModal from "@/components/StakeModal";
+import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
+import {
+  ALL_LANGUAGES,
+  getCurrentLanguageCode,
+  changeLanguage,
+  getFlagUrl,
+} from "@/lib/languages";
 
 // ===================== CONTEXT DEFINITION =====================
 export type ActiveModalType =
@@ -97,6 +104,17 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [accountType, setAccountType] = useState<"real" | "demo">("real");
   const [hideBalance, setHideBalance] = useState(false);
   const [activeModal, setActiveModal] = useState<ActiveModalType>(null);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [currentLangCode, setCurrentLangCode] = useState("en");
+
+  useEffect(() => {
+    setCurrentLangCode(getCurrentLanguageCode());
+    const handleChanged = (e: any) => {
+      if (e?.detail) setCurrentLangCode(e.detail);
+    };
+    window.addEventListener("mg5-lang-changed", handleChanged);
+    return () => window.removeEventListener("mg5-lang-changed", handleChanged);
+  }, []);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "support" | "user"; text: string; time: string }>>([
     {
@@ -125,6 +143,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   }, [pathname]);
 
   const [realBalance, setRealBalance] = useState<number>(0);
+  const [userRefCode, setUserRefCode] = useState<string>("vip-trader");
   const demoBalance = 10000;
   const currentBalance = accountType === "real" ? realBalance : demoBalance;
 
@@ -136,6 +155,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         if (data.user?.wallet?.mainBalance !== undefined) {
           setRealBalance(Number(data.user.wallet.mainBalance));
         }
+        if (data.user?.id) {
+          setUserRefCode(data.user.id.slice(0, 8));
+        }
       }
     } catch (e) {
       console.error("Failed to fetch balance in shell:", e);
@@ -144,6 +166,17 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   useEffect(() => {
     fetchBalance();
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get("action");
+      if (action === "stake") {
+        setActiveModal("stake");
+      } else if (action === "deposit") {
+        setActiveModal("deposit");
+      } else if (action === "withdraw") {
+        setActiveModal("withdraw");
+      }
+    }
   }, [pathname, activeModal]);
 
   const handleCopy = (text: string) => {
@@ -288,7 +321,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <div className="user-avatar">ub</div>
               <div className="user-meta">
                 <p>user b</p>
-                <p>Real Account</p>
+                <p>Real account</p>
               </div>
             </div>
             <div className="dashboard-mobile-menu-buttons">
@@ -437,7 +470,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               onClick={() => setMobileSidebarOpen(false)}
             >
               <Building size={22} />
-              <span>Real Estate</span>
+              <span>Real estate</span>
             </Link>
             <Link
               href="/staking"
@@ -886,7 +919,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       }}
                     >
                       <Building size={15} strokeWidth={1.5} />
-                      <span>Real Estate</span>
+                      <span>Real estate</span>
                     </Link>
                     <Link
                       href="/staking"
@@ -1145,14 +1178,105 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 }}
               >
                 {/* Globe Language Picker */}
-                <button
-                  onClick={() => setActiveModal("settings")}
-                  className="tp-header-btn"
-                  title="Select Language"
-                  aria-label="Select Language"
-                >
-                  <Globe size={18} color="#ffffff" />
-                </button>
+                <div style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setLangDropdownOpen(!langDropdownOpen)}
+                    className="tp-header-btn"
+                    title="Select Language"
+                    aria-label="Select Language"
+                  >
+                    <Globe size={18} color="#ffffff" />
+                  </button>
+
+                  {langDropdownOpen && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "calc(100% + 8px)",
+                        right: 0,
+                        width: "220px",
+                        maxHeight: "320px",
+                        overflowY: "auto",
+                        background: "#18181b",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        borderRadius: "8px",
+                        boxShadow: "0 10px 25px rgba(0,0,0,0.6)",
+                        zIndex: 9999,
+                        padding: "6px",
+                      }}
+                    >
+                      {ALL_LANGUAGES.map((l) => (
+                        <div
+                          key={l.code}
+                          onClick={() => {
+                            changeLanguage(l.code);
+                            setCurrentLangCode(l.code);
+                            setLangDropdownOpen(false);
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            padding: "8px 10px",
+                            cursor: "pointer",
+                            borderRadius: "5px",
+                            background:
+                              currentLangCode === l.code
+                                ? "rgba(71, 99, 240, 0.25)"
+                                : "transparent",
+                            color: currentLangCode === l.code ? "#4763f0" : "#fff",
+                            fontSize: "12.5px",
+                            fontWeight: currentLangCode === l.code ? 600 : 400,
+                          }}
+                          onMouseEnter={(e) => {
+                            if (currentLangCode !== l.code) {
+                              e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (currentLangCode !== l.code) {
+                              e.currentTarget.style.background = "transparent";
+                            }
+                          }}
+                        >
+                          <img
+                            src={getFlagUrl(l.countryCode)}
+                            alt={l.code}
+                            style={{
+                              width: "18px",
+                              height: "13px",
+                              objectFit: "cover",
+                              borderRadius: "2px",
+                            }}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                          <span
+                            style={{
+                              textTransform: "uppercase",
+                              fontWeight: 600,
+                              minWidth: "24px",
+                              fontSize: "11px",
+                            }}
+                          >
+                            {l.code}
+                          </span>
+                          <span
+                            style={{
+                              color: "rgba(255, 255, 255, 0.8)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {l.label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Account Switcher ($0 REAL v) */}
                 <div style={{ position: "relative" }}>
@@ -1173,7 +1297,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         fontWeight: 700,
                       }}
                     >
-                      {accountType.toUpperCase()}
+                      {accountType === "real" ? "Real" : "Demo"}
                     </span>
                     <ChevronDown size={14} color="#ffffff" />
                   </button>
@@ -1359,7 +1483,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 </div>
                 <div>
                   <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>
-                    Live Support
+                    Live support
                   </div>
                   <div style={{ fontSize: "11px", color: "#01b28b" }}>
                     Online 24/7
@@ -1525,7 +1649,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 }}
               >
                 <div style={{ fontSize: "18px", fontWeight: 700, color: "#fff" }}>
-                  Withdraw Funds
+                  Withdraw funds
                 </div>
                 <button
                   onClick={() => setActiveModal(null)}
@@ -1549,7 +1673,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     display: "block",
                   }}
                 >
-                  Recipient Address:
+                  Recipient address:
                 </label>
                 <input
                   type="text"
@@ -1615,7 +1739,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   opacity: withdrawSubmitting ? 0.7 : 1,
                 }}
               >
-                Submit Withdrawal
+                Submit withdrawal
               </button>
             </div>
           </div>
@@ -1790,7 +1914,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                           marginTop: "2px",
                         }}
                       >
-                        Deposit and Withdraw
+                        Deposit and withdraw
                       </div>
                     </div>
                   </div>
@@ -2018,7 +2142,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               {settingsSubView === "payments" && (
                 <div style={{ padding: "0 18px 80px 18px", display: "flex", flexDirection: "column", gap: "16px" }}>
                   <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>
-                    Payment Options
+                    Payment options
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                     <button
@@ -2075,7 +2199,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>
-                      Accepted Methods
+                      Accepted methods
                     </div>
                     <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginTop: "4px" }}>
                       Crypto (BTC, ETH, USDT, SOL), Bank Wire, Cards
@@ -2096,7 +2220,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     }}
                   >
                     <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#01b28b" }}>
-                      Identity Verification (KYC)
+                      Identity verification (KYC)
                     </div>
                     <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)", marginTop: "4px" }}>
                       Complete verification to unlock higher withdrawal limits and advanced trading features.
@@ -2117,7 +2241,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       fontSize: "13.5px",
                     }}
                   >
-                    Open Document Upload Form
+                    Open document upload form
                   </button>
                 </div>
               )}
@@ -2127,7 +2251,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 <div style={{ padding: "0 18px 80px 18px", display: "flex", flexDirection: "column", gap: "14px" }}>
                   <div>
                     <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Full Name
+                      Full name
                     </label>
                     <input
                       type="text"
@@ -2145,7 +2269,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   </div>
                   <div>
                     <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Email Address
+                      Email address
                     </label>
                     <input
                       type="email"
@@ -2164,7 +2288,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   </div>
                   <div>
                     <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Country / Region
+                      Country / region
                     </label>
                     <input
                       type="text"
@@ -2194,7 +2318,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       marginTop: "6px",
                     }}
                   >
-                    Save Changes
+                    Save changes
                   </button>
                 </div>
               )}
@@ -2204,7 +2328,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 <div style={{ padding: "0 18px 80px 18px", display: "flex", flexDirection: "column", gap: "14px" }}>
                   <div>
                     <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Current Password
+                      Current password
                     </label>
                     <input
                       type="password"
@@ -2222,7 +2346,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   </div>
                   <div>
                     <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      New Password
+                      New password
                     </label>
                     <input
                       type="password"
@@ -2252,7 +2376,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   >
                     <div>
                       <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>
-                        Two-Factor Authentication (2FA)
+                        Two-factor authentication (2FA)
                       </div>
                       <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)" }}>
                         Secure your account with 2FA
@@ -2311,9 +2435,36 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         Interface language
                       </div>
                     </div>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#4763f0" }}>
-                      English
-                    </span>
+                    <select
+                      value={currentLangCode}
+                      onChange={(e) => {
+                        const code = e.target.value;
+                        setCurrentLangCode(code);
+                        changeLanguage(code);
+                      }}
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        color: "#4763f0",
+                        background: "#18181b",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        borderRadius: "6px",
+                        padding: "6px 10px",
+                        cursor: "pointer",
+                        outline: "none",
+                        maxWidth: "180px",
+                      }}
+                    >
+                      {ALL_LANGUAGES.map((l) => (
+                        <option
+                          key={l.code}
+                          value={l.code}
+                          style={{ background: "#18181b", color: "#fff" }}
+                        >
+                          {l.label} ({l.code.toUpperCase()})
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                   <div
@@ -2329,7 +2480,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   >
                     <div>
                       <div style={{ fontSize: "13px", fontWeight: 500, color: "#fff" }}>
-                        Hide Balances
+                        Hide balances
                       </div>
                       <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
                         Mask account totals with bullets
@@ -2513,7 +2664,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 }}
               >
                 <div style={{ fontSize: "17px", fontWeight: 700, color: "#fff" }}>
-                  Account Verification
+                  Account verification
                 </div>
                 <button
                   onClick={() => setActiveModal(null)}
@@ -2547,7 +2698,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               >
                 Status:{" "}
                 <strong style={{ color: "#ffaa00" }}>
-                  Pending Verification (Tier 1)
+                  Pending verification (tier 1)
                 </strong>
               </div>
               <button
@@ -2566,98 +2717,17 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   cursor: "pointer",
                 }}
               >
-                Upload Identity Documents
+                Upload identity documents
               </button>
             </div>
           </div>
         )}
 
-        {/* Connect Wallet Modal */}
-        {activeModal === "connectWallet" && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.75)",
-              backdropFilter: "blur(8px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
-              padding: "20px",
-            }}
-            onClick={() => setActiveModal(null)}
-          >
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "440px",
-                backgroundColor: "#16181d",
-                borderRadius: "14px",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                boxSizing: "border-box",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ fontSize: "17px", fontWeight: 700, color: "#fff" }}>
-                  Connect Web3 Wallet
-                </div>
-                <button
-                  onClick={() => setActiveModal(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div style={{ display: "grid", gap: "10px" }}>
-                {["MetaMask", "Coinbase Wallet", "WalletConnect", "Trust Wallet", "Phantom"].map((wallet) => (
-                  <button
-                    key={wallet}
-                    onClick={() => {
-                      alert(`${wallet} connected successfully.`);
-                      setActiveModal(null);
-                    }}
-                    style={{
-                      padding: "12px 16px",
-                      borderRadius: "8px",
-                      backgroundColor: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                      color: "#fff",
-                      fontSize: "13.5px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span>{wallet}</span>
-                    <ChevronRight size={16} />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Connect Wallet Drawer */}
+        <ConnectWalletDrawer
+          isOpen={activeModal === "connectWallet"}
+          onClose={() => setActiveModal(null)}
+        />
 
         {/* Referrals Modal */}
         {activeModal === "referrals" && (
@@ -2701,7 +2771,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 }}
               >
                 <div style={{ fontSize: "17px", fontWeight: 700, color: "#fff" }}>
-                  Refer & Earn
+                  Refer and earn
                 </div>
                 <button
                   onClick={() => setActiveModal(null)}
@@ -2716,7 +2786,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 </button>
               </div>
               <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.7)", lineHeight: "1.5" }}>
-                Earn up to 20% commission on trading fees from every trader you refer to Meta Gold 5.
+                Earn up to 20% commission on trading fees from every trader you refer to the platform.
               </div>
               <div
                 style={{
@@ -2729,11 +2799,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   justifyContent: "space-between",
                 }}
               >
-                <span style={{ fontSize: "12px", color: "#4763f0", fontFamily: "monospace" }}>
-                  https://metagold.io/ref/user-b
+                <span style={{ fontSize: "12px", color: "#4763f0", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>
+                  {typeof window !== "undefined" ? `${window.location.origin}/register?ref=${userRefCode}` : `https://broker.platform/register?ref=${userRefCode}`}
                 </span>
                 <button
-                  onClick={() => handleCopy("https://metagold.io/ref/user-b")}
+                  onClick={() => handleCopy(typeof window !== "undefined" ? `${window.location.origin}/register?ref=${userRefCode}` : `https://broker.platform/register?ref=${userRefCode}`)}
                   style={{
                     padding: "6px 12px",
                     borderRadius: "6px",
@@ -2743,6 +2813,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     fontSize: "12px",
                     fontWeight: 600,
                     cursor: "pointer",
+                    flexShrink: 0,
+                    marginLeft: "8px",
                   }}
                 >
                   {copied ? "Copied" : "Copy"}
