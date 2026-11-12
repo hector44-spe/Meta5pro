@@ -1,0 +1,271 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import "./metagold.css";
+
+:root {
+  /* Canvas & Layout */
+  --background: #000000;
+  --foreground: #ededed;
+  --color-secondary: #0a0a0a;
+  --color-card: #0f0f0f;
+  --color-card-hover: #151515;
+  --color-card-border: rgba(190, 167, 255, 0.12);
+  --color-toolbar: rgba(15, 15, 15, 0.85);
+
+  /* Borders & Outlines */
+  --color-outline: rgba(190, 167, 255, 0.12);
+  --color-faint-outline: rgba(190, 167, 255, 0.06);
+  --color-card-border-glow: rgba(49, 172, 238, 0.25);
+
+  /* Brand Accents */
+  --color-accent: #31acee;
+  --color-accent-hover: #2698d5;
+  --color-accent-subtle: rgba(49, 172, 238, 0.12);
+  --accent-rgb: 49, 172, 238;
+
+  /* Status Colors */
+  --color-positive: #01b28b;
+  --color-positive-subtle: rgba(1, 178, 139, 0.12);
+  --color-negative: #ff3344;
+  --color-negative-subtle: rgba(255, 51, 68, 0.12);
+  --color-warning: #f59e0b;
+
+  /* Typography */
+  --color-text-primary: #fcfcfc;
+  --color-text-secondary: #dfe1f4;
+  --color-text-tertiary: #babcd2;
+  --color-text-extra: #9793b2;
+  --color-text-extra-two: #d9d5f1;
+  --font-inter:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Components */
+  --header-height: 72px;
+  --max-content-width: 1440px;
+  --container-padding-inline: 80px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  :root {
+    --container-padding-inline: 24px;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: clip;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: clip;
+  overflow-y: auto !important;
+  overscroll-behavior: auto !important;
+  background-color: var(--background);
+  color: var(--color-text-primary);
+  font-family: var(--font-inter);
+  line-height: 1.5;
+}
+
+main,
+.page-module___8aEwW__mainContainer {
+  width: 100%;
+  max-width: 100vw;
+  overflow: visible !important;
+  height: auto !important;
+  min-height: 100% !important;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #222226;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333339;
+}
+
+::selection {
+  background: rgba(49, 172, 238, 0.3);
+  color: #ffffff;
+}
+
+/* --- TOP HERO SPACING FOR TRANSPARENT HEADER CLEARANCE --- */
+.two-module__iAIncG__hero {
+  padding-top: 175px !important;
+  position: relative !important;
+}
+
+.copy-trading-module__q7Wi9G__hero,
+.crypto-module__qTDcTa__hero,
+.markets-module__ocH3oG__hero,
+.real-estate-module___lOCRG__hero {
+  padding-top: 175px !important;
+  position: relative !important;
+}
+
+/* Crypto page wide screen scroll & interaction unfreeze */
+.crypto-module__qTDcTa__hero {
+  max-height: none !important;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.crypto-module__qTDcTa__radialMask {
+  pointer-events: none !important;
+}
+
+.crypto-module__qTDcTa__cryptoGridWrapper {
+  pointer-events: none !important;
+  max-width: 100vw !important;
+}
+
+/* --- MOBILE & RESPONSIVE GLOBAL RULES --- */
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+@media screen and (max-width: 995px) {
+  .index-module__Im9qRG__navLinks {
+    display: none !important;
+  }
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+  .header-module__BjIITG__buttonsWrapper {
+    gap: 8px !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .about-module__WyQbRG__lockupTitle,
+  .stocks-module__mh0C-a__lockupTitle,
+  .crypto-module__qTDcTa__lockupTitle,
+  .real-estate-module___lOCRG__lockupTitle,
+  .copy-trading-module__q7Wi9G__lockupTitle,
+  .markets-module__ocH3oG__lockupTitle,
+  .staking-module__8ZBEmW__lockupTitle,
+  .two-module__iAIncG__heroTitle {
+    font-size: 32px !important;
+    line-height: 40px !important;
+  }
+
+  .about-module__WyQbRG__lockupSubtext,
+  .stocks-module__mh0C-a__lockupSubtext,
+  .crypto-module__qTDcTa__lockupSubtext,
+  .real-estate-module___lOCRG__lockupSubtext,
+  .copy-trading-module__q7Wi9G__lockupSubtext,
+  .markets-module__ocH3oG__lockupSubtext,
+  .staking-module__8ZBEmW__lockupSubtext {
+    font-size: 16px !important;
+    line-height: 24px !important;
+  }
+
+  .about-module__WyQbRG__hero,
+  .crypto-module__qTDcTa__hero,
+  .real-estate-module___lOCRG__hero,
+  .copy-trading-module__q7Wi9G__hero,
+  .markets-module__ocH3oG__hero,
+  .staking-module__8ZBEmW__hero,
+  .two-module__iAIncG__hero {
+    padding-top: 110px !important;
+    padding-bottom: 60px !important;
+  }
+
+  .stocks-module__mh0C-a__hero {
+    padding-top: 24px !important;
+    padding-bottom: 40px !important;
+  }
+
+  .stocks-module__mh0C-a__illustrationWrapper {
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto 12px !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .header-module__BjIITG__buttonsWrapper a:nth-of-type(2) {
+    display: none !important;
+  }
+}
+
+/* Hide marketing hamburger menu on wider screens / desktop */
+.mobile-menu-btn {
+  display: none !important;
+}
+
+@media screen and (max-width: 991px) {
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+}
+
+/* Enforce sentence case across dashboard */
+.dashboard-page-wrapper,
+.dashboard-header-container,
+.dashboard-page-content,
+.cold-storage-page-wrapper {
+  text-transform: none;
+}
+
+/* Allow crypto symbols to remain uppercase */
+.cold-storage-page-wrapper .unit,
+.cold-storage-page-wrapper .symbol,
+.cold-storage-page-wrapper .amount_select p {
+  text-transform: uppercase !important;
+}
+
+/* Cold storage empty state complete transparency */
+.cold-storage-table tbody tr.empty-row,
+.cold-storage-table tbody tr:nth-of-type(odd).empty-row,
+.cold-storage-table tbody tr:nth-of-type(even).empty-row,
+.cold-storage-table tbody td.empty-cell,
+.cold-storage-table tbody .empty_state,
+.cold-storage-mobile-wrapper .empty_state {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}

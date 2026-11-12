@@ -1,0 +1,91 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  username     String        @unique
+  fullName     String?
+  phoneNumber  String?
+  passwordHash String
+  role         String        @default("INVESTOR") // "INVESTOR" | "ADMIN"
+  status       String        @default("ACTIVE")   // "ACTIVE" | "SUSPENDED"
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  wallet       Wallet?
+  investments  Investment[]
+  transactions Transaction[]
+  activityLogs ActivityLog[]
+}
+
+model Wallet {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mainBalance     Float    @default(0.0)
+  interestBalance Float    @default(0.0)
+  totalDeposited  Float    @default(0.0)
+  totalWithdrawn  Float    @default(0.0)
+  updatedAt       DateTime @updatedAt
+}
+
+model Plan {
+  id                 String       @id @default(uuid())
+  name               String
+  minDeposit         Float
+  maxDeposit         Float
+  dailyRoiPercentage Float
+  durationDays       Int
+  capitalRefund      Boolean      @default(true)
+  isActive           Boolean      @default(true)
+  investments        Investment[]
+}
+
+model Investment {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId        String
+  plan          Plan     @relation(fields: [planId], references: [id])
+  amount        Float
+  accruedProfit Float    @default(0.0)
+  daysRemaining Int
+  status        String   @default("RUNNING") // "RUNNING" | "COMPLETED" | "CANCELLED"
+  lastPayoutAt  DateTime @default(now())
+  createdAt     DateTime @default(now())
+}
+
+model Transaction {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String    // "DEPOSIT" | "WITHDRAWAL" | "DAILY_ROI" | "TRADE_BUY" | "TRADE_SELL"
+  amount        Float
+  currency      String    // "USDT_TRC20" | "USDT_BEP20" | "BTC" | "USD"
+  cryptoAddress String?
+  txHash        String?
+  receiptUrl    String?
+  status        String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  approvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ActivityLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  ipAddress String?
+  details   String?
+  createdAt DateTime @default(now())
+}

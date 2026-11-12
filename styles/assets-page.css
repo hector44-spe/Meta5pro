@@ -1,0 +1,527 @@
+/* Meta Gold 5 Assets Page Exact Replicated Styling */
+
+.assets-page-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  overflow-y: auto;
+  padding: 0 16px 40px 16px;
+  box-sizing: border-box;
+}
+
+/* Top Split Section: Total Balance + Recent Activity */
+.assets-top-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: stretch;
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 960px) {
+  .assets-top-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Balance Card */
+.assets-balance-card {
+  background: var(--color-card-background, rgba(255, 255, 255, 0.025));
+  border: 1px solid hsla(0, 0%, 100%, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 130px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.assets-balance-card:hover {
+  border-color: hsla(0, 0%, 100%, 0.08);
+}
+
+.assets-balance-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.assets-balance-label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.assets-eye-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  transition: color 0.15s ease;
+}
+
+.assets-eye-btn:hover {
+  color: #ffffff;
+}
+
+.assets-balance-amount {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 32px;
+  color: #ffffff;
+  font-feature-settings: "tnum";
+}
+
+.assets-balance-bars-wrapper {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assets-balance-bar {
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  display: flex;
+}
+
+/* Recent Activity Card */
+.assets-activity-card {
+  background: var(--color-card-background, rgba(255, 255, 255, 0.025));
+  border: 1px solid hsla(0, 0%, 100%, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 130px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.assets-activity-card:hover {
+  border-color: hsla(0, 0%, 100%, 0.08);
+}
+
+.assets-activity-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.6));
+  line-height: 18px;
+  margin-bottom: 14px;
+}
+
+.assets-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.assets-activity-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.assets-activity-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.assets-activity-item-text {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.assets-activity-item-date {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Grip Separator */
+.assets-grip-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  width: 24px;
+  margin: 6px auto;
+  cursor: row-resize;
+  color: rgba(255, 255, 255, 0.3);
+  transition: color 0.15s ease;
+}
+
+.assets-grip-handle:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Main Table Panel */
+.assets-table-section {
+  background: var(--color-card-background, rgba(255, 255, 255, 0.025));
+  border: 1px solid hsla(0, 0%, 100%, 0.05);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  margin-top: 4px;
+}
+
+/* Section Header (Search & Filters) */
+.assets-table-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  flex-wrap: wrap;
+}
+
+.assets-table-top-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+}
+
+.assets-table-utils {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Search input container */
+.assets-search-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 7px 12px;
+  transition: border-color 0.15s ease;
+}
+
+.assets-search-wrapper:focus-within {
+  border-color: rgba(71, 99, 240, 0.6);
+}
+
+.assets-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 13.5px;
+  width: 170px;
+}
+
+.assets-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* Select dropdown */
+.assets-select-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.assets-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 8px 32px 8px 12px;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.assets-select:focus {
+  border-color: rgba(71, 99, 240, 0.6);
+}
+
+.assets-select option {
+  background: #15181e;
+  color: #ffffff;
+}
+
+.assets-select-arrow {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Table Wrapper */
+.assets-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  max-height: calc(100vh - 360px);
+  min-height: 400px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+/* Table element */
+.assets-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  text-align: left;
+}
+
+.assets-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  padding: 10px 14px;
+  border: none;
+  white-space: nowrap;
+}
+
+.assets-table thead th.col-symbol,
+.assets-table thead th.col-type,
+.assets-table thead th.col-price,
+.assets-table thead th.col-wallet,
+.assets-table thead th.col-action {
+  text-align: center;
+}
+
+.assets-table tbody tr {
+  background: rgba(255, 255, 255, 0.015);
+  border-radius: 8px;
+  transition: all 0.12s ease;
+  height: 52px;
+}
+
+.assets-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.assets-table tbody td {
+  padding: 8px 14px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #ffffff;
+  vertical-align: middle;
+  border: none;
+}
+
+/* First and last cell border-radii for rounded rows */
+.assets-table tbody tr td:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.assets-table tbody tr td:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* Column: Asset */
+.cell-asset {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+.cell-asset-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.cell-asset-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.cell-asset-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.cell-asset-symbol-mobile {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  display: none;
+}
+
+/* Column: Symbol */
+.cell-symbol {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  min-width: 70px;
+}
+
+/* Column: Type */
+.cell-type {
+  text-align: center;
+  min-width: 80px;
+}
+
+.type-pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Column: Current price */
+.cell-price {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+/* Column: In your wallet */
+.cell-wallet {
+  text-align: center;
+  min-width: 140px;
+}
+
+.wallet-amount-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.wallet-amount-crypto {
+  font-size: 13px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.wallet-amount-usd {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* Actions Column (Desktop) */
+.cell-actions {
+  text-align: center;
+  white-space: nowrap;
+  min-width: 160px;
+}
+
+.action-buttons-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.asset-action-btn {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.asset-action-btn:hover {
+  background: #3861fb;
+  border-color: #3861fb;
+}
+
+/* Mobile responsive actions (hidden by default) */
+.wallet-mobile-actions {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Responsive queries */
+@media (max-width: 1100px) {
+  .col-symbol,
+  .cell-symbol {
+    display: none;
+  }
+  .cell-asset-symbol-mobile {
+    display: block;
+  }
+}
+
+@media (max-width: 860px) {
+  .col-type,
+  .cell-type {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .col-price,
+  .cell-price {
+    display: none;
+  }
+  .col-action,
+  .cell-actions {
+    display: none;
+  }
+  .wallet-mobile-actions {
+    display: flex;
+  }
+  .wallet-amount-row {
+    display: none;
+  }
+  .assets-search-input {
+    width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .assets-table-section {
+    padding: 12px 10px;
+  }
+  .assets-table tbody td {
+    padding: 8px 8px;
+  }
+}

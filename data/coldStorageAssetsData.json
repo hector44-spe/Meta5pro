@@ -1,0 +1,662 @@
+[
+  {
+    "id": 1,
+    "name": "AAVE",
+    "symbol": "AAVE",
+    "icon": "/cold_storage_files/AAVE.svg",
+    "price": 122.327,
+    "formattedPrice": "$122.327",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 2,
+    "name": "Algorand",
+    "symbol": "ALGO",
+    "icon": "/cold_storage_files/ALGO.svg",
+    "price": 0.09,
+    "formattedPrice": "$0.090000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 3,
+    "name": "Anchor Protocol",
+    "symbol": "ANC",
+    "icon": "/cold_storage_files/ANC.svg",
+    "price": 0.004,
+    "formattedPrice": "$0.004000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 4,
+    "name": "ApeCoin",
+    "symbol": "APE",
+    "icon": "/cold_storage_files/APE.svg",
+    "price": 0.098,
+    "formattedPrice": "$0.098000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 5,
+    "name": "Artificial Superintelligence Alliance",
+    "symbol": "FET",
+    "icon": "/cold_storage_files/FET.svg",
+    "price": 0.15,
+    "formattedPrice": "$0.150000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 6,
+    "name": "Aurora",
+    "symbol": "AURORA",
+    "icon": "/cold_storage_files/AURORA.svg",
+    "price": 0.04,
+    "formattedPrice": "$0.040000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 7,
+    "name": "Avalanche",
+    "symbol": "AVAX",
+    "icon": "/cold_storage_files/AVAX.svg",
+    "price": 8.617,
+    "formattedPrice": "$8.617",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 8,
+    "name": "Axie Infinity",
+    "symbol": "AXS",
+    "icon": "/cold_storage_files/AXS.svg",
+    "price": 0.804,
+    "formattedPrice": "$0.804000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 9,
+    "name": "Bitcoin",
+    "symbol": "BTC",
+    "icon": "/cold_storage_files/BTC.svg",
+    "price": 74.472,
+    "formattedPrice": "$74.472",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 10,
+    "name": "Bitcoin Cash",
+    "symbol": "BCH",
+    "icon": "/cold_storage_files/BCH.svg",
+    "price": 230.954,
+    "formattedPrice": "$230.954",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 11,
+    "name": "Bitcoin Gold",
+    "symbol": "BTG",
+    "icon": "/cold_storage_files/BTG.svg",
+    "price": 0.586,
+    "formattedPrice": "$0.586000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 12,
+    "name": "Bitcoin SV",
+    "symbol": "BSV",
+    "icon": "/cold_storage_files/BSV.svg",
+    "price": 15.984,
+    "formattedPrice": "$15.984",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 13,
+    "name": "Boring DAO",
+    "symbol": "BORING",
+    "icon": "/cold_storage_files/BORING.svg",
+    "price": 1.25,
+    "formattedPrice": "$1.25",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 14,
+    "name": "Cardano",
+    "symbol": "ADA",
+    "icon": "/cold_storage_files/ADA.svg",
+    "price": 0.177,
+    "formattedPrice": "$0.177000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 15,
+    "name": "ChainLink",
+    "symbol": "LINK",
+    "icon": "/cold_storage_files/LINK.svg",
+    "price": 10.38,
+    "formattedPrice": "$10.38",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 16,
+    "name": "Cronos",
+    "symbol": "CRO",
+    "icon": "/cold_storage_files/CRO.svg",
+    "price": 0.048,
+    "formattedPrice": "$0.048000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 17,
+    "name": "Dai",
+    "symbol": "DAI",
+    "icon": "/cold_storage_files/DAI.svg",
+    "price": 1.001,
+    "formattedPrice": "$1.001",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 18,
+    "name": "Dash",
+    "symbol": "DASH",
+    "icon": "/cold_storage_files/DASH.svg",
+    "price": 43.791,
+    "formattedPrice": "$43.791",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 19,
+    "name": "Decentraland",
+    "symbol": "MANA",
+    "icon": "/cold_storage_files/MANA.svg",
+    "price": 0.07,
+    "formattedPrice": "$0.070000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 20,
+    "name": "Dogecoin",
+    "symbol": "DOGE",
+    "icon": "/cold_storage_files/DOGE.svg",
+    "price": 0.068,
+    "formattedPrice": "$0.068000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 21,
+    "name": "Ethereum",
+    "symbol": "ETH",
+    "icon": "/cold_storage_files/ETH.svg",
+    "price": 2.076,
+    "formattedPrice": "$2.076",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 22,
+    "name": "Ethereum Classic",
+    "symbol": "ETC",
+    "icon": "/cold_storage_files/ETC.svg",
+    "price": 6.689,
+    "formattedPrice": "$6.689",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 23,
+    "name": "Evmos",
+    "symbol": "EVMOS",
+    "icon": "/cold_storage_files/EVMOS.svg",
+    "price": 0.002,
+    "formattedPrice": "$0.002000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 24,
+    "name": "Gate Token",
+    "symbol": "GT",
+    "icon": "/cold_storage_files/GT.svg",
+    "price": 9.851,
+    "formattedPrice": "$9.851",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 25,
+    "name": "Hedera",
+    "symbol": "HBAR",
+    "icon": "/cold_storage_files/HBAR.svg",
+    "price": 0.066,
+    "formattedPrice": "$0.066000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 26,
+    "name": "Hex",
+    "symbol": "HEX",
+    "icon": "/cold_storage_files/HEX.svg",
+    "price": 0.001,
+    "formattedPrice": "$0.001000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 27,
+    "name": "Internet Computer",
+    "symbol": "ICP",
+    "icon": "/cold_storage_files/ICP.svg",
+    "price": 2.623,
+    "formattedPrice": "$2.623",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 28,
+    "name": "Link",
+    "symbol": "LN",
+    "icon": "/cold_storage_files/LN.svg",
+    "price": 0.021,
+    "formattedPrice": "$0.021000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 29,
+    "name": "Litecoin",
+    "symbol": "LTC",
+    "icon": "/cold_storage_files/LTC.svg",
+    "price": 50.847,
+    "formattedPrice": "$50.847",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 30,
+    "name": "Monero",
+    "symbol": "XMR",
+    "icon": "/cold_storage_files/XMR.svg",
+    "price": 379,
+    "formattedPrice": "$379.00",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 31,
+    "name": "Nexo",
+    "symbol": "NEXO",
+    "icon": "/cold_storage_files/NEXO.svg",
+    "price": 0.718,
+    "formattedPrice": "$0.718000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 32,
+    "name": "OKB",
+    "symbol": "OKB",
+    "icon": "/cold_storage_files/OKB.svg",
+    "price": 99.041,
+    "formattedPrice": "$99.041",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 33,
+    "name": "Onyxcoin",
+    "symbol": "XCN",
+    "icon": "/cold_storage_files/XCN.svg",
+    "price": 0.004,
+    "formattedPrice": "$0.004000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 34,
+    "name": "Optimism",
+    "symbol": "OP",
+    "icon": "/cold_storage_files/OP.svg",
+    "price": 0.099,
+    "formattedPrice": "$0.099000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 35,
+    "name": "Origin Protocol",
+    "symbol": "OGN",
+    "icon": "/cold_storage_files/OGN.svg",
+    "price": 0.022,
+    "formattedPrice": "$0.022000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 36,
+    "name": "Orion Protocol",
+    "symbol": "ORN",
+    "icon": "/cold_storage_files/ORN.svg",
+    "price": 1.072,
+    "formattedPrice": "$1.072",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 37,
+    "name": "Pangolin",
+    "symbol": "PNG",
+    "icon": "/cold_storage_files/PNG.svg",
+    "price": 0.024,
+    "formattedPrice": "$0.024000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 38,
+    "name": "Pepe",
+    "symbol": "PEPE",
+    "icon": "/cold_storage_files/PEPE.svg",
+    "price": 0.000021,
+    "formattedPrice": "$0.000021",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 39,
+    "name": "Polkadot",
+    "symbol": "DOT",
+    "icon": "/cold_storage_files/DOT.svg",
+    "price": 0.851,
+    "formattedPrice": "$0.851000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 40,
+    "name": "Polygon",
+    "symbol": "MATIC",
+    "icon": "/cold_storage_files/MATIC.svg",
+    "price": 0.196,
+    "formattedPrice": "$0.196000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 41,
+    "name": "Proton",
+    "symbol": "XPR",
+    "icon": "/cold_storage_files/XPR.svg",
+    "price": 0.002,
+    "formattedPrice": "$0.002000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 42,
+    "name": "Quant",
+    "symbol": "QNT",
+    "icon": "/cold_storage_files/QNT.svg",
+    "price": 177.08,
+    "formattedPrice": "$177.08",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 43,
+    "name": "Rarible",
+    "symbol": "RARI",
+    "icon": "/cold_storage_files/RARI.svg",
+    "price": 0.115,
+    "formattedPrice": "$0.115000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 44,
+    "name": "Render",
+    "symbol": "RNDR",
+    "icon": "/cold_storage_files/RNDR.svg",
+    "price": 3.69,
+    "formattedPrice": "$3.69",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 45,
+    "name": "Ripple",
+    "symbol": "XRP",
+    "icon": "/cold_storage_files/XRP.svg",
+    "price": 1.062,
+    "formattedPrice": "$1.062",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 46,
+    "name": "Safepal",
+    "symbol": "SFP",
+    "icon": "/cold_storage_files/SFP.svg",
+    "price": 0.203,
+    "formattedPrice": "$0.203000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 47,
+    "name": "Shiba Inu",
+    "symbol": "SHIB",
+    "icon": "/cold_storage_files/SHIB.svg",
+    "price": 0.000024,
+    "formattedPrice": "$0.000024",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 48,
+    "name": "Solana",
+    "symbol": "SOL",
+    "icon": "/cold_storage_files/SOL.svg",
+    "price": 84.699,
+    "formattedPrice": "$84.699",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 49,
+    "name": "Sologenic",
+    "symbol": "SOLO",
+    "icon": "/cold_storage_files/SOLO.svg",
+    "price": 0.857,
+    "formattedPrice": "$0.857000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 50,
+    "name": "Stellar",
+    "symbol": "XLM",
+    "icon": "/cold_storage_files/XLM.svg",
+    "price": 0.149,
+    "formattedPrice": "$0.149000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 51,
+    "name": "Stepn",
+    "symbol": "GMT",
+    "icon": "/cold_storage_files/GMT.svg",
+    "price": 0.006,
+    "formattedPrice": "$0.006000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 52,
+    "name": "Sushi",
+    "symbol": "SUSHI",
+    "icon": "/cold_storage_files/SUSHI.svg",
+    "price": 0.173,
+    "formattedPrice": "$0.173000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 53,
+    "name": "Telos",
+    "symbol": "TLOS",
+    "icon": "/cold_storage_files/TLOS.svg",
+    "price": 0.014,
+    "formattedPrice": "$0.014000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 54,
+    "name": "Tether",
+    "symbol": "USDT",
+    "icon": "/cold_storage_files/USDT.svg",
+    "price": 1,
+    "formattedPrice": "$1.00",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 55,
+    "name": "Tezos",
+    "symbol": "XTZ",
+    "icon": "/cold_storage_files/XTZ.svg",
+    "price": 0.24,
+    "formattedPrice": "$0.240000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 56,
+    "name": "The Graph",
+    "symbol": "GRT",
+    "icon": "/cold_storage_files/GRT.svg",
+    "price": 0.018,
+    "formattedPrice": "$0.018000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 57,
+    "name": "Toncoin",
+    "symbol": "TON",
+    "icon": "/cold_storage_files/TON.svg",
+    "price": 0.279,
+    "formattedPrice": "$0.279000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 58,
+    "name": "Tron",
+    "symbol": "TRX",
+    "icon": "/cold_storage_files/TRX.svg",
+    "price": 0.318,
+    "formattedPrice": "$0.318000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 59,
+    "name": "Uniswap",
+    "symbol": "UNI",
+    "icon": "/cold_storage_files/UNI.svg",
+    "price": 6.502,
+    "formattedPrice": "$6.502",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 60,
+    "name": "USD Coin",
+    "symbol": "USDC",
+    "icon": "/cold_storage_files/USDC.svg",
+    "price": 1.001,
+    "formattedPrice": "$1.001",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 61,
+    "name": "Vechain",
+    "symbol": "VET",
+    "icon": "/cold_storage_files/VET.svg",
+    "price": 0.005,
+    "formattedPrice": "$0.005000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 62,
+    "name": "Velo",
+    "symbol": "VELO",
+    "icon": "/cold_storage_files/VELO.svg",
+    "price": 0.003,
+    "formattedPrice": "$0.003000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 63,
+    "name": "Wing Finance",
+    "symbol": "WING",
+    "icon": "/cold_storage_files/WING.svg",
+    "price": 0.137,
+    "formattedPrice": "$0.137000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 64,
+    "name": "XDC Network",
+    "symbol": "XDC",
+    "icon": "/cold_storage_files/XDC.svg",
+    "price": 0.029,
+    "formattedPrice": "$0.029000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 65,
+    "name": "XRP Healthcare",
+    "symbol": "XRPH",
+    "icon": "/cold_storage_files/XRPH.svg",
+    "price": 0.042,
+    "formattedPrice": "$0.042000",
+    "inWallet": 0,
+    "currentValue": 0
+  },
+  {
+    "id": 66,
+    "name": "Zcash",
+    "symbol": "ZEC",
+    "icon": "/cold_storage_files/ZEC.svg",
+    "price": 992.534,
+    "formattedPrice": "$992.534",
+    "inWallet": 0,
+    "currentValue": 0
+  }
+]

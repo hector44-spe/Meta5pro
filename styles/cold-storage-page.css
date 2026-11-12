@@ -1,0 +1,1221 @@
+/* ==========================================================================
+   Cold Storage Page Styles - Exact MetaGold 5 Replica
+   ========================================================================== */
+
+.cold-storage-page-wrapper {
+  width: 100%;
+  height: 100%;
+  padding-bottom: 32px;
+  text-transform: none !important;
+}
+
+.cold-storage-page-wrapper * {
+  text-transform: none;
+}
+
+.cold-storage-page-wrapper .unit,
+.cold-storage-page-wrapper .symbol,
+.cold-storage-page-wrapper .amount_select p {
+  text-transform: uppercase !important;
+}
+
+.cold-storage-content-card {
+  background: var(--color-card-background, hsla(0, 0%, 100%, 0.02)) !important;
+  padding: 24px 16px;
+  box-sizing: border-box !important;
+  overflow-y: auto;
+  border-radius: 12px;
+  min-height: calc(100vh - 104px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+/* Top Title & Header */
+.cold-storage-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding-bottom: 24px;
+}
+
+.cold-storage-top-title {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text-secondary, #b2b5be);
+}
+
+.cold-storage-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Switcher Tabs */
+.cold-storage-switcher {
+  gap: 12px;
+  background-color: transparent;
+  display: flex;
+}
+
+.cold-storage-switcher .switcher_wrapper_inner {
+  display: inline-flex;
+  position: relative;
+  background: var(--color-control, hsla(0, 0%, 100%, 0.05));
+  border-radius: 24px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cold-storage-switcher .switcher_item {
+  position: relative;
+  z-index: 2;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 18px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.cold-storage-switcher .switcher_item.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.cold-storage-switcher .switcher_indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  border-radius: 20px;
+  background-color: var(--color-control-active, rgba(255, 255, 255, 0.12));
+  z-index: 1;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==========================================================================
+   Assets Tab View
+   ========================================================================== */
+
+.cold-storage-assets-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Cold Storage Value Box */
+.cold-storage-balance-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.cold-storage-balance-box .balance_label_wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cold-storage-balance-box .balance_label {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.6));
+}
+
+.cold-storage-balance-box .eyes_button {
+  outline: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0 !important;
+  height: 16px !important;
+  cursor: pointer;
+  color: var(--color-text-75, rgba(255, 255, 255, 0.6));
+  transition: all 0.15s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cold-storage-balance-box .eyes_button:hover {
+  color: #ffffff;
+}
+
+.cold-storage-balance-box .user_balance {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-primary-text, #ffffff);
+  line-height: 32px;
+  font-feature-settings: "tnum";
+  margin-top: 2px;
+}
+
+.cold-storage-balance-box .user_balance.hidden {
+  letter-spacing: 2px;
+}
+
+/* "Your assets" Section Bar */
+.cold-storage-assets-header {
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cold-storage-assets-header .titles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cold-storage-assets-header .title {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--color-primary-text, #ffffff);
+}
+
+.cold-storage-assets-header .count {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-50, rgba(255, 255, 255, 0.5));
+}
+
+.cold-storage-add-btn {
+  border: none;
+  outline: none;
+  color: #ffffff !important;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  padding: 8px 14px !important;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--color-primary, #4763f0) !important;
+  transition: all 150ms ease-in;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cold-storage-add-btn:hover {
+  background: var(--color-primary-hover, #3851d8) !important;
+}
+
+.cold-storage-add-btn p {
+  margin: 0;
+  font-size: 13px !important;
+  line-height: 18px !important;
+  font-weight: 600;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   Desktop Assets Table (AssetsDesktop: > 1000px)
+   ========================================================================== */
+
+.cold-storage-desktop-view {
+  display: block;
+}
+
+.cold-storage-mobile-view {
+  display: none;
+}
+
+@media screen and (max-width: 1000px) {
+  .cold-storage-desktop-view {
+    display: none !important;
+  }
+  .cold-storage-mobile-view {
+    display: block !important;
+  }
+}
+
+.cold-storage-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+  background-color: transparent;
+  margin-top: 8px;
+}
+
+.cold-storage-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.cold-storage-table thead tr th {
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+
+.cold-storage-table thead tr th.id {
+  text-align: left;
+  width: 250px;
+}
+
+.cold-storage-table thead tr th.amount_small {
+  text-align: right;
+}
+
+.cold-storage-table thead tr th.actions {
+  width: 48px;
+  text-align: right;
+}
+
+.cold-storage-table tbody tr {
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  transition: background-color 0.15s ease;
+}
+
+.cold-storage-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.cold-storage-table tbody td {
+  padding: 14px;
+  font-size: 13px;
+  color: var(--color-text, #ffffff);
+  white-space: nowrap;
+}
+
+.cold-storage-table tbody td.id-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cold-storage-table tbody td.amount_small {
+  text-align: right;
+  font-feature-settings: "tnum";
+}
+
+.cold-storage-table tbody td.actions {
+  text-align: right;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.cold-storage-table tbody tr:hover td.actions {
+  color: #ffffff;
+}
+
+/* Empty State - Completely transparent background with no box */
+.cold-storage-table tbody tr.empty-row,
+.cold-storage-table tbody tr.empty-row:hover,
+.cold-storage-table tbody tr:nth-of-type(odd).empty-row,
+.cold-storage-table tbody tr:nth-of-type(even).empty-row,
+.cold-storage-table tbody tr:has(.empty_state),
+.cold-storage-table tbody tr:has(.empty-cell),
+.cold-storage-table tbody td.empty-cell,
+.cold-storage-table tbody .empty_state,
+.cold-storage-mobile-wrapper .empty_state {
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  height: auto !important;
+  cursor: default !important;
+}
+
+.cold-storage-table tbody .empty_state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 56px 0;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent !important;
+}
+
+.cold-storage-table tbody .empty_state p {
+  margin: 0;
+}
+
+/* ==========================================================================
+   Mobile Assets Cards (AssetsMobile: <= 1000px)
+   ========================================================================== */
+
+.cold-storage-mobile-wrapper {
+  margin-top: 14px;
+  width: 100%;
+}
+
+.cold-storage-mobile-wrapper .content_wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cold-storage-mobile-wrapper .empty_state {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  color: var(--color-text-75, rgba(255, 255, 255, 0.6));
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}
+
+.cold-storage-mobile-wrapper .asset {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  background-color: transparent;
+  padding: 12px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border-radius: 8px;
+  align-items: center;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.cold-storage-mobile-wrapper .asset:nth-of-type(odd) {
+  background-color: var(--color-control, hsla(0, 0%, 100%, 0.04));
+}
+
+.cold-storage-mobile-wrapper .asset:hover {
+  background-color: var(--color-control-hover, hsla(0, 0%, 100%, 0.08));
+}
+
+.cold-storage-mobile-wrapper .asset_left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cold-storage-mobile-wrapper .asset_left img {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.cold-storage-mobile-wrapper .asset_left span {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cold-storage-mobile-wrapper .asset_name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+.cold-storage-mobile-wrapper .asset_value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.cold-storage-mobile-wrapper .asset_value p {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  margin: 0;
+}
+
+.cold-storage-mobile-wrapper .asset_right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cold-storage-mobile-wrapper .asset_right span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.cold-storage-mobile-wrapper p.current_price {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-tertiary, rgba(255, 255, 255, 0.6));
+  margin: 0;
+}
+
+.cold-storage-mobile-wrapper .chevron_right_wrapper {
+  display: grid;
+  place-items: center;
+  color: var(--color-primary, #4763f0);
+}
+
+/* ==========================================================================
+   How It Works Accordion
+   ========================================================================== */
+
+.how-it-works-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.how_it_works_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.how_it_works_header p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.how-it-works-questions {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 650px;
+  cursor: pointer;
+}
+
+.how-it-works-questions .question {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: var(--color-account-card-background, hsla(0, 0%, 100%, 0.02));
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.how-it-works-questions .question.open {
+  background-color: var(--color-control, hsla(0, 0%, 100%, 0.05));
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.08));
+}
+
+.how-it-works-questions .question .wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.how-it-works-questions .question .left_section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.how-it-works-questions .question_number {
+  height: 22px;
+  width: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.1));
+  transition: all 0.2s ease-in-out;
+}
+
+.how-it-works-questions .question_title {
+  margin: 0;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--color-text, #ffffff);
+}
+
+.how-it-works-questions .question_answer {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 20px;
+  font-weight: 400;
+  color: var(--color-text-80, rgba(255, 255, 255, 0.75));
+  max-width: 580px;
+}
+
+/* ==========================================================================
+   Slide-in Drawers (NotificationsWrapper$1 / Overlay)
+   ========================================================================== */
+
+.cold-storage-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-in-out;
+}
+
+.cold-storage-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cold-storage-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  min-height: 100vh;
+  height: 100%;
+  z-index: 999;
+  transform: translateX(100%);
+  padding: 20px 16px;
+  opacity: 0.75;
+  max-width: 420px;
+  width: 100%;
+  overflow-y: auto;
+  transition: all 300ms ease-in-out;
+  background: var(--color-modal-background, #080c10) !important;
+  backdrop-filter: blur(40px) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.cold-storage-drawer.open {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Drawer Top Bar */
+.cold-storage-drawer .drawer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.cold-storage-drawer .drawer-top-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--color-text, #ffffff);
+  padding: 0;
+}
+
+.cold-storage-drawer .drawer-top-title {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+.cold-storage-drawer .drawer-step-badge {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  margin-left: 8px;
+}
+
+.cold-storage-drawer .drawer-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.6);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.cold-storage-drawer .drawer-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+/* Progress Divider */
+.cold-storage-divider {
+  width: 100%;
+  height: 2px;
+  background-color: rgba(71, 99, 240, 0.15);
+  position: relative;
+  margin-top: 12px;
+  border-radius: 100px;
+}
+
+.cold-storage-divider-bar {
+  height: 2px;
+  background-color: var(--color-primary, #4763f0);
+  transition: all 0.25s ease-in-out;
+  position: absolute;
+  border-radius: 100px;
+  left: 0;
+}
+
+/* Drawer Content */
+.cold-storage-drawer .drawer-content {
+  width: 100%;
+  flex: 1;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Search Box in Select View */
+.cold-storage-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-control, hsla(0, 0%, 100%, 0.05));
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 10px;
+}
+
+.cold-storage-search-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text, #ffffff);
+  font-size: 13.5px;
+}
+
+.cold-storage-search-input::placeholder {
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.4));
+}
+
+/* Asset List items in Select View */
+.cold-storage-asset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 14px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 2px;
+}
+
+.cold-storage-asset-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.cold-storage-asset-item:hover {
+  background-color: var(--color-control, rgba(255, 255, 255, 0.05));
+}
+
+.cold-storage-asset-item .left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cold-storage-asset-item .asset-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: contain;
+}
+
+.cold-storage-asset-item .name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cold-storage-asset-item .symbol {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+.cold-storage-asset-item .right {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ==========================================================================
+   Asset Details View (AssetView)
+   ========================================================================== */
+
+.asset-details-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.asset-details-profile {
+  display: flex;
+  flex-direction: column;
+}
+
+.asset-details-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.asset-details-name-row {
+  margin-top: 18px;
+}
+
+.asset-details-name-row .asset-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.asset-details-price-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.asset-details-price-row .price {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  line-height: 26px;
+}
+
+.asset-details-price-row .unit {
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+.asset-details-balance-box {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background-color: var(--color-control, hsla(0, 0%, 100%, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.asset-details-balance-box p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text, #ffffff);
+  line-height: 14px;
+}
+
+.asset-details-balance-box .estimated {
+  font-size: 12px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+.asset-details-chart-container {
+  width: 100%;
+  height: 330px;
+  margin-top: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.asset-details-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.asset-details-btn-primary {
+  flex: 1;
+  background: var(--color-primary, #4763f0);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.asset-details-btn-primary:hover {
+  background: var(--color-primary-hover, #3851d8);
+}
+
+.asset-details-btn-secondary {
+  flex: 1;
+  background: var(--color-control, rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.asset-details-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   Deposit & Withdraw Flow Screens
+   ========================================================================== */
+
+.transaction-content-prompt {
+  margin-top: 16px;
+}
+
+.transaction-content-prompt p {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+.amount-input-card {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.amount-input-card .amountbox_wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-control, hsla(0, 0%, 100%, 0.05));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+
+.amount-input-card.error .amountbox_wrapper {
+  border-color: #f7495b;
+}
+
+.amount-input-card input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  width: 70%;
+  font-feature-settings: "tnum";
+}
+
+.amount-input-card .amount_select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.amount-input-card .captions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+.amount-input-card .captions .error-text {
+  color: #f7495b;
+  font-weight: 500;
+}
+
+/* Step 2 Review Box */
+.review-transaction-box {
+  margin-top: 20px;
+  background: var(--color-control, hsla(0, 0%, 100%, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.review-transaction-box .top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.review-transaction-box .bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 14px;
+}
+
+.review-transaction-box .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.review-transaction-box .summary-row .label {
+  font-size: 12.5px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+.review-transaction-box .summary-row .value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff;
+  font-feature-settings: "tnum";
+}
+
+.drawer-action-btn {
+  width: 100%;
+  margin-top: 48px;
+  background: var(--color-primary, #4763f0);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.drawer-action-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover, #3851d8);
+}
+
+.drawer-action-btn:disabled,
+.drawer-action-btn.disabled {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.3) !important;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Success Modal (ColdStorageModalContent)
+   ========================================================================== */
+
+.cold-storage-success-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.cold-storage-success-card {
+  width: 100%;
+  max-width: 440px;
+  background: #0d1218;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 24px;
+  position: relative;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cold-storage-success-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.15s ease;
+}
+
+.cold-storage-success-close:hover {
+  color: #ffffff;
+}
+
+.cold-storage-success-badge {
+  padding: 10px 18px;
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.cold-storage-success-badge.deposit {
+  background: linear-gradient(-160deg, hsla(36, 100%, 65%, 0.1) 0%, hsla(36, 67%, 36%, 0.1) 100%);
+}
+
+.cold-storage-success-badge.withdraw {
+  background: linear-gradient(-160deg, hsla(0, 100%, 65%, 0.1) 0%, hsla(0, 67%, 36%, 0.1) 100%);
+}
+
+.cold-storage-success-badge p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.cold-storage-success-badge.deposit p {
+  color: #ffaf33;
+}
+
+.cold-storage-success-badge.withdraw p {
+  color: #f7495b;
+}
+
+.cold-storage-success-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.cold-storage-success-texts .title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.cold-storage-success-texts .subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: rgba(255, 255, 255, 0.75);
+  max-width: 360px;
+}
+
+.cold-storage-success-btn {
+  width: 100%;
+  margin-top: 28px;
+  background: var(--color-primary, #4763f0);
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cold-storage-success-btn:hover {
+  background: var(--color-primary-hover, #3851d8);
+}
+
+/* ==========================================================================
+   Comprehensive Responsive Queries (< 900px, < 768px, < 480px)
+   ========================================================================== */
+
+@media screen and (max-width: 900px) {
+  .cold-storage-content-card {
+    height: auto;
+    min-height: calc(100vh - 80px);
+    padding: 20px 14px;
+  }
+
+  .cold-storage-top {
+    display: grid !important;
+    gap: 12px;
+    padding-bottom: 16px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .cold-storage-content-card {
+    padding: 16px 12px;
+    border-radius: 8px;
+  }
+
+  .cold-storage-drawer {
+    max-width: 100vw;
+    width: 100vw;
+    padding: 16px 12px;
+  }
+
+  .cold-storage-success-card {
+    padding: 20px 16px;
+    max-width: calc(100vw - 32px);
+  }
+
+  .cold-storage-balance-box .user_balance {
+    font-size: 22px;
+  }
+
+  .asset-details-price-row .price {
+    font-size: 20px;
+  }
+
+  .amount-input-card input {
+    font-size: 16px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .cold-storage-switcher .switcher_item {
+    padding: 5px 14px;
+    font-size: 12px;
+  }
+
+  .cold-storage-assets-header {
+    margin-top: 12px;
+  }
+
+  .cold-storage-add-btn {
+    padding: 6px 12px !important;
+  }
+
+  .how-it-works-questions .question {
+    padding: 10px 12px;
+  }
+
+  .how-it-works-questions .question_answer {
+    padding-left: 0;
+  }
+}

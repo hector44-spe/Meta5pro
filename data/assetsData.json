@@ -1,0 +1,1682 @@
+[
+  {
+    "id": 1,
+    "name": "Apple",
+    "symbol": "AAPL",
+    "type": "Stocks",
+    "price": "$355.78/AAPL",
+    "walletAmount": "0 AAPL",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AAPL.svg"
+  },
+  {
+    "id": 2,
+    "name": "AAVE",
+    "symbol": "AAVE",
+    "type": "Crypto",
+    "price": "$122.327/AAVE",
+    "walletAmount": "0 AAVE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AAVE.svg"
+  },
+  {
+    "id": 3,
+    "name": "Abbot Labs",
+    "symbol": "ABT",
+    "type": "Stocks",
+    "price": "$109.38/ABT",
+    "walletAmount": "0 ABT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ABT.svg"
+  },
+  {
+    "id": 4,
+    "name": "Cardano",
+    "symbol": "ADA",
+    "type": "Crypto",
+    "price": "$0.177/ADA",
+    "walletAmount": "0 ADA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ADA.svg"
+  },
+  {
+    "id": 5,
+    "name": "Adobe",
+    "symbol": "ADBE",
+    "type": "Stocks",
+    "price": "$237.57/ADBE",
+    "walletAmount": "0 ADBE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ADBE.svg"
+  },
+  {
+    "id": 6,
+    "name": "Analog Devices",
+    "symbol": "ADI",
+    "type": "Stocks",
+    "price": "$408.88/ADI",
+    "walletAmount": "0 ADI",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ADI.svg"
+  },
+  {
+    "id": 7,
+    "name": "Aethlon Medical",
+    "symbol": "AEMD",
+    "type": "Stocks",
+    "price": "$5.575/AEMD",
+    "walletAmount": "0 AEMD",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AEMD.svg"
+  },
+  {
+    "id": 8,
+    "name": "American International Group",
+    "symbol": "AIG",
+    "type": "Stocks",
+    "price": "$82.83/AIG",
+    "walletAmount": "0 AIG",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AIG.svg"
+  },
+  {
+    "id": 9,
+    "name": "Algorand",
+    "symbol": "ALGO",
+    "type": "Crypto",
+    "price": "$0.09/ALGO",
+    "walletAmount": "0 ALGO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ALGO.svg"
+  },
+  {
+    "id": 10,
+    "name": "AMC Holdings",
+    "symbol": "AMC",
+    "type": "Stocks",
+    "price": "$3.415/AMC",
+    "walletAmount": "0 AMC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AMC.svg"
+  },
+  {
+    "id": 11,
+    "name": "AMD",
+    "symbol": "AMD",
+    "type": "Stocks",
+    "price": "$553.64/AMD",
+    "walletAmount": "0 AMD",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AMD.svg"
+  },
+  {
+    "id": 12,
+    "name": "American Tower",
+    "symbol": "AMT",
+    "type": "Stocks",
+    "price": "$190.19/AMT",
+    "walletAmount": "0 AMT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AMT.svg"
+  },
+  {
+    "id": 13,
+    "name": "Amazon",
+    "symbol": "AMZN",
+    "type": "Stocks",
+    "price": "$266.23/AMZN",
+    "walletAmount": "0 AMZN",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AMZN.svg"
+  },
+  {
+    "id": 14,
+    "name": "Anchor Protocol",
+    "symbol": "ANC",
+    "type": "Crypto",
+    "price": "$0.004/ANC",
+    "walletAmount": "0 ANC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ANC.svg"
+  },
+  {
+    "id": 15,
+    "name": "ApeCoin",
+    "symbol": "APE",
+    "type": "Crypto",
+    "price": "$0.098/APE",
+    "walletAmount": "0 APE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/APE.svg"
+  },
+  {
+    "id": 16,
+    "name": "Alpha Pro Tech",
+    "symbol": "APT",
+    "type": "Stocks",
+    "price": "$6.20/APT",
+    "walletAmount": "0 APT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/APT.svg"
+  },
+  {
+    "id": 17,
+    "name": "ASML",
+    "symbol": "ASML",
+    "type": "Stocks",
+    "price": "$1.534K/ASML",
+    "walletAmount": "0 ASML",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ASML.svg"
+  },
+  {
+    "id": 18,
+    "name": "Aterian Inc",
+    "symbol": "ATER",
+    "type": "Stocks",
+    "price": "$0.92/ATER",
+    "walletAmount": "0 ATER",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ATER.svg"
+  },
+  {
+    "id": 19,
+    "name": "Australian Dollar",
+    "symbol": "AUD",
+    "type": "Fiat",
+    "price": "$0.685/AUD",
+    "walletAmount": "0 AUD",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AUD.svg"
+  },
+  {
+    "id": 20,
+    "name": "Aurora",
+    "symbol": "AURORA",
+    "type": "Crypto",
+    "price": "$0.04/AURORA",
+    "walletAmount": "0 AURORA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AURORA.svg"
+  },
+  {
+    "id": 21,
+    "name": "Avalanche",
+    "symbol": "AVAX",
+    "type": "Crypto",
+    "price": "$8.617/AVAX",
+    "walletAmount": "0 AVAX",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AVAX.svg"
+  },
+  {
+    "id": 22,
+    "name": "American Express",
+    "symbol": "AXP",
+    "type": "Stocks",
+    "price": "$322.90/AXP",
+    "walletAmount": "0 AXP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AXP.svg"
+  },
+  {
+    "id": 23,
+    "name": "Axie Infinity",
+    "symbol": "AXS",
+    "type": "Crypto",
+    "price": "$0.804/AXS",
+    "walletAmount": "0 AXS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/AXS.svg"
+  },
+  {
+    "id": 24,
+    "name": "Boeing",
+    "symbol": "BA",
+    "type": "Stocks",
+    "price": "$174.55/BA",
+    "walletAmount": "0 BA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BA.svg"
+  },
+  {
+    "id": 25,
+    "name": "Alibaba",
+    "symbol": "BABA",
+    "type": "Stocks",
+    "price": "$101.535/BABA",
+    "walletAmount": "0 BABA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BABA.svg"
+  },
+  {
+    "id": 26,
+    "name": "Bank of America",
+    "symbol": "BAC",
+    "type": "Stocks",
+    "price": "$50.66/BAC",
+    "walletAmount": "0 BAC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BAC.svg"
+  },
+  {
+    "id": 27,
+    "name": "Bitcoin Cash",
+    "symbol": "BCH",
+    "type": "Crypto",
+    "price": "$230.954/BCH",
+    "walletAmount": "0 BCH",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BCH.svg"
+  },
+  {
+    "id": 28,
+    "name": "Baidu Inc",
+    "symbol": "BIDU",
+    "type": "Stocks",
+    "price": "$79.71/BIDU",
+    "walletAmount": "0 BIDU",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BIDU.svg"
+  },
+  {
+    "id": 29,
+    "name": "Bristol Myers",
+    "symbol": "BMY",
+    "type": "Stocks",
+    "price": "$62.92/BMY",
+    "walletAmount": "0 BMY",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BMY.svg"
+  },
+  {
+    "id": 30,
+    "name": "Boring DAO",
+    "symbol": "BORING",
+    "type": "Crypto",
+    "price": "$0.00/BORING",
+    "walletAmount": "0 BORING",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BORING.svg"
+  },
+  {
+    "id": 31,
+    "name": "Bitcoin SV",
+    "symbol": "BSV",
+    "type": "Crypto",
+    "price": "$15.984/BSV",
+    "walletAmount": "0 BSV",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BSV.svg"
+  },
+  {
+    "id": 32,
+    "name": "Bitcoin",
+    "symbol": "BTC",
+    "type": "Crypto",
+    "price": "$74.472K/BTC",
+    "walletAmount": "0 BTC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BTC.svg"
+  },
+  {
+    "id": 33,
+    "name": "Bitcoin Gold",
+    "symbol": "BTG",
+    "type": "Crypto",
+    "price": "$0.586/BTG",
+    "walletAmount": "0 BTG",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/BTG.svg"
+  },
+  {
+    "id": 34,
+    "name": "Citigroup",
+    "symbol": "C",
+    "type": "Stocks",
+    "price": "$124.19/C",
+    "walletAmount": "0 C",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/C.svg"
+  },
+  {
+    "id": 35,
+    "name": "Canadian Dollar",
+    "symbol": "CAD",
+    "type": "Fiat",
+    "price": "$0.703/CAD",
+    "walletAmount": "0 CAD",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CAD.svg"
+  },
+  {
+    "id": 36,
+    "name": "Caterpillar",
+    "symbol": "CAT",
+    "type": "Stocks",
+    "price": "$601.63/CAT",
+    "walletAmount": "0 CAT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CAT.svg"
+  },
+  {
+    "id": 37,
+    "name": "Clear Channel Outdoor",
+    "symbol": "CCO",
+    "type": "Stocks",
+    "price": "$2.43/CCO",
+    "walletAmount": "0 CCO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CCO.svg"
+  },
+  {
+    "id": 38,
+    "name": "Camber Energy",
+    "symbol": "CEI",
+    "type": "Stocks",
+    "price": "$0.096/CEI",
+    "walletAmount": "0 CEI",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CEI.svg"
+  },
+  {
+    "id": 39,
+    "name": "Swiss Franc",
+    "symbol": "CHF",
+    "type": "Fiat",
+    "price": "$1.202/CHF",
+    "walletAmount": "0 CHF",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CHF.svg"
+  },
+  {
+    "id": 40,
+    "name": "Chewy Inc",
+    "symbol": "CHWY",
+    "type": "Stocks",
+    "price": "$23.14/CHWY",
+    "walletAmount": "0 CHWY",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CHWY.svg"
+  },
+  {
+    "id": 41,
+    "name": "Colgate-Palmolive",
+    "symbol": "CL",
+    "type": "Stocks",
+    "price": "$97.99/CL",
+    "walletAmount": "0 CL",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CL.svg"
+  },
+  {
+    "id": 42,
+    "name": "Comcast",
+    "symbol": "CMCSA",
+    "type": "Stocks",
+    "price": "$25.03/CMCSA",
+    "walletAmount": "0 CMCSA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CMCSA.svg"
+  },
+  {
+    "id": 43,
+    "name": "Chinese Yuan",
+    "symbol": "CNY",
+    "type": "Fiat",
+    "price": "$0.15/CNY",
+    "walletAmount": "0 CNY",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CNY.svg"
+  },
+  {
+    "id": 44,
+    "name": "Costco",
+    "symbol": "COST",
+    "type": "Stocks",
+    "price": "$1.087K/COST",
+    "walletAmount": "0 COST",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/COST.svg"
+  },
+  {
+    "id": 45,
+    "name": "Cardiff Oncology Inc",
+    "symbol": "CRDF",
+    "type": "Stocks",
+    "price": "$0.767/CRDF",
+    "walletAmount": "0 CRDF",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CRDF.svg"
+  },
+  {
+    "id": 46,
+    "name": "Salesforce Inc",
+    "symbol": "CRM",
+    "type": "Stocks",
+    "price": "$217.89/CRM",
+    "walletAmount": "0 CRM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CRM.svg"
+  },
+  {
+    "id": 47,
+    "name": "Cronos",
+    "symbol": "CRO",
+    "type": "Crypto",
+    "price": "$0.048/CRO",
+    "walletAmount": "0 CRO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CRO.svg"
+  },
+  {
+    "id": 48,
+    "name": "Cisco",
+    "symbol": "CSCO",
+    "type": "Stocks",
+    "price": "$100.82/CSCO",
+    "walletAmount": "0 CSCO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CSCO.svg"
+  },
+  {
+    "id": 49,
+    "name": "Chevron",
+    "symbol": "CVX",
+    "type": "Stocks",
+    "price": "$213.28/CVX",
+    "walletAmount": "0 CVX",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/CVX.svg"
+  },
+  {
+    "id": 50,
+    "name": "Dai",
+    "symbol": "DAI",
+    "type": "Crypto",
+    "price": "$1.001/DAI",
+    "walletAmount": "0 DAI",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/DAI.svg"
+  },
+  {
+    "id": 51,
+    "name": "Dash",
+    "symbol": "DASH",
+    "type": "Crypto",
+    "price": "$43.791/DASH",
+    "walletAmount": "0 DASH",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/DASH.svg"
+  },
+  {
+    "id": 52,
+    "name": "Disney",
+    "symbol": "DIS",
+    "type": "Stocks",
+    "price": "$119.655/DIS",
+    "walletAmount": "0 DIS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/DIS.svg"
+  },
+  {
+    "id": 53,
+    "name": "Dogecoin",
+    "symbol": "DOGE",
+    "type": "Crypto",
+    "price": "$0.068/DOGE",
+    "walletAmount": "0 DOGE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/DOGE.svg"
+  },
+  {
+    "id": 54,
+    "name": "Polkadot",
+    "symbol": "DOT",
+    "type": "Crypto",
+    "price": "$0.851/DOT",
+    "walletAmount": "0 DOT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/DOT.svg"
+  },
+  {
+    "id": 55,
+    "name": "Ebay",
+    "symbol": "EBAY",
+    "type": "Stocks",
+    "price": "$122.68/EBAY",
+    "walletAmount": "0 EBAY",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/EBAY.svg"
+  },
+  {
+    "id": 56,
+    "name": "Ethereum Classic",
+    "symbol": "ETC",
+    "type": "Crypto",
+    "price": "$6.689/ETC",
+    "walletAmount": "0 ETC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ETC.svg"
+  },
+  {
+    "id": 57,
+    "name": "Ethereum",
+    "symbol": "ETH",
+    "type": "Crypto",
+    "price": "$2.076K/ETH",
+    "walletAmount": "0 ETH",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ETH.svg"
+  },
+  {
+    "id": 58,
+    "name": "Euro",
+    "symbol": "EUR",
+    "type": "Fiat",
+    "price": "$1.111/EUR",
+    "walletAmount": "0 EUR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/EUR.svg"
+  },
+  {
+    "id": 59,
+    "name": "Evmos",
+    "symbol": "EVMOS",
+    "type": "Crypto",
+    "price": "$0.002/EVMOS",
+    "walletAmount": "0 EVMOS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/EVMOS.svg"
+  },
+  {
+    "id": 60,
+    "name": "Meta Platforms Inc",
+    "symbol": "FB",
+    "type": "Stocks",
+    "price": "$45.99/FB",
+    "walletAmount": "0 FB",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/FB.svg"
+  },
+  {
+    "id": 61,
+    "name": "Artificial Superintelligence Alliance",
+    "symbol": "FET",
+    "type": "Crypto",
+    "price": "$0.15/FET",
+    "walletAmount": "0 FET",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/FET.svg"
+  },
+  {
+    "id": 62,
+    "name": "Fastly Inc",
+    "symbol": "FSLY",
+    "type": "Stocks",
+    "price": "$17.26/FSLY",
+    "walletAmount": "0 FSLY",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/FSLY.svg"
+  },
+  {
+    "id": 63,
+    "name": "British Pound",
+    "symbol": "GBP",
+    "type": "Fiat",
+    "price": "$1.329/GBP",
+    "walletAmount": "0 GBP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GBP.svg"
+  },
+  {
+    "id": 64,
+    "name": "General Electric",
+    "symbol": "GE",
+    "type": "Stocks",
+    "price": "$342.55/GE",
+    "walletAmount": "0 GE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GE.svg"
+  },
+  {
+    "id": 65,
+    "name": "Gevo Inc",
+    "symbol": "GEVO",
+    "type": "Stocks",
+    "price": "$1.815/GEVO",
+    "walletAmount": "0 GEVO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GEVO.svg"
+  },
+  {
+    "id": 66,
+    "name": "General Motors",
+    "symbol": "GM",
+    "type": "Stocks",
+    "price": "$88.87/GM",
+    "walletAmount": "0 GM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GM.svg"
+  },
+  {
+    "id": 67,
+    "name": "Stepn",
+    "symbol": "GMT",
+    "type": "Crypto",
+    "price": "$0.006/GMT",
+    "walletAmount": "0 GMT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GMT.svg"
+  },
+  {
+    "id": 68,
+    "name": "Google",
+    "symbol": "GOOGL",
+    "type": "Stocks",
+    "price": "$293.55/GOOGL",
+    "walletAmount": "0 GOOGL",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GOOGL.svg"
+  },
+  {
+    "id": 69,
+    "name": "The Graph",
+    "symbol": "GRT",
+    "type": "Crypto",
+    "price": "$0.018/GRT",
+    "walletAmount": "0 GRT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GRT.svg"
+  },
+  {
+    "id": 70,
+    "name": "Goldman Sachs",
+    "symbol": "GS",
+    "type": "Stocks",
+    "price": "$926.65/GS",
+    "walletAmount": "0 GS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GS.svg"
+  },
+  {
+    "id": 71,
+    "name": "Gate Token",
+    "symbol": "GT",
+    "type": "Crypto",
+    "price": "$9.851/GT",
+    "walletAmount": "0 GT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/GT.svg"
+  },
+  {
+    "id": 72,
+    "name": "Hedera",
+    "symbol": "HBAR",
+    "type": "Crypto",
+    "price": "$0.066/HBAR",
+    "walletAmount": "0 HBAR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/HBAR.svg"
+  },
+  {
+    "id": 73,
+    "name": "Home Depot",
+    "symbol": "HD",
+    "type": "Stocks",
+    "price": "$351.19/HD",
+    "walletAmount": "0 HD",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/HD.svg"
+  },
+  {
+    "id": 74,
+    "name": "Hex",
+    "symbol": "HEX",
+    "type": "Crypto",
+    "price": "$0.001/HEX",
+    "walletAmount": "0 HEX",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/HEX.svg"
+  },
+  {
+    "id": 75,
+    "name": "Honeywell",
+    "symbol": "HON",
+    "type": "Stocks",
+    "price": "$227.58/HON",
+    "walletAmount": "0 HON",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/HON.svg"
+  },
+  {
+    "id": 76,
+    "name": "IBM",
+    "symbol": "IBM",
+    "type": "Stocks",
+    "price": "$248.13/IBM",
+    "walletAmount": "0 IBM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/IBM.svg"
+  },
+  {
+    "id": 77,
+    "name": "Internet Computer",
+    "symbol": "ICP",
+    "type": "Crypto",
+    "price": "$2.623/ICP",
+    "walletAmount": "0 ICP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ICP.svg"
+  },
+  {
+    "id": 78,
+    "name": "Inmode",
+    "symbol": "INMD",
+    "type": "Stocks",
+    "price": "$13.74/INMD",
+    "walletAmount": "0 INMD",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/INMD.svg"
+  },
+  {
+    "id": 79,
+    "name": "Indian Rupee",
+    "symbol": "INR",
+    "type": "Fiat",
+    "price": "$0.011/INR",
+    "walletAmount": "0 INR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/INR.svg"
+  },
+  {
+    "id": 80,
+    "name": "Intel",
+    "symbol": "INTC",
+    "type": "Stocks",
+    "price": "$62.50/INTC",
+    "walletAmount": "0 INTC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/INTC.svg"
+  },
+  {
+    "id": 81,
+    "name": "Johnson & Johnson",
+    "symbol": "JNJ",
+    "type": "Stocks",
+    "price": "$280.33/JNJ",
+    "walletAmount": "0 JNJ",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/JNJ.svg"
+  },
+  {
+    "id": 82,
+    "name": "JP Morgan",
+    "symbol": "JPM",
+    "type": "Stocks",
+    "price": "$343.34/JPM",
+    "walletAmount": "0 JPM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/JPM.svg"
+  },
+  {
+    "id": 83,
+    "name": "Japanese Yen",
+    "symbol": "JPY",
+    "type": "Fiat",
+    "price": "$0.006/JPY",
+    "walletAmount": "0 JPY",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/JPY.svg"
+  },
+  {
+    "id": 84,
+    "name": "Coca Cola",
+    "symbol": "KO",
+    "type": "Stocks",
+    "price": "$97.55/KO",
+    "walletAmount": "0 KO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/KO.svg"
+  },
+  {
+    "id": 85,
+    "name": "Lennar Corporation",
+    "symbol": "LEN",
+    "type": "Stocks",
+    "price": "$86.33/LEN",
+    "walletAmount": "0 LEN",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/LEN.svg"
+  },
+  {
+    "id": 86,
+    "name": "ChainLink",
+    "symbol": "LINK",
+    "type": "Crypto",
+    "price": "$10.38/LINK",
+    "walletAmount": "0 LINK",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/LINK.svg"
+  },
+  {
+    "id": 87,
+    "name": "Link",
+    "symbol": "LN",
+    "type": "Crypto",
+    "price": "$0.021/LN",
+    "walletAmount": "0 LN",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/LN.svg"
+  },
+  {
+    "id": 88,
+    "name": "Litecoin",
+    "symbol": "LTC",
+    "type": "Crypto",
+    "price": "$50.847/LTC",
+    "walletAmount": "0 LTC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/LTC.svg"
+  },
+  {
+    "id": 89,
+    "name": "Las Vegas Sands",
+    "symbol": "LVS",
+    "type": "Stocks",
+    "price": "$40.215/LVS",
+    "walletAmount": "0 LVS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/LVS.svg"
+  },
+  {
+    "id": 90,
+    "name": "MasterCard",
+    "symbol": "MA",
+    "type": "Stocks",
+    "price": "$660.22/MA",
+    "walletAmount": "0 MA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MA.svg"
+  },
+  {
+    "id": 91,
+    "name": "Decentraland",
+    "symbol": "MANA",
+    "type": "Crypto",
+    "price": "$0.07/MANA",
+    "walletAmount": "0 MANA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MANA.svg"
+  },
+  {
+    "id": 92,
+    "name": "Polygon",
+    "symbol": "MATIC",
+    "type": "Crypto",
+    "price": "$0.196/MATIC",
+    "walletAmount": "0 MATIC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MATIC.svg"
+  },
+  {
+    "id": 93,
+    "name": "Mondelez",
+    "symbol": "MDLZ",
+    "type": "Stocks",
+    "price": "$66.70/MDLZ",
+    "walletAmount": "0 MDLZ",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MDLZ.svg"
+  },
+  {
+    "id": 94,
+    "name": "3M Company",
+    "symbol": "MMM",
+    "type": "Stocks",
+    "price": "$188.79/MMM",
+    "walletAmount": "0 MMM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MMM.svg"
+  },
+  {
+    "id": 95,
+    "name": "Monster",
+    "symbol": "MNST",
+    "type": "Stocks",
+    "price": "$45.42/MNST",
+    "walletAmount": "0 MNST",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MNST.svg"
+  },
+  {
+    "id": 96,
+    "name": "Attria Group",
+    "symbol": "MO",
+    "type": "Stocks",
+    "price": "$77.39/MO",
+    "walletAmount": "0 MO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MO.svg"
+  },
+  {
+    "id": 97,
+    "name": "Marin Software",
+    "symbol": "MRIN",
+    "type": "Stocks",
+    "price": "$0.98/MRIN",
+    "walletAmount": "0 MRIN",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MRIN.svg"
+  },
+  {
+    "id": 98,
+    "name": "Merck",
+    "symbol": "MRK",
+    "type": "Stocks",
+    "price": "$147.20/MRK",
+    "walletAmount": "0 MRK",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MRK.svg"
+  },
+  {
+    "id": 99,
+    "name": "Morgan Stanley",
+    "symbol": "MS",
+    "type": "Stocks",
+    "price": "$190.50/MS",
+    "walletAmount": "0 MS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MS.svg"
+  },
+  {
+    "id": 100,
+    "name": "Microsoft",
+    "symbol": "MSFT",
+    "type": "Stocks",
+    "price": "$520.63/MSFT",
+    "walletAmount": "0 MSFT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MSFT.svg"
+  },
+  {
+    "id": 101,
+    "name": "Motorola",
+    "symbol": "MSI",
+    "type": "Stocks",
+    "price": "$535.175/MSI",
+    "walletAmount": "0 MSI",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/MSI.svg"
+  },
+  {
+    "id": 102,
+    "name": "Nexo",
+    "symbol": "NEXO",
+    "type": "Crypto",
+    "price": "$0.718/NEXO",
+    "walletAmount": "0 NEXO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/NEXO.svg"
+  },
+  {
+    "id": 103,
+    "name": "Netflix",
+    "symbol": "NFLX",
+    "type": "Stocks",
+    "price": "$64.55/NFLX",
+    "walletAmount": "0 NFLX",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/NFLX.svg"
+  },
+  {
+    "id": 104,
+    "name": "Nike",
+    "symbol": "NKE",
+    "type": "Stocks",
+    "price": "$38.33/NKE",
+    "walletAmount": "0 NKE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/NKE.svg"
+  },
+  {
+    "id": 105,
+    "name": "Nvidia",
+    "symbol": "NVDA",
+    "type": "Stocks",
+    "price": "$173.85/NVDA",
+    "walletAmount": "0 NVDA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/NVDA.svg"
+  },
+  {
+    "id": 106,
+    "name": "Novartis",
+    "symbol": "NVS",
+    "type": "Stocks",
+    "price": "$160.36/NVS",
+    "walletAmount": "0 NVS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/NVS.svg"
+  },
+  {
+    "id": 107,
+    "name": "Origin Protocol",
+    "symbol": "OGN",
+    "type": "Crypto",
+    "price": "$0.022/OGN",
+    "walletAmount": "0 OGN",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/OGN.svg"
+  },
+  {
+    "id": 108,
+    "name": "OKB",
+    "symbol": "OKB",
+    "type": "Crypto",
+    "price": "$99.041/OKB",
+    "walletAmount": "0 OKB",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/OKB.svg"
+  },
+  {
+    "id": 109,
+    "name": "Optimism",
+    "symbol": "OP",
+    "type": "Crypto",
+    "price": "$0.099/OP",
+    "walletAmount": "0 OP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/OP.svg"
+  },
+  {
+    "id": 110,
+    "name": "Oracle",
+    "symbol": "ORCL",
+    "type": "Stocks",
+    "price": "$128.94/ORCL",
+    "walletAmount": "0 ORCL",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ORCL.svg"
+  },
+  {
+    "id": 111,
+    "name": "Orion Protocol",
+    "symbol": "ORN",
+    "type": "Crypto",
+    "price": "$1.072/ORN",
+    "walletAmount": "0 ORN",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ORN.svg"
+  },
+  {
+    "id": 112,
+    "name": "Pepsico",
+    "symbol": "PEP",
+    "type": "Stocks",
+    "price": "$143.98/PEP",
+    "walletAmount": "0 PEP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/PEP.svg"
+  },
+  {
+    "id": 113,
+    "name": "Pepe",
+    "symbol": "PEPE",
+    "type": "Crypto",
+    "price": "$0.00/PEPE",
+    "walletAmount": "0 PEPE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/PEPE.svg"
+  },
+  {
+    "id": 114,
+    "name": "Pfizer",
+    "symbol": "PFE",
+    "type": "Stocks",
+    "price": "$29.37/PFE",
+    "walletAmount": "0 PFE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/PFE.svg"
+  },
+  {
+    "id": 115,
+    "name": "Procter & Gamble",
+    "symbol": "PG",
+    "type": "Stocks",
+    "price": "$167.64/PG",
+    "walletAmount": "0 PG",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/PG.svg"
+  },
+  {
+    "id": 116,
+    "name": "Pangolin",
+    "symbol": "PNG",
+    "type": "Crypto",
+    "price": "$0.024/PNG",
+    "walletAmount": "0 PNG",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/PNG.svg"
+  },
+  {
+    "id": 117,
+    "name": "Paypal",
+    "symbol": "PYPL",
+    "type": "Stocks",
+    "price": "$59.48/PYPL",
+    "walletAmount": "0 PYPL",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/PYPL.svg"
+  },
+  {
+    "id": 118,
+    "name": "Quant",
+    "symbol": "QNT",
+    "type": "Crypto",
+    "price": "$177.08/QNT",
+    "walletAmount": "0 QNT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/QNT.svg"
+  },
+  {
+    "id": 119,
+    "name": "Ferrari",
+    "symbol": "RACE",
+    "type": "Stocks",
+    "price": "$415.88/RACE",
+    "walletAmount": "0 RACE",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/RACE.svg"
+  },
+  {
+    "id": 120,
+    "name": "Rarible",
+    "symbol": "RARI",
+    "type": "Crypto",
+    "price": "$0.115/RARI",
+    "walletAmount": "0 RARI",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/RARI.svg"
+  },
+  {
+    "id": 121,
+    "name": "Rocket Lab",
+    "symbol": "RKLB",
+    "type": "Stocks",
+    "price": "$66.15/RKLB",
+    "walletAmount": "0 RKLB",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/RKLB.svg"
+  },
+  {
+    "id": 122,
+    "name": "Ralph Lauren",
+    "symbol": "RL",
+    "type": "Stocks",
+    "price": "$393.84/RL",
+    "walletAmount": "0 RL",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/RL.svg"
+  },
+  {
+    "id": 123,
+    "name": "Render",
+    "symbol": "RNDR",
+    "type": "Crypto",
+    "price": "$3.69/RNDR",
+    "walletAmount": "0 RNDR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/RNDR.svg"
+  },
+  {
+    "id": 124,
+    "name": "Russian Ruble",
+    "symbol": "RUB",
+    "type": "Fiat",
+    "price": "$0.012/RUB",
+    "walletAmount": "0 RUB",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/RUB.svg"
+  },
+  {
+    "id": 125,
+    "name": "ReWalk Robotics",
+    "symbol": "RWLK",
+    "type": "Stocks",
+    "price": "$1.055/RWLK",
+    "walletAmount": "0 RWLK",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/RWLK.svg"
+  },
+  {
+    "id": 126,
+    "name": "Starbucks",
+    "symbol": "SBUX",
+    "type": "Stocks",
+    "price": "$109.90/SBUX",
+    "walletAmount": "0 SBUX",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SBUX.svg"
+  },
+  {
+    "id": 127,
+    "name": "Safepal",
+    "symbol": "SFP",
+    "type": "Crypto",
+    "price": "$0.203/SFP",
+    "walletAmount": "0 SFP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SFP.svg"
+  },
+  {
+    "id": 128,
+    "name": "Shiba Inu",
+    "symbol": "SHIB",
+    "type": "Crypto",
+    "price": "$0.00/SHIB",
+    "walletAmount": "0 SHIB",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SHIB.svg"
+  },
+  {
+    "id": 129,
+    "name": "Snap Inc",
+    "symbol": "SNAP",
+    "type": "Stocks",
+    "price": "$5.35/SNAP",
+    "walletAmount": "0 SNAP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SNAP.svg"
+  },
+  {
+    "id": 130,
+    "name": "Solana",
+    "symbol": "SOL",
+    "type": "Crypto",
+    "price": "$84.699/SOL",
+    "walletAmount": "0 SOL",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SOL.svg"
+  },
+  {
+    "id": 131,
+    "name": "Sologenic",
+    "symbol": "SOLO",
+    "type": "Crypto",
+    "price": "$0.857/SOLO",
+    "walletAmount": "0 SOLO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SOLO.svg"
+  },
+  {
+    "id": 132,
+    "name": "Square",
+    "symbol": "SQ",
+    "type": "Stocks",
+    "price": "$86.95/SQ",
+    "walletAmount": "0 SQ",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SQ.svg"
+  },
+  {
+    "id": 133,
+    "name": "SSR Mining",
+    "symbol": "SSRM",
+    "type": "Stocks",
+    "price": "$28.05/SSRM",
+    "walletAmount": "0 SSRM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SSRM.svg"
+  },
+  {
+    "id": 134,
+    "name": "Sushi",
+    "symbol": "SUSHI",
+    "type": "Crypto",
+    "price": "$0.173/SUSHI",
+    "walletAmount": "0 SUSHI",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/SUSHI.svg"
+  },
+  {
+    "id": 135,
+    "name": "At&t",
+    "symbol": "T",
+    "type": "Stocks",
+    "price": "$22.25/T",
+    "walletAmount": "0 T",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/T.svg"
+  },
+  {
+    "id": 136,
+    "name": "Teva",
+    "symbol": "TEVA",
+    "type": "Stocks",
+    "price": "$43.22/TEVA",
+    "walletAmount": "0 TEVA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TEVA.svg"
+  },
+  {
+    "id": 137,
+    "name": "Telos",
+    "symbol": "TLOS",
+    "type": "Crypto",
+    "price": "$0.014/TLOS",
+    "walletAmount": "0 TLOS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TLOS.svg"
+  },
+  {
+    "id": 138,
+    "name": "Toyota Motor",
+    "symbol": "TM",
+    "type": "Stocks",
+    "price": "$213.11/TM",
+    "walletAmount": "0 TM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TM.svg"
+  },
+  {
+    "id": 139,
+    "name": "T-Mobile",
+    "symbol": "TMUS",
+    "type": "Stocks",
+    "price": "$172.15/TMUS",
+    "walletAmount": "0 TMUS",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TMUS.svg"
+  },
+  {
+    "id": 140,
+    "name": "Toncoin",
+    "symbol": "TON",
+    "type": "Crypto",
+    "price": "$0.279/TON",
+    "walletAmount": "0 TON",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TON.svg"
+  },
+  {
+    "id": 141,
+    "name": "TripAdvisor",
+    "symbol": "TRIP",
+    "type": "Stocks",
+    "price": "$7.475/TRIP",
+    "walletAmount": "0 TRIP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TRIP.svg"
+  },
+  {
+    "id": 142,
+    "name": "Tron",
+    "symbol": "TRX",
+    "type": "Crypto",
+    "price": "$0.318/TRX",
+    "walletAmount": "0 TRX",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TRX.svg"
+  },
+  {
+    "id": 143,
+    "name": "Tesla",
+    "symbol": "TSLA",
+    "type": "Stocks",
+    "price": "$390.75/TSLA",
+    "walletAmount": "0 TSLA",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TSLA.svg"
+  },
+  {
+    "id": 144,
+    "name": "TSMC",
+    "symbol": "TSM",
+    "type": "Stocks",
+    "price": "$414.00/TSM",
+    "walletAmount": "0 TSM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TSM.svg"
+  },
+  {
+    "id": 145,
+    "name": "Twitter",
+    "symbol": "TWTR",
+    "type": "Stocks",
+    "price": "$53.83/TWTR",
+    "walletAmount": "0 TWTR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/TWTR.svg"
+  },
+  {
+    "id": 146,
+    "name": "United Health Group",
+    "symbol": "UNH",
+    "type": "Stocks",
+    "price": "$403.00/UNH",
+    "walletAmount": "0 UNH",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/UNH.svg"
+  },
+  {
+    "id": 147,
+    "name": "Uniswap",
+    "symbol": "UNI",
+    "type": "Crypto",
+    "price": "$6.502/UNI",
+    "walletAmount": "0 UNI",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/UNI.svg"
+  },
+  {
+    "id": 148,
+    "name": "United States Dollar",
+    "symbol": "USD",
+    "type": "Fiat",
+    "price": "$1.00/USD",
+    "walletAmount": "0 USD",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/USD.svg"
+  },
+  {
+    "id": 149,
+    "name": "USD Coin",
+    "symbol": "USDC",
+    "type": "Crypto",
+    "price": "$1.001/USDC",
+    "walletAmount": "0 USDC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/USDC.svg"
+  },
+  {
+    "id": 150,
+    "name": "Tether",
+    "symbol": "USDT",
+    "type": "Crypto",
+    "price": "$1.00/USDT",
+    "walletAmount": "0 USDT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/USDT.svg"
+  },
+  {
+    "id": 151,
+    "name": "Visa",
+    "symbol": "V",
+    "type": "Stocks",
+    "price": "$425.68/V",
+    "walletAmount": "0 V",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/V.svg"
+  },
+  {
+    "id": 152,
+    "name": "Velo",
+    "symbol": "VELO",
+    "type": "Crypto",
+    "price": "$0.003/VELO",
+    "walletAmount": "0 VELO",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/VELO.svg"
+  },
+  {
+    "id": 153,
+    "name": "Vechain",
+    "symbol": "VET",
+    "type": "Crypto",
+    "price": "$0.005/VET",
+    "walletAmount": "0 VET",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/VET.svg"
+  },
+  {
+    "id": 154,
+    "name": "Verizon",
+    "symbol": "VZ",
+    "type": "Stocks",
+    "price": "$46.58/VZ",
+    "walletAmount": "0 VZ",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/VZ.svg"
+  },
+  {
+    "id": 155,
+    "name": "Wells Fargo",
+    "symbol": "WFC",
+    "type": "Stocks",
+    "price": "$85.81/WFC",
+    "walletAmount": "0 WFC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/WFC.svg"
+  },
+  {
+    "id": 156,
+    "name": "Wing Finance",
+    "symbol": "WING",
+    "type": "Crypto",
+    "price": "$0.137/WING",
+    "walletAmount": "0 WING",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/WING.svg"
+  },
+  {
+    "id": 157,
+    "name": "Walmart",
+    "symbol": "WMT",
+    "type": "Stocks",
+    "price": "$125.71/WMT",
+    "walletAmount": "0 WMT",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/WMT.svg"
+  },
+  {
+    "id": 158,
+    "name": "Onyxcoin",
+    "symbol": "XCN",
+    "type": "Crypto",
+    "price": "$0.004/XCN",
+    "walletAmount": "0 XCN",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XCN.svg"
+  },
+  {
+    "id": 159,
+    "name": "XDC Network",
+    "symbol": "XDC",
+    "type": "Crypto",
+    "price": "$0.029/XDC",
+    "walletAmount": "0 XDC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XDC.svg"
+  },
+  {
+    "id": 160,
+    "name": "Stellar",
+    "symbol": "XLM",
+    "type": "Crypto",
+    "price": "$0.149/XLM",
+    "walletAmount": "0 XLM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XLM.svg"
+  },
+  {
+    "id": 161,
+    "name": "Monero",
+    "symbol": "XMR",
+    "type": "Crypto",
+    "price": "$379.00/XMR",
+    "walletAmount": "0 XMR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XMR.svg"
+  },
+  {
+    "id": 162,
+    "name": "Exxon Mobil",
+    "symbol": "XOM",
+    "type": "Stocks",
+    "price": "$166.675/XOM",
+    "walletAmount": "0 XOM",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XOM.svg"
+  },
+  {
+    "id": 163,
+    "name": "Proton",
+    "symbol": "XPR",
+    "type": "Crypto",
+    "price": "$0.002/XPR",
+    "walletAmount": "0 XPR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XPR.svg"
+  },
+  {
+    "id": 164,
+    "name": "Ripple",
+    "symbol": "XRP",
+    "type": "Crypto",
+    "price": "$1.062/XRP",
+    "walletAmount": "0 XRP",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XRP.svg"
+  },
+  {
+    "id": 165,
+    "name": "XRP Healthcare",
+    "symbol": "XRPH",
+    "type": "Crypto",
+    "price": "$0.042/XRPH",
+    "walletAmount": "0 XRPH",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XRPH.svg"
+  },
+  {
+    "id": 166,
+    "name": "Tezos",
+    "symbol": "XTZ",
+    "type": "Crypto",
+    "price": "$0.24/XTZ",
+    "walletAmount": "0 XTZ",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/XTZ.svg"
+  },
+  {
+    "id": 167,
+    "name": "South African Rand",
+    "symbol": "ZAR",
+    "type": "Fiat",
+    "price": "$0.06/ZAR",
+    "walletAmount": "0 ZAR",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ZAR.svg"
+  },
+  {
+    "id": 168,
+    "name": "Zcash",
+    "symbol": "ZEC",
+    "type": "Crypto",
+    "price": "$992.534/ZEC",
+    "walletAmount": "0 ZEC",
+    "walletValue": "$0",
+    "icon": "/dashboard_files/ZEC.svg"
+  }
+]

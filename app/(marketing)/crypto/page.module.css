@@ -1,0 +1,163 @@
+.container {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: rgba(49, 172, 238, 0.1);
+  border: 1px solid rgba(49, 172, 238, 0.25);
+  border-radius: var(--radius-full);
+  color: var(--color-accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: clamp(2.2rem, 4.5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.titleAccent {
+  color: var(--color-accent);
+}
+
+.subtitle {
+  color: var(--color-text-tertiary);
+  max-width: 620px;
+  margin: 0 auto 2.5rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.ctaGroup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.primaryBtn {
+  background: var(--color-accent);
+  color: #000;
+  font-weight: 700;
+  padding: 0.85rem 2rem;
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 20px rgba(49, 172, 238, 0.3);
+  transition: all var(--transition-fast);
+}
+
+.primaryBtn:hover {
+  background: #4bbaff;
+  transform: translateY(-2px);
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.75rem;
+  margin-bottom: 4rem;
+}
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.iconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(49, 172, 238, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-accent);
+}
+
+.cardTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.cardText {
+  color: var(--color-text-tertiary);
+  font-size: 0.925rem;
+  line-height: 1.6;
+}
+
+.leverageBanner {
+  background: linear-gradient(135deg, #0e1520 0%, #101018 100%);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-lg);
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+}
+
+.leverageContent h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+}
+
+.leverageContent p {
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 550px;
+}
+
+.tierBox {
+  display: flex;
+  gap: 1rem;
+}
+
+.tierPill {
+  background: #000;
+  border: 1px solid rgba(49, 172, 238, 0.3);
+  padding: 1.25rem 1.75rem;
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.tierValue {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+}
+
+.tierLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-extra);
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .grid3 {
+    grid-template-columns: 1fr;
+  }
+  .leverageBanner {
+    flex-direction: column;
+    text-align: center;
+  }
+}

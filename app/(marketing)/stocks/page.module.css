@@ -1,0 +1,157 @@
+.container {
+  max-width: var(--max-content-width);
+  margin: 0 auto;
+  padding: 3.5rem 1.5rem;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: rgba(49, 172, 238, 0.1);
+  border: 1px solid rgba(49, 172, 238, 0.25);
+  border-radius: var(--radius-full);
+  color: var(--color-accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: clamp(2.2rem, 4.5vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.titleAccent {
+  color: var(--color-accent);
+}
+
+.subtitle {
+  color: var(--color-text-tertiary);
+  max-width: 640px;
+  margin: 0 auto 2.5rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.banner0Commission {
+  background: linear-gradient(135deg, rgba(49, 172, 238, 0.15) 0%, rgba(1, 178, 139, 0.1) 100%);
+  border: 1px solid rgba(49, 172, 238, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 2rem 2.5rem;
+  margin-bottom: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.bannerText h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+
+.bannerText p {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+}
+
+.bannerBadge {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--color-positive);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 4rem;
+}
+
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-outline);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  transition: all var(--transition-normal);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.card:hover {
+  background: var(--color-card-hover);
+  border-color: rgba(49, 172, 238, 0.35);
+  transform: translateY(-4px);
+}
+
+.cardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.symbolBadge {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.companyName {
+  font-size: 0.85rem;
+  color: var(--color-text-extra);
+}
+
+.price {
+  font-size: 1.6rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  margin-bottom: 0.35rem;
+}
+
+.positive {
+  color: var(--color-positive);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.negative {
+  color: var(--color-negative);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cardAction {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-faint-outline);
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .banner0Commission {
+    flex-direction: column;
+    text-align: center;
+  }
+}

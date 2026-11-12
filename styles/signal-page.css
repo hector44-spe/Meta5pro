@@ -1,0 +1,1089 @@
+/* ==========================================================================
+   Signal Page Styles - Exact MetaGold 5 Replica
+   ========================================================================== */
+
+.signal-page-wrapper {
+  width: 100%;
+  height: 100%;
+  padding-bottom: 32px;
+}
+
+/* Page Section Top Title */
+.signal-section-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.signal-section-top p {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+/* Main Content Card Container */
+.signal-content-card {
+  background: var(--color-card-background, hsla(0, 0%, 100%, 0.02)) !important;
+  padding: 16px;
+  box-sizing: border-box !important;
+  overflow-y: auto;
+  border-radius: 12px;
+  min-height: calc(100vh - 104px);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+@media screen and (max-width: 768px) {
+  .signal-content-card {
+    padding-bottom: 200px;
+  }
+}
+
+/* ==========================================================================
+   Top Grid: Signal Balance Card & Signal Strength Card
+   ========================================================================== */
+
+.signal_top {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  gap: 8px;
+}
+
+@media screen and (max-width: 1050px) {
+  .signal_top {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 1. Left Card: Signal Balance */
+.signal-balance-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px;
+  padding-bottom: 40px;
+  background: var(--color-card-background-2, #0d1117) !important;
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  min-height: 154px;
+  box-sizing: border-box;
+}
+
+.signal-balance-card .balance-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signal-balance-card .eyes_wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signal-balance-card .eyes_wrapper p {
+  font-size: 14px;
+  color: var(--color-text-50, rgba(255, 255, 255, 0.65));
+  line-height: 18px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.signal-balance-card .eyes_button {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  transition: color 0.15s ease;
+}
+
+.signal-balance-card .eyes_button:hover {
+  color: var(--color-text, #ffffff);
+}
+
+.signal-balance-card .user_balance {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  line-height: 32px;
+  font-feature-settings: "tnum";
+  margin-top: 4px;
+  display: block;
+}
+
+.signal-balance-card .user_balance.hidden {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 20px;
+  line-height: 24px;
+  color: var(--color-text, #ffffff);
+  letter-spacing: 2px;
+  margin: 4px 0 0 0;
+}
+
+.signal-balance-card .user_balance.hidden i {
+  font-style: normal;
+  display: inline-block;
+}
+
+/* Utility Deposit Button */
+.signal-deposit-btn {
+  border: none;
+  outline: none;
+  padding: 10px 16px !important;
+  border-radius: 120px;
+  cursor: pointer;
+  background: var(--color-control, hsla(0, 0%, 100%, 0.05)) !important;
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.08));
+  transition: all 150ms ease-in;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text, #ffffff);
+  font-size: 14px;
+  font-weight: 500;
+  height: fit-content !important;
+}
+
+.signal-deposit-btn:hover {
+  background-color: var(--color-control-hover, hsla(0, 0%, 100%, 0.1)) !important;
+}
+
+.signal-deposit-btn p {
+  margin: 0;
+  color: var(--color-text, #ffffff);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+/* 2. Right Card: Signal Info & Strength */
+.signal-info-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  padding: 24px;
+  gap: 32px;
+  background: var(--color-card-background-2, #0d1117) !important;
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+  min-height: 154px;
+  box-sizing: border-box;
+}
+
+.signal-info-card-top {
+  display: flex;
+  flex-direction: column;
+}
+
+.signal_strength_wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signal_strength_wrapper .strength-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.signal_strength_wrapper .signal_strength_title {
+  font-size: 14px;
+  color: var(--color-text-50, rgba(255, 255, 255, 0.65));
+  font-weight: 500;
+  margin: 0;
+}
+
+.signal_strength_wrapper .strength-value {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.signal_strength_wrapper .signal_wrapper {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  width: 100%;
+}
+
+.signal_wrapper .signal_bar {
+  height: 6px;
+  flex: 1;
+  border-radius: 4px;
+  transition: background-color 0.25s ease;
+}
+
+.signal_info_card_bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.signal_info_card_bottom p {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--color-text-50, rgba(255, 255, 255, 0.65));
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.signal_info_card_bottom strong {
+  font-weight: 600;
+  color: var(--color-primary-text, #ffffff);
+}
+
+/* ==========================================================================
+   Bottom Section: Switcher & Views
+   ========================================================================== */
+
+.signal_bottom {
+  margin-top: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Switcher Tabs */
+.signals-switcher {
+  display: flex;
+  position: relative;
+  white-space: nowrap !important;
+}
+
+.signals-switcher .switcher_wrapper_inner {
+  display: inline-flex;
+  position: relative;
+  background: var(--color-control, hsla(0, 0%, 100%, 0.05));
+  border-radius: 24px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.signals-switcher .switcher_item {
+  position: relative;
+  z-index: 2;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 18px;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.signals-switcher .switcher_item.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.signals-switcher .switcher_indicator {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  background: var(--color-primary, #4763f0);
+  border-radius: 24px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* ==========================================================================
+   TAB 1: SIGNALS VIEW
+   ========================================================================== */
+
+.signals_view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.signals_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signals_header p:first-of-type {
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+/* Cards Grid */
+.signals-cards-grid {
+  width: 100%;
+  display: grid;
+  gap: 16px;
+  margin-top: 24px;
+  grid-template-columns: 1fr;
+}
+
+@media screen and (min-width: 1050px) {
+  .signals-cards-grid {
+    grid-template-columns: repeat(1, 1fr);
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .signals-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (min-width: 1640px) {
+  .signals-cards-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Individual Signal Card */
+.signal_card {
+  background: var(--color-card-background-2, #0d1117) !important;
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.05));
+  padding: 24px;
+  border-radius: 12px;
+  transition: all 150ms ease-in;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.signal_card:hover {
+  background-color: var(--color-box-border, hsla(0, 0%, 100%, 0.04)) !important;
+}
+
+.signal_card_top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.signal_card_top .signal_title {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 700;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+.signal_card_details {
+  margin-top: 40px;
+  display: grid;
+  gap: 12px;
+}
+
+.signal_card_detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 12px;
+}
+
+.signal_card_detail:not(:last-of-type) {
+  border-bottom: 1px solid var(--color-outline, rgba(255, 255, 255, 0.05));
+}
+
+.signal_card_detail p {
+  margin: 0;
+}
+
+.signal_card_detail p:first-of-type {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+.signal_card_detail p.signal_price {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.card-strength-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-strength-wrapper .signal_strength {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.card-strength-wrapper .card_signal_wrapper {
+  display: flex;
+  gap: 4px;
+  width: 80px;
+}
+
+.card-strength-wrapper .card_signal_bar {
+  height: 5px;
+  flex: 1;
+  border-radius: 3px;
+  transition: background-color 0.2s ease;
+}
+
+/* Signal Card Amount Input Box */
+.signal_card_amount {
+  margin-top: 32px;
+}
+
+.signal-amountbox {
+  width: 100%;
+}
+
+.signal-amountbox label {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  display: block;
+}
+
+.signal-amountbox-wrapper {
+  background: var(--color-input, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--color-input-border, rgba(255, 255, 255, 0.08));
+  border-radius: 8px;
+  padding: 4px 8px;
+  margin-top: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 42px;
+  box-sizing: border-box;
+  padding-right: 4px;
+  cursor: text;
+  transition: all 150ms ease-out;
+}
+
+.signal-amountbox-wrapper:hover,
+.signal-amountbox-wrapper:focus-within {
+  background: var(--color-input-hover, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--color-box-border, rgba(255, 255, 255, 0.15));
+}
+
+.signal-amountbox.error .signal-amountbox-wrapper {
+  border: 1px solid #ff3344 !important;
+  animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.signal-amountbox-wrapper input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text, #ffffff);
+  font-size: 16px;
+  line-height: 18px;
+  font-weight: 600;
+  width: 100%;
+  font-family: inherit;
+}
+
+.signal-amountbox-wrapper input::placeholder {
+  color: var(--color-text-50, rgba(255, 255, 255, 0.35));
+  font-size: 16px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.signal-amountbox-wrapper input::-webkit-outer-spin-button,
+.signal-amountbox-wrapper input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.signal-amount-select {
+  outline: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+  background: var(--color-control, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--color-control-border, rgba(255, 255, 255, 0.08));
+  padding: 6px 10px;
+  box-sizing: border-box;
+  transition: background 150ms ease-out;
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  height: calc(100% - 4px);
+  user-select: none;
+}
+
+.signal-amount-select p {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--color-primary-text, #ffffff);
+  margin: 0;
+}
+
+.signal-captions {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.signal-caption {
+  font-size: 12px;
+  line-height: 15px;
+  color: var(--color-text-75, rgba(255, 255, 255, 0.65));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 500;
+  margin: 0;
+}
+
+.signal-caption p {
+  margin: 0;
+}
+
+.signal-caption.error {
+  color: #ff3344;
+  margin-bottom: 2px;
+}
+
+/* Purchase Button */
+.signal_card_footer {
+  margin-top: 32px;
+  width: 100%;
+}
+
+.signal-purchase-btn {
+  background: var(--color-primary, #4763f0);
+  border: none;
+  outline: none;
+  color: var(--color-white, #ffffff);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  height: 42px;
+  margin: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  transition: all 150ms ease-in;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.signal-purchase-btn p {
+  color: var(--color-white, #ffffff);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.signal-purchase-btn.disabled,
+.signal-purchase-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.signal-purchase-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0.15;
+}
+
+/* ==========================================================================
+   TAB 2: YOUR HISTORY VIEW
+   ========================================================================== */
+
+.signal_history_view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.signal_history_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signal_history_header p:first-of-type {
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+/* Desktop History Table */
+.signal-desktop-table-wrapper {
+  margin-top: 24px;
+  display: block;
+}
+
+.signal-mobile-history-wrapper {
+  margin-top: 24px;
+  width: 100%;
+  display: none;
+}
+
+@media screen and (max-width: 768px) {
+  .signal-desktop-table-wrapper {
+    display: none !important;
+  }
+  .signal-mobile-history-wrapper {
+    display: block !important;
+  }
+}
+
+.signal-desktop-table-wrapper .table_wrapper {
+  max-width: calc(100vw - 40px);
+  overflow-x: auto;
+  padding-bottom: 48px;
+  scroll-behavior: smooth;
+  scroll-snap-align: y mandatory;
+}
+
+.signal-history-table {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-collapse: collapse;
+}
+
+.signal-history-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.signal-history-table thead tr {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  align-items: center;
+  white-space: nowrap;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.signal-history-table thead th {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  text-align: left;
+}
+
+.signal-history-table tbody {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding-top: 12px;
+}
+
+.signal-history-table tbody tr {
+  display: flex;
+  width: 100%;
+  gap: 12px;
+  align-items: center;
+  white-space: nowrap;
+  padding: 10px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.1s ease-in-out;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.05));
+  background: var(--color-card-background-2, #0d1117) !important;
+}
+
+.signal-history-table tbody tr:hover {
+  background: var(--color-control-hover, rgba(255, 255, 255, 0.08)) !important;
+}
+
+.signal-history-table td,
+.signal-history-table th {
+  padding: 0;
+}
+
+.signal-history-table .col-ref {
+  min-width: 120px;
+  max-width: 160px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.signal-history-table .col-signal {
+  min-width: 120px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.signal-history-table .col-price {
+  min-width: 110px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.signal-history-table .col-strength {
+  min-width: 90px;
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-weight: 600;
+}
+
+.signal-history-table .col-status {
+  min-width: 90px;
+  width: 100%;
+  display: flex;
+  text-align: center;
+  justify-content: flex-end;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-badge-active {
+  text-transform: capitalize;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: #4ebe96;
+  background: rgba(78, 190, 150, 0.1);
+  font-size: 12px;
+}
+
+/* Mobile History List */
+.signal-mobile-content-wrapper {
+  overflow-y: auto;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 88px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+.signal_history_item {
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 150ms ease-in-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-sizing: border-box;
+  background: var(--color-card-background-2, #0d1117);
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.05));
+}
+
+.signal_history_item:nth-of-type(odd) {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+.signal_history_item:hover {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.signal_history_item .left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.signal_history_item .left .left_info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.signal_history_item .left .left_info_title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+}
+
+.signal_history_item .left .left_info_value {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  margin: 0;
+}
+
+.signal_history_item .right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.signal_history_item .right .right_info {
+  display: flex;
+  font-size: 12px;
+  line-height: 14px;
+  gap: 4px;
+  text-align: right;
+  align-self: flex-end;
+}
+
+.signal_history_item .right .right_info p.title {
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  margin: 0;
+}
+
+.signal_history_item .right .right_info p.value {
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+/* Empty State */
+.signal-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 48px;
+  padding: 40px 16px;
+  text-align: center;
+}
+
+.signal-empty-state .svg-icon {
+  width: 44px;
+  height: 44px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.signal-empty-state p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+/* ==========================================================================
+   TAB 3: HOW IT WORKS VIEW
+   ========================================================================== */
+
+.signal-how_it_works_view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.signal-how_it_works_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.signal-how_it_works_header p:first-of-type {
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+.signal-how_it_works_content {
+  width: 100%;
+  max-width: 600px;
+}
+
+.signal-questions-wrapper {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signal-question {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background-color: var(--color-account-card-background, hsla(0, 0%, 100%, 0.02));
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+}
+
+.signal-question:hover {
+  background-color: hsla(0, 0%, 100%, 0.04);
+}
+
+.signal-question.open {
+  background-color: var(--color-control, hsla(0, 0%, 100%, 0.05));
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.08));
+}
+
+.signal-question .wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.signal-question .wrapper .left_section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.signal-question_number {
+  height: 22px;
+  width: 22px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text, #ffffff);
+  background: var(--color-control-inactive, hsla(0, 0%, 100%, 0.05));
+  border: 1px solid var(--color-card-background-3, rgba(255, 255, 255, 0.08));
+  transition: all 0.2s ease-in-out;
+}
+
+.signal-question.open .signal-question_number {
+  background: var(--color-primary, #4763f0) !important;
+  color: #ffffff !important;
+  border-color: var(--color-primary, #4763f0);
+}
+
+.signal-question_title {
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 500;
+  color: var(--color-text, #ffffff);
+  margin: 0;
+}
+
+.signal-question_chevron {
+  transition: transform 0.25s ease-in-out;
+  color: var(--color-primary, #4763f0);
+}
+
+.signal-question.open .signal-question_chevron {
+  transform: rotate(180deg);
+}
+
+.signal-question_answer_wrapper {
+  margin-top: 12px;
+  padding-left: 32px;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.signal-question_answer {
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 400;
+  max-width: 540px;
+  color: var(--color-text-80, rgba(255, 255, 255, 0.8));
+  margin: 0;
+}
+
+/* Toast Success Notification Banner */
+.signal-toast-banner {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: #111a22;
+  border: 1px solid rgba(1, 178, 139, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1000;
+  color: #ffffff;
+  animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.signal-toast-banner svg {
+  color: #01b28b;
+  flex-shrink: 0;
+}
+
+.signal-toast-banner p {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
