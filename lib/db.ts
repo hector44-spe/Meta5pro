@@ -9,160 +9,173 @@ if (!fs.existsSync(dbDir)) {
 
 const dbPath = path.join(dbDir, "broker.db");
 
-// Singleton connection across Next.js reloads
+// Singleton connection across Next.js reloads and production workers
 const globalForDb = globalThis as unknown as {
   sqliteDb: DatabaseSync | undefined;
+  sqliteInitialized: boolean | undefined;
 };
 
 export const sqlite =
   globalForDb.sqliteDb ?? new DatabaseSync(dbPath);
 
-if (process.env.NODE_ENV !== "production") {
-  globalForDb.sqliteDb = sqlite;
-}
+globalForDb.sqliteDb = sqlite;
 
-// Initialize tables and PRAGMAs
-sqlite.exec(`
-  PRAGMA journal_mode = WAL;
-  PRAGMA busy_timeout = 5000;
+function ensureInitialized() {
+  if (globalForDb.sqliteInitialized) return;
 
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    username TEXT UNIQUE NOT NULL,
-    fullName TEXT,
-    phoneNumber TEXT,
-    passwordHash TEXT NOT NULL,
-    role TEXT DEFAULT 'INVESTOR',
-    status TEXT DEFAULT 'ACTIVE',
-    createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
-  );
+  try {
+    sqlite.exec(`
+      PRAGMA busy_timeout = 30000;
+      PRAGMA journal_mode = WAL;
 
-  CREATE TABLE IF NOT EXISTS wallets (
-    id TEXT PRIMARY KEY,
-    userId TEXT UNIQUE NOT NULL,
-    mainBalance REAL DEFAULT 0.0,
-    interestBalance REAL DEFAULT 0.0,
-    totalDeposited REAL DEFAULT 0.0,
-    totalWithdrawn REAL DEFAULT 0.0,
-    updatedAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-  );
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE NOT NULL,
+        fullName TEXT,
+        phoneNumber TEXT,
+        passwordHash TEXT NOT NULL,
+        role TEXT DEFAULT 'INVESTOR',
+        status TEXT DEFAULT 'ACTIVE',
+        createdAt TEXT NOT NULL,
+        updatedAt TEXT NOT NULL
+      );
 
-  CREATE TABLE IF NOT EXISTS plans (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    minDeposit REAL NOT NULL,
-    maxDeposit REAL NOT NULL,
-    dailyRoiPercentage REAL NOT NULL,
-    durationDays INTEGER NOT NULL,
-    capitalRefund INTEGER DEFAULT 1,
-    isActive INTEGER DEFAULT 1
-  );
+      CREATE TABLE IF NOT EXISTS wallets (
+        id TEXT PRIMARY KEY,
+        userId TEXT UNIQUE NOT NULL,
+        mainBalance REAL DEFAULT 0.0,
+        interestBalance REAL DEFAULT 0.0,
+        totalDeposited REAL DEFAULT 0.0,
+        totalWithdrawn REAL DEFAULT 0.0,
+        updatedAt TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      );
 
-  CREATE TABLE IF NOT EXISTS investments (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    planId TEXT NOT NULL,
-    amount REAL NOT NULL,
-    accruedProfit REAL DEFAULT 0.0,
-    daysRemaining INTEGER NOT NULL,
-    status TEXT DEFAULT 'RUNNING',
-    lastPayoutAt TEXT NOT NULL,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (planId) REFERENCES plans(id)
-  );
+      CREATE TABLE IF NOT EXISTS plans (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        minDeposit REAL NOT NULL,
+        maxDeposit REAL NOT NULL,
+        dailyRoiPercentage REAL NOT NULL,
+        durationDays INTEGER NOT NULL,
+        capitalRefund INTEGER DEFAULT 1,
+        isActive INTEGER DEFAULT 1
+      );
 
-  CREATE TABLE IF NOT EXISTS transactions (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    type TEXT NOT NULL,
-    amount REAL NOT NULL,
-    currency TEXT NOT NULL,
-    cryptoAddress TEXT,
-    txHash TEXT,
-    receiptUrl TEXT,
-    status TEXT DEFAULT 'PENDING',
-    approvedAt TEXT,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-  );
+      CREATE TABLE IF NOT EXISTS investments (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        planId TEXT NOT NULL,
+        amount REAL NOT NULL,
+        accruedProfit REAL DEFAULT 0.0,
+        daysRemaining INTEGER NOT NULL,
+        status TEXT DEFAULT 'RUNNING',
+        lastPayoutAt TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
+        FOREIGN KEY (planId) REFERENCES plans(id)
+      );
 
-  CREATE TABLE IF NOT EXISTS activity_logs (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    action TEXT NOT NULL,
-    ipAddress TEXT,
-    details TEXT,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-  );
+      CREATE TABLE IF NOT EXISTS transactions (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        currency TEXT NOT NULL,
+        cryptoAddress TEXT,
+        txHash TEXT,
+        receiptUrl TEXT,
+        status TEXT DEFAULT 'PENDING',
+        approvedAt TEXT,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      );
 
-  CREATE TABLE IF NOT EXISTS deposit_addresses (
-    id TEXT PRIMARY KEY,
-    token TEXT NOT NULL,
-    symbol TEXT NOT NULL,
-    network TEXT NOT NULL,
-    address TEXT NOT NULL,
-    memo TEXT,
-    updatedAt TEXT NOT NULL
-  );
+      CREATE TABLE IF NOT EXISTS activity_logs (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        action TEXT NOT NULL,
+        ipAddress TEXT,
+        details TEXT,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      );
 
-  CREATE TABLE IF NOT EXISTS positions (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    symbol TEXT NOT NULL,
-    type TEXT NOT NULL,
-    amount REAL NOT NULL,
-    entryPrice REAL NOT NULL,
-    leverage INTEGER DEFAULT 1,
-    status TEXT DEFAULT 'OPEN',
-    pnl REAL DEFAULT 0.0,
-    closedAt TEXT,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-  );
+      CREATE TABLE IF NOT EXISTS deposit_addresses (
+        id TEXT PRIMARY KEY,
+        token TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        network TEXT NOT NULL,
+        address TEXT NOT NULL,
+        memo TEXT,
+        updatedAt TEXT NOT NULL
+      );
 
-  CREATE TABLE IF NOT EXISTS password_reset_tokens (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    token TEXT UNIQUE NOT NULL,
-    expiresAt TEXT NOT NULL,
-    used INTEGER DEFAULT 0,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-  );
-`);
+      CREATE TABLE IF NOT EXISTS positions (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        type TEXT NOT NULL,
+        amount REAL NOT NULL,
+        entryPrice REAL NOT NULL,
+        leverage INTEGER DEFAULT 1,
+        status TEXT DEFAULT 'OPEN',
+        pnl REAL DEFAULT 0.0,
+        closedAt TEXT,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      );
 
-// Auto-seed default deposit addresses if any missing
-const defaultAddrs = [
-  { token: "Ripple", symbol: "XRP", network: "XRP", address: "rsKcLv4k9jkWSFqjEmEnCMn6pMC3LZMTn1", memo: "" },
-  { token: "Ethereum", symbol: "ETH", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
-  { token: "USD Coin", symbol: "USDC", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
-  { token: "USD Coin", symbol: "USDC", network: "BEP-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
-  { token: "USD Coin", symbol: "USDC", network: "Solana", address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkkD88V5K1kGqXz999", memo: "" },
-  { token: "Tether", symbol: "USDT", network: "TRC-20", address: "TJY6ZpB8E7WcEKnLq3h74V75tKjM9zD5eR", memo: "" },
-  { token: "Tether", symbol: "USDT", network: "BEP-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
-  { token: "Tether", symbol: "USDT", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
-  { token: "Solana", symbol: "SOL", network: "Solana", address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkkD88V5K1kGqXz999", memo: "" },
-  { token: "Bitcoin", symbol: "BTC", network: "Bitcoin", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", memo: "" },
-];
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id TEXT PRIMARY KEY,
+        userId TEXT NOT NULL,
+        token TEXT UNIQUE NOT NULL,
+        expiresAt TEXT NOT NULL,
+        used INTEGER DEFAULT 0,
+        createdAt TEXT NOT NULL,
+        FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `);
 
-const checkStmt = sqlite.prepare("SELECT id FROM deposit_addresses WHERE symbol = ? AND network = ?");
-const insertAddr = sqlite.prepare(`
-  INSERT INTO deposit_addresses (id, token, symbol, network, address, memo, updatedAt)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`);
+    // Auto-seed default deposit addresses if any missing
+    const defaultAddrs = [
+      { token: "Ripple", symbol: "XRP", network: "XRP", address: "rsKcLv4k9jkWSFqjEmEnCMn6pMC3LZMTn1", memo: "" },
+      { token: "Ethereum", symbol: "ETH", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
+      { token: "USD Coin", symbol: "USDC", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
+      { token: "USD Coin", symbol: "USDC", network: "BEP-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
+      { token: "USD Coin", symbol: "USDC", network: "Solana", address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkkD88V5K1kGqXz999", memo: "" },
+      { token: "Tether", symbol: "USDT", network: "TRC-20", address: "TJY6ZpB8E7WcEKnLq3h74V75tKjM9zD5eR", memo: "" },
+      { token: "Tether", symbol: "USDT", network: "BEP-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
+      { token: "Tether", symbol: "USDT", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7", memo: "" },
+      { token: "Solana", symbol: "SOL", network: "Solana", address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkkD88V5K1kGqXz999", memo: "" },
+      { token: "Bitcoin", symbol: "BTC", network: "Bitcoin", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", memo: "" },
+    ];
 
-const now = new Date().toISOString();
-for (const item of defaultAddrs) {
-  const existing = checkStmt.get(item.symbol, item.network);
-  if (!existing) {
-    insertAddr.run(generateId(), item.token, item.symbol, item.network, item.address, item.memo, now);
+    const checkStmt = sqlite.prepare("SELECT id FROM deposit_addresses WHERE symbol = ? AND network = ?");
+    const insertAddr = sqlite.prepare(`
+      INSERT INTO deposit_addresses (id, token, symbol, network, address, memo, updatedAt)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const now = new Date().toISOString();
+    for (const item of defaultAddrs) {
+      const existing = checkStmt.get(item.symbol, item.network);
+      if (!existing) {
+        insertAddr.run(generateId(), item.token, item.symbol, item.network, item.address, item.memo, now);
+      }
+    }
+
+    globalForDb.sqliteInitialized = true;
+  } catch (err: any) {
+    if (!err?.message?.includes("already exists")) {
+      console.warn("[DB] Initialization notice:", err?.message || err);
+    }
+    globalForDb.sqliteInitialized = true;
   }
 }
+
+ensureInitialized();
 
 function generateId(): string {
   return "id_" + Math.random().toString(36).substring(2, 11) + "_" + Date.now();

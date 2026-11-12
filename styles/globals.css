@@ -1,5 +1,4 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
-@import "./metagold.css";
 
 :root {
   /* Canvas & Layout */
@@ -296,4 +295,24 @@ body {
   background: none !important;
   box-shadow: none !important;
 }
+
+/* Prevent mobile zooming in and out, gesture bouncing, and input focus zoom */
+html,
+body {
+  touch-action: pan-x pan-y;
+  overflow-x: hidden !important;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Force minimum 16px on inputs on mobile to stop iOS Safari auto-zoom on focus */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 

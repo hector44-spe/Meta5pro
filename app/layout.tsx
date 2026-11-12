@@ -1,6 +1,15 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import "@/styles/metagold.css";
 import "@/styles/globals.css";
 import GoogleTranslateProvider from "@/components/GoogleTranslateProvider";
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "Meta Gold 5 - Trade With Ease",
@@ -26,6 +35,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <meta name="HandheldFriendly" content="true" />
+        <meta name="MobileOptimized" content="width" />
       </head>
       <body className="inter_b65991a8-module__hDb0IG__variable mori_f26f32d3-module__KmV5nG__variable digitalnumbers_d8613293-module__O5KEpG__variable">
         <GoogleTranslateProvider />
