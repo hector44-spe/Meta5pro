@@ -4,8 +4,13 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { money } from "@/lib/ledger";
-import { notifyAdminDeposit } from "@/lib/mail";
+import { getPrice } from "@/lib/prices";
+import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
+import { notifyAdminDeposit, sendDepositReceivedEmail } from "@/lib/mail";
 import { z } from "zod";
+
+const MIN_DEPOSIT_USD = 100;
+const MAX_DEPOSIT_USD = 100_000;
 
 // Receipts must be proofs this user uploaded through /api/upload.
 const RECEIPT_RE = /^\/api\/upload\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
@@ -23,8 +28,10 @@ function normalizeTxHash(raw: string): string | null {
 }
 
 const depositSchema = z.object({
-  amount: z.number().positive("Deposit amount must be greater than 0").max(10_000_000, "Amount is too large"),
-  currency: z.string().trim().min(1, "Currency is required").max(20),
+  // Quantity of the coin sent, e.g. 0.015 (BTC). The USD value is worked out
+  // here from the live price, never taken from the browser.
+  units: z.number().positive("Enter the amount you sent").max(1e12),
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/, "Unknown asset"),
   network: z.string().trim().max(30).optional(),
   txHash: z.string().trim().max(120).optional(),
   cryptoAddress: z.string().trim().max(120).optional(),
@@ -46,7 +53,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { amount, currency, network, cryptoAddress } = parsed.data;
+    const { units, currency: symbol, network, cryptoAddress } = parsed.data;
     const txHashInput = parsed.data.txHash || undefined;
     const receiptUrl = parsed.data.receiptUrl || undefined;
 
@@ -58,7 +65,20 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Receipt: must be an upload owned by this user, and not already used for another deposit.
+    // 1. Value the deposit at the live price
+    const price = await getPrice(symbol);
+    if (!price) {
+      return NextResponse.json({ error: `Live price for ${symbol} is unavailable. Please try again shortly.` }, { status: 503 });
+    }
+    const usdAmount = money(units * price);
+    if (usdAmount < MIN_DEPOSIT_USD || usdAmount > MAX_DEPOSIT_USD) {
+      return NextResponse.json(
+        { error: `Deposits must be between ${fmtUsd(MIN_DEPOSIT_USD)} and ${fmtUsd(MAX_DEPOSIT_USD)}. ${fmtUnits(units, symbol)} is about ${fmtUsd(usdAmount)}.` },
+        { status: 400 },
+      );
+    }
+
+    // 2. Receipt: must be an upload owned by this user, and not already used for another deposit.
     if (receiptUrl) {
       const match = RECEIPT_RE.exec(receiptUrl);
       const upload = match
@@ -73,7 +93,7 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Transaction hash: must look like a real on-chain hash.
+    // 3. Transaction hash: must look like a real on-chain hash.
     let depositHash: string | null = null;
     if (txHashInput) {
       depositHash = normalizeTxHash(txHashInput);
@@ -85,15 +105,17 @@ export async function POST(req: Request) {
       }
     }
 
-    const fullCurrency = network ? `${currency} (${network})` : currency;
+    const fullCurrency = network ? `${symbol} (${network})` : symbol;
 
     try {
       const transaction = await prisma.transaction.create({
         data: {
           userId: session.userId,
           type: "DEPOSIT",
-          amount: money(amount),
+          amount: usdAmount,
           currency: fullCurrency,
+          assetSymbol: symbol,
+          assetAmount: units,
           cryptoAddress: cryptoAddress || null,
           txHash: txHashInput ?? `PROOF_${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
           depositHash,
@@ -102,22 +124,42 @@ export async function POST(req: Request) {
         },
       });
 
-      await notifyAdminDeposit({
-        userEmail: session.email,
-        amount: transaction.amount.toNumber(),
-        currency: fullCurrency,
-        txHash: txHashInput ?? null,
-        hasReceipt: Boolean(receiptUrl),
-        transactionId: transaction.id,
-      });
+      const reference = transaction.id.slice(0, 8).toUpperCase();
+      await Promise.all([
+        notify(
+          session.userId,
+          "deposit",
+          "Deposit received",
+          `We received your deposit of ${fmtUnits(units, symbol)} (≈ ${fmtUsd(usdAmount)}). Reference ${reference}. It will be credited once confirmed.`,
+        ),
+        sendDepositReceivedEmail(session.email, {
+          reference,
+          units,
+          symbol,
+          network: network ?? null,
+          usdAmount,
+          txHash: txHashInput ?? null,
+        }),
+        notifyAdminDeposit({
+          userEmail: session.email,
+          amount: usdAmount,
+          currency: `${fmtUnits(units, symbol)}${network ? ` (${network})` : ""}`,
+          txHash: txHashInput ?? null,
+          hasReceipt: Boolean(receiptUrl),
+          transactionId: transaction.id,
+        }),
+      ]);
 
       return NextResponse.json({
         success: true,
-        message: "Deposit submitted successfully. Awaiting administrative review.",
+        message: "Deposit submitted successfully. Awaiting confirmation.",
+        reference,
+        usdAmount,
+        price,
         transaction,
       });
     } catch (e) {
-      // 3. Same hash already claimed (enforced by a unique index, so it holds under concurrency too)
+      // Same hash already claimed (enforced by a unique index, so it holds under concurrency too)
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         return NextResponse.json(
           { error: "This transaction hash has already been submitted." },

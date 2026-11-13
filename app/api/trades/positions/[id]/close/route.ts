@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { atomic, creditMain, insertTransaction, money } from "@/lib/ledger";
+import { getPrice } from "@/lib/prices";
+import { notify, fmtUsd } from "@/lib/notify";
 
 export async function POST(
   _req: Request,
@@ -24,18 +26,10 @@ export async function POST(
       return NextResponse.json({ error: "Position is already closed" }, { status: 400 });
     }
 
-    const marketPrices: Record<string, number> = {
-      BTC: 86900.0,
-      ETH: 2710.0,
-      SOL: 188.0,
-      XRP: 1.48,
-      USDT: 1.0,
-      USDC: 1.0,
-    };
-
     const entryPrice = pos.entryPrice.toNumber();
     const amount = pos.amount.toNumber();
-    const currentMarkPrice = marketPrices[pos.symbol] || entryPrice;
+    // Close at the live market price
+    const currentMarkPrice = (await getPrice(pos.symbol)) ?? entryPrice;
     const requiredMargin = amount / pos.leverage;
 
     // Calculate PnL
@@ -72,6 +66,13 @@ export async function POST(
     if (newBalance === null) {
       return NextResponse.json({ error: "Position is already closed" }, { status: 400 });
     }
+
+    await notify(
+      session.userId,
+      "trade",
+      "Position closed",
+      `${pos.symbol} ${pos.type.toLowerCase()} closed at ${fmtUsd(currentMarkPrice)}. Realized P&L ${pnl >= 0 ? "+" : "-"}${fmtUsd(Math.abs(pnl))}; ${fmtUsd(returnCapital)} returned to your balance.`,
+    );
 
     return NextResponse.json({
       success: true,

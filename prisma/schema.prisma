@@ -50,6 +50,7 @@ model User {
   resetTokens  PasswordResetToken[]
   uploads      ProofUpload[]
   withdrawalCodes WithdrawalCode[]
+  notifications   Notification[]
 
   @@map("users")
 }
@@ -112,12 +113,16 @@ model Transaction {
   // blockchain transaction can't be claimed twice.
   depositHash   String?   @unique
   receiptUrl    String?
+  // The crypto asset and quantity involved (deposits / withdrawals), e.g. BTC 0.015
+  assetSymbol   String?
+  assetAmount   Decimal?  @db.Decimal(28, 10)
   status        TxStatus  @default(PENDING)
   approvedAt    DateTime?
   createdAt     DateTime  @default(now())
 
   @@index([userId, createdAt])
   @@index([status])
+  @@index([userId, assetSymbol])
   @@map("transactions")
 }
 
@@ -203,4 +208,19 @@ model WithdrawalCode {
 
   @@index([userId, createdAt])
   @@map("withdrawal_codes")
+}
+
+// In-app notifications shown under the bell icon.
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // deposit | withdrawal | balance | security | account | trade | investment
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read, createdAt])
+  @@map("notifications")
 }

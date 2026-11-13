@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import "@/styles/deposit-modal.css";
+import { usePrices } from "@/lib/usePrices";
 
 export interface DepositAddressItem {
   id: string;
@@ -30,15 +31,6 @@ interface DepositModalProps {
   onSuccess?: () => void;
 }
 
-// Token pricing mapping for USD estimation
-const TOKEN_PRICES: Record<string, number> = {
-  BTC: 86450,
-  ETH: 2680,
-  USDT: 1.0,
-  USDC: 1.0,
-  SOL: 185,
-  XRP: 1.45,
-};
 
 // Supported tokens with their designated networks
 const SUPPORTED_TOKENS = [
@@ -73,6 +65,20 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Live USD prices (refreshed every minute)
+  const { prices } = usePrices();
+  const priceOf = (sym?: string) => (sym ? prices[sym.toUpperCase()] ?? null : null);
+
+  // Confirmation shown after a successful submission
+  const [receipt, setReceipt] = useState<{
+    reference: string;
+    units: number;
+    symbol: string;
+    network: string;
+    usdAmount: number;
+    submittedAt: string;
+  } | null>(null);
 
   // Reset or fetch addresses on open
   useEffect(() => {
@@ -143,7 +149,8 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
   const calculateUSDValue = () => {
     if (!selectedToken) return "$0.00";
     const num = parseFloat(amountInput) || 0;
-    const rate = TOKEN_PRICES[selectedToken.symbol] || 1.0;
+    const rate = priceOf(selectedToken.symbol);
+    if (rate == null) return "…";
     const total = num * rate;
     return `$${total.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   };
@@ -168,9 +175,10 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
       return;
     }
 
-    // The amount is entered in coins; the server records deposits in USD.
-    const usdAmount = Math.round(numAmount * (TOKEN_PRICES[selectedToken?.symbol || "USDT"] ?? 1) * 100) / 100;
-    if (usdAmount < 100 || usdAmount > 100000) {
+    // The amount is entered in coins; the server values it at the live price.
+    const livePrice = priceOf(selectedToken?.symbol);
+    const usdAmount = livePrice != null ? Math.round(numAmount * livePrice * 100) / 100 : null;
+    if (usdAmount != null && (usdAmount < 100 || usdAmount > 100000)) {
       setErrorMessage("Deposits must be between $100 and $100,000.");
       return;
     }
@@ -199,7 +207,7 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: usdAmount,
+          units: numAmount,
           currency: selectedToken?.symbol || "USDT",
           network: selectedNetwork,
           cryptoAddress: activeAddress,
@@ -207,11 +215,19 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
         }),
       });
 
+      const depositData = await depositRes.json();
       if (!depositRes.ok) {
-        const errData = await depositRes.json();
-        throw new Error(errData.error || "Deposit recording failed");
+        throw new Error(depositData.error || "Deposit recording failed");
       }
 
+      setReceipt({
+        reference: depositData.reference,
+        units: numAmount,
+        symbol: selectedToken?.symbol || "USDT",
+        network: selectedNetwork,
+        usdAmount: depositData.usdAmount,
+        submittedAt: new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+      });
       setStep("SUCCESS");
       if (onSuccess) onSuccess();
     } catch (err: any) {
@@ -612,10 +628,31 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
               <CheckCircle2 size={32} color="#10b981" />
             </div>
             <h3 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "8px" }}>
-              Deposit proof submitted!
+              Deposit received
             </h3>
-            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5, marginBottom: "24px" }}>
-              Your deposit transaction of {amountInput} {selectedToken?.symbol} has been queued. Our administrative team will verify your uploaded screenshot and credit your balance shortly.
+            <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5, marginBottom: "16px" }}>
+              We&apos;ll confirm the payment and credit your balance. You&apos;ll get a notification and an email when it&apos;s approved.
+            </p>
+            {receipt && (
+              <div className="dm-limits-box" style={{ textAlign: "left", marginBottom: "20px" }}>
+                {[
+                  ["Reference", receipt.reference],
+                  ["Amount", `${Number(receipt.units.toFixed(8))} ${receipt.symbol}`],
+                  ["Network", receipt.network],
+                  ["Value", `$${receipt.usdAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`],
+                  ["Submitted", receipt.submittedAt],
+                  ["Status", "Pending confirmation"],
+                ].map(([k, v]) => (
+                  <div className="dm-limit-row" key={k}>
+                    <span className="dm-limit-label">{k}</span>
+                    <span className="dm-limit-dots"></span>
+                    <span className="dm-limit-val" style={k === "Status" ? { color: "#fbbf24" } : undefined}>{v}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginBottom: "16px" }}>
+              A copy of this receipt was sent to your email.
             </p>
             <button
               type="button"

@@ -76,6 +76,8 @@ export function insertTransaction(
     cryptoAddress?: string | null;
     txHash?: string | null;
     receiptUrl?: string | null;
+    assetSymbol?: string | null;
+    assetAmount?: number | null;
   },
 ) {
   return tx.transaction.create({ data: { ...t, amount: money(t.amount) } });

@@ -180,3 +180,101 @@ export function SecuritySettings({ email }: { email: string | null }) {
     </form>
   );
 }
+
+export const DISPLAY_CURRENCIES = [
+  { code: "USD", label: "US dollar" },
+  { code: "EUR", label: "Euro" },
+  { code: "GBP", label: "British pound" },
+  { code: "NGN", label: "Nigerian naira" },
+  { code: "GHS", label: "Ghanaian cedi" },
+  { code: "KES", label: "Kenyan shilling" },
+  { code: "ZAR", label: "South African rand" },
+  { code: "CAD", label: "Canadian dollar" },
+  { code: "AUD", label: "Australian dollar" },
+  { code: "INR", label: "Indian rupee" },
+  { code: "JPY", label: "Japanese yen" },
+  { code: "CHF", label: "Swiss franc" },
+  { code: "AED", label: "UAE dirham" },
+];
+
+/** Language, display currency and balance privacy. */
+export function AccountSettings({
+  languages,
+  langCode,
+  onLanguageChange,
+  currency,
+  onCurrencyChange,
+  hideBalance,
+  onToggleHideBalance,
+  rateNote,
+}: {
+  languages: { code: string; label: string }[];
+  langCode: string;
+  onLanguageChange: (code: string) => void;
+  currency: string;
+  onCurrencyChange: (code: string) => void;
+  hideBalance: boolean;
+  onToggleHideBalance: () => void;
+  rateNote: string | null;
+}) {
+  return (
+    <div className="app-form" style={{ padding: "0 18px 80px 18px" }}>
+      <div>
+        <label className="app-label" htmlFor="settings-language">Language</label>
+        <select id="settings-language" className="app-input" value={langCode} onChange={(e) => onLanguageChange(e.target.value)}>
+          {languages.map((l) => (
+            <option key={l.code} value={l.code}>
+              {l.label} ({l.code.toUpperCase()})
+            </option>
+          ))}
+        </select>
+        <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", marginTop: "6px" }}>
+          The page reloads to apply a new language.
+        </div>
+      </div>
+
+      <div>
+        <label className="app-label" htmlFor="settings-currency">Display currency</label>
+        <select id="settings-currency" className="app-input" value={currency} onChange={(e) => onCurrencyChange(e.target.value)}>
+          {DISPLAY_CURRENCIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.code} · {c.label}
+            </option>
+          ))}
+        </select>
+        <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", marginTop: "6px", lineHeight: 1.5 }}>
+          Balances are shown in this currency using live exchange rates. Your account itself is held in US dollars.
+          {rateNote ? ` ${rateNote}` : ""}
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          padding: "12px 14px",
+          borderRadius: "8px",
+          backgroundColor: "rgba(255, 255, 255, 0.03)",
+          border: "1px solid rgba(255, 255, 255, 0.06)",
+        }}
+      >
+        <div>
+          <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>Hide balances</div>
+          <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)" }}>Show ****** instead of amounts</div>
+        </div>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={hideBalance}
+          onClick={onToggleHideBalance}
+          className="app-switch"
+          data-on={hideBalance ? "true" : "false"}
+        >
+          <span />
+        </button>
+      </div>
+    </div>
+  );
+}

@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { X, ChevronLeft, ChevronDown, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
 import "@/styles/deposit-modal.css";
 import "@/styles/app-forms.css";
+import { usePrices } from "@/lib/usePrices";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -11,15 +12,6 @@ interface WithdrawModalProps {
   onSuccess?: () => void;
 }
 
-// Indicative USD prices used to show coin amounts; the admin settles the real amount.
-const TOKEN_PRICES: Record<string, number> = {
-  BTC: 86450,
-  ETH: 2680,
-  USDT: 1.0,
-  USDC: 1.0,
-  SOL: 185,
-  XRP: 1.45,
-};
 
 const TOKENS = [
   { name: "Bitcoin", symbol: "BTC", networks: ["Bitcoin"] },
@@ -74,10 +66,12 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
       .catch(() => setBalanceUsd(0));
   }, [isOpen]);
 
-  const price = token ? TOKEN_PRICES[token.symbol] ?? 1 : 1;
+  // Live USD price for the selected coin (refreshed every minute)
+  const { prices } = usePrices();
+  const price = token ? prices[token.symbol] ?? 0 : 0;
   const units = parseFloat(amount) || 0;
   const totalUsd = Math.round(units * price * 100) / 100;
-  const availableUnits = useMemo(() => balanceUsd / price, [balanceUsd, price]);
+  const availableUnits = useMemo(() => (price > 0 ? balanceUsd / price : 0), [balanceUsd, price]);
 
   if (!isOpen) return null;
 
@@ -102,6 +96,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
 
   const validate = (): string | null => {
     if (!token) return "Select the asset to withdraw.";
+    if (!(price > 0)) return "Loading the live price… please try again in a moment.";
     if (address.trim().length < 10) return "Enter a valid destination address.";
     if (!units || units <= 0) return "Enter an amount.";
     if (totalUsd < MIN_WITHDRAWAL) return `Minimum withdrawal is ${fmtUsd(MIN_WITHDRAWAL)}.`;
@@ -126,8 +121,9 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: totalUsd,
-          currency: `${fmtUnits(units)} ${token!.symbol} (${chosenNetwork})`,
+          units,
+          currency: token!.symbol,
+          network: chosenNetwork,
           cryptoAddress: address.trim(),
           code: code.trim(),
         }),

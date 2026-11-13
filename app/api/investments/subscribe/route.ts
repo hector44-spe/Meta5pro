@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, InsufficientFundsError } from "@/lib/ledger";
+import { notify, fmtUsd } from "@/lib/notify";
 import { z } from "zod";
 
 const subscribeSchema = z.object({
@@ -71,6 +72,8 @@ export async function POST(req: Request) {
         });
         return { investment, newBalance };
       });
+
+      await notify(session.userId, "investment", "Plan subscription started", `${fmtUsd(amount)} subscribed to ${plan.name} for ${plan.durationDays} days.`);
 
       return NextResponse.json({
         success: true,

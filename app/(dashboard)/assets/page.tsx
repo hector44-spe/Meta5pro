@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
 import assetsData from "@/data/assetsData.json";
+import { usePrices } from "@/lib/usePrices";
+import { useHoldings } from "@/lib/useHoldings";
 import "@/styles/assets-page.css";
 
 interface AssetItem {
@@ -24,16 +26,46 @@ interface AssetItem {
 }
 
 export default function AssetsPage() {
-  const { currentBalance, hideBalance, setHideBalance, openModal } = useDashboard();
+  const { currentBalance, hideBalance, setHideBalance, openModal, formatMoney, balanceLoaded } = useDashboard();
 
   // Search & Type Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedAssetSymbol, setSelectedAssetSymbol] = useState<string | null>(null);
 
-  // Filtered Assets list
+  // Live prices and the user's holdings
+  const { prices } = usePrices();
+  const { holdings } = useHoldings();
+
+  // Catalogue merged with live prices (crypto & fiat) and real holdings.
+  // Stocks keep their catalogue price: the live source only covers crypto and currencies.
+  const liveAssets = useMemo(() => {
+    const fmt = (n: number) =>
+      n >= 1
+        ? n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : n.toLocaleString("en-US", { maximumSignificantDigits: 4 });
+    return (assetsData as AssetItem[]).map((asset) => {
+      const sym = asset.symbol.toUpperCase();
+      const live = asset.type !== "Stocks" ? prices[sym] : undefined;
+      const h = holdings.find((x) => x.symbol === sym);
+      const units = h?.units ?? 0;
+      const unitPrice = live ?? h?.price ?? null;
+      return {
+        ...asset,
+        price: live != null ? `$${fmt(live)}/${asset.symbol}` : asset.price,
+        walletAmount: units > 0 ? `${Number(units.toFixed(8))} ${asset.symbol}` : asset.walletAmount,
+        walletValue:
+          units > 0 && unitPrice != null
+            ? `$${(units * unitPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            : asset.walletValue,
+        heldUsd: units > 0 && unitPrice != null ? units * unitPrice : 0,
+      };
+    });
+  }, [prices, holdings]);
+
+  // Filtered Assets list (assets you hold are listed first)
   const filteredAssets = useMemo(() => {
-    return (assetsData as AssetItem[]).filter((asset) => {
+    return liveAssets.filter((asset) => {
       const matchesSearch =
         asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         asset.symbol.toLowerCase().includes(searchQuery.toLowerCase());
@@ -41,8 +73,8 @@ export default function AssetsPage() {
         selectedType === "all" ||
         asset.type.toLowerCase() === selectedType.toLowerCase();
       return matchesSearch && matchesType;
-    });
-  }, [searchQuery, selectedType]);
+    }).sort((a, b) => b.heldUsd - a.heldUsd);
+  }, [liveAssets, searchQuery, selectedType]);
 
   const handleDepositClick = (symbol: string) => {
     setSelectedAssetSymbol(symbol);
@@ -54,13 +86,7 @@ export default function AssetsPage() {
     openModal("withdraw");
   };
 
-  const formattedBalance =
-    currentBalance === 0
-      ? "$0"
-      : `$${currentBalance.toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`;
+  const formattedBalance = !balanceLoaded ? "…" : formatMoney(currentBalance);
 
   return (
     <div className="assets-page-container">

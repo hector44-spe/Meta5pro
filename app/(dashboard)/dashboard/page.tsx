@@ -1,6 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { usePrices } from "@/lib/usePrices";
+import { useHoldings } from "@/lib/useHoldings";
+import assetCatalog from "@/data/assetsData.json";
 import Link from "next/link";
 import {
   House,
@@ -118,6 +121,8 @@ export default function DashboardPage() {
     currentBalance,
     realBalance,
     refreshBalance,
+    formatMoney,
+    balanceLoaded,
   } = useDashboard();
 
   interface Position {
@@ -219,45 +224,36 @@ export default function DashboardPage() {
   const [orderExecuting, setOrderExecuting] = useState(false);
   const [orderFeedback, setOrderFeedback] = useState<string | null>(null);
 
-  const btcPrice = 73915.147;
+  // Live prices (refresh every minute) and the user's real per-coin holdings
+  const { prices } = usePrices();
+  const { holdings } = useHoldings();
+  const btcPrice = prices[(currency || "BTC").toUpperCase()] ?? 0;
 
-  const assetsList = [
-    {
-      name: "Bitcoin",
-      symbol: "BTC",
-      icon: "/dashboard_files/BTC.svg",
-      usd: "$0.00",
-      amount: "0.0000 BTC",
-    },
-    {
-      name: "Ethereum",
-      symbol: "ETH",
-      icon: "/dashboard_files/ETH.svg",
-      usd: "$0.00",
-      amount: "0.0000 ETH",
-    },
-    {
-      name: "Solana",
-      symbol: "SOL",
-      icon: "/dashboard_files/SOL.svg",
-      usd: "$0.00",
-      amount: "0.0000 SOL",
-    },
-    {
-      name: "Apple",
-      symbol: "AAPL",
-      icon: "/dashboard_files/AAPL.svg",
-      usd: "$0.00",
-      amount: "0.0000 AAPL",
-    },
-    {
-      name: "Alphabet",
-      symbol: "GOOGL",
-      icon: "/dashboard_files/GOOGL.svg",
-      usd: "$0.00",
-      amount: "0.0000 GOOGL",
-    },
-  ];
+  const fmtUsdValue = (n: number) =>
+    `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const fmtUnitsValue = (n: number, sym: string) =>
+    `${n === 0 ? "0.0000" : Number(n.toFixed(8)).toString()} ${sym}`;
+
+  // Held coins first (largest value first), then the usual defaults at zero
+  const assetsList = useMemo(() => {
+    const catalog = assetCatalog as { name: string; symbol: string; icon: string }[];
+    const info = (sym: string) => {
+      const c = catalog.find((a) => a.symbol.toUpperCase() === sym);
+      return { name: c?.name ?? sym, icon: c?.icon ?? `/dashboard_files/${sym}.svg` };
+    };
+    const held = holdings
+      .filter((h) => h.units > 0 || h.pendingUnits > 0)
+      .map((h) => {
+        const usd = h.units * (prices[h.symbol] ?? h.price ?? 0);
+        return { symbol: h.symbol, ...info(h.symbol), usdNum: usd, usd: fmtUsdValue(usd), amount: fmtUnitsValue(h.units, h.symbol) };
+      })
+      .sort((a, b) => b.usdNum - a.usdNum);
+    const defaults = ["BTC", "ETH", "SOL", "AAPL", "GOOGL"]
+      .filter((sym) => !held.some((h) => h.symbol === sym))
+      .map((sym) => ({ symbol: sym, ...info(sym), usdNum: 0, usd: fmtUsdValue(0), amount: fmtUnitsValue(0, sym) }));
+    return [...held, ...defaults];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdings, prices]);
 
   // TradingView Embed Chart reference
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -449,11 +445,7 @@ export default function DashboardPage() {
                   lineHeight: 1.1,
                 }}
               >
-                {hideBalance
-                  ? "••••••"
-                  : currentBalance === 0
-                  ? "$0"
-                  : `$${currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                {hideBalance ? "••••••" : !balanceLoaded ? "…" : formatMoney(currentBalance)}
               </div>
             </div>
 
@@ -672,7 +664,7 @@ export default function DashboardPage() {
                 Top assets
               </div>
               <Link
-                href="/crypto"
+                href="/assets"
                 style={{
                   fontSize: "12.5px",
                   color: "#4763f0",
@@ -963,7 +955,7 @@ export default function DashboardPage() {
                 Top assets
               </div>
               <Link
-                href="/crypto"
+                href="/assets"
                 style={{
                   fontSize: "12.5px",
                   color: "#4763f0",
@@ -1619,9 +1611,9 @@ export default function DashboardPage() {
                 color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
               }}
             >
-              <span>Current BTC price:</span>
+              <span>Current {currency} price:</span>
               <span style={{ fontWeight: 600, color: "#01b28b" }}>
-                ${btcPrice.toLocaleString(undefined, { minimumFractionDigits: 3 })}
+                {btcPrice ? `$${btcPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Loading…"}
               </span>
             </div>
           </div>

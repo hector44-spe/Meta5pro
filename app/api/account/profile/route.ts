@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -44,6 +45,8 @@ export async function PATCH(req: Request) {
       data: { fullName, phoneNumber: phoneNumber || null, country: country || null },
       select: { fullName: true, email: true, phoneNumber: true, country: true },
     });
+
+    await notify(session.userId, "account", "Profile updated", "Your personal details were updated.");
 
     return NextResponse.json({ success: true, message: "Profile updated", profile });
   } catch (error) {

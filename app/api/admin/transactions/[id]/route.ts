@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession, clientIp } from "@/lib/auth";
 import { atomic, addWithdrawn, audit, creditMain, settlePending } from "@/lib/ledger";
 import { sendTransactionStatusEmail } from "@/lib/mail";
+import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
 
 export async function PATCH(
   req: Request,
@@ -63,6 +64,18 @@ export async function PATCH(
     }
 
     if (tx.type === "DEPOSIT" || tx.type === "WITHDRAWAL") {
+      const ref = tx.id.slice(0, 8).toUpperCase();
+      const what = tx.assetSymbol && tx.assetAmount ? `${fmtUnits(tx.assetAmount.toNumber(), tx.assetSymbol)} (${fmtUsd(amount)})` : fmtUsd(amount);
+      const text =
+        tx.type === "DEPOSIT"
+          ? status === "APPROVED"
+            ? ["Deposit confirmed", `Your deposit of ${what} has been confirmed and ${fmtUsd(amount)} was added to your balance. Reference ${ref}.`]
+            : ["Deposit not approved", `Your deposit of ${what} could not be confirmed. Reference ${ref}. Contact support if you believe this is a mistake.`]
+          : status === "APPROVED"
+            ? ["Withdrawal sent", `Your withdrawal of ${what} has been approved and sent to ${tx.cryptoAddress ?? "your address"}. Reference ${ref}.`]
+            : ["Withdrawal rejected", `Your withdrawal of ${what} was rejected and ${fmtUsd(amount)} was returned to your balance. Reference ${ref}.`];
+      await notify(tx.userId, tx.type === "DEPOSIT" ? "deposit" : "withdrawal", text[0], text[1]);
+
       const owner = await prisma.user.findUnique({ where: { id: tx.userId }, select: { email: true } });
       if (owner) {
         await sendTransactionStatusEmail(owner.email, { type: tx.type, status, amount, currency: tx.currency });

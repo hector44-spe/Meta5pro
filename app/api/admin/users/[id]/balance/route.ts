@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession, clientIp } from "@/lib/auth";
 import { atomic, audit, creditMain, debitMain, InsufficientFundsError } from "@/lib/ledger";
+import { notify, fmtUsd } from "@/lib/notify";
 import { z } from "zod";
 
 const balanceSchema = z.object({
@@ -52,6 +53,13 @@ export async function PATCH(
         );
         return balance;
       });
+
+      await notify(
+        userId,
+        "balance",
+        action === "credit" ? "Balance credited" : "Balance debited",
+        `${fmtUsd(amount)} was ${action === "credit" ? "added to" : "deducted from"} your balance by support. New balance: ${fmtUsd(newBalance)}.${note ? ` Note: ${note}` : ""}`,
+      );
 
       const wallet = await prisma.wallet.findUnique({ where: { userId } });
       return NextResponse.json({

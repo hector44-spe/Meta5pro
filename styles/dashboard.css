@@ -24034,3 +24034,11 @@
 .dashboard-page-container *::after {
   text-transform: none !important;
 }
+
+/* A leftover theme rule puts a fade `mask` on every `table tbody`.
+   Safari cannot paint a mask on a very tall table body, so long lists
+   (e.g. 168 assets) render blank until the user interacts. Disable it. */
+.dashboard-page-container table tbody {
+  -webkit-mask: none !important;
+  mask: none !important;
+}

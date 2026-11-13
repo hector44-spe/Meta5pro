@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, signToken, AUTH_COOKIE, rateLimited, clientIp } from "@/lib/auth";
 import { z } from "zod";
+import { notify } from "@/lib/notify";
 import crypto from "node:crypto";
 
 export const dynamic = "force-dynamic";
@@ -70,6 +71,8 @@ export async function POST(req: Request) {
         wallet: true,
       },
     });
+
+    await notify(user.id, "account", "Welcome to Meta Gold 5", "Your account is ready. Make a deposit to get started.");
 
     // Sign session token
     const token = signToken({

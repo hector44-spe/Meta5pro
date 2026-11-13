@@ -750,3 +750,12 @@
   right: 10px;
   transform: translateY(-50%);
 }
+
+/* Undo the theme's generic `table tbody` grid/padding on the assets table */
+.assets-table-section .assets-table tbody {
+  display: table-row-group;
+  overflow: visible;
+  height: auto;
+  padding: 0 !important;
+  gap: 0;
+}

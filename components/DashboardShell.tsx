@@ -43,7 +43,9 @@ import {
 import "@/styles/dashboard.css";
 import DepositModal from "@/components/DepositModal";
 import WithdrawModal from "@/components/WithdrawModal";
-import { ProfileSettings, SecuritySettings, type UserProfile } from "@/components/SettingsForms";
+import { ProfileSettings, SecuritySettings, AccountSettings, type UserProfile } from "@/components/SettingsForms";
+import NotificationsPanel, { type AppNotification } from "@/components/NotificationsPanel";
+import { usePrices } from "@/lib/usePrices";
 import StakeModal from "@/components/StakeModal";
 import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
 import {
@@ -78,6 +80,9 @@ interface DashboardContextType {
   demoBalance: number;
   currentBalance: number;
   refreshBalance: () => void;
+  /** Formats a USD amount in the user's display currency (live FX). */
+  formatMoney: (usd: number) => string;
+  balanceLoaded: boolean;
   isChatOpen: boolean;
   setIsChatOpen: (open: boolean) => void;
 }
@@ -156,6 +161,59 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       .join("") || "").toLowerCase();
   const demoBalance = 10000;
   const currentBalance = accountType === "real" ? realBalance : demoBalance;
+  const [balanceLoaded, setBalanceLoaded] = useState(false);
+
+  // Display currency (Settings > Account); amounts are converted with live FX rates
+  const { prices } = usePrices();
+  const [displayCurrency, setDisplayCurrency] = useState("USD");
+  const formatMoney = (usd: number) => {
+    const code = displayCurrency;
+    const usdPerUnit = code === "USD" ? 1 : prices[code];
+    const value = usdPerUnit ? usd / usdPerUnit : usd;
+    const shownCode = usdPerUnit ? code : "USD";
+    try {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: shownCode,
+        minimumFractionDigits: value === 0 ? 0 : 2,
+        maximumFractionDigits: 2,
+      }).format(value);
+    } catch {
+      return `${shownCode} ${value.toFixed(2)}`;
+    }
+  };
+
+  // In-app notifications (bell)
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifLoading, setNotifLoading] = useState(true);
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch("/api/notifications", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data.notifications || []);
+        setUnreadCount(data.unread || 0);
+      }
+    } catch {
+      /* ignore */
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+  const markAllNotificationsRead = async () => {
+    setUnreadCount(0);
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    try {
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ all: true }),
+      });
+    } catch {
+      /* ignore */
+    }
+  };
 
   const fetchBalance = async () => {
     try {
@@ -177,11 +235,39 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       }
     } catch (e) {
       console.error("Failed to fetch balance in shell:", e);
+    } finally {
+      setBalanceLoaded(true);
     }
   };
 
   useEffect(() => {
     setSiteOrigin(window.location.origin);
+    setCurrentLangCode(getCurrentLanguageCode());
+    try {
+      const saved = localStorage.getItem("mg5_display_currency");
+      if (saved) setDisplayCurrency(saved);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+
+  // Keep balance and notifications fresh (e.g. after an admin approves a deposit)
+  useEffect(() => {
+    fetchNotifications();
+    const t = setInterval(() => {
+      fetchBalance();
+      fetchNotifications();
+    }, 60_000);
+    const onFocus = () => {
+      fetchBalance();
+      fetchNotifications();
+    };
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("focus", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -241,6 +327,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     demoBalance,
     currentBalance,
     refreshBalance: fetchBalance,
+    formatMoney,
+    balanceLoaded,
     isChatOpen,
     setIsChatOpen,
   };
@@ -1071,6 +1159,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   aria-label="Open navigation"
                 >
                   <Menu size={22} color="#ffffff" strokeWidth={2} />
+                  {unreadCount > 0 && (
                   <span
                     style={{
                       position: "absolute",
@@ -1088,8 +1177,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       justifyContent: "center",
                     }}
                   >
-                    1
+                    {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
+                  )}
                 </button>
 
                 {/* Left Header Title / Breadcrumb */}
@@ -1225,11 +1315,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     className="tp-account-pill"
                   >
                     <span className="tp-account-mask">
-                      {hideBalance
-                        ? "******"
-                        : currentBalance === 0
-                        ? "$0"
-                        : `$${currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}{" "}
+                      {hideBalance ? "******" : !balanceLoaded ? "…" : formatMoney(currentBalance)}{" "}
                     </span>
                     <span
                       style={{
@@ -1319,13 +1405,16 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
                 {/* Notifications Bell */}
                 <button
-                  onClick={() => setActiveModal("notifications")}
+                  onClick={() => {
+                    fetchNotifications();
+                    setActiveModal("notifications");
+                  }}
                   className="tp-header-btn dashboard-header-bell"
                   title="Notifications"
                   aria-label="Notifications"
                 >
                   <Bell size={18} color="#ffffff" />
-                  <span className="tp-bell-badge">1</span>
+                  {unreadCount > 0 && <span className="tp-bell-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
                 </button>
 
                 {/* User Avatar */}
@@ -2067,117 +2156,30 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
               {/* Subview: Account */}
               {settingsSubView === "account" && (
-                <div style={{ padding: "0 18px 80px 18px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      borderRadius: "8px",
-                      backgroundColor: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#fff" }}>
-                        Currency
-                      </div>
-                      <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
-                        Base currency for calculations
-                      </div>
-                    </div>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#4763f0" }}>
-                      USD ($)
-                    </span>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      borderRadius: "8px",
-                      backgroundColor: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#fff" }}>
-                        Language
-                      </div>
-                      <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
-                        Interface language
-                      </div>
-                    </div>
-                    <select
-                      value={currentLangCode}
-                      onChange={(e) => {
-                        const code = e.target.value;
-                        setCurrentLangCode(code);
-                        changeLanguage(code);
-                      }}
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "#4763f0",
-                        background: "#18181b",
-                        border: "1px solid rgba(255, 255, 255, 0.12)",
-                        borderRadius: "6px",
-                        padding: "6px 10px",
-                        cursor: "pointer",
-                        outline: "none",
-                        maxWidth: "180px",
-                      }}
-                    >
-                      {ALL_LANGUAGES.map((l) => (
-                        <option
-                          key={l.code}
-                          value={l.code}
-                          style={{ background: "#18181b", color: "#fff" }}
-                        >
-                          {l.label} ({l.code.toUpperCase()})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      borderRadius: "8px",
-                      backgroundColor: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: "13px", fontWeight: 500, color: "#fff" }}>
-                        Hide balances
-                      </div>
-                      <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
-                        Mask account totals with bullets
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setHideBalance(!hideBalance)}
-                      style={{
-                        padding: "6px 12px",
-                        borderRadius: "6px",
-                        backgroundColor: hideBalance ? "#4763f0" : "rgba(255,255,255,0.06)",
-                        color: "#fff",
-                        border: "none",
-                        fontSize: "12px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {hideBalance ? "Enabled" : "Disabled"}
-                    </button>
-                  </div>
-                </div>
+                <AccountSettings
+                  languages={ALL_LANGUAGES}
+                  langCode={currentLangCode}
+                  onLanguageChange={(code) => {
+                    setCurrentLangCode(code);
+                    changeLanguage(code);
+                  }}
+                  currency={displayCurrency}
+                  onCurrencyChange={(code) => {
+                    setDisplayCurrency(code);
+                    try {
+                      localStorage.setItem("mg5_display_currency", code);
+                    } catch {
+                      /* storage unavailable */
+                    }
+                  }}
+                  hideBalance={hideBalance}
+                  onToggleHideBalance={() => setHideBalance(!hideBalance)}
+                  rateNote={
+                    displayCurrency !== "USD" && prices[displayCurrency]
+                      ? `1 USD = ${(1 / prices[displayCurrency]).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${displayCurrency}.`
+                      : null
+                  }
+                />
               )}
 
               {/* Floating Blue Chat Bubble at Bottom Right (Images 1 & 2) */}
@@ -2264,36 +2266,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 </button>
               </div>
 
-              <div
-                style={{
-                  padding: "14px",
-                  borderRadius: "10px",
-                  backgroundColor: "rgba(71, 99, 240, 0.1)",
-                  border: "1px solid rgba(71, 99, 240, 0.2)",
-                }}
-              >
-                <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#fff" }}>
-                  Welcome to Meta Gold 5
-                </div>
-                <div
-                  style={{
-                    fontSize: "12.5px",
-                    color: "rgba(255, 255, 255, 0.6)",
-                    marginTop: "4px",
-                  }}
-                >
-                  Your account is ready. Deposit funds to start trading global markets.
-                </div>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "rgba(255, 255, 255, 0.4)",
-                    marginTop: "8px",
-                  }}
-                >
-                  Today
-                </div>
-              </div>
+              <NotificationsPanel
+                items={notifications}
+                unread={unreadCount}
+                loading={notifLoading}
+                onMarkAllRead={markAllNotificationsRead}
+              />
             </div>
           </div>
         )}

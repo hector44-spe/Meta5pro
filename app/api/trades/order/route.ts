@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
+import { getPrice } from "@/lib/prices";
+import { notify, fmtUsd } from "@/lib/notify";
 import { z } from "zod";
 
 const orderSchema = z.object({
@@ -33,17 +35,11 @@ export async function POST(req: Request) {
     // Required margin for position
     const requiredMargin = money(amount / leverage);
 
-    // Reference execution prices
-    const marketPrices: Record<string, number> = {
-      BTC: 86450.0,
-      ETH: 2680.0,
-      SOL: 185.0,
-      XRP: 1.45,
-      USDT: 1.0,
-      USDC: 1.0,
-    };
-
-    const fillPrice = marketPrices[symbol] || 86450.0;
+    // Fill at the live market price
+    const fillPrice = await getPrice(symbol);
+    if (!fillPrice) {
+      return NextResponse.json({ error: `No live price for ${symbol}. Try again shortly.` }, { status: 503 });
+    }
     const filledQuantity = (amount / fillPrice).toFixed(6);
 
     try {
@@ -67,6 +63,13 @@ export async function POST(req: Request) {
         });
         return { position, tx, newBalance };
       });
+
+      await notify(
+        session.userId,
+        "trade",
+        `${side === "BUY" ? "Buy" : side === "SELL" ? "Sell" : "Convert"} order filled`,
+        `${fmtUsd(amount)} of ${symbol} at ${fmtUsd(fillPrice)} with ${leverage}x leverage. Margin held: ${fmtUsd(requiredMargin)}.`,
+      );
 
       return NextResponse.json({
         success: true,

@@ -45,6 +45,8 @@ interface AdminTx {
   cryptoAddress: string | null;
   txHash: string | null;
   receiptUrl: string | null;
+  assetSymbol?: string | null;
+  assetAmount?: number | null;
   status: string;
   createdAt: string;
 }
@@ -84,6 +86,9 @@ const usd = (n: number) =>
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+const coins = (t: { assetSymbol?: string | null; assetAmount?: number | null }) =>
+  t.assetSymbol && t.assetAmount ? `${Number(Number(t.assetAmount).toFixed(8))} ${t.assetSymbol}` : null;
 
 const shortId = (id: string) => id.replace(/^tx_/, "").slice(0, 8).toUpperCase();
 
@@ -338,7 +343,9 @@ export default function AdminPage() {
               <dt>User</dt>
               <dd>{confirmTx.tx.userEmail}</dd>
               <dt>Amount</dt>
-              <dd className={styles.mono}>{usd(confirmTx.tx.amount)}</dd>
+              <dd className={styles.mono}>
+                {coins(confirmTx.tx) ? `${coins(confirmTx.tx)} (${usd(confirmTx.tx.amount)})` : usd(confirmTx.tx.amount)}
+              </dd>
               <dt>Asset</dt>
               <dd>{confirmTx.tx.currency}</dd>
               {confirmTx.tx.cryptoAddress && (
@@ -646,7 +653,16 @@ function TxTable({
               </td>
               {showType && <td>{typeLabel(t.type)}</td>}
               <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>{usd(t.amount)}</td>
-              <td className={styles.muted}>{t.currency}</td>
+              <td className={styles.muted}>
+                {coins(t) ? (
+                  <div className={styles.userCell}>
+                    <span className={styles.mono}>{coins(t)}</span>
+                    <small>{t.currency}</small>
+                  </div>
+                ) : (
+                  t.currency
+                )}
+              </td>
               <td>
                 {t.receiptUrl ? (
                   <button type="button" className={styles.linkBtn} onClick={() => onPreview(t.receiptUrl!)}>
@@ -694,7 +710,7 @@ function TxTable({
             </div>
             <div className={styles.itemMeta}>
               <span>{typeLabel(t.type)}</span>
-              <span>{t.currency}</span>
+              <span>{coins(t) ?? t.currency}</span>
               <span>{when(t.createdAt)}</span>
               <span className={styles.mono}>#{shortId(t.id)}</span>
             </div>

@@ -203,3 +203,26 @@ export function sendTransactionStatusEmail(
     ),
   );
 }
+
+/** Receipt sent to the investor as soon as a deposit is submitted. */
+export function sendDepositReceivedEmail(
+  to: string,
+  d: { reference: string; units: number; symbol: string; network: string | null; usdAmount: number; txHash: string | null },
+) {
+  return sendMail(
+    to,
+    `We received your ${d.symbol} deposit (${d.reference})`,
+    layout(
+      "Deposit received",
+      "Thanks, we've received your deposit details. Our team will confirm the payment and credit your balance. You'll get another email once it's approved.",
+      [
+        ["Reference", d.reference],
+        ["Amount", `${Number(d.units.toFixed(8))} ${d.symbol}${d.network ? ` (${d.network})` : ""}`],
+        ["Value at submission", usd(d.usdAmount)],
+        ["Transaction hash", d.txHash || "Screenshot provided"],
+        ["Status", "Pending review"],
+      ],
+      appUrl() ? { label: "View my deposits", url: `${appUrl()}/deposit` } : undefined,
+    ),
+  );
+}

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession, hashPassword, verifyPassword, rateLimited } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 import { z } from "zod";
 
 const passwordSchema = z
@@ -36,6 +37,8 @@ export async function POST(req: Request) {
       where: { id: session.userId },
       data: { passwordHash: await hashPassword(parsed.data.newPassword) },
     });
+
+    await notify(session.userId, "security", "Password changed", "Your password was changed. If this wasn't you, reset your password immediately and contact support.");
 
     return NextResponse.json({ success: true, message: "Password changed" });
   } catch (error) {
