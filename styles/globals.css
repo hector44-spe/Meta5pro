@@ -190,6 +190,8 @@ a {
   .copy-trading-module__q7Wi9G__lockupTitle,
   .markets-module__ocH3oG__lockupTitle,
   .staking-module__8ZBEmW__lockupTitle,
+  .contact-module__fBAZnG__lockupTitle,
+  .help-center-module__AcrFRG__lockupTitle,
   .two-module__iAIncG__heroTitle {
     font-size: 32px !important;
     line-height: 40px !important;
@@ -201,7 +203,9 @@ a {
   .real-estate-module___lOCRG__lockupSubtext,
   .copy-trading-module__q7Wi9G__lockupSubtext,
   .markets-module__ocH3oG__lockupSubtext,
-  .staking-module__8ZBEmW__lockupSubtext {
+  .staking-module__8ZBEmW__lockupSubtext,
+  .contact-module__fBAZnG__lockupSubtext,
+  .help-center-module__AcrFRG__lockupSubtext {
     font-size: 16px !important;
     line-height: 24px !important;
   }
@@ -212,13 +216,15 @@ a {
   .copy-trading-module__q7Wi9G__hero,
   .markets-module__ocH3oG__hero,
   .staking-module__8ZBEmW__hero,
+  .contact-module__fBAZnG__hero,
+  .help-center-module__AcrFRG__hero,
   .two-module__iAIncG__hero {
     padding-top: 110px !important;
     padding-bottom: 60px !important;
   }
 
   .stocks-module__mh0C-a__hero {
-    padding-top: 24px !important;
+    padding-top: 80px !important;
     padding-bottom: 40px !important;
   }
 

@@ -43,6 +43,13 @@ export default function Header() {
     };
   }, [mobileOpen]);
 
+  // Close any open menus after navigating (from PR #1).
+  // No per-route hiding is needed: this header is only rendered by the marketing layout.
+  useEffect(() => {
+    setMobileOpen(false);
+    setActiveMenu(null);
+  }, [pathname]);
+
   const navCategories: NavCategory[] = [
     {
       title: "Explore",
@@ -270,7 +277,7 @@ export default function Header() {
           justifyContent: "space-between",
           maxWidth: "1440px",
           margin: "0 auto",
-          padding: "0 2rem",
+          padding: "0 clamp(1rem, 3vw, 2rem)",
           height: "72px",
           boxSizing: "border-box",
         }}
@@ -710,6 +717,56 @@ export default function Header() {
               </div>
             </div>
           ))}
+
+          {/* Mobile Drawer CTA Buttons */}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              marginTop: "32px",
+              paddingTop: "24px",
+              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <Link
+              href="/register"
+              onClick={() => setMobileOpen(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "var(--color-accent)",
+                color: "#000",
+                padding: "14px 24px",
+                borderRadius: "9999px",
+                fontWeight: 600,
+                fontSize: "15px",
+                textDecoration: "none",
+              }}
+            >
+              Get started
+            </Link>
+            <Link
+              href="/login"
+              onClick={() => setMobileOpen(false)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "rgba(255, 255, 255, 0.08)",
+                color: "#fff",
+                padding: "14px 24px",
+                borderRadius: "9999px",
+                fontWeight: 500,
+                fontSize: "15px",
+                textDecoration: "none",
+                border: "1px solid var(--color-outline)",
+              }}
+            >
+              Log in
+            </Link>
+          </div>
         </div>
       )}
     </header>
