@@ -6,7 +6,7 @@ services:
   - type: web
     name: broker
     runtime: node
-    plan: starter            # "free" also works, but it sleeps after 15 min idle (slow first load)
+    plan: free               # no card needed; sleeps after 15 min idle (first visit then takes ~1 min). "starter" = paid, always on
     region: virginia         # same AWS region as the Neon database (us-east-1) for low latency
     branch: main
     autoDeploy: true
