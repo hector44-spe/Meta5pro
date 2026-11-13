@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
 export async function GET() {
@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const wallet = await db.wallet.findUnique({
+    const wallet = await prisma.wallet.findUnique({
       where: { userId: session.userId },
     });
 
@@ -18,7 +18,7 @@ export async function GET() {
       return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
     }
 
-    const transactions = await db.transaction.findMany({
+    const transactions = await prisma.transaction.findMany({
       where: { userId: session.userId },
       orderBy: { createdAt: "desc" },
       take: 20,

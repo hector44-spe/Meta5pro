@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
 
@@ -33,7 +33,7 @@ export async function PUT(req: Request) {
 
     const updated = [];
     for (const item of parsed.data.addresses) {
-      const res = await db.depositAddress.update({
+      const res = await prisma.depositAddress.update({
         where: { id: item.id },
         data: {
           address: item.address.trim(),

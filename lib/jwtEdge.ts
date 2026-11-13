@@ -1,5 +1,3 @@
-const JWT_SECRET =
-  process.env.JWT_SECRET || "meta-gold-5-secure-jwt-secret-key-2026-production";
 
 export interface EdgeTokenPayload {
   userId: string;
@@ -16,6 +14,12 @@ export async function verifyEdgeToken(
     const parts = token.split(".");
     if (parts.length !== 3) return null;
     const [headerB64, payloadB64, signatureB64] = parts;
+    const JWT_SECRET = process.env.JWT_SECRET;
+    if (!JWT_SECRET || JWT_SECRET.length < 32) return null;
+
+    // 0. Only accept HS256 tokens
+    const header = JSON.parse(atob(headerB64.replace(/-/g, "+").replace(/_/g, "/")));
+    if (header.alg !== "HS256") return null;
 
     // 1. Verify expiration
     const payloadStr = atob(

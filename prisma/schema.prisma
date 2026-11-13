@@ -1,51 +1,84 @@
-datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
-}
-
+// Postgres on Neon.
+// DATABASE_URL = pooled connection (host contains "-pooler"), used by the app at runtime.
+// DIRECT_URL   = direct connection, used by `prisma migrate`.
 generator client {
   provider = "prisma-client-js"
+  // "native" = the machine that runs `prisma generate`. On Render that is the same
+  // Linux build/run environment, so no extra engine targets are needed.
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  INVESTOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum TxStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model User {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  username     String        @unique
+  id           String     @id @default(uuid())
+  email        String     @unique
+  username     String     @unique
   fullName     String?
   phoneNumber  String?
+  country      String?
   passwordHash String
-  role         String        @default("INVESTOR") // "INVESTOR" | "ADMIN"
-  status       String        @default("ACTIVE")   // "ACTIVE" | "SUSPENDED"
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  role         Role       @default(INVESTOR)
+  status       UserStatus @default(ACTIVE)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   wallet       Wallet?
   investments  Investment[]
   transactions Transaction[]
   activityLogs ActivityLog[]
+  positions    Position[]
+  resetTokens  PasswordResetToken[]
+  uploads      ProofUpload[]
+  withdrawalCodes WithdrawalCode[]
+
+  @@map("users")
 }
 
 model Wallet {
   id              String   @id @default(uuid())
   userId          String   @unique
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  mainBalance     Float    @default(0.0)
-  interestBalance Float    @default(0.0)
-  totalDeposited  Float    @default(0.0)
-  totalWithdrawn  Float    @default(0.0)
+  mainBalance     Decimal  @default(0) @db.Decimal(18, 2)
+  interestBalance Decimal  @default(0) @db.Decimal(18, 2)
+  totalDeposited  Decimal  @default(0) @db.Decimal(18, 2)
+  totalWithdrawn  Decimal  @default(0) @db.Decimal(18, 2)
   updatedAt       DateTime @updatedAt
+
+  @@map("wallets")
 }
 
 model Plan {
   id                 String       @id @default(uuid())
   name               String
-  minDeposit         Float
-  maxDeposit         Float
-  dailyRoiPercentage Float
+  minDeposit         Decimal      @db.Decimal(18, 2)
+  maxDeposit         Decimal      @db.Decimal(18, 2)
+  dailyRoiPercentage Decimal      @db.Decimal(6, 3)
   durationDays       Int
   capitalRefund      Boolean      @default(true)
   isActive           Boolean      @default(true)
   investments        Investment[]
+
+  @@map("plans")
 }
 
 model Investment {
@@ -54,30 +87,38 @@ model Investment {
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId        String
   plan          Plan     @relation(fields: [planId], references: [id])
-  amount        Float
-  accruedProfit Float    @default(0.0)
+  amount        Decimal  @db.Decimal(18, 2)
+  accruedProfit Decimal  @default(0) @db.Decimal(18, 2)
   daysRemaining Int
-  status        String   @default("RUNNING") // "RUNNING" | "COMPLETED" | "CANCELLED"
+  status        String   @default("RUNNING") // RUNNING | COMPLETED
   lastPayoutAt  DateTime @default(now())
   createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([status, lastPayoutAt])
+  @@map("investments")
 }
 
 model Transaction {
   id            String    @id @default(uuid())
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type          String    // "DEPOSIT" | "WITHDRAWAL" | "DAILY_ROI" | "TRADE_BUY" | "TRADE_SELL"
-  amount        Float
-  currency      String    // "USDT_TRC20" | "USDT_BEP20" | "BTC" | "USD"
+  type          String // DEPOSIT | WITHDRAWAL | INVESTMENT_SUBSCRIBE | TRADE_BUY | TRADE_SELL | TRADE_CONVERT | TRADE_CLOSE
+  amount        Decimal   @db.Decimal(18, 2)
+  currency      String
   cryptoAddress String?
   txHash        String?
+  // Normalized on-chain hash a user submitted with a deposit. Unique, so the same
+  // blockchain transaction can't be claimed twice.
+  depositHash   String?   @unique
   receiptUrl    String?
-  status        String    @default("PENDING") // "PENDING" | "APPROVED" | "REJECTED"
+  status        TxStatus  @default(PENDING)
   approvedAt    DateTime?
   createdAt     DateTime  @default(now())
 
-  @@index([userId])
+  @@index([userId, createdAt])
   @@index([status])
+  @@map("transactions")
 }
 
 model ActivityLog {
@@ -88,4 +129,78 @@ model ActivityLog {
   ipAddress String?
   details   String?
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("activity_logs")
+}
+
+model DepositAddress {
+  id        String   @id @default(uuid())
+  token     String
+  symbol    String
+  network   String
+  address   String
+  memo      String?
+  updatedAt DateTime @updatedAt
+
+  @@unique([symbol, network])
+  @@map("deposit_addresses")
+}
+
+model Position {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol     String
+  type       String // BUY | SELL | CONVERT
+  amount     Decimal   @db.Decimal(18, 2)
+  entryPrice Decimal   @db.Decimal(24, 8)
+  leverage   Int       @default(1)
+  status     String    @default("OPEN") // OPEN | CLOSED
+  pnl        Decimal   @default(0) @db.Decimal(18, 2)
+  closedAt   DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, createdAt])
+  @@map("positions")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+// Payment-proof screenshots. Kept in Postgres so they survive serverless deploys.
+model ProofUpload {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentType String
+  data        Bytes
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("proof_uploads")
+}
+
+// One-time codes emailed to the user to confirm a withdrawal (expire after 10 minutes).
+model WithdrawalCode {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  attempts  Int      @default(0)
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("withdrawal_codes")
 }

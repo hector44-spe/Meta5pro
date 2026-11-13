@@ -361,12 +361,6 @@ export default function SignalPage() {
           <p>{toastMessage}</p>
         </div>
       )}
-
-      {/* Top Header */}
-      <div className="signal-section-top">
-        <p>Signals</p>
-      </div>
-
       {/* Main Content Card */}
       <div className="signal-content-card scrollbar-hide">
         {/* Top 2-Column Grid */}

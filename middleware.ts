@@ -5,13 +5,28 @@ import { verifyEdgeToken } from "@/lib/jwtEdge";
 const COOKIE_NAME = process.env.COOKIE_NAME || "mg5_token";
 
 const PROTECTED_USER_PATHS: string[] = [
-  // Allow /deposit, /withdraw, /assets, /wallet to be viewed directly for presentation and testing
+  "/dashboard",
+  "/wallet",
+  "/assets",
+  "/deposit",
+  "/deposits",
+  "/withdraw",
+  "/withdrawals",
+  "/signals",
+  "/subscribe",
+  "/cold-storage",
 ];
 
 const PROTECTED_ADMIN_PATHS = ["/admin"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Static files (e.g. /assets/logo.png, /assets/video/bg.mp4 from /public) share URL
+  // prefixes with dashboard pages like /assets. Never gate actual files behind login.
+  if (/\.[a-z0-9]+$/i.test(pathname)) {
+    return NextResponse.next();
+  }
   const token = request.cookies.get(COOKIE_NAME)?.value;
 
   const isUserProtected = PROTECTED_USER_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
@@ -63,6 +78,9 @@ export const config = {
     "/deposits/:path*",
     "/withdraw/:path*",
     "/withdrawals/:path*",
+    "/signals/:path*",
+    "/subscribe/:path*",
+    "/cold-storage/:path*",
     "/admin/:path*",
     "/login",
     "/register",

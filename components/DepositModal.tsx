@@ -114,8 +114,8 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
       if (found) {
         setActiveAddress(found.address);
       } else {
-        // Fallback default
-        setActiveAddress("0x71C6944e5B889498b31B5c26b65389Da205f14E7");
+        // No address configured for this token/network: never show a made-up one.
+        setActiveAddress("");
       }
     } else {
       setActiveAddress("");
@@ -163,6 +163,18 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
       return;
     }
 
+    if (!activeAddress) {
+      setErrorMessage("Deposits for this token and network are not available right now.");
+      return;
+    }
+
+    // The amount is entered in coins; the server records deposits in USD.
+    const usdAmount = Math.round(numAmount * (TOKEN_PRICES[selectedToken?.symbol || "USDT"] ?? 1) * 100) / 100;
+    if (usdAmount < 100 || usdAmount > 100000) {
+      setErrorMessage("Deposits must be between $100 and $100,000.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
@@ -187,7 +199,7 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: numAmount,
+          amount: usdAmount,
           currency: selectedToken?.symbol || "USDT",
           network: selectedNetwork,
           cryptoAddress: activeAddress,
@@ -389,13 +401,13 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
 
                   {activeAddress ? (
                     <div className="dm-address-box">
-                      <span className="dm-address-text">{activeAddress}</span>
+                      <span className="dm-address-text">{activeAddress || "Not available for this network"}</span>
                       <div className="dm-address-actions">
                         <button
                           type="button"
                           className="dm-icon-action-btn"
                           onClick={handleCopyAddress}
-                          title="Copy Address"
+                          title="Copy address"
                         >
                           {copied ? <CheckCircle2 size={16} color="#10b981" /> : <Copy size={16} />}
                         </button>
@@ -600,7 +612,7 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
               <CheckCircle2 size={32} color="#10b981" />
             </div>
             <h3 style={{ fontSize: "18px", fontWeight: 700, marginBottom: "8px" }}>
-              Deposit Proof Submitted!
+              Deposit proof submitted!
             </h3>
             <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5, marginBottom: "24px" }}>
               Your deposit transaction of {amountInput} {selectedToken?.symbol} has been queued. Our administrative team will verify your uploaded screenshot and credit your balance shortly.

@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { sqlite } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
 export async function GET() {
@@ -10,16 +10,18 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const stmt = sqlite.prepare(`
-      SELECT 
-        i.id, i.userId, i.planId, i.amount, i.accruedProfit, i.daysRemaining, i.status, i.lastPayoutAt, i.createdAt,
-        p.name as planName, p.dailyRoiPercentage, p.durationDays, p.capitalRefund
-      FROM investments i
-      LEFT JOIN plans p ON i.planId = p.id
-      WHERE i.userId = ?
-      ORDER BY i.createdAt DESC
-    `);
-    const investments = stmt.all(session.userId);
+    const rows = await prisma.investment.findMany({
+      where: { userId: session.userId },
+      orderBy: { createdAt: "desc" },
+      include: { plan: { select: { name: true, dailyRoiPercentage: true, durationDays: true, capitalRefund: true } } },
+    });
+    const investments = rows.map(({ plan, ...i }) => ({
+      ...i,
+      planName: plan.name,
+      dailyRoiPercentage: plan.dailyRoiPercentage,
+      durationDays: plan.durationDays,
+      capitalRefund: plan.capitalRefund,
+    }));
 
     return NextResponse.json({
       success: true,

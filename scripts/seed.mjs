@@ -1,187 +1,102 @@
-import { DatabaseSync } from "node:sqlite";
-import path from "node:path";
-import fs from "node:fs";
+// Seeds plans, deposit addresses, an admin and a demo investor into the Prisma database.
+// Run after migrations: `npm run seed` (needs DATABASE_URL in .env).
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
 
-const dbDir = path.join(process.cwd(), "data");
-if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+const prisma = new PrismaClient();
+
+// Seed passwords come from the environment; otherwise a random one is generated and printed once.
+function seedPassword(envVar, label) {
+  const fromEnv = process.env[envVar];
+  if (fromEnv) return fromEnv;
+  const generated = crypto.randomBytes(12).toString("base64url");
+  console.log(`Generated ${label} password (set ${envVar} to choose your own): ${generated}`);
+  return generated;
 }
 
-const dbPath = path.join(dbDir, "broker.db");
-const db = new DatabaseSync(dbPath);
+const plans = [
+  { id: "plan_alpha", name: "Alpha Staking", minDeposit: 500, maxDeposit: 10000, dailyRoiPercentage: 0.8, durationDays: 30 },
+  { id: "plan_quant", name: "Quant Copytrade", minDeposit: 2500, maxDeposit: 50000, dailyRoiPercentage: 1.4, durationDays: 60 },
+  { id: "plan_prime", name: "Institutional Prime", minDeposit: 10000, maxDeposit: 500000, dailyRoiPercentage: 2.2, durationDays: 90 },
+];
 
-console.log("Seeding SQLite database at", dbPath);
+const depositAddresses = [
+  { token: "Ripple", symbol: "XRP", network: "XRP", address: "rsKcLv4k9jkWSFqjEmEnCMn6pMC3LZMTn1" },
+  { token: "Ethereum", symbol: "ETH", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7" },
+  { token: "USD Coin", symbol: "USDC", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7" },
+  { token: "USD Coin", symbol: "USDC", network: "BEP-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7" },
+  { token: "USD Coin", symbol: "USDC", network: "Solana", address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkkD88V5K1kGqXz999" },
+  { token: "Tether", symbol: "USDT", network: "TRC-20", address: "TJY6ZpB8E7WcEKnLq3h74V75tKjM9zD5eR" },
+  { token: "Tether", symbol: "USDT", network: "BEP-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7" },
+  { token: "Tether", symbol: "USDT", network: "ERC-20", address: "0x71C6944e5B889498b31B5c26b65389Da205f14E7" },
+  { token: "Solana", symbol: "SOL", network: "Solana", address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkkD88V5K1kGqXz999" },
+  { token: "Bitcoin", symbol: "BTC", network: "Bitcoin", address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" },
+];
 
-// Ensure tables exist
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    username TEXT UNIQUE NOT NULL,
-    fullName TEXT,
-    phoneNumber TEXT,
-    passwordHash TEXT NOT NULL,
-    role TEXT DEFAULT 'INVESTOR',
-    status TEXT DEFAULT 'ACTIVE',
-    createdAt TEXT NOT NULL,
-    updatedAt TEXT NOT NULL
-  );
-
-  CREATE TABLE IF NOT EXISTS wallets (
-    id TEXT PRIMARY KEY,
-    userId TEXT UNIQUE NOT NULL,
-    mainBalance REAL DEFAULT 0.0,
-    interestBalance REAL DEFAULT 0.0,
-    totalDeposited REAL DEFAULT 0.0,
-    totalWithdrawn REAL DEFAULT 0.0,
-    updatedAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-  );
-
-  CREATE TABLE IF NOT EXISTS plans (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    minDeposit REAL NOT NULL,
-    maxDeposit REAL NOT NULL,
-    dailyRoiPercentage REAL NOT NULL,
-    durationDays INTEGER NOT NULL,
-    capitalRefund INTEGER DEFAULT 1,
-    isActive INTEGER DEFAULT 1
-  );
-
-  CREATE TABLE IF NOT EXISTS investments (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    planId TEXT NOT NULL,
-    amount REAL NOT NULL,
-    accruedProfit REAL DEFAULT 0.0,
-    daysRemaining INTEGER NOT NULL,
-    status TEXT DEFAULT 'RUNNING',
-    lastPayoutAt TEXT NOT NULL,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (planId) REFERENCES plans(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS transactions (
-    id TEXT PRIMARY KEY,
-    userId TEXT NOT NULL,
-    type TEXT NOT NULL,
-    amount REAL NOT NULL,
-    currency TEXT NOT NULL,
-    cryptoAddress TEXT,
-    txHash TEXT,
-    receiptUrl TEXT,
-    status TEXT DEFAULT 'PENDING',
-    approvedAt TEXT,
-    createdAt TEXT NOT NULL,
-    FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
-  );
-`);
-
-async function seed() {
-  const now = new Date().toISOString();
-
-  // 1. Create Default Plans
-  const plans = [
-    {
-      id: "plan_alpha",
-      name: "Alpha Staking",
-      minDeposit: 500,
-      maxDeposit: 10000,
-      dailyRoiPercentage: 0.8,
-      durationDays: 30,
-    },
-    {
-      id: "plan_quant",
-      name: "Quant Copytrade",
-      minDeposit: 2500,
-      maxDeposit: 50000,
-      dailyRoiPercentage: 1.4,
-      durationDays: 60,
-    },
-    {
-      id: "plan_prime",
-      name: "Institutional Prime",
-      minDeposit: 10000,
-      maxDeposit: 500000,
-      dailyRoiPercentage: 2.2,
-      durationDays: 90,
-    },
-  ];
-
+async function main() {
+  // 1. Plans
   for (const p of plans) {
-    const existing = db
-      .prepare("SELECT id FROM plans WHERE name = ?")
-      .get(p.name);
-    if (!existing) {
-      db.prepare(`
-        INSERT INTO plans (id, name, minDeposit, maxDeposit, dailyRoiPercentage, durationDays, capitalRefund, isActive)
-        VALUES (?, ?, ?, ?, ?, ?, 1, 1)
-      `).run(p.id, p.name, p.minDeposit, p.maxDeposit, p.dailyRoiPercentage, p.durationDays);
-    }
+    await prisma.plan.upsert({ where: { id: p.id }, update: {}, create: p });
   }
+  console.log("✓ Plans");
 
-  // 2. Admin User
+  // 2. Deposit addresses (only missing ones; existing edits are kept)
+  for (const a of depositAddresses) {
+    await prisma.depositAddress.upsert({
+      where: { symbol_network: { symbol: a.symbol, network: a.network } },
+      update: {},
+      create: a,
+    });
+  }
+  console.log("✓ Deposit addresses");
+
+  // 3. Admin
   const adminEmail = "admin@platform.internal";
-  const existingAdmin = db
-    .prepare("SELECT id FROM users WHERE email = ?")
-    .get(adminEmail);
-  if (!existingAdmin) {
-    const adminPass = await bcrypt.hash("AdminPassword123!", 12);
-    const adminId = "user_admin_001";
-    db.prepare(`
-      INSERT INTO users (id, email, username, fullName, passwordHash, role, status, createdAt, updatedAt)
-      VALUES (?, ?, 'superadmin', 'System Administrator', ?, 'ADMIN', 'ACTIVE', ?, ?)
-    `).run(adminId, adminEmail, adminPass, now, now);
-
-    db.prepare(`
-      INSERT INTO wallets (id, userId, mainBalance, interestBalance, totalDeposited, totalWithdrawn, updatedAt)
-      VALUES ('w_admin_001', ?, 100000.0, 0.0, 100000.0, 0.0, ?)
-    `).run(adminId, now);
-
-    console.log("✓ Admin user created: admin@platform.internal / AdminPassword123!");
+  if (!(await prisma.user.findUnique({ where: { email: adminEmail } }))) {
+    await prisma.user.create({
+      data: {
+        email: adminEmail,
+        username: "superadmin",
+        fullName: "System Administrator",
+        passwordHash: await bcrypt.hash(seedPassword("SEED_ADMIN_PASSWORD", "admin"), 12),
+        role: "ADMIN",
+        wallet: { create: {} },
+      },
+    });
+    console.log(`✓ Admin user created: ${adminEmail}`);
   }
 
-  // 3. Demo Investor User
+  // 4. Demo investor with two pending requests for the admin queue
   const investorEmail = "investor@platform.internal";
-  let investorId = "user_investor_001";
-  const existingInvestor = db
-    .prepare("SELECT id FROM users WHERE email = ?")
-    .get(investorEmail);
-  if (!existingInvestor) {
-    const investorPass = await bcrypt.hash("InvestorPassword123!", 12);
-    db.prepare(`
-      INSERT INTO users (id, email, username, fullName, phoneNumber, passwordHash, role, status, createdAt, updatedAt)
-      VALUES (?, ?, 'alexander_investor', 'Alexander Sterling', '+1 555-0199', ?, 'INVESTOR', 'ACTIVE', ?, ?)
-    `).run(investorId, investorEmail, investorPass, now, now);
-
-    db.prepare(`
-      INSERT INTO wallets (id, userId, mainBalance, interestBalance, totalDeposited, totalWithdrawn, updatedAt)
-      VALUES ('w_investor_001', ?, 18450.0, 1240.5, 25000.0, 6550.0, ?)
-    `).run(investorId, now);
-
-    console.log(
-      "✓ Demo investor created: investor@platform.internal / InvestorPassword123!",
-    );
-  } else {
-    investorId = existingInvestor.id;
-  }
-
-  // 4. Sample Pending Transactions for Admin Queue
-  const existingTx = db.prepare("SELECT id FROM transactions LIMIT 1").get();
-  if (!existingTx) {
-    db.prepare(`
-      INSERT INTO transactions (id, userId, type, amount, currency, cryptoAddress, txHash, status, createdAt)
-      VALUES 
-        ('DEP-802', ?, 'DEPOSIT', 10000.00, 'USDT (TRC-20)', 'TJY6ZpB8E7WcEKnLq3h74V75tKjM9zD5eR', 'a7f34c98b21e04...498b31B5', 'PENDING', ?),
-        ('WTH-311', ?, 'WITHDRAWAL', 4500.00, 'BTC', 'bc1q9p8e7wc4knlq3h74v75tkjm9zd5er06xyz888', NULL, 'PENDING', ?)
-    `).run(investorId, now, investorId, now);
-    console.log("✓ Sample pending transactions seeded for admin moderation.");
+  if (!(await prisma.user.findUnique({ where: { email: investorEmail } }))) {
+    await prisma.user.create({
+      data: {
+        email: investorEmail,
+        username: "alexander_investor",
+        fullName: "Alexander Sterling",
+        phoneNumber: "+1 555-0199",
+        passwordHash: await bcrypt.hash(seedPassword("SEED_INVESTOR_PASSWORD", "demo investor"), 12),
+        wallet: {
+          create: { mainBalance: 18450, interestBalance: 1240.5, totalDeposited: 25000, totalWithdrawn: 6550 },
+        },
+        transactions: {
+          create: [
+            { type: "DEPOSIT", amount: 10000, currency: "USDT (TRC-20)", cryptoAddress: "TJY6ZpB8E7WcEKnLq3h74V75tKjM9zD5eR", txHash: "a7f34c98b21e04...498b31B5" },
+            { type: "WITHDRAWAL", amount: 4500, currency: "BTC", cryptoAddress: "bc1q9p8e7wc4knlq3h74v75tkjm9zd5er06xyz888" },
+          ],
+        },
+      },
+    });
+    console.log(`✓ Demo investor created: ${investorEmail}`);
   }
 
   console.log("Database seeded successfully!");
 }
 
-seed().catch(console.error);
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exitCode = 1;
+  })
+  .finally(() => prisma.$disconnect());

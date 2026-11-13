@@ -16,7 +16,7 @@
 .cold-storage-page-wrapper .unit,
 .cold-storage-page-wrapper .symbol,
 .cold-storage-page-wrapper .amount_select p {
-  text-transform: uppercase !important;
+  text-transform: none !important;
 }
 
 .cold-storage-content-card {

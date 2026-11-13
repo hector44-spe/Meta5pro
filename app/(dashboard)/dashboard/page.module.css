@@ -78,7 +78,7 @@
 .balanceLabel {
   font-size: 0.85rem;
   color: var(--color-text-extra);
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
 }
@@ -125,7 +125,7 @@
   border-bottom: 1px solid var(--color-outline);
   color: var(--color-text-extra);
   font-size: 0.8rem;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .td {

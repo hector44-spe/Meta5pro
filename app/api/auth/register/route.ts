@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { hashPassword, signToken, AUTH_COOKIE } from "@/lib/auth";
+import { hashPassword, signToken, AUTH_COOKIE, rateLimited, clientIp } from "@/lib/auth";
 import { z } from "zod";
+import crypto from "node:crypto";
 
 export const dynamic = "force-dynamic";
 
 const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().optional(),
@@ -15,6 +16,10 @@ const registerSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    if (rateLimited(`register:${clientIp(req)}`, 10, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many sign-ups from this address. Try again later." }, { status: 429 });
+    }
+
     const body = await req.json();
     const parsed = registerSchema.safeParse(body);
 
@@ -40,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await hashPassword(password);
-    const username = email.split("@")[0] + "_" + Math.floor(1000 + Math.random() * 9000);
+    const username = email.split("@")[0] + "_" + crypto.randomInt(1000, 10000);
 
     // Create user and initial wallet
     const user = await prisma.user.create({

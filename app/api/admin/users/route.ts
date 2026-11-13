@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { sqlite } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
 export async function GET() {
@@ -10,18 +10,21 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
     }
 
-    const stmt = sqlite.prepare(`
-      SELECT 
-        u.id, u.email, u.username, u.fullName, u.phoneNumber, u.role, u.status, u.createdAt,
-        COALESCE(w.mainBalance, 0.0) as mainBalance,
-        COALESCE(w.interestBalance, 0.0) as interestBalance,
-        COALESCE(w.totalDeposited, 0.0) as totalDeposited,
-        COALESCE(w.totalWithdrawn, 0.0) as totalWithdrawn
-      FROM users u
-      LEFT JOIN wallets w ON u.id = w.userId
-      ORDER BY u.createdAt DESC
-    `);
-    const users = stmt.all();
+    const rows = await prisma.user.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true, email: true, username: true, fullName: true, phoneNumber: true,
+        role: true, status: true, createdAt: true, wallet: true,
+      },
+    });
+    // Flatten wallet balances onto each user, as the admin page expects
+    const users = rows.map(({ wallet, ...u }) => ({
+      ...u,
+      mainBalance: wallet?.mainBalance.toNumber() ?? 0,
+      interestBalance: wallet?.interestBalance.toNumber() ?? 0,
+      totalDeposited: wallet?.totalDeposited.toNumber() ?? 0,
+      totalWithdrawn: wallet?.totalWithdrawn.toNumber() ?? 0,
+    }));
 
     return NextResponse.json({
       success: true,

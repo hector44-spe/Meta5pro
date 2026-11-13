@@ -21,7 +21,13 @@ export default function ForgotPasswordPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
       });
-      const data = await res.json();
+      let data: any = {};
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error("Unable to reach server. Please try again later.");
+      }
       if (res.ok) {
         setSubmitted(true);
         if (data.resetUrl) {
@@ -30,8 +36,12 @@ export default function ForgotPasswordPage() {
       } else {
         setErrorMsg(data.error || "Failed to process request");
       }
-    } catch {
-      setErrorMsg("Network error submitting request");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMsg(err.message);
+      } else {
+        setErrorMsg("Network error submitting request");
+      }
     } finally {
       setLoading(false);
     }
@@ -42,16 +52,17 @@ export default function ForgotPasswordPage() {
       <div className={styles.authWrapper}>
         <header className={styles.authHeader}>
           <Link href="/" className={styles.logoWrapper}>
-            <span
-              style={{
-                color: "#fff",
-                fontSize: "18px",
-                fontWeight: "600",
-                letterSpacing: "-0.01em",
-              }}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 198 235"
+              style={{ height: "36px", width: "auto" }}
             >
-              Meta Gold 5
-            </span>
+              <path
+                fill="#fff"
+                d="m124.3 67.826-22.622 39.194H124.3v108.569l-50.611 18.422V166.2H96.32L73.69 126.996V18.422L124.3 0zm-73.676 59.17L27.99 166.2h22.634v23.063L0 207.685V59.92l50.624-18.435zm147.362 47.095-50.611 18.434V107.02h22.634l-22.634-39.213V44.748l50.624-18.422z"
+              />
+            </svg>
           </Link>
 
           <div className={styles.headerActions}>

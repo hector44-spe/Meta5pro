@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db, sqlite } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { z } from "zod";
 
@@ -32,7 +32,7 @@ export async function PATCH(
     const { status } = parsed.data;
 
     // Check target user
-    const user = await db.user.findUnique({ where: { id: userId } });
+    const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -42,11 +42,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Cannot suspend a Super Admin account" }, { status: 400 });
     }
 
-    sqlite.prepare("UPDATE users SET status = ?, updatedAt = ? WHERE id = ?").run(
-      status,
-      new Date().toISOString(),
-      userId
-    );
+    await prisma.user.update({ where: { id: userId }, data: { status } });
 
     return NextResponse.json({
       success: true,

@@ -525,3 +525,228 @@
     padding: 8px 8px;
   }
 }
+
+/* =====================================================================
+   Responsive fixes
+   The global theme (metagold.css / dashboard.css) sets table cells to
+   display:block, pads every <table>, and absolutely positions <select>.
+   These scoped rules restore a real table and size it to its card.
+   Column visibility uses container queries, so it follows the card's
+   actual width (the sidebar takes space on desktop), not the viewport.
+   ===================================================================== */
+.assets-table-section {
+  container-type: inline-size;
+  container-name: assets;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Toolbar */
+.assets-table-section .assets-table-top {
+  flex-wrap: wrap;
+  row-gap: 12px;
+}
+.assets-table-section .assets-table-utils {
+  flex: 0 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+}
+.assets-table-section .assets-search-wrapper {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.assets-table-section .assets-search-input {
+  width: 100%;
+  min-width: 0;
+  font-size: 13.5px;
+}
+.assets-table-section .assets-select-wrapper {
+  position: relative;
+  flex: 0 0 auto;
+  width: auto;
+}
+.assets-table-section .assets-select {
+  position: static;
+  width: auto;
+  min-width: 130px;
+  height: auto;
+  opacity: 1;
+}
+
+/* Table: real table layout, no theme padding */
+.assets-table-section .assets-table-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}
+.assets-table-section .assets-table {
+  display: table;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  table-layout: auto;
+}
+.assets-table-section .assets-table thead { display: table-header-group; }
+.assets-table-section .assets-table tbody { display: table-row-group; }
+.assets-table-section .assets-table tr { display: table-row; }
+.assets-table-section .assets-table th,
+.assets-table-section .assets-table td { display: table-cell; }
+
+.assets-table-section .assets-table th.col-wallet,
+.assets-table-section .assets-table td.col-wallet,
+.assets-table-section .assets-table th.col-action,
+.assets-table-section .assets-table td.col-action {
+  text-align: right;
+}
+.assets-table-section .cell-wallet { align-items: flex-end; }
+.assets-table-section .cell-actions { justify-content: flex-end; }
+.assets-table-section .cell-asset-meta { min-width: 0; }
+.assets-table-section .cell-asset-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+/* Neutralize the older viewport-based rules above; container queries below decide */
+.assets-table-section .cell-symbol,
+.assets-table-section .cell-type,
+.assets-table-section .cell-price { display: block; }
+.assets-table-section .cell-actions { display: flex; }
+.assets-table-section .wallet-amount-row { display: flex; gap: 6px; justify-content: flex-end; }
+.assets-table-section .wallet-mobile-actions { display: none; }
+.assets-table-section .cell-asset-symbol-mobile { display: none; }
+
+/* Hide columns as the card narrows */
+@container assets (max-width: 860px) {
+  .assets-table-section .assets-table .col-symbol { display: none; }
+  .assets-table-section .cell-asset-symbol-mobile { display: block; }
+}
+@container assets (max-width: 700px) {
+  .assets-table-section .assets-table .col-type { display: none; }
+}
+@container assets (max-width: 560px) {
+  .assets-table-section .assets-table .col-price,
+  .assets-table-section .assets-table .col-action { display: none; }
+  .assets-table-section .wallet-amount-row { display: flex; gap: 6px; justify-content: flex-end; }
+  .assets-table-section .wallet-mobile-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+  .assets-table-section .cell-asset-name { max-width: 130px; }
+}
+@container assets (max-width: 420px) {
+  .assets-table-section .assets-table-utils { width: 100%; }
+  .assets-table-section .assets-select { min-width: 0; }
+  .assets-table-section .assets-table td { padding: 8px 6px; }
+  .assets-table-section .cell-asset-icon { width: 28px; height: 28px; }
+}
+
+/* Toolbar select + action buttons: undo theme sizing */
+.assets-table-section .assets-select-wrapper .assets-select {
+  display: block;
+  height: 36px;
+  line-height: 20px;
+  padding: 7px 32px 7px 12px;
+  font-size: 13.5px;
+  box-sizing: border-box;
+}
+.assets-table-section .assets-select-wrapper .assets-select-arrow {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+}
+.assets-table-section .assets-search-wrapper {
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 12px;
+}
+.assets-table-section .asset-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 30px;
+  min-width: 0;
+  width: auto;
+  padding: 0 12px;
+  font-size: 12.5px;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 6px;
+}
+.assets-table-section .cell-actions,
+.assets-table-section .wallet-mobile-actions {
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.assets-table-section .wallet-amount-row {
+  white-space: nowrap;
+}
+
+@container assets (max-width: 420px) {
+  .assets-table-section .asset-action-btn {
+    height: 28px;
+    padding: 0 9px;
+    font-size: 12px;
+  }
+  .assets-table-section .assets-select-wrapper .assets-select {
+    padding-right: 28px;
+  }
+}
+
+/* The theme forces `padding: 10px 8px !important` on every button. */
+.assets-table-section .assets-table .asset-action-btn {
+  padding: 0 12px !important;
+  height: 30px;
+}
+.assets-table-section .cell-asset-name { max-width: 180px; }
+
+@container assets (max-width: 960px) {
+  .assets-table-section .assets-table .col-symbol { display: none; }
+  .assets-table-section .cell-asset-symbol-mobile { display: block; }
+}
+@container assets (max-width: 760px) {
+  .assets-table-section .assets-table .col-type { display: none; }
+}
+@container assets (max-width: 600px) {
+  .assets-table-section .assets-table .col-price,
+  .assets-table-section .assets-table .col-action { display: none; }
+  .assets-table-section .wallet-mobile-actions { display: flex; justify-content: flex-end; margin-top: 6px; }
+}
+@container assets (max-width: 420px) {
+  .assets-table-section .assets-table .asset-action-btn {
+    padding: 0 9px !important;
+    height: 28px;
+    font-size: 11.5px;
+  }
+  .assets-table-section .cell-asset-name { max-width: 96px; }
+  .assets-table-section .cell-asset { gap: 8px; }
+  .assets-table-section .wallet-amount-usd { display: none; }
+  .assets-table-section .assets-table-top-title { font-size: 15px; }
+}
+
+@container assets (max-width: 740px) {
+  .assets-table-section .assets-table .col-price { display: none; }
+}
+@container assets (max-width: 420px) {
+  .assets-table-section .assets-table { table-layout: fixed; }
+  .assets-table-section .assets-table .col-asset { width: 50%; min-width: 0; }
+  .assets-table-section .assets-table .col-wallet { width: 50%; min-width: 0; }
+  .assets-table-section .cell-asset-name { max-width: 100%; }
+  .assets-table-section .assets-table .asset-action-btn {
+    padding: 0 7px !important;
+    font-size: 11px;
+  }
+  .assets-table-section .wallet-mobile-actions { gap: 4px; }
+}
+/* Keep the category select the same height as the search box */
+.assets-table-section .assets-table-utils { align-items: center; }
+.assets-table-section .assets-select-wrapper { height: 36px; align-self: center; margin: 0; }
+.assets-table-section .assets-select-wrapper .assets-select { margin: 0 !important; }
+.assets-table-section .assets-select-wrapper .assets-select {
+  transform: none;
+  inset: auto;
+}
+.assets-table-section .assets-select-wrapper .assets-select-arrow {
+  inset: auto;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+}

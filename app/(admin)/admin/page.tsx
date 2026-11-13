@@ -291,7 +291,7 @@ export default function AdminPage() {
             Root privilege access • Financial audit logs, addresses &amp; balance control
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div className={styles.headerActions}>
           <button
             type="button"
             onClick={() => {
@@ -340,7 +340,7 @@ export default function AdminPage() {
       </div>
 
       {/* Admin Section Tabs */}
-      <div style={{ display: "flex", gap: "10px", marginBottom: "20px" }}>
+      <div className={styles.tabs}>
         <button
           type="button"
           onClick={() => setActiveTab("queue")}
@@ -407,6 +407,7 @@ export default function AdminPage() {
                 All operations reviewed and cleared. Pending queue is empty.
               </p>
             ) : (
+              <div className={styles.tableWrap}>
               <table className={styles.table}>
                 <thead>
                   <tr>
@@ -508,6 +509,7 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
 
@@ -521,6 +523,7 @@ export default function AdminPage() {
                 No past operations in audit log.
               </p>
             ) : (
+              <div className={styles.tableWrap}>
               <table className={styles.table}>
                 <thead>
                   <tr>
@@ -593,6 +596,7 @@ export default function AdminPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </>
@@ -603,7 +607,7 @@ export default function AdminPage() {
           ==================================================================== */}
       {activeTab === "users" && (
         <div className={styles.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div className={styles.cardHeader}>
             <div>
               <h2 className={styles.tableTitle} style={{ margin: 0 }}>
                 Registered User Directory ({users.length})
@@ -612,7 +616,7 @@ export default function AdminPage() {
                 Inspect investor profiles, adjust account balances, and manage access statuses.
               </p>
             </div>
-            <div style={{ position: "relative", width: "260px" }}>
+            <div className={styles.search}>
               <input
                 type="text"
                 placeholder="Search email, name or role..."
@@ -631,6 +635,8 @@ export default function AdminPage() {
               />
             </div>
           </div>
+
+          <div className={styles.tableWrap}>
 
           <table className={styles.table}>
             <thead>
@@ -753,6 +759,7 @@ export default function AdminPage() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -761,7 +768,7 @@ export default function AdminPage() {
           ==================================================================== */}
       {activeTab === "addresses" && (
         <div className={styles.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+          <div className={styles.cardHeader}>
             <div>
               <h2 className={styles.tableTitle} style={{ margin: 0 }}>
                 Crypto Deposit Addresses Configuration
@@ -799,6 +806,7 @@ export default function AdminPage() {
           )}
 
           <form onSubmit={handleSaveAddresses}>
+            <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -871,6 +879,7 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+            </div>
 
             <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
               <button

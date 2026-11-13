@@ -1,4 +1,5 @@
 "use client";
+import { logout } from "@/lib/logout";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import Link from "next/link";
@@ -41,6 +42,8 @@ import {
 } from "lucide-react";
 import "@/styles/dashboard.css";
 import DepositModal from "@/components/DepositModal";
+import WithdrawModal from "@/components/WithdrawModal";
+import { ProfileSettings, SecuritySettings, type UserProfile } from "@/components/SettingsForms";
 import StakeModal from "@/components/StakeModal";
 import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
 import {
@@ -133,9 +136,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [settingsActiveTab, setSettingsActiveTab] = useState<
     "profile" | "security" | "verification" | "preferences"
   >("profile");
-  const [withdrawAddressInput, setWithdrawAddressInput] = useState("");
-  const [withdrawAmountInput, setWithdrawAmountInput] = useState("");
-  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
 
   // Close mobile drawer on route changes
   useEffect(() => {
@@ -144,6 +144,16 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   const [realBalance, setRealBalance] = useState<number>(0);
   const [userRefCode, setUserRefCode] = useState<string>("vip-trader");
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [siteOrigin, setSiteOrigin] = useState("");
+  const displayName = profile?.fullName?.trim() || profile?.email?.split("@")[0] || "";
+  const initials =
+    (displayName
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("") || "").toLowerCase();
   const demoBalance = 10000;
   const currentBalance = accountType === "real" ? realBalance : demoBalance;
 
@@ -157,12 +167,22 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         }
         if (data.user?.id) {
           setUserRefCode(data.user.id.slice(0, 8));
+          setProfile({
+            fullName: data.user.fullName ?? null,
+            email: data.user.email,
+            phoneNumber: data.user.phoneNumber ?? null,
+            country: data.user.country ?? null,
+          });
         }
       }
     } catch (e) {
       console.error("Failed to fetch balance in shell:", e);
     }
   };
+
+  useEffect(() => {
+    setSiteOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     fetchBalance();
@@ -207,85 +227,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     }, 1000);
   };
 
-  const handleWithdrawDrawerSubmit = async () => {
-    if (!withdrawAddressInput || !withdrawAmountInput) {
-      alert("Please fill in both address and amount.");
-      return;
-    }
-    const numAmount = parseFloat(withdrawAmountInput);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      alert("Please enter a valid withdrawal amount.");
-      return;
-    }
-    setWithdrawSubmitting(true);
-    try {
-      const res = await fetch("/api/wallet/withdraw", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: numAmount,
-          currency: "USDT",
-          cryptoAddress: withdrawAddressInput.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Withdrawal failed");
-      } else {
-        alert("Withdrawal request submitted successfully. Funds placed in escrow pending admin review.");
-        await fetchBalance();
-        setActiveModal(null);
-        setWithdrawAddressInput("");
-        setWithdrawAmountInput("");
-      }
-    } catch {
-      alert("Network error processing withdrawal request.");
-    } finally {
-      setWithdrawSubmitting(false);
-    }
-  };
-
-  // Determine current page title & icon for top header breadcrumb
-  const getHeaderBreadcrumb = () => {
-    if (pathname.startsWith("/deposit")) {
-      return (
-        <>
-          <CirclePlus size={16} strokeWidth={1.8} color="#ffffff" />
-          <span>Deposit</span>
-        </>
-      );
-    }
-    if (pathname.startsWith("/withdraw")) {
-      return (
-        <>
-          <CircleMinus size={16} strokeWidth={1.8} color="#ffffff" />
-          <span>Withdraw</span>
-        </>
-      );
-    }
-    if (pathname.startsWith("/assets") || pathname.startsWith("/wallet")) {
-      return (
-        <>
-          <WalletMinimal size={16} strokeWidth={2} color="#4763f0" />
-          <span>Assets</span>
-        </>
-      );
-    }
-    if (pathname.startsWith("/cold-storage")) {
-      return (
-        <>
-          <Snowflake size={16} strokeWidth={2} color="#4763f0" />
-          <span>Cold storage</span>
-        </>
-      );
-    }
-    return (
-      <>
-        <House size={16} strokeWidth={2} color="#4763f0" />
-        <span>Dashboard</span>
-      </>
-    );
-  };
 
   const contextValue: DashboardContextType = {
     activeModal,
@@ -318,9 +259,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               }}
               style={{ cursor: "pointer" }}
             >
-              <div className="user-avatar">ub</div>
+              <div className="user-avatar">{initials}</div>
               <div className="user-meta">
-                <p>user b</p>
+                <p>{displayName}</p>
                 <p>Real account</p>
               </div>
             </div>
@@ -1058,7 +999,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     color: "var(--color-primary, #4763f0)",
                   }}
                 >
-                  ub
+                  {initials}
                 </div>
                 <img
                   src="/dashboard_files/starter.svg"
@@ -1082,7 +1023,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     lineHeight: 1.2,
                   }}
                 >
-                  user b
+                  {displayName}
                 </div>
                 <div
                   style={{
@@ -1126,8 +1067,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     padding: "4px",
                     color: "#ffffff",
                   }}
-                  title="Open Navigation"
-                  aria-label="Open Navigation"
+                  title="Open navigation"
+                  aria-label="Open navigation"
                 >
                   <Menu size={22} color="#ffffff" strokeWidth={2} />
                   <span
@@ -1163,7 +1104,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     fontWeight: 600,
                   }}
                 >
-                  {getHeaderBreadcrumb()}
                 </div>
               </div>
 
@@ -1182,8 +1122,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   <button
                     onClick={() => setLangDropdownOpen(!langDropdownOpen)}
                     className="tp-header-btn"
-                    title="Select Language"
-                    aria-label="Select Language"
+                    title="Select language"
+                    aria-label="Select language"
                   >
                     <Globe size={18} color="#ffffff" />
                   </button>
@@ -1260,7 +1200,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                               fontSize: "11px",
                             }}
                           >
-                            {l.code}
+                            {l.code.toUpperCase()}
                           </span>
                           <span
                             style={{
@@ -1392,9 +1332,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 <div
                   onClick={() => setActiveModal("settings")}
                   className="tp-avatar-box"
-                  title="Settings & Profile"
+                  title="Settings & profile"
                 >
-                  ub
+                  {initials}
                   <span className="tp-avatar-diamond" />
                 </div>
               </div>
@@ -1429,7 +1369,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             zIndex: 9000,
             transition: "transform 0.2s ease, box-shadow 0.2s ease",
           }}
-          title="Live Chat Support"
+          title="Live chat support"
           aria-label="Open support chat"
         >
           <MessageSquare size={24} />
@@ -1609,141 +1549,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           onSuccess={() => setActiveModal(null)}
         />
 
-        {/* Withdraw Drawer */}
-        {activeModal === "withdraw" && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.75)",
-              backdropFilter: "blur(8px)",
-              display: "flex",
-              justifyContent: "flex-end",
-              zIndex: 9999,
-            }}
-            onClick={() => setActiveModal(null)}
-          >
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "460px",
-                height: "100%",
-                backgroundColor: "#12141a",
-                borderLeft: "1px solid rgba(255, 255, 255, 0.08)",
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "20px",
-                boxSizing: "border-box",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ fontSize: "18px", fontWeight: 700, color: "#fff" }}>
-                  Withdraw funds
-                </div>
-                <button
-                  onClick={() => setActiveModal(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div>
-                <label
-                  style={{
-                    fontSize: "13px",
-                    color: "rgba(255, 255, 255, 0.6)",
-                    marginBottom: "6px",
-                    display: "block",
-                  }}
-                >
-                  Recipient address:
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter destination address"
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    backgroundColor: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    color: "#fff",
-                    fontSize: "13px",
-                    boxSizing: "border-box",
-                  }}
-                  value={withdrawAddressInput}
-                  onChange={(e) => setWithdrawAddressInput(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label
-                  style={{
-                    fontSize: "13px",
-                    color: "rgba(255, 255, 255, 0.6)",
-                    marginBottom: "6px",
-                    display: "block",
-                  }}
-                >
-                  Amount (USD):
-                </label>
-                <input
-                  type="number"
-                  placeholder="0.00"
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    borderRadius: "8px",
-                    backgroundColor: "rgba(255, 255, 255, 0.04)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    color: "#fff",
-                    fontSize: "13px",
-                    boxSizing: "border-box",
-                  }}
-                  value={withdrawAmountInput}
-                  onChange={(e) => setWithdrawAmountInput(e.target.value)}
-                />
-              </div>
-
-              <button
-                onClick={handleWithdrawDrawerSubmit}
-                disabled={withdrawSubmitting}
-                style={{
-                  width: "100%",
-                  padding: "12px",
-                  borderRadius: "8px",
-                  backgroundColor: "#4763f0",
-                  color: "#fff",
-                  border: "none",
-                  fontWeight: 600,
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  marginTop: "12px",
-                  opacity: withdrawSubmitting ? 0.7 : 1,
-                }}
-              >
-                Submit withdrawal
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Withdraw Modal: method selection -> crypto withdrawal form (emailed confirmation code) */}
+        <WithdrawModal
+          isOpen={activeModal === "withdraw"}
+          onClose={() => setActiveModal(null)}
+          onSuccess={() => fetchBalance()}
+        />
 
         {/* Settings Drawer (Matches Image 1 on Mobile & Image 2 on Desktop) */}
         {activeModal === "settings" && (
@@ -1812,8 +1623,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     alignItems: "center",
                     justifyContent: "center",
                   }}
-                  title="Close Settings"
-                  aria-label="Close Settings"
+                  title="Close settings"
+                  aria-label="Close settings"
                 >
                   <X size={18} />
                 </button>
@@ -1856,7 +1667,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         flexShrink: 0,
                       }}
                     >
-                      ub
+                      {initials}
                     </div>
                     <div>
                       <div
@@ -1867,7 +1678,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                           lineHeight: "1.2",
                         }}
                       >
-                        user b
+                        {displayName}
                       </div>
                       <div
                         style={{
@@ -1876,7 +1687,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                           marginTop: "2px",
                         }}
                       >
-                        user@account.com
+                        {profile?.email}
                       </div>
                     </div>
                   </div>
@@ -2110,7 +1921,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     {/* Logout Row */}
                     <div
                       onClick={() => {
-                        window.location.href = "/login";
+                        void logout();
                       }}
                       style={{
                         display: "flex",
@@ -2248,146 +2059,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
               {/* Subview: Personal */}
               {settingsSubView === "personal" && (
-                <div style={{ padding: "0 18px 80px 18px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div>
-                    <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Full name
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue="User B"
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        color: "#fff",
-                        fontSize: "13px",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Email address
-                    </label>
-                    <input
-                      type="email"
-                      defaultValue="user@account.com"
-                      disabled
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(255, 255, 255, 0.02)",
-                        border: "1px solid rgba(255, 255, 255, 0.05)",
-                        color: "rgba(255, 255, 255, 0.4)",
-                        fontSize: "13px",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Country / region
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue="United States"
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        color: "#fff",
-                        fontSize: "13px",
-                      }}
-                    />
-                  </div>
-                  <button
-                    onClick={() => alert("Personal information updated.")}
-                    style={{
-                      padding: "11px",
-                      borderRadius: "8px",
-                      backgroundColor: "#4763f0",
-                      color: "#fff",
-                      border: "none",
-                      fontWeight: 600,
-                      fontSize: "13px",
-                      cursor: "pointer",
-                      marginTop: "6px",
-                    }}
-                  >
-                    Save changes
-                  </button>
-                </div>
+                <ProfileSettings profile={profile} onSaved={setProfile} />
               )}
 
               {/* Subview: Security */}
-              {settingsSubView === "security" && (
-                <div style={{ padding: "0 18px 80px 18px", display: "flex", flexDirection: "column", gap: "14px" }}>
-                  <div>
-                    <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      Current password
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="••••••••"
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        color: "#fff",
-                        fontSize: "13px",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "4px", display: "block" }}>
-                      New password
-                    </label>
-                    <input
-                      type="password"
-                      placeholder="Enter new password"
-                      style={{
-                        width: "100%",
-                        padding: "10px 12px",
-                        borderRadius: "8px",
-                        backgroundColor: "rgba(255, 255, 255, 0.04)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                        color: "#fff",
-                        fontSize: "13px",
-                      }}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "12px 14px",
-                      borderRadius: "8px",
-                      backgroundColor: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                      marginTop: "4px",
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>
-                        Two-factor authentication (2FA)
-                      </div>
-                      <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)" }}>
-                        Secure your account with 2FA
-                      </div>
-                    </div>
-                    <span style={{ fontSize: "12px", color: "#01b28b", fontWeight: 600 }}>
-                      Enabled
-                    </span>
-                  </div>
-                </div>
-              )}
+              {settingsSubView === "security" && <SecuritySettings email={profile?.email ?? null} />}
 
               {/* Subview: Account */}
               {settingsSubView === "account" && (
@@ -2524,8 +2200,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   boxShadow: "0 4px 14px rgba(29, 114, 254, 0.4)",
                   zIndex: 10000,
                 }}
-                title="Open Live Chat"
-                aria-label="Open Live Chat"
+                title="Open live chat"
+                aria-label="Open live chat"
               >
                 <MessageSquare size={22} fill="white" />
               </button>
@@ -2800,10 +2476,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 }}
               >
                 <span style={{ fontSize: "12px", color: "#4763f0", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>
-                  {typeof window !== "undefined" ? `${window.location.origin}/register?ref=${userRefCode}` : `https://broker.platform/register?ref=${userRefCode}`}
+                  {`${siteOrigin}/register?ref=${userRefCode}`}
                 </span>
                 <button
-                  onClick={() => handleCopy(typeof window !== "undefined" ? `${window.location.origin}/register?ref=${userRefCode}` : `https://broker.platform/register?ref=${userRefCode}`)}
+                  onClick={() => handleCopy(`${siteOrigin}/register?ref=${userRefCode}`)}
                   style={{
                     padding: "6px 12px",
                     borderRadius: "6px",

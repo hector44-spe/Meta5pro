@@ -1,6 +1,7 @@
 "use client";
+import { logout } from "@/lib/logout";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   X,
@@ -39,6 +40,18 @@ export interface DepositRecord {
   status: "approved" | "pending" | "declined";
 }
 
+// Drawer asset key -> [symbol, network] as stored in deposit_addresses
+const DEPOSIT_ASSETS = [
+  ["BTC", "BTC", "Bitcoin"],
+  ["ETH", "ETH", "ERC-20"],
+  ["USDT_TRC20", "USDT", "TRC-20"],
+  ["USDT_BEP20", "USDT", "BEP-20"],
+  ["SOL", "SOL", "Solana"],
+] as const;
+
+// Indicative USD rates used to value a crypto deposit; the admin confirms the real amount on approval.
+const USD_RATES: Record<string, number> = { BTC: 86450, ETH: 2680, SOL: 185, USDT: 1 };
+
 interface DepositDrawerProps {
   isOpen: boolean;
   onClose: () => void;
@@ -57,16 +70,30 @@ export function DepositDrawer({
   const [txId, setTxId] = useState("");
   const [copied, setCopied] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [depositError, setDepositError] = useState("");
+  const [depositAddresses, setDepositAddresses] = useState<Record<string, string>>({});
+
+  // Deposit addresses come from the admin-managed settings, not hard-coded values.
+  useEffect(() => {
+    if (!isOpen) return;
+    fetch("/api/settings/addresses")
+      .then((r) => r.json())
+      .then((data) => {
+        const map: Record<string, string> = {};
+        for (const [key, sym, net] of DEPOSIT_ASSETS) {
+          const hit = (data.addresses || []).find(
+            (a: { symbol: string; network: string; address: string }) =>
+              a.symbol === sym && a.network === net,
+          );
+          if (hit) map[key] = hit.address;
+        }
+        setDepositAddresses(map);
+      })
+      .catch(() => setDepositError("Could not load deposit addresses. Please try again."));
+  }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const depositAddresses: Record<string, string> = {
-    BTC: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    ETH: "0x71C6944e5B889498b31B5c26b65389Da205f14E7",
-    USDT_TRC20: "TJY6ZpB8E7WcEKnLq3h74V75tKjM9zD5eR",
-    USDT_BEP20: "0x71C6944e5B889498b31B5c26b65389Da205f14E7",
-    SOL: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkkD88V5K1kGqXz999",
-  };
 
   const handleCopy = () => {
     navigator.clipboard?.writeText(depositAddresses[selectedAsset]);
@@ -74,37 +101,70 @@ export function DepositDrawer({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount) return;
+    const units = parseFloat(amount);
+    if (!units || units <= 0) {
+      setDepositError("Please enter a valid amount.");
+      return;
+    }
+    if (!txId.trim()) {
+      setDepositError("Please paste the transaction hash (TxID) from your wallet.");
+      return;
+    }
 
-    const ref = "DP" + Math.floor(100000 + Math.random() * 900000);
-    const now = new Date();
-    const dateFormatted = `${now.getDate()} ${now.toLocaleString("default", { month: "short" })}, ${now.getFullYear()}`;
+    const [, symbol, network] = DEPOSIT_ASSETS.find(([key]) => key === selectedAsset)!;
+    const usdValue = Math.round(units * (USD_RATES[symbol] ?? 1) * 100) / 100;
 
-    const newDep: DepositRecord = {
-      date: dateFormatted,
-      reference: ref,
-      method: selectedAsset.replace("_", " "),
-      type: "Regular",
-      amount: `${amount} ${selectedAsset.split("_")[0]}`,
-      totalUSD: `$${(parseFloat(amount) * (selectedAsset.startsWith("USDT") ? 1 : selectedAsset === "BTC" ? 73915 : 2650)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      status: "pending",
-    };
+    setIsSubmitting(true);
+    setDepositError("");
+    try {
+      const res = await fetch("/api/wallet/deposit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: usdValue,
+          currency: symbol,
+          network,
+          txHash: txId.trim(),
+          cryptoAddress: depositAddresses[selectedAsset],
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDepositError(data.error || "Deposit submission failed.");
+        return;
+      }
 
-    onDepositSuccess(newDep);
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      onClose();
-    }, 1500);
+      const created = new Date(data.transaction.createdAt);
+      onDepositSuccess({
+        date: `${created.getDate()} ${created.toLocaleString("default", { month: "short" })}, ${created.getFullYear()}`,
+        reference: data.transaction.id.slice(0, 8).toUpperCase(),
+        method: `${symbol} ${network}`,
+        type: "Regular",
+        amount: `${units} ${symbol}`,
+        totalUSD: `$${usdValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        status: "pending",
+      });
+      setIsSubmitted(true);
+      setAmount("");
+      setTxId("");
+      setTimeout(() => {
+        setIsSubmitted(false);
+        onClose();
+      }, 1500);
+    } catch {
+      setDepositError("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="tp-drawer-backdrop" onClick={onClose}>
       <div className="tp-drawer-panel" onClick={(e) => e.stopPropagation()}>
         <div className="tp-drawer-header">
-          <h2 className="tp-drawer-title">Deposit Funds</h2>
+          <h2 className="tp-drawer-title">Deposit funds</h2>
           <button type="button" className="tp-drawer-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -123,7 +183,7 @@ export function DepositDrawer({
           >
             <CheckCircle2 size={54} color="#01b28b" />
             <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-              Deposit Proof Submitted!
+              Deposit proof submitted!
             </h3>
             <p style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.7)" }}>
               Your deposit reference has been recorded and will reflect in your account upon blockchain confirmation.
@@ -142,7 +202,7 @@ export function DepositDrawer({
                   fontWeight: 500,
                 }}
               >
-                Select Deposit Asset:
+                Select deposit asset:
               </label>
               <div
                 style={{
@@ -220,7 +280,7 @@ export function DepositDrawer({
                   marginBottom: "12px",
                 }}
               >
-                {depositAddresses[selectedAsset]}
+                {depositAddresses[selectedAsset] ?? "Loading address..."}
               </div>
 
               {/* Copy Button */}
@@ -243,7 +303,7 @@ export function DepositDrawer({
                 }}
               >
                 {copied ? <Check size={15} /> : <Copy size={15} />}
-                <span>{copied ? "Copied Address" : "Copy Address"}</span>
+                <span>{copied ? "Copied address" : "Copy address"}</span>
               </button>
             </div>
 
@@ -257,7 +317,7 @@ export function DepositDrawer({
                   marginBottom: "6px",
                 }}
               >
-                Deposit Amount:
+                Deposit amount:
               </label>
               <input
                 required
@@ -290,7 +350,7 @@ export function DepositDrawer({
                   marginBottom: "6px",
                 }}
               >
-                Transaction Hash / TxID:
+                Transaction hash / TxID:
               </label>
               <input
                 type="text"
@@ -311,9 +371,16 @@ export function DepositDrawer({
               />
             </div>
 
+            {depositError && (
+              <div role="alert" style={{ color: "#ff3344", fontSize: "13px" }}>
+                {depositError}
+              </div>
+            )}
+
             {/* Submit Button */}
             <button
               type="submit"
+              disabled={isSubmitting || !depositAddresses[selectedAsset]}
               style={{
                 width: "100%",
                 padding: "14px",
@@ -363,58 +430,97 @@ export function WithdrawDrawer({
   onWithdrawSuccess,
   accountType = "real",
 }: WithdrawDrawerProps) {
-  const [selectedMethod, setSelectedMethod] = useState<"Crypto" | "Bank Transfer">("Crypto");
+  const [selectedMethod, setSelectedMethod] = useState<"Crypto" | "Bank transfer">("Crypto");
   const [cryptoAsset, setCryptoAsset] = useState<"USDT" | "BTC" | "ETH">("USDT");
   const [address, setAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [realBalance, setRealBalance] = useState(0);
+
+  // Real balance comes from the server wallet.
+  useEffect(() => {
+    if (!isOpen || accountType !== "real") return;
+    fetch("/api/wallet")
+      .then((r) => r.json())
+      .then((data) => setRealBalance(Number(data.wallet?.mainBalance ?? 0)))
+      .catch(() => setErrorMsg("Could not load your balance. Please try again."));
+  }, [isOpen, accountType]);
 
   if (!isOpen) return null;
 
-  const currentBalance = accountType === "real" ? 0 : 10000;
+  const currentBalance = accountType === "real" ? realBalance : 10000;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const numAmount = parseFloat(amount);
     if (!numAmount || numAmount <= 0) {
       setErrorMsg("Please enter a valid amount.");
       return;
     }
-
-    if (numAmount > currentBalance && accountType === "real") {
-      setErrorMsg("Insufficient funds in your Real Account balance ($0). Please deposit first or switch to Demo Account.");
+    if (!address.trim()) {
+      setErrorMsg(selectedMethod === "Crypto" ? "Please enter the destination address." : "Please enter your bank details.");
+      return;
+    }
+    if (accountType !== "real") {
+      setErrorMsg("Withdrawals are only available from your real account.");
+      return;
+    }
+    if (numAmount > currentBalance) {
+      setErrorMsg(`Insufficient funds. Available: $${currentBalance.toFixed(2)}.`);
       return;
     }
 
     setErrorMsg("");
-    const ref = "WD" + Math.floor(100000 + Math.random() * 900000);
-    const now = new Date();
-    const dateFormatted = `${now.getDate()} ${now.toLocaleString("default", { month: "short" })}, ${now.getFullYear()}`;
+    setIsSubmitting(true);
+    try {
+      // The server re-checks the balance and holds the funds atomically.
+      const res = await fetch("/api/wallet/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: numAmount,
+          currency: selectedMethod === "Crypto" ? cryptoAsset : "USD (bank wire)",
+          cryptoAddress: address.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Withdrawal failed.");
+        return;
+      }
 
-    const newWd: WithdrawalRecord = {
-      date: dateFormatted,
-      reference: ref,
-      method: selectedMethod === "Crypto" ? cryptoAsset : "Bank Wire",
-      type: "Standard",
-      amount: selectedMethod === "Crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`,
-      totalUSD: `$${parseFloat(amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      status: "pending",
-    };
-
-    onWithdrawSuccess(newWd);
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setIsSubmitted(false);
-      onClose();
-    }, 1500);
+      const created = new Date(data.transaction.createdAt);
+      onWithdrawSuccess({
+        date: `${created.getDate()} ${created.toLocaleString("default", { month: "short" })}, ${created.getFullYear()}`,
+        reference: data.transaction.id.slice(0, 8).toUpperCase(),
+        method: selectedMethod === "Crypto" ? cryptoAsset : "Bank wire",
+        type: "Standard",
+        amount: selectedMethod === "Crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`,
+        totalUSD: `$${numAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        status: "pending",
+      });
+      setRealBalance(Number(data.newBalance ?? currentBalance - numAmount));
+      setIsSubmitted(true);
+      setAmount("");
+      setAddress("");
+      setTimeout(() => {
+        setIsSubmitted(false);
+        onClose();
+      }, 1500);
+    } catch {
+      setErrorMsg("Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="tp-drawer-backdrop" onClick={onClose}>
       <div className="tp-drawer-panel" onClick={(e) => e.stopPropagation()}>
         <div className="tp-drawer-header">
-          <h2 className="tp-drawer-title">Withdraw Funds</h2>
+          <h2 className="tp-drawer-title">Withdraw funds</h2>
           <button type="button" className="tp-drawer-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -433,7 +539,7 @@ export function WithdrawDrawer({
           >
             <CheckCircle2 size={54} color="#01b28b" />
             <h3 style={{ fontSize: "18px", fontWeight: 700, margin: 0 }}>
-              Withdrawal Request Submitted!
+              Withdrawal request submitted!
             </h3>
             <p style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.7)" }}>
               Your withdrawal has been queued for automated forensic compliance verification. Funds will be disbursed shortly.
@@ -455,7 +561,7 @@ export function WithdrawDrawer({
             >
               <div>
                 <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.55)", display: "block" }}>
-                  Available Balance ({accountType.toUpperCase()})
+                  Available balance ({accountType.toUpperCase()})
                 </span>
                 <span style={{ fontSize: "20px", fontWeight: 700, color: accountType === "real" ? "#3861fb" : "#01b28b" }}>
                   ${currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
@@ -466,10 +572,10 @@ export function WithdrawDrawer({
             {/* Method Tabs */}
             <div>
               <label style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", display: "block", marginBottom: "8px" }}>
-                Withdrawal Channel:
+                Withdrawal channel:
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                {(["Crypto", "Bank Transfer"] as const).map((method) => (
+                {(["Crypto", "Bank transfer"] as const).map((method) => (
                   <button
                     key={method}
                     type="button"
@@ -500,12 +606,12 @@ export function WithdrawDrawer({
             {/* Destination Address / Account */}
             <div>
               <label style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", display: "block", marginBottom: "6px" }}>
-                {selectedMethod === "Crypto" ? "Recipient Wallet Address:" : "Bank Account / IBAN details:"}
+                {selectedMethod === "Crypto" ? "Recipient wallet address:" : "Bank account / IBAN details:"}
               </label>
               <input
                 required
                 type="text"
-                placeholder={selectedMethod === "Crypto" ? "Enter destination address..." : "Bank name, IBAN / SWIFT, Account holder"}
+                placeholder={selectedMethod === "Crypto" ? "Enter destination address..." : "Bank name, IBAN / SWIFT, account holder"}
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 style={{
@@ -526,7 +632,7 @@ export function WithdrawDrawer({
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
                 <label style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)" }}>
-                  Withdrawal Amount:
+                  Withdrawal amount:
                 </label>
                 <button
                   type="button"
@@ -597,6 +703,7 @@ export function WithdrawDrawer({
             {/* Submit */}
             <button
               type="submit"
+              disabled={isSubmitting}
               style={{
                 width: "100%",
                 padding: "14px",
@@ -611,7 +718,7 @@ export function WithdrawDrawer({
                 boxShadow: "0 4px 14px rgba(56, 97, 251, 0.3)",
               }}
             >
-              Request Withdrawal
+              Request withdrawal
             </button>
           </form>
         )}
@@ -672,10 +779,10 @@ export function LiveChatDialog({ isOpen, onClose }: LiveChatDialogProps) {
           />
           <div>
             <div style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>
-              Broker Live Support
+              Broker live support
             </div>
             <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.55)" }}>
-              Specialist Online
+              Specialist online
             </div>
           </div>
         </div>
@@ -738,7 +845,7 @@ export function MobileNavDrawer({
           <div className="user-avatar">ub</div>
           <div className="user-meta">
             <p>user b</p>
-            <p>Real Account</p>
+            <p>Real account</p>
           </div>
         </div>
         <div className="dashboard-mobile-menu-buttons">
@@ -800,7 +907,7 @@ export function MobileNavDrawer({
           onClick={onClose}
         >
           <Layers size={22} />
-          <span>Cold Storage</span>
+          <span>Cold storage</span>
         </Link>
         <Link
           href="/cards"
@@ -863,7 +970,7 @@ export function MobileNavDrawer({
           onClick={onClose}
         >
           <Building size={22} />
-          <span>Real Estate</span>
+          <span>Real estate</span>
         </Link>
         <Link
           href="/staking"
@@ -934,7 +1041,7 @@ export function LanguageModal({ isOpen, onClose }: LanguageModalProps) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="tp-drawer-header">
-          <h2 className="tp-drawer-title">Select Language</h2>
+          <h2 className="tp-drawer-title">Select language</h2>
           <button type="button" className="tp-drawer-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -1003,7 +1110,7 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
           >
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
               <span style={{ fontSize: "14px", fontWeight: 700, color: "#fff" }}>
-                Welcome to Institutional Trading
+                Welcome to institutional trading
               </span>
               <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.4)" }}>Just now</span>
             </div>
@@ -1032,7 +1139,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
     <div className="tp-drawer-backdrop" onClick={onClose}>
       <div className="tp-drawer-panel" onClick={(e) => e.stopPropagation()}>
         <div className="tp-drawer-header">
-          <h2 className="tp-drawer-title">Account Settings</h2>
+          <h2 className="tp-drawer-title">Account settings</h2>
           <button type="button" className="tp-drawer-close" onClick={onClose}>
             <X size={20} />
           </button>
@@ -1067,7 +1174,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                   borderRadius: "10px",
                 }}
               >
-                Verified Trader
+                Verified trader
               </span>
             </div>
           </div>
@@ -1088,7 +1195,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 justifyContent: "space-between",
               }}
             >
-              <span>Trading Dashboard</span>
+              <span>Trading dashboard</span>
               <ArrowUpRight size={16} />
             </Link>
             <Link
@@ -1106,12 +1213,16 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 justifyContent: "space-between",
               }}
             >
-              <span>Custodial Wallet Hub</span>
+              <span>Custodial wallet hub</span>
               <ArrowUpRight size={16} />
             </Link>
             <Link
               href="/login"
-              onClick={onClose}
+              onClick={(e) => {
+                e.preventDefault();
+                onClose();
+                void logout();
+              }}
               style={{
                 padding: "12px",
                 backgroundColor: "rgba(255, 51, 68, 0.1)",
@@ -1125,7 +1236,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
                 marginTop: "8px",
               }}
             >
-              <span>Sign Out</span>
+              <span>Sign out</span>
               <LogOut size={16} />
             </Link>
           </div>

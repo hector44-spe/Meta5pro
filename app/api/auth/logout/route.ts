@@ -8,6 +8,8 @@ export async function POST() {
     name: AUTH_COOKIE,
     value: "",
     httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     maxAge: 0,
     path: "/",
   });

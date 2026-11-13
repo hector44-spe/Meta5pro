@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { sqlite } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
 export async function GET() {
@@ -10,12 +10,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const stmt = sqlite.prepare(`
-      SELECT * FROM positions
-      WHERE userId = ?
-      ORDER BY createdAt DESC
-    `);
-    const positions = stmt.all(session.userId);
+    const positions = await prisma.position.findMany({
+      where: { userId: session.userId },
+      orderBy: { createdAt: "desc" },
+    });
 
     return NextResponse.json({
       success: true,

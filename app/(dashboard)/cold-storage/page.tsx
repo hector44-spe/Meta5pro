@@ -362,13 +362,6 @@ export default function ColdStoragePage() {
   return (
     <div className="cold-storage-page-wrapper">
       <div className="cold-storage-content-card scrollbar-hide">
-        {/* Top Header */}
-        <div className="cold-storage-top">
-          <span style={{ display: "flex", gap: "12px", alignItems: "center", whiteSpace: "nowrap" }}>
-            <p className="cold-storage-top-title">Cold storage</p>
-          </span>
-        </div>
-
         <div className="cold-storage-bottom">
           {/* Switcher Wrapper */}
           <div className="cold-storage-switcher">

@@ -1,4 +1,4 @@
-import { db, sqlite } from "../lib/db.ts";
+import { db, sqlite } from "../../lib/db.ts";
 
 async function testFinancialFlows() {
   console.log("=== Testing Financial Flows: Deposits, Approvals, Trading & Withdrawals ===");

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+/* Fonts: Inter is self-hosted via @font-face in metagold.css (no render-blocking Google Fonts request). */
 
 :root {
   /* Canvas & Layout */
@@ -243,6 +243,9 @@ a {
 @media screen and (max-width: 991px) {
   .mobile-menu-btn {
     display: flex !important;
+  }
+  .header-module__BjIITG__headerContainer {
+    padding: 0 16px !important;
   }
 }
 

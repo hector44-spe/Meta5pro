@@ -74,7 +74,6 @@ export default function WithdrawPage() {
     <div className="tp-content-container">
       {/* Title Row: "Withdrawals" heading + "Withdraw now" action button */}
       <div className="tp-title-row">
-        <h1 className="tp-title-heading">Withdrawals</h1>
         <button
           type="button"
           className="tp-action-btn"

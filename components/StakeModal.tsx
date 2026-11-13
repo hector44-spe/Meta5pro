@@ -198,7 +198,7 @@ export default function StakeModal({ isOpen, onClose, onSuccess }: StakeModalPro
         {/* Plan Tiers Selection */}
         <div style={{ marginBottom: "16px" }}>
           <label style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.8)", display: "block", marginBottom: "8px" }}>
-            Select Yield Tier:
+            Select yield tier:
           </label>
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             {plans.map((p) => {
@@ -249,7 +249,7 @@ export default function StakeModal({ isOpen, onClose, onSuccess }: StakeModalPro
           <div style={{ marginBottom: "16px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
               <label style={{ fontSize: "13px", fontWeight: 500, color: "rgba(255,255,255,0.8)" }}>
-                Stake Amount ($ USD):
+                Stake amount ($ USD):
               </label>
               <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)" }}>
                 Available: <span style={{ color: "#38bdf8", fontWeight: 600 }}>${currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
@@ -304,14 +304,14 @@ export default function StakeModal({ isOpen, onClose, onSuccess }: StakeModalPro
             }}
           >
             <div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>Daily Profit</div>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>Daily profit</div>
               <div style={{ color: "#10b981", fontWeight: 700, fontSize: "15px" }}>
                 +${dailyYield.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
             </div>
             <div style={{ width: "1px", backgroundColor: "rgba(255,255,255,0.08)" }} />
             <div>
-              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>Total Yield Return</div>
+              <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>Total yield return</div>
               <div style={{ color: "#60a5fa", fontWeight: 700, fontSize: "15px" }}>
                 +${totalReturn.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </div>
@@ -340,10 +340,10 @@ export default function StakeModal({ isOpen, onClose, onSuccess }: StakeModalPro
             {submitting ? (
               <>
                 <Loader2 size={16} className="animate-spin" />
-                <span>Confirming Subscription...</span>
+                <span>Confirming subscription...</span>
               </>
             ) : (
-              "Confirm & Lock Capital"
+              "Confirm & lock capital"
             )}
           </button>
         </form>

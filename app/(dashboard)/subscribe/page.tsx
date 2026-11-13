@@ -224,7 +224,7 @@ export default function SubscribePage() {
   // Success Notification Toast
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Accordion open item for "How It Works"
+  // Accordion open item for "How it works"
   const [openQuestionId, setOpenQuestionId] = useState<number | null>(null);
 
   // Currency Formatter
@@ -320,12 +320,6 @@ export default function SubscribePage() {
           <p>{toastMessage}</p>
         </div>
       )}
-
-      {/* Top Header */}
-      <div className="subscribe-section-top">
-        <p>Subscriptions</p>
-      </div>
-
       {/* Main Content Card */}
       <div className="subscribe-content-card scrollbar-hide">
         {/* Top Subscription Balance Card */}

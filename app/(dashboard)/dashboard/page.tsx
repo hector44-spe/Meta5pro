@@ -95,7 +95,7 @@ function AssetBrandIcon({ symbol, size = 28 }: { symbol: string; size?: number }
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ borderRadius: "50%", flexShrink: 0 }}>
         <circle cx="12" cy="12" r="12" fill="#1c1c1e" stroke="rgba(255,255,255,0.12)" strokeWidth="0.5" />
         <path
-          d="M15.44 12.38c.02 2.07 1.82 2.76 1.84 2.77-.02.05-.29 1-.95 1.97-.57.84-1.17 1.67-2.1 1.69-.92.02-1.22-.55-2.28-.55-1.07 0-1.4.53-2.28.57-.9.03-1.58-.9-2.15-1.74-1.18-1.7-2.07-4.8-.87-6.88.6-.1.03 1.57-.6 2.61-.6 1.05 0 1.98.7 2.62.7.63 0 1.76-.88 2.94-.75.49.02 1.88.2 2.77 1.5-.07.05-1.66.97-1.64 2.89zm-1.89-4.88c.49-.6.82-1.42.73-2.25-.71.03-1.56.47-2.06 1.06-.44.51-.83 1.35-.72 2.16.79.06 1.6-.41 2.05-.97z"
+          d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" transform="translate(4.8 4.8) scale(0.6)"
           fill="#ffffff"
         />
       </svg>
@@ -261,9 +261,39 @@ export default function DashboardPage() {
 
   // TradingView Embed Chart reference
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [chartInView, setChartInView] = useState(false);
+
+  // Live TradingView symbol for the asset selected in the trade panel.
+  // CRYPTO:<coin>USD is TradingView's aggregated index, available in every region.
+  const tvSymbol = (() => {
+    const c = (currency || "BTC").toUpperCase();
+    const stocks: Record<string, string> = { AAPL: "NASDAQ:AAPL", GOOGL: "NASDAQ:GOOGL", TSLA: "NASDAQ:TSLA", MSFT: "NASDAQ:MSFT" };
+    return stocks[c] ?? `CRYPTO:${c}USD`;
+  })();
+
+  // Only load the (heavy) chart once it is on screen
+  useEffect(() => {
+    const el = chartContainerRef.current;
+    if (!el || chartInView) return;
+    if (!("IntersectionObserver" in window)) {
+      setChartInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setChartInView(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [chartHidden, chartInView]);
 
   useEffect(() => {
-    if (chartHidden) return;
+    if (chartHidden || !chartInView) return;
     const container = chartContainerRef.current;
     if (!container) return;
 
@@ -281,8 +311,8 @@ export default function DashboardPage() {
     script.async = true;
     script.innerHTML = JSON.stringify({
       autosize: true,
-      symbol: "BINANCE:BTCUSDT",
-      interval: "D",
+      symbol: tvSymbol,
+      interval: "15",
       timezone: "Etc/UTC",
       theme: "dark",
       style: "1",
@@ -300,7 +330,7 @@ export default function DashboardPage() {
     return () => {
       if (container) container.innerHTML = "";
     };
-  }, [chartHidden]);
+  }, [chartHidden, chartInView, tvSymbol]);
 
   // AI assistant for TP/SL
   const handleSetWithAi = () => {
@@ -1720,7 +1750,7 @@ export default function DashboardPage() {
               >
                 <div>
                   <label style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
-                    Stop Loss:
+                    Stop loss:
                   </label>
                   <input
                     type="text"
@@ -1742,7 +1772,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <label style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
-                    Take Profit:
+                    Take profit:
                   </label>
                   <input
                     type="text"
@@ -1843,7 +1873,7 @@ export default function DashboardPage() {
           >
             {orderExecuting
               ? "Executing..."
-              : `${orderTab === "buy" ? "Buy" : orderTab === "sell" ? "Sell" : "Convert"} ${currency} ${accountType === "real" ? "(Real)" : "(Demo)"}`}
+              : `${orderTab === "buy" ? "Buy" : orderTab === "sell" ? "Sell" : "Convert"} ${currency} ${accountType === "real" ? "(real)" : "(demo)"}`}
           </button>
         </div>
       </div>
@@ -1988,8 +2018,8 @@ export default function DashboardPage() {
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size (Margin)</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry Price</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Mark Price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Mark price</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Unrealized PnL</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Action</th>
                             </tr>
@@ -2128,9 +2158,9 @@ export default function DashboardPage() {
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry Price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry price</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Realized PnL</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Closed At</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Closed at</th>
                             </tr>
                           </thead>
                           <tbody>

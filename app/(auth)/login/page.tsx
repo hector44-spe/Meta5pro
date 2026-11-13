@@ -54,7 +54,13 @@ export default function LoginPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      let data: any = {};
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error("Unable to reach server. Please try again later.");
+      }
       if (!res.ok) {
         throw new Error(data.error || "Login failed");
       }
@@ -91,149 +97,140 @@ export default function LoginPage() {
                 d="m124.3 67.826-22.622 39.194H124.3v108.569l-50.611 18.422V166.2H96.32L73.69 126.996V18.422L124.3 0zm-73.676 59.17L27.99 166.2h22.634v23.063L0 207.685V59.92l50.624-18.435zm147.362 47.095-50.611 18.434V107.02h22.634l-22.634-39.213V44.748l50.624-18.422z"
               />
             </svg>
-            <span
-              style={{
-                color: "#fff",
-                fontSize: "18px",
-                fontWeight: "600",
-                letterSpacing: "-0.01em",
-              }}
-            >
-              Meta Gold 5
-            </span>
           </Link>
 
-          <div className={styles.headerActions}>
-            <div style={{ position: "relative" }}>
-              <div
-                className={styles.globeWrapper}
-                onClick={() => setLangOpen(!langOpen)}
-              >
-                <div className={styles.globeContent}>
-                  <Globe size={18} />
-                  <span className={styles.globeCode}>{currentLang.code}</span>
-                </div>
-                <ChevronDown
-                  size={14}
-                  style={{
-                    transform: langOpen ? "rotate(180deg)" : "none",
-                    transition: "transform 150ms ease",
-                  }}
-                />
-              </div>
+          <Link href="/" className={styles.headerBackLink}>
+            <div className={styles.headerBackBtn}>
+              <p>Back to homepage</p>
+            </div>
+          </Link>
+        </header>
 
-              {langOpen && (
-                <div
-                  className={styles.dropdownMenu}
-                  style={{
-                    width: "220px",
-                    right: 0,
-                    left: "auto",
-                    maxHeight: "320px",
-                    overflowY: "auto",
-                    padding: "4px",
-                    zIndex: 9999,
-                  }}
-                >
-                  <div
-                    style={{
-                      padding: "6px",
-                      position: "sticky",
-                      top: 0,
-                      background: "#18181b",
-                      zIndex: 10,
-                      borderBottom: "1px solid #27272a",
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <input
-                      type="text"
-                      placeholder="Search language..."
-                      value={langSearch}
-                      onChange={(e) => setLangSearch(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 8px",
-                        fontSize: "12px",
-                        background: "#09090b",
-                        border: "1px solid #3f3f46",
-                        borderRadius: "4px",
-                        color: "#fff",
-                        outline: "none",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                  {filteredLangs.map((l) => (
-                    <div
-                      key={l.code}
-                      className={styles.dropdownItem}
-                      onClick={() => {
-                        changeLanguage(l.code);
-                        setCurrentCode(l.code);
-                        setLangOpen(false);
-                      }}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        padding: "7px 10px",
-                        background:
-                          currentCode === l.code
-                            ? "rgba(79, 70, 229, 0.25)"
-                            : undefined,
-                      }}
-                    >
-                      <img
-                        src={getFlagUrl(l.countryCode)}
-                        alt={l.code}
-                        style={{
-                          width: "18px",
-                          height: "13px",
-                          objectFit: "cover",
-                          borderRadius: "2px",
-                        }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = "none";
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontWeight: 600,
-                          textTransform: "uppercase",
-                          fontSize: "11px",
-                          minWidth: "24px",
-                        }}
-                      >
-                        {l.code}
-                      </span>
-                      <span className={styles.itemSecondary} style={{ fontSize: "12px" }}>
-                        {l.label}
-                      </span>
-                    </div>
-                  ))}
-                  {filteredLangs.length === 0 && (
-                    <div style={{ padding: "12px", textAlign: "center", fontSize: "12px", color: "#71717a" }}>
-                      No languages found
-                    </div>
-                  )}
-                </div>
-              )}
+        {/* Right-aligned Language Switcher Pill */}
+        <div className={styles.authLangRow}>
+          <div style={{ position: "relative" }}>
+            <div
+              className={styles.globeWrapper}
+              onClick={() => setLangOpen(!langOpen)}
+            >
+              <div className={styles.globeContent}>
+                <Globe size={15} />
+                <span className={styles.globeCode}>{currentLang.code}</span>
+              </div>
+              <ChevronDown
+                size={13}
+                style={{
+                  transform: langOpen ? "rotate(180deg)" : "none",
+                  transition: "transform 150ms ease",
+                }}
+              />
             </div>
 
-            <Link href="/" className={styles.headerBackLink}>
-              <div className={styles.headerBackBtn}>
-                <p>Back to homepage</p>
+            {langOpen && (
+              <div
+                className={styles.dropdownMenu}
+                style={{
+                  width: "220px",
+                  right: 0,
+                  left: "auto",
+                  maxHeight: "320px",
+                  overflowY: "auto",
+                  padding: "4px",
+                  zIndex: 9999,
+                }}
+              >
+                <div
+                  style={{
+                    padding: "6px",
+                    position: "sticky",
+                    top: 0,
+                    background: "#18181b",
+                    zIndex: 10,
+                    borderBottom: "1px solid #27272a",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="text"
+                    placeholder="Search language..."
+                    value={langSearch}
+                    onChange={(e) => setLangSearch(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "6px 8px",
+                      fontSize: "12px",
+                      background: "#09090b",
+                      border: "1px solid #3f3f46",
+                      borderRadius: "4px",
+                      color: "#fff",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                {filteredLangs.map((l) => (
+                  <div
+                    key={l.code}
+                    className={styles.dropdownItem}
+                    onClick={() => {
+                      changeLanguage(l.code);
+                      setCurrentCode(l.code);
+                      setLangOpen(false);
+                    }}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "7px 10px",
+                      background:
+                        currentCode === l.code
+                          ? "rgba(79, 70, 229, 0.25)"
+                          : undefined,
+                    }}
+                  >
+                    <img
+                      src={getFlagUrl(l.countryCode)}
+                      alt={l.code}
+                      style={{
+                        width: "18px",
+                        height: "13px",
+                        objectFit: "cover",
+                        borderRadius: "2px",
+                      }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        fontSize: "11px",
+                        minWidth: "24px",
+                      }}
+                    >
+                      {l.code}
+                    </span>
+                    <span className={styles.itemSecondary} style={{ fontSize: "12px" }}>
+                      {l.label}
+                    </span>
+                  </div>
+                ))}
+                {filteredLangs.length === 0 && (
+                  <div style={{ padding: "12px", textAlign: "center", fontSize: "12px", color: "#71717a" }}>
+                    No languages found
+                  </div>
+                )}
               </div>
-            </Link>
+            )}
           </div>
-        </header>
+        </div>
 
         {/* Main Auth Form */}
         <main className={styles.authPageContent}>
           <div className={styles.authForm}>
             <span className={styles.authFormHeader}>
-              <h3 className={styles.authFormTitle}>Welcome back</h3>
+              <h3 className={styles.authFormTitle}>Welcome back!</h3>
               <p className={styles.authFormSubtext}>Log in to your account</p>
             </span>
 

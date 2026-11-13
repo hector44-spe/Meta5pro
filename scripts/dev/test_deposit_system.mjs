@@ -1,4 +1,4 @@
-import { db } from "../lib/db.ts";
+import { db } from "../../lib/db.ts";
 
 async function runDepositSystemTest() {
   console.log("=== Testing Multi-Step Deposit System & Dynamic Admin Addresses ===\n");

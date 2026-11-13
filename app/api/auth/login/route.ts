@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword, signToken, AUTH_COOKIE } from "@/lib/auth";
+import { verifyPassword, signToken, AUTH_COOKIE, rateLimited, clearRateLimit, clientIp } from "@/lib/auth";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +23,14 @@ export async function POST(req: Request) {
     }
 
     const { email, password } = parsed.data;
+
+    const limitKey = `login:${clientIp(req)}:${email.toLowerCase()}`;
+    if (rateLimited(limitKey, 5)) {
+      return NextResponse.json(
+        { error: "Too many login attempts. Please wait 15 minutes and try again." },
+        { status: 429 },
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
@@ -50,6 +58,8 @@ export async function POST(req: Request) {
         { status: 401 },
       );
     }
+
+    clearRateLimit(limitKey);
 
     const token = signToken({
       userId: user.id,

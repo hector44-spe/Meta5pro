@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db, sqlite } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 
 export async function GET() {
@@ -11,15 +11,16 @@ export async function GET() {
     }
 
     // Join transactions with user email/fullName
-    const stmt = sqlite.prepare(`
-      SELECT 
-        t.id, t.userId, t.type, t.amount, t.currency, t.cryptoAddress, t.txHash, t.receiptUrl, t.status, t.createdAt,
-        u.email as userEmail, u.fullName as userFullName
-      FROM transactions t
-      LEFT JOIN users u ON t.userId = u.id
-      ORDER BY t.createdAt DESC
-    `);
-    const transactions = stmt.all();
+    const rows = await prisma.transaction.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { user: { select: { email: true, fullName: true } } },
+    });
+    // Flatten to the shape the admin page expects
+    const transactions = rows.map(({ user, approvedAt: _approvedAt, ...t }) => ({
+      ...t,
+      userEmail: user?.email ?? null,
+      userFullName: user?.fullName ?? null,
+    }));
 
     return NextResponse.json({
       success: true,

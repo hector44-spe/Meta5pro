@@ -266,7 +266,7 @@
   }
 
   @media screen and (max-width: 1024px) {
-    & {
+    .orphan-scss-rule {
       max-width: unset;
     }
 
@@ -293,11 +293,11 @@
   outline: none;
   transition: all 150ms ease-in-out;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     color: var(--color-white);
   }
 
-  &::after {
+  .orphan-scss-rule::after {
     background: var(--color-ai-btn-gradient);
     border-radius: inherit;
     content: "";
@@ -329,7 +329,7 @@
   margin-top: 8px;
   transition: all 150ms ease-in;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     color: var(--color-primary-hover);
   }
 
@@ -353,14 +353,14 @@
   position: relative;
   overflow: hidden;
 
-  & p {
+  .orphan-scss-rule p {
     color: var(--color-text);
     font-size: 14px;
     line-height: 18px;
     font-weight: 500;
   }
 
-  &::before {
+  .orphan-scss-rule::before {
     content: "";
     position: absolute;
     top: 0;
@@ -371,7 +371,7 @@
     opacity: 0.22;
   }
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     background-color: grey;
     pointer-events: none;
     user-select: none;
@@ -402,14 +402,14 @@
   position: relative;
   overflow: hidden;
 
-  & p {
+  .orphan-scss-rule p {
     color: var(--color-text);
     font-size: 14px;
     line-height: 18px;
     font-weight: 500;
   }
 
-  &::before {
+  .orphan-scss-rule::before {
     content: "";
     position: absolute;
     top: 0;
@@ -420,11 +420,11 @@
     opacity: 0.15;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-primary-hover) !important;
   }
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     background-color: grey;
     pointer-events: none;
     user-select: none;
@@ -454,11 +454,11 @@
   justify-content: center;
   transition: all 150ms ease-in;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover) !important;
   }
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     background-color: grey;
     pointer-events: none;
     user-select: none;
@@ -489,7 +489,7 @@
   position: relative;
   overflow: hidden;
 
-  &::before {
+  .orphan-scss-rule::before {
     content: "";
     position: absolute;
     top: 0;
@@ -500,7 +500,7 @@
     opacity: 0.15;
   }
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     background-color: grey;
     pointer-events: none;
     user-select: none;
@@ -529,7 +529,7 @@
   width: 100%;
   transition: all 150ms ease-in;
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     background-color: grey;
     pointer-events: none;
     user-select: none;
@@ -582,7 +582,7 @@
   justify-content: center;
   transition: all 150ms ease-in;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     border: 1px solid var(--color-primary-hover);
     animation: glow 1s infinite;
   }
@@ -719,14 +719,14 @@
     color: var(--color-primary);
   }
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     pointer-events: none;
     user-select: none;
     cursor: not-allowed;
     opacity: 0.5;
   }
 
-  &.error {
+  .orphan-scss-rule.error {
     .file_upload_wrapper {
       border: 1px dashed #ff3344;
     }
@@ -755,14 +755,14 @@
   gap: 8px;
   max-height: max-content;
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     background-color: grey !important;
     pointer-events: none;
     user-select: none;
     cursor: not-allowed;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-primary-hover) !important;
   }
 
@@ -786,16 +786,16 @@
   align-items: center;
   justify-content: space-between;
 
-  &.lighter {
+  .orphan-scss-rule.lighter {
     background: var(--color-control-active);
   }
 
-  &.hoverable {
+  .orphan-scss-rule.hoverable {
     cursor: pointer;
     transition: all 150ms ease-in;
   }
 
-  &.hoverable:hover {
+  .orphan-scss-rule.hoverable:hover {
     background-color: var(--color-control-hover);
   }
 
@@ -859,11 +859,11 @@
   align-items: center;
   justify-content: center;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background: var(--color-control-hover);
   }
 
-  &.disabled {
+  .orphan-scss-rule.disabled {
     /* background-color: grey; */
     pointer-events: none;
     user-select: none;
@@ -871,7 +871,7 @@
     cursor: not-allowed;
   }
 
-  &.active {
+  .orphan-scss-rule.active {
     background-color: var(--color-primary);
     color: var(--color-primary-text);
   }
@@ -896,12 +896,12 @@
   max-height: max-content;
   color: var(--color-text);
 
-  &.primary {
+  .orphan-scss-rule.primary {
     background-color: var(--color-primary) !important;
     color: var(--color-white) !important;
   }
 
-  &.w-full {
+  .orphan-scss-rule.w-full {
     white-space: nowrap;
     display: flex;
     align-items: center;
@@ -909,11 +909,11 @@
     width: 100%;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover) !important;
   }
 
-  & p {
+  .orphan-scss-rule p {
     font-size: 14px !important;
     line-height: 18px !important;
     font-weight: 600;
@@ -935,11 +935,11 @@
   transition: all 150ms ease-in-out;
   color: var(--color-white);
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-primary-hover);
   }
 
-  & p {
+  .orphan-scss-rule p {
     font-size: 14px;
     line-height: 13px;
     font-weight: 600;
@@ -1018,7 +1018,7 @@
     border: 1px solid var(--color-input-border);
   }
 
-  &.error .input_wrapper {
+  .orphan-scss-rule.error .input_wrapper {
     border: 1px solid #ff3344 !important;
     animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
     transform: translate3d(0, 0, 0);
@@ -1026,8 +1026,8 @@
     perspective: 1000px;
   }
 
-  & .input_wrapper:hover,
-  & .input_wrapper:focus-within {
+  .orphan-scss-rule .input_wrapper:hover,
+  .orphan-scss-rule .input_wrapper:focus-within {
     background: var(--color-input-hover);
     border: 1px solid var(--color-box-border);
   }
@@ -1623,7 +1623,7 @@
   flex-direction: column;
   margin-top: 15px;
 
-  &.sm {
+  .orphan-scss-rule.sm {
     margin-top: 6px;
   }
 
@@ -1637,7 +1637,7 @@
   color: var(--color-primary);
   transition: all 150ms ease-in;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     color: var(--color-primary-hover);
   }
 
@@ -1782,14 +1782,14 @@
   background: var(--color-primary-light);
   border: 1px solid var(--color-primary);
 
-  &.lg {
+  .orphan-scss-rule.lg {
     font-size: 12px;
     line-height: 12px;
     padding-inline: 8px;
     text-transform: capitalize;
   }
 
-  &.xl {
+  .orphan-scss-rule.xl {
     font-size: 16px;
     line-height: 16px;
     padding-inline: 12px;
@@ -1862,12 +1862,12 @@
   display: grid;
   place-content: center;
 
-  &:checked {
+  .orphan-scss-rule:checked {
     background-color: var(--color-primary);
     border: 1px solid var(--color-primary);
   }
 
-  &::before {
+  .orphan-scss-rule::before {
     content: "";
     width: 0.5em;
     height: 0.5em;
@@ -1878,7 +1878,7 @@
     clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
   }
 
-  &:checked::before {
+  .orphan-scss-rule:checked::before {
     transform: scale(1);
   }
 
@@ -2274,7 +2274,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -2343,12 +2343,12 @@
   width: "auto";
   white-space: nowrap;
 
-  &.quick_link_badge {
+  .orphan-scss-rule.quick_link_badge {
     position: unset !important;
     animation: bounce 1s infinite !important;
   }
 
-  &.zero {
+  .orphan-scss-rule.zero {
     display: none;
   }
 
@@ -2671,7 +2671,7 @@
     transition: all 150ms ease-in-out;
   }
 
-  & tbody tr:hover .action_icon {
+  .orphan-scss-rule tbody tr:hover .action_icon {
     visibility: visible;
   }
 
@@ -2690,26 +2690,26 @@
     cursor: pointer;
   }
 
-  & thead {
+  .orphan-scss-rule thead {
     position: "sticky";
     top: 0;
   }
 
-  & thead th {
+  .orphan-scss-rule thead th {
     font-size: 12px;
     font-family: 16px;
     font-weight: 500;
     color: var(--color-text-secondary);
   }
 
-  & tbody td {
+  .orphan-scss-rule tbody td {
     font-size: 14px;
     font-family: 18px;
     font-weight: 500;
   }
 
-  & thead tr,
-  & tbody tr {
+  .orphan-scss-rule thead tr,
+  .orphan-scss-rule tbody tr {
     display: flex;
     width: 100%;
     gap: 12px;
@@ -2717,13 +2717,13 @@
     white-space: nowrap;
   }
 
-  & thead tr {
+  .orphan-scss-rule thead tr {
     background: transparent;
     padding: 4px 8px;
     border-radius: 8px;
   }
 
-  & tbody {
+  .orphan-scss-rule tbody {
     display: grid;
     gap: 8px;
     width: 100%;
@@ -2731,15 +2731,15 @@
     padding-top: 12px;
   }
 
-  & tbody tr:nth-of-type(even) {
+  .orphan-scss-rule tbody tr:nth-of-type(even) {
     background: transparent;
   }
 
-  & tbody tr:nth-of-type(odd) {
+  .orphan-scss-rule tbody tr:nth-of-type(odd) {
     background: var(--color-card-background-2) !important;
   }
 
-  & tbody tr {
+  .orphan-scss-rule tbody tr {
     padding: 10px 8px;
     border-radius: 8px;
     cursor: pointer;
@@ -2748,11 +2748,11 @@
     border: 1px solid var(--color-card-background-3);
   }
 
-  & tbody tr:hover {
+  .orphan-scss-rule tbody tr:hover {
     background: var(--color-control-hover) !important;
   }
 
-  & tbody:has(> :hover) > *:not(:hover) {
+  .orphan-scss-rule tbody:has(> :hover) > *:not(:hover) {
     opacity: 0.7;
   }
 
@@ -2968,7 +2968,7 @@
   animation: fadeSlideIn 200ms ease-out;
   z-index: 1000;
 
-  &.language-select {
+  .orphan-scss-rule.language-select {
    right: 0px;
    min-width: 180px;
   }
@@ -2984,7 +2984,7 @@
     }
   }
 
-  &.full {
+  .orphan-scss-rule.full {
     max-width: 100%;
     width: 100%;
   }
@@ -3121,7 +3121,7 @@
   transition: all 150ms ease-in-out;
   overflow: hidden;
 
-  &::before {
+  .orphan-scss-rule::before {
     content: "";
     position: absolute;
     top: 0;
@@ -3136,7 +3136,7 @@
     opacity: 0.09;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     color: var(--color-text);
     background-color: var(--color-control-hover);
   }
@@ -3165,7 +3165,7 @@
     display: block;
   }
 
-  &::after {
+  .orphan-scss-rule::after {
     content: "";
     position: absolute;
     top: 0;
@@ -3196,7 +3196,7 @@
   width: 100vw;
   position: relative;
 
-  &::before {
+  .orphan-scss-rule::before {
     content: "";
     position: absolute;
     top: 0;
@@ -3222,7 +3222,7 @@
   overflow: scroll;
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       padding-bottom: 180px;
     }
   }
@@ -3273,7 +3273,7 @@
   transition: all 150ms ease-in-out;
   overflow: hidden;
 
-  &::before {
+  .orphan-scss-rule::before {
     content: "";
     position: absolute;
     top: 0;
@@ -3288,7 +3288,7 @@
     opacity: 0.09;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     color: var(--color-text);
     background-color: var(--color-control-hover);
   }
@@ -3346,8 +3346,8 @@
     right: 0;
   }
 
-  & .input_wrapper:hover,
-  & .input_wrapper:focus-within {
+  .orphan-scss-rule .input_wrapper:hover,
+  .orphan-scss-rule .input_wrapper:focus-within {
     border: 1px solid var(--color-card-background-50);
   }
 
@@ -4032,7 +4032,7 @@
     }
   }
 
-  &.full {
+  .orphan-scss-rule.full {
     max-width: 100%;
     width: 100%;
   }
@@ -4122,7 +4122,7 @@
   z-index: 100;
   display: none;
 
-  &.open {
+  .orphan-scss-rule.open {
     display: block;
   }
 
@@ -4458,7 +4458,7 @@
   }
 
   @media screen and (max-width: 1274px) {
-    & {
+    .orphan-scss-rule {
       gap: 56px;
       border-radius: 12px;
       margin-top: 8px;
@@ -4878,7 +4878,7 @@
   border-radius: 6px;
   background-color: var(--color-control);
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover);
   }
 
@@ -4921,7 +4921,7 @@
     transition: all 200ms ease;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     .move-money-button-options {
       opacity: 1;
     }
@@ -5241,7 +5241,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    &.desktop {
+    .orphan-scss-rule.desktop {
       display: none;
     }
   }
@@ -5360,7 +5360,7 @@
   }
 
   @media screen and (max-width: 1274px) {
-    & {
+    .orphan-scss-rule {
       background: var(--color-card-background);
       border-radius: 12px;
     }
@@ -5400,12 +5400,12 @@
     background-color: var(--color-primary);
   }
 
-  &:has(> :hover) > *:not(:hover) {
+  .orphan-scss-rule:has(> :hover) > *:not(:hover) {
     opacity: 0.6;
     border-color: transparent !important;
   }
 
-  & .account_summary_new_item {
+  .orphan-scss-rule .account_summary_new_item {
     font-size: 14px;
     color: var(--color-text);
     line-height: 18px;
@@ -5421,54 +5421,54 @@
     height: 52px;
   }
 
-  & .account_summary_new_item div:first-of-type {
+  .orphan-scss-rule .account_summary_new_item div:first-of-type {
     display: flex;
     align-items: center;
     gap: 8px;
   }
 
-  & .account_summary_new_item span {
+  .orphan-scss-rule .account_summary_new_item span {
     display: flex;
     align-items: center;
     gap: 4px;
   }
 
-  & .account_summary_new_item span img {
+  .orphan-scss-rule .account_summary_new_item span img {
     height: 18px;
     width: 18px;
   }
 
-  & .account_summary_new_item .title {
+  .orphan-scss-rule .account_summary_new_item .title {
     white-space: nowrap;
     font-weight: 600;
     color: var(--color-text);
   }
 
-  & .account_summary_new_item .value {
+  .orphan-scss-rule .account_summary_new_item .value {
     color: var(--color-text-secondary);
     white-space: nowrap;
     width: 100%;
     max-width: max-content;
   }
 
-  & .account_summary_new_item:not(:last-of-type) {
+  .orphan-scss-rule .account_summary_new_item:not(:last-of-type) {
     border-bottom: 1px solid var(--color-account-card-background);
   }
 
-  & .account_summary_new_item:hover {
+  .orphan-scss-rule .account_summary_new_item:hover {
     border-radius: 6px;
     background-color: var(--color-card-background-2);
     border-color: transparent;
   }
 
-  & .account_summary_new_item:hover {
+  .orphan-scss-rule .account_summary_new_item:hover {
     border-radius: 6px;
     background-color: var(--color-card-background-2);
     border-color: transparent;
   }
 
   @media screen and (max-width: 550px) {
-    & .account_summary_new_item {
+    .orphan-scss-rule .account_summary_new_item {
       display: flex;
       justify-content: space-between;
       width: 100%;
@@ -5480,11 +5480,11 @@
       display: none;
     }
 
-    & .account_summary_new_item:hover .value {
+    .orphan-scss-rule .account_summary_new_item:hover .value {
       display: none;
     }
 
-    & .account_summary_new_item:hover .account_summary_button {
+    .orphan-scss-rule .account_summary_new_item:hover .account_summary_button {
       display: block;
     }
   }
@@ -5495,20 +5495,20 @@
   /* categories */
   padding: 0px 6px;
 
-  & {
+  .orphan-scss-rule {
     display: flex;
     flex-direction: column;
     gap: 24px;
     margin-top: 16px;
   }
 
-  & .bars {
+  .orphan-scss-rule .bars {
     display: flex;
     gap: 4px;
     align-items: center;
   }
 
-  & .bars .bar {
+  .orphan-scss-rule .bars .bar {
     height: 24px;
   }
 
@@ -5529,12 +5529,12 @@
     gap: 24px;
   }
 
-  & .bars .bar:first-of-type {
+  .orphan-scss-rule .bars .bar:first-of-type {
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;
   }
 
-  & .bars .bar:last-child {
+  .orphan-scss-rule .bars .bar:last-child {
     border-top-right-radius: 6px !important;
     border-bottom-right-radius: 6px !important;
   }
@@ -5555,18 +5555,18 @@
     gap: 4px;
   }
 
-  & .titles .title .icon {
+  .orphan-scss-rule .titles .title .icon {
     margin-top: 5px;
   }
 
-  & .titles .title p:nth-of-type(1) {
+  .orphan-scss-rule .titles .title p:nth-of-type(1) {
     font-size: 14px;
     color: var(--color-text-48);
     line-height: 18px;
     font-weight: 600;
   }
 
-  & .titles .title p:nth-of-type(2) {
+  .orphan-scss-rule .titles .title p:nth-of-type(2) {
     font-size: 16px;
     color: var(--color-text);
     line-height: 24px;
@@ -5585,18 +5585,18 @@
   cursor: pointer;
   transition: all 80ms ease-out;
 
-  &:not(:last-of-type) {
+  .orphan-scss-rule:not(:last-of-type) {
     /* padding-bottom: 8px; */
     border-bottom: 1px solid var(--color-account-card-background);
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     border-radius: 6px;
     background-color: var(--color-card-background-2);
     border-color: transparent;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     border-radius: 6px;
     background-color: var(--color-card-background-2);
     border-color: transparent;
@@ -5749,7 +5749,7 @@
   }
 
   @media screen and (max-width: 1274px) {
-    & {
+    .orphan-scss-rule {
       display: flex;
       flex-direction: column;
       background: transparent;
@@ -5990,7 +5990,7 @@
     margin-top: 0px !important;
   }
 
-  &.error .amountbox_wrapper {
+  .orphan-scss-rule.error .amountbox_wrapper {
     border: 1px solid #ff3344 !important;
     animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
     transform: translate3d(0, 0, 0);
@@ -6233,18 +6233,18 @@
   place-content: center;
   transition: transform 0.2s ease;
 
-  &.switching {
+  .orphan-scss-rule.switching {
     color: var(--color-text-80);
     transform: translate(-50%, -50%) rotate(180deg);
     border-radius: 100%;
   }
 
   @media (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       transform: translate(-50%, -30%);
     }
 
-    &.switching {
+    .orphan-scss-rule.switching {
       transform: translate(-50%, -30%) rotate(180deg);
     }
   }
@@ -6362,7 +6362,7 @@
     transition: all 100ms ease;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     .quick-flip-buttons {
       opacity: 1;
     }
@@ -6450,17 +6450,17 @@
     background: var(--color-control-hover);
   }
 
-  &:disabled {
+  .orphan-scss-rule:disabled {
     opacity: 0.5;
     cursor: not-allowed;
     color: var(--color-text-disabled);
   }
 
-  &.active {
+  .orphan-scss-rule.active {
     color: var(--color-white);
   }
 
-  &.active p {
+  .orphan-scss-rule.active p {
     color: var(--color-white) !important;
   }
 
@@ -6494,7 +6494,7 @@
   border-radius: 12px;
 
   @media screen and (max-width: 1200px) {
-    & {
+    .orphan-scss-rule {
       flex-direction: column;
       min-height: 470px;
       width: 100%;
@@ -6510,7 +6510,7 @@
   height: 100%;
 
   @media screen and (max-width: 1200px) {
-    & {
+    .orphan-scss-rule {
       flex-direction: column;
       background-color: var(--color-card-background);
       border-radius: 12px;
@@ -6537,7 +6537,7 @@
   padding: 24px;
 
   @media screen and (max-width: 1200px) {
-    & {
+    .orphan-scss-rule {
       max-width: unset;
       background: transparent;
     }
@@ -6652,7 +6652,7 @@
   }
 
   @media screen and (max-width: 1200px) {
-    & {
+    .orphan-scss-rule {
       background: transparent;
       padding-bottom: 0px;
     }
@@ -6674,7 +6674,7 @@
   transition: all 0.1s cubic-bezier(0.47, 0, 0.75, 0.72);
 
   @media screen and (max-width: 1200px) {
-    & {
+    .orphan-scss-rule {
 /* emotion-js-expr:       height: ${({$showChart:er})=>er?"400px":"0px"}; */
 /* emotion-js-expr:       /* opacity: ${({$showChart:er})=>er?1:0}; * / */
 /* emotion-js-expr:       visibility: ${({$showChart:er})=>er?"visible":"hidden"}; */
@@ -7057,26 +7057,26 @@
     font-weight: 600 !important;
   }
 
-  & thead {
+  .orphan-scss-rule thead {
     position: "sticky";
     top: 0;
   }
 
-  & thead th {
+  .orphan-scss-rule thead th {
     font-size: 12px;
     font-family: 16px;
     font-weight: 500;
     color: var(--color-text-secondary);
   }
 
-  & tbody td {
+  .orphan-scss-rule tbody td {
     font-size: 14px;
     font-family: 18px;
     font-weight: 500;
   }
 
-  & thead tr,
-  & tbody tr {
+  .orphan-scss-rule thead tr,
+  .orphan-scss-rule tbody tr {
     display: flex;
     width: 100%;
     gap: 12px;
@@ -7085,13 +7085,13 @@
     /* max-height: max-content; */
   }
 
-  & thead tr {
+  .orphan-scss-rule thead tr {
     background: transparent;
     padding: 4px 8px;
     border-radius: 8px;
   }
 
-  & tbody {
+  .orphan-scss-rule tbody {
     display: grid;
     gap: 8px;
     /* height: 100%; */
@@ -7101,15 +7101,15 @@
     padding-top: 12px;
   }
 
-  & tbody tr:nth-of-type(even) {
+  .orphan-scss-rule tbody tr:nth-of-type(even) {
     background: transparent;
   }
 
-  & tbody tr:nth-of-type(odd) {
+  .orphan-scss-rule tbody tr:nth-of-type(odd) {
     background: var(--color-control) !important;
   }
 
-  & tbody tr {
+  .orphan-scss-rule tbody tr {
     /* max-height: 60px; */
     padding: 8px;
     border-radius: 8px;
@@ -7120,11 +7120,11 @@
     animation-delay: calc(var(--row-index, 0) * 30ms); */
   }
 
-  & tbody tr:hover {
+  .orphan-scss-rule tbody tr:hover {
     background: var(--color-control-hover) !important;
   }
 
-  & tbody:has(> :hover) > *:not(:hover) {
+  .orphan-scss-rule tbody:has(> :hover) > *:not(:hover) {
     opacity: 0.7;
   }
 
@@ -7307,7 +7307,7 @@
     background: var(--color-control) !important;
   }
 
-  & .trade:hover {
+  .orphan-scss-rule .trade:hover {
     background: var(--color-control-hover);
   }
 
@@ -7568,12 +7568,12 @@
   animation: fadeSlideIn 200ms ease-out;
   z-index: 9999999;
 
-  &.small {
+  .orphan-scss-rule.small {
     min-width: 180px !important;
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       max-width: 100%;
       min-width: 100%;
     }
@@ -7593,7 +7593,7 @@
   display: none;
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       display: block;
     }
   }
@@ -8099,7 +8099,7 @@
   transition: all 150ms ease-in-out;
   gap: 18px;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover);
   }
 
@@ -8163,7 +8163,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       display: none;
     }
   }
@@ -8191,7 +8191,7 @@
   transition: background-color 150ms ease-in-out;
   border: 1px dashed var(--color-box-border);
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover);
   }
 
@@ -8200,7 +8200,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       display: none;
     }
   }
@@ -8221,7 +8221,7 @@
   transition: background-color 150ms ease-in-out;
   border: 1px dashed var(--color-box-border);
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover);
   }
 
@@ -8255,13 +8255,13 @@
     transition: all 150ms ease-out;
   }
 
-  &:hover img {
+  .orphan-scss-rule:hover img {
     filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(334deg)
       brightness(200%) contrast(100%);
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       display: flex;
     }
   }
@@ -8280,7 +8280,7 @@
   z-index: 999;
 
   @media screen and (max-height: 560px) {
-    & {
+    .orphan-scss-rule {
       margin-top: 12px;
       position: unset;
       transform: unset;
@@ -8333,7 +8333,7 @@
     cursor: pointer;
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -8435,7 +8435,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       display: block;
     }
   }
@@ -8515,7 +8515,7 @@
   box-sizing: border-box;
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       display: none;
     }
   }
@@ -8644,7 +8644,7 @@
   font-weight: 500;
   user-select: none;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover);
     padding: 8px 16px;
     color: var(--color-text);
@@ -8686,7 +8686,7 @@
   padding: 8px;
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       grid-template-columns: auto;
       padding: 0px;
       padding-top: 8px;
@@ -8791,7 +8791,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       height: auto !important;
       display: flex;
       flex-direction: column;
@@ -9179,7 +9179,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       border-radius: 12px;
       background-color: var(--color-card-background);
       display: block;
@@ -9540,7 +9540,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       border-radius: 12px;
       background-color: var(--color-card-background);
       display: block;
@@ -9864,24 +9864,24 @@
   /* categories */
   padding: 0px 6px;
 
-  &.no-padding {
+  .orphan-scss-rule.no-padding {
     padding: 0px !important;
   }
 
-  & {
+  .orphan-scss-rule {
     display: flex;
     flex-direction: column;
     gap: 24px;
     margin-top: 16px;
   }
 
-  & .bars {
+  .orphan-scss-rule .bars {
     display: flex;
     gap: 4px;
     align-items: center;
   }
 
-  & .bars .bar {
+  .orphan-scss-rule .bars .bar {
     height: 24px;
   }
 
@@ -9902,12 +9902,12 @@
     gap: 24px;
   }
 
-  & .bars .bar:first-of-type {
+  .orphan-scss-rule .bars .bar:first-of-type {
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;
   }
 
-  & .bars .bar:last-child {
+  .orphan-scss-rule .bars .bar:last-child {
     border-top-right-radius: 6px !important;
     border-bottom-right-radius: 6px !important;
   }
@@ -9928,18 +9928,18 @@
     gap: 4px;
   }
 
-  & .titles .title .icon {
+  .orphan-scss-rule .titles .title .icon {
     margin-top: 5px;
   }
 
-  & .titles .title p:nth-of-type(1) {
+  .orphan-scss-rule .titles .title p:nth-of-type(1) {
     font-size: 14px;
     color: var(--color-text-48);
     line-height: 18px;
     font-weight: 600;
   }
 
-  & .titles .title p:nth-of-type(2) {
+  .orphan-scss-rule .titles .title p:nth-of-type(2) {
     font-size: 16px;
     color: var(--color-text);
     line-height: 24px;
@@ -10854,11 +10854,11 @@
     align-items: center;
   }
 
-  &.transparent .amount {
+  .orphan-scss-rule.transparent .amount {
     min-width: 170px;
   }
 
-  &.transparent .amount_small {
+  .orphan-scss-rule.transparent .amount_small {
     min-width: 100px;
   }
 
@@ -11391,7 +11391,7 @@
     border-radius: 12px !important;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-box-border) !important;
   }
 
@@ -11735,7 +11735,7 @@
   z-index: 100;
   display: none;
 
-  &.open {
+  .orphan-scss-rule.open {
     display: block;
   }
 
@@ -12056,7 +12056,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -12291,7 +12291,7 @@
     border-radius: 12px !important;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-box-border) !important;
   }
 
@@ -12428,7 +12428,7 @@
   height: calc(100vh - 104px);
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       padding-bottom: 200px;
     }
   }
@@ -12465,7 +12465,7 @@
 
   margin-top: 14px;
 
-  & .title {
+  .orphan-scss-rule .title {
     font-size: 13px;
     line-height: 16px;
     font-weight: 500;
@@ -12930,7 +12930,7 @@
   }
 
   @media (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       position: fixed;
       top: unset;
       bottom: 0;
@@ -13682,7 +13682,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -13773,7 +13773,7 @@
   align-items: center;
   justify-self: center;
 
-  &.active {
+  .orphan-scss-rule.active {
     .theme-preview {
       border: 1px solid var(--color-primary);
     }
@@ -13796,7 +13796,7 @@
     cursor: pointer;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     .theme-preview {
       border: 1px solid var(--color-primary);
     }
@@ -14475,7 +14475,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -14623,7 +14623,7 @@
   z-index: 100;
   display: none;
 
-  &.open {
+  .orphan-scss-rule.open {
     display: block;
   }
 
@@ -15021,7 +15021,7 @@
   cursor: pointer;
   margin-left: auto;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     color: var(--color-primary-hover);
   }
 
@@ -15916,7 +15916,7 @@
   }
 
   @media screen and (max-width: 1024px) {
-    & {
+    .orphan-scss-rule {
       grid-template-columns: auto;
     }
 
@@ -15984,7 +15984,7 @@
   }
 
   @media screen and (max-width: 1024px) {
-    & {
+    .orphan-scss-rule {
       display: none;
     }
   }
@@ -17250,7 +17250,7 @@
   z-index: 100;
   display: none;
 
-  &.open {
+  .orphan-scss-rule.open {
     display: block;
   }
 
@@ -17666,7 +17666,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -17714,7 +17714,7 @@
   cursor: pointer;
   transition: all 150ms ease-in;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-box-border) !important;
   }
 
@@ -17822,7 +17822,7 @@
   height: calc(100vh - 104px);
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       padding-bottom: 200px;
     }
   }
@@ -17880,7 +17880,7 @@
     opacity: 0.5; /* Adjust this value as needed */
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-box-border) !important;
   }
 
@@ -18182,7 +18182,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -18253,7 +18253,7 @@
   height: calc(100vh - 104px);
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       padding-bottom: 200px;
     }
   }
@@ -18429,7 +18429,7 @@
   cursor: pointer;
   transition: all 150ms ease-in;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-box-border) !important;
   }
 
@@ -18741,7 +18741,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -18843,8 +18843,8 @@
   }
 
   @media screen and (max-width: 768px) {
-    &.active,
-    &.closed {
+    .orphan-scss-rule.active,
+    .orphan-scss-rule.closed {
       display: none;
     }
 
@@ -18852,11 +18852,11 @@
       display: grid;
     }
 
-    & .stat_card_wrapper_desktop {
+    .orphan-scss-rule .stat_card_wrapper_desktop {
       display: none;
     }
 
-    & .stat_card_wrapper_mobile .value {
+    .orphan-scss-rule .stat_card_wrapper_mobile .value {
       color: var(--color-text-50) !important;
     }
   }
@@ -18899,7 +18899,7 @@
   }
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       padding-bottom: 200px;
     }
 
@@ -18926,7 +18926,7 @@
   /* height: 336px; */
   justify-content: space-between;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background: var(--color-card-background-2) !important;
   }
 
@@ -19425,7 +19425,7 @@
   z-index: 100;
   display: none;
 
-  &.open {
+  .orphan-scss-rule.open {
     display: block;
   }
 
@@ -19801,7 +19801,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -19907,7 +19907,7 @@
   border: 1px solid var(--color-card-background-3);
   position: relative;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     border: 1px solid var(--color-primary);
     background-color: var(--color-account-card-background) !important;
   }
@@ -20047,17 +20047,17 @@
     text-transform: uppercase !important;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     border: 1px solid var(--color-primary);
   }
 
-  &:hover .card_button {
+  .orphan-scss-rule:hover .card_button {
     background-color: var(--color-primary);
     color: var(--color-white);
     /* color: var(--color-text); */
   }
 
-  &:hover .card_button p {
+  .orphan-scss-rule:hover .card_button p {
     color: var(--color-white);
   }
 
@@ -20240,7 +20240,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -20295,11 +20295,11 @@
   place-content: center;
   gap: 8px;
 
-  &:hover {
+  .orphan-scss-rule:hover {
     background-color: var(--color-control-hover);
   }
 
-  & p {
+  .orphan-scss-rule p {
     font-size: 14px;
     line-height: 18px;
     font-weight: 600;
@@ -20319,7 +20319,7 @@
   height: calc(100vh - 104px);
 
   @media screen and (max-width: 768px) {
-    & {
+    .orphan-scss-rule {
       padding-bottom: 200px;
     }
   }
@@ -20596,16 +20596,16 @@
     text-transform: uppercase !important;
   }
 
-  &:hover {
+  .orphan-scss-rule:hover {
     border: 1px solid var(--color-primary);
   }
 
-  &:hover .card_button {
+  .orphan-scss-rule:hover .card_button {
     background-color: var(--color-primary);
     color: #000;
   }
 
-  &:hover .card_button p {
+  .orphan-scss-rule:hover .card_button p {
     color: #000;
   }
 
@@ -20783,7 +20783,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -20807,7 +20807,7 @@
   z-index: 100;
   display: none;
 
-  &.open {
+  .orphan-scss-rule.open {
     display: block;
   }
 
@@ -21011,7 +21011,7 @@
   }
 
   @media screen and (max-width: 1100px) {
-    & {
+    .orphan-scss-rule {
       align-items: flex-start;
     }
 
@@ -21381,7 +21381,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -21696,7 +21696,7 @@
   z-index: 100;
   display: none;
 
-  &.open {
+  .orphan-scss-rule.open {
     display: block;
   }
 
@@ -22254,7 +22254,7 @@
       brightness(200%) contrast(100%);
   }
 
-  &.open {
+  .orphan-scss-rule.open {
     transform: translateX(0);
     opacity: 1;
   }
@@ -23131,7 +23131,7 @@
   position: relative;
   overflow: hidden;
 
-  &.shining {
+  .orphan-scss-rule.shining {
     .card_shine {
       display: block;
     }
@@ -24022,3 +24022,15 @@
 }
 
 
+
+/* ------------------------------------------------------------------
+   Investor dashboard: sentence case everywhere.
+   The imported theme above uppercases / title-cases many elements;
+   show text exactly as written in the source instead.
+   ------------------------------------------------------------------ */
+.dashboard-page-container,
+.dashboard-page-container *,
+.dashboard-page-container *::before,
+.dashboard-page-container *::after {
+  text-transform: none !important;
+}

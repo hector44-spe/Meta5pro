@@ -74,7 +74,6 @@ export default function DepositPage() {
     <div className="tp-content-container">
       {/* Title Row: "Deposits" heading + "Deposit now" action button */}
       <div className="tp-title-row">
-        <h1 className="tp-title-heading">Deposits</h1>
         <button
           type="button"
           className="tp-action-btn"

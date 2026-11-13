@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import TradingToolsOrb from "@/components/TradingToolsOrb/TradingToolsOrb";
 import CountUp from "@/components/CountUp/CountUp";
+import BackgroundVideo from "@/components/BackgroundVideo";
 
 export default function HomePage() {
   return (
@@ -17,11 +18,9 @@ export default function HomePage() {
           position: "relative",
         }}
       >
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
+        <BackgroundVideo
+          src="/assets/video/bg-video.mp4"
+          poster="/assets/asset_10.webp"
           style={{
             position: "absolute",
             top: "0",
@@ -37,11 +36,7 @@ export default function HomePage() {
             userSelect: "none",
             pointerEvents: "none",
           }}
-          poster="/assets/asset_10.webp"
-        >
-          <source src="/assets/video/bg-video.mp4" type="video/mp4" />
-          Your browser does not support the video tag.
-        </video>
+        />
         <section className="two-module__iAIncG__hero">
           <div className="two-module__iAIncG__lockup">
             <div className="stagger-2" data-animate="true">

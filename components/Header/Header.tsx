@@ -43,29 +43,6 @@ export default function Header() {
     };
   }, [mobileOpen]);
 
-  if (
-    pathname === "/login" ||
-    pathname === "/register" ||
-    pathname?.startsWith("/dashboard") ||
-    pathname?.startsWith("/subscribe") ||
-    pathname?.startsWith("/signals") ||
-    pathname?.startsWith("/cold-storage") ||
-    pathname?.startsWith("/assets") ||
-    pathname?.startsWith("/deposit") ||
-    pathname?.startsWith("/deposits") ||
-    pathname?.startsWith("/withdraw") ||
-    pathname?.startsWith("/withdrawals") ||
-    pathname?.startsWith("/wallet") ||
-    pathname?.startsWith("/cards") ||
-    pathname?.startsWith("/staking") ||
-    pathname?.startsWith("/mining") ||
-    pathname?.startsWith("/real-estate") ||
-    pathname?.startsWith("/copy-trading") ||
-    pathname?.startsWith("/investing")
-  ) {
-    return null;
-  }
-
   const navCategories: NavCategory[] = [
     {
       title: "Explore",

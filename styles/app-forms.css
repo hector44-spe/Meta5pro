@@ -1,0 +1,117 @@
+/*
+ * Form controls for the withdraw modal and settings forms.
+ * The imported theme (dashboard.css) forces padding/height/transform on every
+ * input, select and button with !important, so these scoped rules need it too.
+ */
+
+.app-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.app-input,
+.app-form .app-input {
+  display: block !important;
+  position: static !important;
+  transform: none !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  line-height: 44px !important;
+  outline: none;
+  opacity: 1 !important;
+}
+.app-input:focus {
+  border-color: rgba(71, 99, 240, 0.7) !important;
+}
+.app-input:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed;
+}
+select.app-input {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 36px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.6' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+}
+select.app-input option {
+  background: #15181e;
+  color: #ffffff;
+}
+
+.app-label {
+  display: block;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 6px 0 !important;
+}
+
+/* Text-style button ("Has network?") */
+.app-link-btn {
+  background: none !important;
+  border: none !important;
+  height: auto !important;
+  padding: 8px 0 0 0 !important;
+  color: #4763f0 !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  width: auto !important;
+}
+
+/* Value shown as a button (tap to use full balance) */
+.app-plain-btn {
+  background: none !important;
+  border: none !important;
+  height: auto !important;
+  padding: 0 !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+/* Secondary button next to an input ("Send code") */
+.app-side-btn {
+  flex-shrink: 0;
+  height: 44px !important;
+  padding: 0 14px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(71, 99, 240, 0.5) !important;
+  background: rgba(71, 99, 240, 0.12) !important;
+  color: #8fa2ff !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  width: auto !important;
+}
+
+/* Primary submit in settings */
+.app-primary-btn {
+  height: 44px !important;
+  padding: 0 16px !important;
+  border-radius: 8px !important;
+  background: #4763f0 !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 600 !important;
+  font-size: 13.5px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100% !important;
+  margin-top: 6px !important;
+}
+.app-primary-btn:disabled {
+  opacity: 0.7;
+}

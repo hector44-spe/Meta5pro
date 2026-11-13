@@ -56,7 +56,7 @@ export default function TradingHeader({
           <Link
             href="/dashboard"
             className="tp-header-title-link"
-            title="Return to Dashboard"
+            title="Return to dashboard"
           >
             <span className="tp-header-title-icon">
               {pageType === "deposit" ? (
@@ -78,7 +78,7 @@ export default function TradingHeader({
             type="button"
             className="tp-header-btn"
             onClick={onOpenLanguage}
-            title="Change Language"
+            title="Change language"
           >
             <Globe size={18} strokeWidth={1.8} />
           </button>
@@ -89,7 +89,7 @@ export default function TradingHeader({
               type="button"
               className="tp-account-pill"
               onClick={() => setAccountDropdownOpen(!accountDropdownOpen)}
-              title="Switch Account"
+              title="Switch account"
             >
               <span className="tp-account-mask">
                 {hideBalance
@@ -121,7 +121,7 @@ export default function TradingHeader({
                     setAccountDropdownOpen(false);
                   }}
                 >
-                  <span>Real Account</span>
+                  <span>Real account</span>
                   <span style={{ color: "#3861fb" }}>
                     {hideBalance ? "******" : "$0"}
                   </span>
@@ -134,7 +134,7 @@ export default function TradingHeader({
                     setAccountDropdownOpen(false);
                   }}
                 >
-                  <span>Demo Account</span>
+                  <span>Demo account</span>
                   <span style={{ color: "#01b28b" }}>
                     {hideBalance ? "******" : "$10,000.00"}
                   </span>
@@ -154,7 +154,7 @@ export default function TradingHeader({
                       setAccountDropdownOpen(false);
                     }}
                   >
-                    <span>{hideBalance ? "Show Balance" : "Hide Balance"}</span>
+                    <span>{hideBalance ? "Show balance" : "Hide balance"}</span>
                   </button>
                 )}
               </div>
@@ -176,7 +176,7 @@ export default function TradingHeader({
           <div
             className="tp-avatar-box"
             onClick={onOpenSettings}
-            title="User Profile & Settings"
+            title="User profile & settings"
           >
             <span>ub</span>
             <span className="tp-avatar-diamond" />

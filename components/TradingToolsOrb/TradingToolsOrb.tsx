@@ -433,7 +433,7 @@ export default function TradingToolsOrb() {
                 id="orb_svg__b"
                 width="2048"
                 height="2048"
-                href="/assets/asset_18.png"
+                href="/assets/asset_18.webp"
                 preserveAspectRatio="none"
               ></image>
             </defs>

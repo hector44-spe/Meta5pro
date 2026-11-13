@@ -19,6 +19,7 @@ export async function GET() {
         username: true,
         fullName: true,
         phoneNumber: true,
+        country: true,
         role: true,
         status: true,
         wallet: true,

@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { sqlite } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import { z } from "zod";
 
@@ -24,11 +24,9 @@ export async function POST(req: Request) {
     const { token, newPassword } = parsed.data;
 
     // Check token
-    const stmt = sqlite.prepare(`
-      SELECT * FROM password_reset_tokens
-      WHERE token = ? AND used = 0
-    `);
-    const tokenRecord = stmt.get(token) as any;
+    const tokenRecord = await prisma.passwordResetToken.findFirst({
+      where: { token, used: false },
+    });
 
     if (!tokenRecord) {
       return NextResponse.json(
@@ -38,7 +36,7 @@ export async function POST(req: Request) {
     }
 
     // Check expiration
-    if (new Date(tokenRecord.expiresAt).getTime() < Date.now()) {
+    if (tokenRecord.expiresAt.getTime() < Date.now()) {
       return NextResponse.json(
         { error: "This password reset link has expired. Please request a new one." },
         { status: 400 }
@@ -47,21 +45,23 @@ export async function POST(req: Request) {
 
     // Hash new password
     const passwordHash = await hashPassword(newPassword);
-    const now = new Date().toISOString();
 
-    // 1. Update user password
-    sqlite.prepare(`
-      UPDATE users
-      SET passwordHash = ?, updatedAt = ?
-      WHERE id = ?
-    `).run(passwordHash, now, tokenRecord.userId);
+    // Claim the token first (only one request can win), then update the password.
+    const claimed = await prisma.passwordResetToken.updateMany({
+      where: { id: tokenRecord.id, used: false },
+      data: { used: true },
+    });
+    if (claimed.count !== 1) {
+      return NextResponse.json(
+        { error: "Invalid or already used password reset link" },
+        { status: 400 }
+      );
+    }
 
-    // 2. Mark token used
-    sqlite.prepare(`
-      UPDATE password_reset_tokens
-      SET used = 1
-      WHERE id = ?
-    `).run(tokenRecord.id);
+    await prisma.user.update({
+      where: { id: tokenRecord.userId },
+      data: { passwordHash },
+    });
 
     return NextResponse.json({
       success: true,

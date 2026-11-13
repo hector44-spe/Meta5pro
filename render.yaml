@@ -1,0 +1,42 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# Create it with: Render Dashboard > New > Blueprint > pick this repo.
+# Secrets marked `sync: false` are asked for once when the Blueprint is created
+# (or set them later under the service's Environment tab).
+services:
+  - type: web
+    name: broker
+    runtime: node
+    plan: starter            # "free" also works, but it sleeps after 15 min idle (slow first load)
+    region: virginia         # same AWS region as the Neon database (us-east-1) for low latency
+    branch: main
+    autoDeploy: true
+    # npm ci also runs `prisma generate` (postinstall). Migrations run before each build,
+    # so a deploy never starts with an out-of-date database schema.
+    buildCommand: npm ci && npx prisma migrate deploy && npm run build
+    startCommand: npm start  # `next start` listens on Render's $PORT automatically
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL     # Neon pooled URL (host contains -pooler)
+        sync: false
+      - key: DIRECT_URL       # Neon direct URL (no -pooler), used by prisma migrate
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true   # Render creates a strong random value
+      - key: APP_URL          # e.g. https://broker.onrender.com or your custom domain
+        sync: false
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Meta Gold 5
+      - key: ZOHO_SMTP_USER
+        sync: false
+      - key: ZOHO_SMTP_PASS
+        sync: false
+      - key: ZOHO_SMTP_HOST
+        value: smtp.zoho.com
+      - key: ADMIN_NOTIFY_EMAIL
+        sync: false

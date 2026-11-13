@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const plans = await db.plan.findMany();
+    const plans = await prisma.plan.findMany({ orderBy: { minDeposit: "asc" } });
     return NextResponse.json({
       success: true,
       plans,

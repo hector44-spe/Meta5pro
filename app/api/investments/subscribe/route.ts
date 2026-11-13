@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { atomic, debitMain, insertTransaction, InsufficientFundsError } from "@/lib/ledger";
 import { z } from "zod";
 
 const subscribeSchema = z.object({
@@ -16,9 +17,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const parsed = subscribeSchema.safeParse(body);
-
+    const parsed = subscribeSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Validation failed" },
@@ -29,76 +28,67 @@ export async function POST(req: Request) {
     const { planId, amount } = parsed.data;
 
     // 1. Verify plan exists
-    const plans = await db.plan.findMany();
-    const plan = plans.find((p) => p.id === planId);
+    const plan = await prisma.plan.findUnique({ where: { id: planId } });
     if (!plan || !plan.isActive) {
       return NextResponse.json({ error: "Selected investment plan is invalid or inactive" }, { status: 404 });
     }
 
     // 2. Verify deposit bounds
-    if (amount < plan.minDeposit) {
+    const minDeposit = plan.minDeposit.toNumber();
+    const maxDeposit = plan.maxDeposit.toNumber();
+    if (amount < minDeposit) {
       return NextResponse.json(
-        { error: `Minimum investment for ${plan.name} is $${plan.minDeposit.toLocaleString()}` },
+        { error: `Minimum investment for ${plan.name} is $${minDeposit.toLocaleString()}` },
         { status: 400 }
       );
     }
-    if (amount > plan.maxDeposit) {
+    if (amount > maxDeposit) {
       return NextResponse.json(
-        { error: `Maximum investment for ${plan.name} is $${plan.maxDeposit.toLocaleString()}` },
-        { status: 400 }
-      );
-    }
-
-    // 3. Verify user wallet
-    const wallet = await db.wallet.findUnique({ where: { userId: session.userId } });
-    const currentBalance = wallet?.mainBalance || 0.0;
-    if (currentBalance < amount) {
-      return NextResponse.json(
-        { error: `Insufficient balance. Available: $${currentBalance.toFixed(2)}, Required: $${amount.toFixed(2)}` },
+        { error: `Maximum investment for ${plan.name} is $${maxDeposit.toLocaleString()}` },
         { status: 400 }
       );
     }
 
-    // 4. Deduct capital from wallet
-    const newBalance = currentBalance - amount;
-    await db.wallet.update({
-      where: { userId: session.userId },
-      data: { mainBalance: newBalance },
-    });
+    try {
+      // 3. Debit, create the investment and record history in one transaction
+      const { investment, newBalance } = await atomic(async (tx) => {
+        const newBalance = await debitMain(tx, session.userId, amount);
+        const investment = await tx.investment.create({
+          data: {
+            userId: session.userId,
+            planId: plan.id,
+            amount,
+            daysRemaining: plan.durationDays,
+          },
+        });
+        await insertTransaction(tx, {
+          userId: session.userId,
+          type: "INVESTMENT_SUBSCRIBE",
+          amount,
+          currency: "USD",
+          txHash: `STAKE_${investment.id.substring(0, 8).toUpperCase()}`,
+          status: "APPROVED",
+        });
+        return { investment, newBalance };
+      });
 
-    // 5. Create active investment
-    const investment = await db.investment.create({
-      data: {
-        userId: session.userId,
-        planId: plan.id,
-        amount,
-        daysRemaining: plan.durationDays,
-      },
-    });
-
-    // 6. Record transaction history
-    await db.transaction.create({
-      data: {
-        userId: session.userId,
-        type: "INVESTMENT_SUBSCRIBE",
-        amount,
-        currency: "USD",
-        txHash: `STAKE_${investment.id.substring(3, 11).toUpperCase()}`,
-        status: "APPROVED",
-      },
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: `Successfully subscribed $${amount.toLocaleString()} to ${plan.name}! Daily ROI: ${plan.dailyRoiPercentage}%`,
-      investment,
-      newBalance,
-    });
+      return NextResponse.json({
+        success: true,
+        message: `Successfully subscribed $${amount.toLocaleString()} to ${plan.name}! Daily ROI: ${plan.dailyRoiPercentage.toNumber()}%`,
+        investment,
+        newBalance,
+      });
+    } catch (e) {
+      if (e instanceof InsufficientFundsError) {
+        return NextResponse.json(
+          { error: `Insufficient balance. Available: $${e.available.toFixed(2)}, Required: $${amount.toFixed(2)}` },
+          { status: 400 }
+        );
+      }
+      throw e;
+    }
   } catch (error) {
     console.error("Investment subscription error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

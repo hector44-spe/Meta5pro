@@ -1,5 +1,5 @@
-import { db } from "../lib/db.ts";
-import { hashPassword, verifyPassword, signToken, verifyToken } from "../lib/auth.ts";
+import { db } from "../../lib/db.ts";
+import { hashPassword, verifyPassword, signToken, verifyToken } from "../../lib/auth.ts";
 
 async function testAuth() {
   console.log("=== Testing Authentication & Database Layer ===");

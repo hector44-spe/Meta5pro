@@ -79,3 +79,117 @@
   border-radius: var(--radius-sm);
   font-size: 0.8rem;
 }
+
+/* ---------- Layout helpers ---------- */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.tabs > * {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.search {
+  position: relative;
+  width: 260px;
+  flex-shrink: 0;
+}
+
+/* Wide tables scroll inside their card instead of stretching the page */
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tableWrap .table {
+  min-width: 720px;
+}
+
+.td,
+.th {
+  white-space: nowrap;
+}
+
+/* ---------- Tablet ---------- */
+@media (max-width: 900px) {
+  .container {
+    padding: 2rem 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .cardHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search {
+    width: 100%;
+  }
+}
+
+/* ---------- Phone ---------- */
+@media (max-width: 520px) {
+  .container {
+    padding: 1.25rem 0.75rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+  }
+
+  .card {
+    padding: 1rem 0.75rem;
+    border-radius: var(--radius-md, 10px);
+  }
+
+  .tableTitle {
+    font-size: 1.05rem;
+  }
+
+  .th,
+  .td {
+    padding: 0.65rem 0.6rem;
+  }
+
+  .approveBtn,
+  .rejectBtn {
+    padding: 0.45rem 0.7rem;
+  }
+}

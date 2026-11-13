@@ -1,7 +1,8 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { sqlite } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { atomic, money } from "@/lib/ledger";
 
 export async function POST() {
   try {
@@ -10,64 +11,62 @@ export async function POST() {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
     }
 
-    // Find all RUNNING investments
-    const stmt = sqlite.prepare(`
-      SELECT 
-        i.id, i.userId, i.planId, i.amount, i.accruedProfit, i.daysRemaining, i.status,
-        p.dailyRoiPercentage, p.durationDays, p.capitalRefund
-      FROM investments i
-      JOIN plans p ON i.planId = p.id
-      WHERE i.status = 'RUNNING' AND i.daysRemaining > 0
-    `);
-    const running = stmt.all() as any[];
+    // Only investments not paid in the last 23 hours, so triggering this twice in a day pays once.
+    const cutoff = new Date(Date.now() - 23 * 60 * 60 * 1000);
 
-    let totalYieldDistributed = 0;
-    const now = new Date().toISOString();
+    const due = await prisma.investment.findMany({
+      where: { status: "RUNNING", daysRemaining: { gt: 0 }, lastPayoutAt: { lte: cutoff } },
+      include: { plan: { select: { dailyRoiPercentage: true, capitalRefund: true } } },
+    });
 
-    for (const inv of running) {
-      const dailyYield = Number(inv.amount) * (Number(inv.dailyRoiPercentage) / 100);
-      totalYieldDistributed += dailyYield;
+    let processed = 0;
+    let total = 0;
 
-      const newAccrued = Number(inv.accruedProfit) + dailyYield;
-      const newDaysRemaining = Number(inv.daysRemaining) - 1;
+    // One short transaction per investment; the lastPayoutAt condition makes each
+    // payout happen at most once even if two runs overlap.
+    for (const inv of due) {
+      const amount = inv.amount.toNumber();
+      const dailyYield = money(amount * (inv.plan.dailyRoiPercentage.toNumber() / 100));
+      const newDaysRemaining = inv.daysRemaining - 1;
       const isCompleted = newDaysRemaining <= 0;
-      const newStatus = isCompleted ? "COMPLETED" : "RUNNING";
 
-      // 1. Update investment record
-      sqlite.prepare(`
-        UPDATE investments
-        SET accruedProfit = ?, daysRemaining = ?, status = ?, lastPayoutAt = ?
-        WHERE id = ?
-      `).run(newAccrued, newDaysRemaining, newStatus, now, inv.id);
+      const paid = await atomic(async (tx) => {
+        const claim = await tx.investment.updateMany({
+          where: { id: inv.id, status: "RUNNING", lastPayoutAt: { lte: cutoff } },
+          data: {
+            accruedProfit: { increment: dailyYield },
+            daysRemaining: newDaysRemaining,
+            status: isCompleted ? "COMPLETED" : "RUNNING",
+            lastPayoutAt: new Date(),
+          },
+        });
+        if (claim.count !== 1) return false;
 
-      // 2. Credit yield to investor's interestBalance
-      sqlite.prepare(`
-        UPDATE wallets
-        SET interestBalance = interestBalance + ?, updatedAt = ?
-        WHERE userId = ?
-      `).run(dailyYield, now, inv.userId);
+        await tx.wallet.update({
+          where: { userId: inv.userId },
+          data: {
+            interestBalance: { increment: dailyYield },
+            ...(isCompleted && inv.plan.capitalRefund ? { mainBalance: { increment: amount } } : {}),
+          },
+        });
+        return true;
+      });
 
-      // 3. If completed and capital refund is enabled, return capital to mainBalance
-      if (isCompleted && inv.capitalRefund === 1) {
-        sqlite.prepare(`
-          UPDATE wallets
-          SET mainBalance = mainBalance + ?, updatedAt = ?
-          WHERE userId = ?
-        `).run(Number(inv.amount), now, inv.userId);
+      if (paid) {
+        processed++;
+        total += dailyYield;
       }
     }
 
+    total = money(total);
     return NextResponse.json({
       success: true,
-      message: `Successfully processed daily yields for ${running.length} active investments. Total distributed: $${totalYieldDistributed.toFixed(2)}`,
-      processedCount: running.length,
-      totalYieldDistributed,
+      message: `Processed ${processed} investments due for payout. Total distributed: $${total.toFixed(2)}`,
+      processedCount: processed,
+      totalYieldDistributed: total,
     });
   } catch (error) {
     console.error("Accrue daily yields error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

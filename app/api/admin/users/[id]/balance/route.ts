@@ -1,13 +1,14 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db, sqlite } from "@/lib/db";
-import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { getSession, clientIp } from "@/lib/auth";
+import { atomic, audit, creditMain, debitMain, InsufficientFundsError } from "@/lib/ledger";
 import { z } from "zod";
 
 const balanceSchema = z.object({
   amount: z.number().positive("Amount must be greater than 0"),
   action: z.enum(["credit", "debit"]),
-  note: z.string().optional(),
+  note: z.string().max(500).optional(),
 });
 
 export async function PATCH(
@@ -21,9 +22,7 @@ export async function PATCH(
     }
 
     const { id: userId } = await params;
-    const body = await req.json();
-    const parsed = balanceSchema.safeParse(body);
-
+    const parsed = balanceSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Validation failed" },
@@ -33,57 +32,44 @@ export async function PATCH(
 
     const { amount, action, note } = parsed.data;
 
-    // Check user & wallet
-    const user = await db.user.findUnique({ where: { id: userId }, include: { wallet: true } });
-    if (!user) {
+    const exists = await prisma.wallet.findUnique({ where: { userId }, select: { id: true } });
+    if (!exists) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const currentBalance = user.wallet?.mainBalance || 0.0;
-    let newBalance = currentBalance;
+    const ip = clientIp(req);
+    try {
+      const newBalance = await atomic(async (tx) => {
+        const balance = action === "credit"
+          ? await creditMain(tx, userId, amount)
+          : await debitMain(tx, userId, amount);
+        await audit(
+          tx,
+          userId,
+          `ADMIN_BALANCE_${action.toUpperCase()}`,
+          ip,
+          `Admin ${session.userId} (${session.email}) ${action}ed $${amount}. Note: ${note || "Manual balance correction"}`,
+        );
+        return balance;
+      });
 
-    if (action === "credit") {
-      newBalance = currentBalance + amount;
-    } else {
-      if (currentBalance < amount) {
+      const wallet = await prisma.wallet.findUnique({ where: { userId } });
+      return NextResponse.json({
+        success: true,
+        message: `User balance ${action}ed by $${amount}. New balance: $${newBalance.toFixed(2)}`,
+        wallet,
+      });
+    } catch (e) {
+      if (e instanceof InsufficientFundsError) {
         return NextResponse.json(
-          { error: `Insufficient user balance to debit $${amount}. Current balance: $${currentBalance}` },
+          { error: `Insufficient user balance to debit $${amount}. Current balance: $${e.available.toFixed(2)}` },
           { status: 400 }
         );
       }
-      newBalance = currentBalance - amount;
+      throw e;
     }
-
-    // Update wallet
-    const updatedWallet = await db.wallet.update({
-      where: { userId },
-      data: { mainBalance: newBalance },
-    });
-
-    // Record audit log
-    const now = new Date().toISOString();
-    sqlite.prepare(`
-      INSERT INTO activity_logs (id, userId, action, ipAddress, details, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?)
-    `).run(
-      "log_" + Math.random().toString(36).substring(2, 9),
-      userId,
-      `ADMIN_BALANCE_${action.toUpperCase()}`,
-      "127.0.0.1",
-      `Admin ${action}ed $${amount}. Note: ${note || "Manual balance correction"}`,
-      now
-    );
-
-    return NextResponse.json({
-      success: true,
-      message: `User balance ${action}ed by $${amount}. New balance: $${newBalance.toFixed(2)}`,
-      wallet: updatedWallet,
-    });
   } catch (error) {
     console.error("Admin balance adjustment error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

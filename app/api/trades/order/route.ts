@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { db, sqlite } from "@/lib/db";
 import { getSession } from "@/lib/auth";
+import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { z } from "zod";
 
 const orderSchema = z.object({
@@ -20,9 +20,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const parsed = orderSchema.safeParse(body);
-
+    const parsed = orderSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Invalid order parameters" },
@@ -32,27 +30,8 @@ export async function POST(req: Request) {
 
     const { side, symbol, amount, leverage } = parsed.data;
 
-    const wallet = await db.wallet.findUnique({
-      where: { userId: session.userId },
-    });
-
-    if (!wallet) {
-      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
-    }
-
     // Required margin for position
-    const requiredMargin = amount / leverage;
-
-    if (wallet.mainBalance < requiredMargin) {
-      return NextResponse.json(
-        {
-          error: `Insufficient margin. Required: $${requiredMargin.toFixed(
-            2,
-          )} USD, Available: $${wallet.mainBalance.toFixed(2)} USD`,
-        },
-        { status: 400 },
-      );
-    }
+    const requiredMargin = money(amount / leverage);
 
     // Reference execution prices
     const marketPrices: Record<string, number> = {
@@ -67,55 +46,58 @@ export async function POST(req: Request) {
     const fillPrice = marketPrices[symbol] || 86450.0;
     const filledQuantity = (amount / fillPrice).toFixed(6);
 
-    // 1. Deduct margin from wallet
-    const newBalance = wallet.mainBalance - requiredMargin;
-    await db.wallet.update({
-      where: { userId: session.userId },
-      data: { mainBalance: newBalance },
-    });
+    try {
+      const { position, tx, newBalance } = await atomic(async (t) => {
+        // 1. Deduct margin (throws if balance is insufficient)
+        const newBalance = await debitMain(t, session.userId, requiredMargin);
 
-    // 2. Insert into positions table
-    const positionId = "pos_" + Math.random().toString(36).substring(2, 9) + "_" + Date.now();
-    const now = new Date().toISOString();
-    sqlite.prepare(`
-      INSERT INTO positions (id, userId, symbol, type, amount, entryPrice, leverage, status, pnl, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 'OPEN', 0.0, ?)
-    `).run(positionId, session.userId, symbol, side, amount, fillPrice, leverage, now);
+        // 2. Open the position
+        const position = await t.position.create({
+          data: { userId: session.userId, symbol, type: side, amount, entryPrice: fillPrice, leverage },
+        });
 
-    // 3. Record trade transaction
-    const tx = await db.transaction.create({
-      data: {
-        userId: session.userId,
-        type: `TRADE_${side}`,
-        amount,
-        currency: symbol,
-        txHash: `ORD_${positionId.substring(4, 12).toUpperCase()}`,
-        status: "APPROVED",
-      },
-    });
+        // 3. Record trade transaction
+        const tx = await insertTransaction(t, {
+          userId: session.userId,
+          type: `TRADE_${side}`,
+          amount,
+          currency: symbol,
+          txHash: `ORD_${position.id.substring(0, 8).toUpperCase()}`,
+          status: "APPROVED",
+        });
+        return { position, tx, newBalance };
+      });
 
-    return NextResponse.json({
-      success: true,
-      order: {
-        id: positionId,
-        side,
-        symbol,
-        notionalAmount: amount,
-        leverage,
-        requiredMargin,
-        fillPrice,
-        filledQuantity,
-        timestamp: now,
-        transactionId: tx.id,
-      },
-      newBalance,
-      message: `${side} order for $${amount} ${symbol} executed at $${fillPrice}. Margin locked: $${requiredMargin.toFixed(2)}`,
-    });
+      return NextResponse.json({
+        success: true,
+        order: {
+          id: position.id,
+          side,
+          symbol,
+          notionalAmount: amount,
+          leverage,
+          requiredMargin,
+          fillPrice,
+          filledQuantity,
+          timestamp: position.createdAt.toISOString(),
+          transactionId: tx.id,
+        },
+        newBalance,
+        message: `${side} order for $${amount} ${symbol} executed at $${fillPrice}. Margin locked: $${requiredMargin.toFixed(2)}`,
+      });
+    } catch (e) {
+      if (e instanceof InsufficientFundsError) {
+        return NextResponse.json(
+          {
+            error: `Insufficient margin. Required: $${requiredMargin.toFixed(2)} USD, Available: $${e.available.toFixed(2)} USD`,
+          },
+          { status: 400 },
+        );
+      }
+      throw e;
+    }
   } catch (error) {
     console.error("Order execution error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

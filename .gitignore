@@ -44,3 +44,7 @@ scratch/
 raw_css/
 raw_pages/
 *.html
+# user uploads (payment proofs)
+/data/uploads/
+/public/uploads/
+/.next-build/
