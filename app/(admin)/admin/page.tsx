@@ -1,26 +1,38 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ShieldAlert,
-  Check,
-  X,
-  Search,
-  RefreshCw,
+  LayoutDashboard,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  ListOrdered,
+  Users,
+  Wallet,
   LogOut,
+  RefreshCw,
+  Menu,
+  X,
+  Check,
+  Search,
   Eye,
   Save,
+  Copy,
   CheckCircle2,
   AlertCircle,
-  FileText,
-  ExternalLink,
-  Users,
-  DollarSign,
+  Clock,
+  ShieldCheck,
   UserX,
   UserCheck,
-  Edit3,
+  DollarSign,
+  ExternalLink,
+  Loader2,
+  RotateCcw,
 } from "lucide-react";
 import styles from "./page.module.css";
+
+/* ------------------------------------------------------------------ */
+/* Types                                                               */
+/* ------------------------------------------------------------------ */
 
 interface AdminTx {
   id: string;
@@ -61,205 +73,124 @@ interface AdminUser {
   totalWithdrawn: number;
 }
 
+type Section = "overview" | "deposits" | "withdrawals" | "transactions" | "users" | "addresses";
+
+/* ------------------------------------------------------------------ */
+/* Helpers                                                             */
+/* ------------------------------------------------------------------ */
+
+const usd = (n: number) =>
+  `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const when = (iso: string) =>
+  new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+const shortId = (id: string) => id.replace(/^tx_/, "").slice(0, 8).toUpperCase();
+
+const typeLabel = (t: string) =>
+  ({
+    DEPOSIT: "Deposit",
+    WITHDRAWAL: "Withdrawal",
+    INVESTMENT_SUBSCRIBE: "Plan subscription",
+    TRADE_BUY: "Trade (buy)",
+    TRADE_SELL: "Trade (sell)",
+    TRADE_CONVERT: "Trade (convert)",
+    TRADE_CLOSE: "Trade closed",
+  })[t] ?? t;
+
+function StatusPill({ status }: { status: string }) {
+  const cls =
+    status === "APPROVED" || status === "ACTIVE"
+      ? styles.pillGreen
+      : status === "PENDING"
+        ? styles.pillAmber
+        : styles.pillRed;
+  const label = status.charAt(0) + status.slice(1).toLowerCase();
+  return <span className={`${styles.pill} ${cls}`}>{label}</span>;
+}
+
+/* ------------------------------------------------------------------ */
+/* Page                                                                */
+/* ------------------------------------------------------------------ */
+
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<"queue" | "addresses" | "users">("queue");
+  const [section, setSection] = useState<Section>("overview");
+  const [navOpen, setNavOpen] = useState(false);
+
   const [transactions, setTransactions] = useState<AdminTx[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState<string | null>(null);
-
-  // Address editor state
-  const [addresses, setAddresses] = useState<AddressItem[]>([]);
-  const [savingAddresses, setSavingAddresses] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
-
-  // User management state
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
-  const [userSearchQuery, setUserSearchQuery] = useState("");
-  const [selectedUserForBalance, setSelectedUserForBalance] = useState<AdminUser | null>(null);
-  const [adjustAmount, setAdjustAmount] = useState("");
-  const [adjustAction, setAdjustAction] = useState<"credit" | "debit">("credit");
-  const [adjustNote, setAdjustNote] = useState("");
-  const [adjusting, setAdjusting] = useState(false);
-  const [adjustStatus, setAdjustStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const [statusUpdatingId, setStatusUpdatingId] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<AddressItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adminEmail, setAdminEmail] = useState("");
 
-  // Proof screenshot lightbox
+  // Approve / reject confirmation
+  const [confirmTx, setConfirmTx] = useState<{ tx: AdminTx; action: "approve" | "reject" } | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState("");
+
+  // Proof preview
   const [previewProofUrl, setPreviewProofUrl] = useState<string | null>(null);
 
-  const fetchTransactions = async () => {
+  // Toast
+  const [toast, setToast] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const flash = useCallback((kind: "ok" | "error", text: string) => {
+    setToast({ kind, text });
+    window.setTimeout(() => setToast(null), 3500);
+  }, []);
+
+  const loadAll = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await fetch("/api/admin/transactions");
-      if (res.ok) {
-        const data = await res.json();
-        setTransactions(data.transactions || []);
-      }
-    } catch (err) {
-      console.error("Failed to load admin queue:", err);
+      const [txRes, userRes, addrRes, meRes] = await Promise.all([
+        fetch("/api/admin/transactions"),
+        fetch("/api/admin/users"),
+        fetch("/api/settings/addresses"),
+        fetch("/api/auth/me"),
+      ]);
+      if (txRes.ok) setTransactions((await txRes.json()).transactions || []);
+      if (userRes.ok) setUsers((await userRes.json()).users || []);
+      if (addrRes.ok) setAddresses((await addrRes.json()).addresses || []);
+      if (meRes.ok) setAdminEmail((await meRes.json()).user?.email || "");
+    } catch {
+      flash("error", "Could not load data. Check your connection and refresh.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchAddresses = async () => {
-    try {
-      const res = await fetch("/api/settings/addresses");
-      if (res.ok) {
-        const data = await res.json();
-        setAddresses(data.addresses || []);
-      }
-    } catch (err) {
-      console.error("Failed to load addresses:", err);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      setLoadingUsers(true);
-      const res = await fetch("/api/admin/users");
-      if (res.ok) {
-        const data = await res.json();
-        setUsers(data.users || []);
-      }
-    } catch (err) {
-      console.error("Failed to load users:", err);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
+  }, [flash]);
 
   useEffect(() => {
-    fetchTransactions();
-    fetchAddresses();
-    fetchUsers();
-  }, []);
+    loadAll();
+  }, [loadAll]);
 
-  const handleAction = async (id: string, action: "approve" | "reject") => {
-    setActionLoading(id);
+  // Close the mobile menu when switching sections
+  const go = (s: Section) => {
+    setSection(s);
+    setNavOpen(false);
+    window.scrollTo({ top: 0 });
+  };
+
+  const pendingDeposits = transactions.filter((t) => t.type === "DEPOSIT" && t.status === "PENDING");
+  const pendingWithdrawals = transactions.filter((t) => t.type === "WITHDRAWAL" && t.status === "PENDING");
+
+  const runAction = async () => {
+    if (!confirmTx) return;
+    setActionBusy(true);
+    setActionError("");
     try {
-      const res = await fetch(`/api/admin/transactions/${id}`, {
+      const res = await fetch(`/api/admin/transactions/${confirmTx.tx.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
-      if (res.ok) {
-        await fetchTransactions();
-        await fetchUsers(); // refresh balances
-      } else {
-        const err = await res.json();
-        alert(err.error || "Operation failed");
-      }
-    } catch (err) {
-      console.error("Action error:", err);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleAddressChange = (id: string, field: "address" | "memo", val: string) => {
-    setAddresses((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: val } : item))
-    );
-  };
-
-  const handleSaveAddresses = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSavingAddresses(true);
-    setSaveStatus(null);
-    try {
-      const res = await fetch("/api/admin/settings/addresses", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          addresses: addresses.map((a) => ({
-            id: a.id,
-            address: a.address,
-            memo: a.memo,
-          })),
-        }),
+        body: JSON.stringify({ action: confirmTx.action }),
       });
       const data = await res.json();
-      if (res.ok) {
-        setSaveStatus({ type: "success", message: "Deposit addresses updated successfully! Changes are live across all investor deposit modals." });
-        if (data.addresses) setAddresses(data.addresses);
-      } else {
-        setSaveStatus({ type: "error", message: data.error || "Failed to update addresses" });
-      }
-    } catch {
-      setSaveStatus({ type: "error", message: "Network error saving addresses" });
+      if (!res.ok) throw new Error(data.error || "Action failed");
+      flash("ok", `${typeLabel(confirmTx.tx.type)} ${confirmTx.action === "approve" ? "approved" : "rejected"}.`);
+      setConfirmTx(null);
+      await loadAll();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Action failed");
     } finally {
-      setSavingAddresses(false);
-    }
-  };
-
-  const handleBalanceSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedUserForBalance) return;
-    const num = parseFloat(adjustAmount);
-    if (!num || num <= 0) {
-      setAdjustStatus({ type: "error", message: "Please enter a valid positive adjustment amount" });
-      return;
-    }
-
-    setAdjusting(true);
-    setAdjustStatus(null);
-    try {
-      const res = await fetch(`/api/admin/users/${selectedUserForBalance.id}/balance`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: num,
-          action: adjustAction,
-          note: adjustNote.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setAdjustStatus({ type: "success", message: data.message });
-        await fetchUsers();
-        setTimeout(() => {
-          setSelectedUserForBalance(null);
-          setAdjustAmount("");
-          setAdjustNote("");
-          setAdjustStatus(null);
-        }, 1200);
-      } else {
-        setAdjustStatus({ type: "error", message: data.error || "Balance adjustment failed" });
-      }
-    } catch {
-      setAdjustStatus({ type: "error", message: "Network error adjusting balance" });
-    } finally {
-      setAdjusting(false);
-    }
-  };
-
-  const handleToggleUserStatus = async (user: AdminUser) => {
-    const newStatus = user.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-    if (user.role === "ADMIN" && newStatus === "SUSPENDED") {
-      alert("Cannot suspend a Super Admin account");
-      return;
-    }
-    const confirmMsg = `Are you sure you want to set status of ${user.email} to ${newStatus}?`;
-    if (!confirm(confirmMsg)) return;
-
-    setStatusUpdatingId(user.id);
-    try {
-      const res = await fetch(`/api/admin/users/${user.id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        await fetchUsers();
-      } else {
-        const err = await res.json();
-        alert(err.error || "Failed to update user status");
-      }
-    } catch {
-      alert("Network error updating status");
-    } finally {
-      setStatusUpdatingId(null);
+      setActionBusy(false);
     }
   };
 
@@ -268,904 +199,939 @@ export default function AdminPage() {
     window.location.href = "/login";
   };
 
-  const pendingQueue = transactions.filter((t) => t.status === "PENDING");
-  const processedQueue = transactions.filter((t) => t.status !== "PENDING");
+  const nav: { id: Section; label: string; icon: React.ReactNode; count?: number }[] = [
+    { id: "overview", label: "Overview", icon: <LayoutDashboard size={18} /> },
+    { id: "deposits", label: "Deposits", icon: <ArrowDownToLine size={18} />, count: pendingDeposits.length },
+    { id: "withdrawals", label: "Withdrawals", icon: <ArrowUpFromLine size={18} />, count: pendingWithdrawals.length },
+    { id: "transactions", label: "All transactions", icon: <ListOrdered size={18} /> },
+    { id: "users", label: "Users", icon: <Users size={18} /> },
+    { id: "addresses", label: "Deposit addresses", icon: <Wallet size={18} /> },
+  ];
 
-  const filteredUsers = users.filter((u) => {
-    const q = userSearchQuery.toLowerCase();
+  const titles: Record<Section, [string, string]> = {
+    overview: ["Overview", "What needs your attention right now."],
+    deposits: ["Deposits", "Check each payment on the blockchain or in the proof, then approve or reject it."],
+    withdrawals: ["Withdrawals", "Funds are on hold until you approve (send the crypto) or reject (refund the balance)."],
+    transactions: ["All transactions", "Every deposit, withdrawal, subscription and trade, newest first."],
+    users: ["Users", "Find an account, adjust its balance, or suspend access."],
+    addresses: ["Deposit addresses", "The wallets investors pay into. Each one saves on its own."],
+  };
+
+  return (
+    <div className={styles.shell}>
+      {/* ---------------- Sidebar ---------------- */}
+      <aside className={`${styles.sidebar} ${navOpen ? styles.sidebarOpen : ""}`} aria-label="Admin navigation">
+        <div className={styles.brand}>
+          <ShieldCheck size={22} />
+          <div>
+            <div className={styles.brandTitle}>Admin</div>
+            <div className={styles.brandSub}>Control panel</div>
+          </div>
+          <button type="button" className={styles.navClose} onClick={() => setNavOpen(false)} aria-label="Close menu">
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className={styles.nav}>
+          {nav.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`${styles.navItem} ${section === item.id ? styles.navItemActive : ""}`}
+              onClick={() => go(item.id)}
+              aria-current={section === item.id ? "page" : undefined}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+              {!!item.count && <span className={styles.navCount}>{item.count}</span>}
+            </button>
+          ))}
+        </nav>
+
+        <div className={styles.sidebarFooter}>
+          <div className={styles.adminWho} title={adminEmail}>
+            <div className={styles.adminAvatar}>{(adminEmail[0] || "A").toUpperCase()}</div>
+            <span>{adminEmail || "Administrator"}</span>
+          </div>
+          <button type="button" className={styles.logoutBtn} onClick={handleLogout}>
+            <LogOut size={16} />
+            Log out
+          </button>
+        </div>
+      </aside>
+      {navOpen && <div className={styles.scrim} onClick={() => setNavOpen(false)} />}
+
+      {/* ---------------- Main ---------------- */}
+      <main className={styles.main}>
+        <header className={styles.topbar}>
+          <button type="button" className={styles.menuBtn} onClick={() => setNavOpen(true)} aria-label="Open menu">
+            <Menu size={20} />
+          </button>
+          <div className={styles.pageTitles}>
+            <h1>{titles[section][0]}</h1>
+            <p>{titles[section][1]}</p>
+          </div>
+          <button type="button" className={styles.btnGhost} onClick={loadAll} disabled={loading}>
+            <RefreshCw size={15} className={loading ? styles.spin : ""} />
+            <span className={styles.hideSm}>Refresh</span>
+          </button>
+        </header>
+
+        {section === "overview" && (
+          <Overview
+            transactions={transactions}
+            users={users}
+            pendingDeposits={pendingDeposits}
+            pendingWithdrawals={pendingWithdrawals}
+            onReview={(tx, action) => setConfirmTx({ tx, action })}
+            onGo={go}
+            onPreview={setPreviewProofUrl}
+          />
+        )}
+
+        {section === "deposits" && (
+          <TxSection
+            pending={pendingDeposits}
+            history={transactions.filter((t) => t.type === "DEPOSIT" && t.status !== "PENDING")}
+            kind="deposit"
+            onReview={(tx, action) => setConfirmTx({ tx, action })}
+            onPreview={setPreviewProofUrl}
+          />
+        )}
+
+        {section === "withdrawals" && (
+          <TxSection
+            pending={pendingWithdrawals}
+            history={transactions.filter((t) => t.type === "WITHDRAWAL" && t.status !== "PENDING")}
+            kind="withdrawal"
+            onReview={(tx, action) => setConfirmTx({ tx, action })}
+            onPreview={setPreviewProofUrl}
+          />
+        )}
+
+        {section === "transactions" && <AllTransactions transactions={transactions} onPreview={setPreviewProofUrl} />}
+
+        {section === "users" && <UsersSection users={users} onChanged={loadAll} flash={flash} />}
+
+        {section === "addresses" && (
+          <AddressesSection
+            addresses={addresses}
+            onSaved={(a) => setAddresses((prev) => prev.map((x) => (x.id === a.id ? a : x)))}
+            flash={flash}
+          />
+        )}
+      </main>
+
+      {/* ---------------- Approve / reject confirmation ---------------- */}
+      {confirmTx && (
+        <div className={styles.modalBackdrop} onClick={() => !actionBusy && setConfirmTx(null)}>
+          <div className={styles.modal} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHead}>
+              <h2>
+                {confirmTx.action === "approve" ? "Approve" : "Reject"} {typeLabel(confirmTx.tx.type).toLowerCase()}?
+              </h2>
+              <button type="button" className={styles.iconBtn} onClick={() => setConfirmTx(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <dl className={styles.detailList}>
+              <dt>User</dt>
+              <dd>{confirmTx.tx.userEmail}</dd>
+              <dt>Amount</dt>
+              <dd className={styles.mono}>{usd(confirmTx.tx.amount)}</dd>
+              <dt>Asset</dt>
+              <dd>{confirmTx.tx.currency}</dd>
+              {confirmTx.tx.cryptoAddress && (
+                <>
+                  <dt>{confirmTx.tx.type === "WITHDRAWAL" ? "Send to" : "Paid to"}</dt>
+                  <dd className={`${styles.mono} ${styles.breakAll}`}>{confirmTx.tx.cryptoAddress}</dd>
+                </>
+              )}
+              {confirmTx.tx.txHash && !confirmTx.tx.txHash.startsWith("PROOF_") && (
+                <>
+                  <dt>Tx hash</dt>
+                  <dd className={`${styles.mono} ${styles.breakAll}`}>{confirmTx.tx.txHash}</dd>
+                </>
+              )}
+            </dl>
+            <p className={styles.modalNote}>
+              {confirmTx.tx.type === "DEPOSIT" && confirmTx.action === "approve" &&
+                "Only approve after you've confirmed the payment arrived. The amount will be added to the user's balance."}
+              {confirmTx.tx.type === "DEPOSIT" && confirmTx.action === "reject" &&
+                "The deposit will be marked rejected. No balance changes."}
+              {confirmTx.tx.type === "WITHDRAWAL" && confirmTx.action === "approve" &&
+                "Approve once you have sent the crypto to the address above. The held funds are marked as withdrawn."}
+              {confirmTx.tx.type === "WITHDRAWAL" && confirmTx.action === "reject" &&
+                "The held amount will be returned to the user's balance."}
+              {" "}The user gets an email either way.
+            </p>
+            {confirmTx.tx.receiptUrl && (
+              <button type="button" className={styles.linkBtn} onClick={() => setPreviewProofUrl(confirmTx.tx.receiptUrl)}>
+                <Eye size={15} /> View payment proof
+              </button>
+            )}
+            {actionError && (
+              <div className={styles.errorText}>
+                <AlertCircle size={15} /> {actionError}
+              </div>
+            )}
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnGhost} onClick={() => setConfirmTx(null)} disabled={actionBusy}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={confirmTx.action === "approve" ? styles.btnSuccess : styles.btnDanger}
+                onClick={runAction}
+                disabled={actionBusy}
+              >
+                {actionBusy ? <Loader2 size={15} className={styles.spin} /> : confirmTx.action === "approve" ? <Check size={15} /> : <X size={15} />}
+                {confirmTx.action === "approve" ? "Approve" : "Reject"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ---------------- Proof preview ---------------- */}
+      {previewProofUrl && (
+        <div className={styles.modalBackdrop} onClick={() => setPreviewProofUrl(null)}>
+          <div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHead}>
+              <h2>Payment proof</h2>
+              <div style={{ display: "flex", gap: 8 }}>
+                <a className={styles.iconBtn} href={previewProofUrl} target="_blank" rel="noreferrer" aria-label="Open in new tab">
+                  <ExternalLink size={17} />
+                </a>
+                <button type="button" className={styles.iconBtn} onClick={() => setPreviewProofUrl(null)} aria-label="Close">
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewProofUrl} alt="Payment proof screenshot" className={styles.proofImg} />
+          </div>
+        </div>
+      )}
+
+      {toast && (
+        <div className={`${styles.toast} ${toast.kind === "ok" ? styles.toastOk : styles.toastErr}`} role="status">
+          {toast.kind === "ok" ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
+          {toast.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Overview                                                            */
+/* ------------------------------------------------------------------ */
+
+function Overview({
+  transactions,
+  users,
+  pendingDeposits,
+  pendingWithdrawals,
+  onReview,
+  onGo,
+  onPreview,
+}: {
+  transactions: AdminTx[];
+  users: AdminUser[];
+  pendingDeposits: AdminTx[];
+  pendingWithdrawals: AdminTx[];
+  onReview: (tx: AdminTx, action: "approve" | "reject") => void;
+  onGo: (s: Section) => void;
+  onPreview: (url: string) => void;
+}) {
+  const sum = (list: AdminTx[]) => list.reduce((a, t) => a + Number(t.amount), 0);
+  const investors = users.filter((u) => u.role !== "ADMIN");
+  const totalBalances = investors.reduce((a, u) => a + Number(u.mainBalance), 0);
+  const waiting = [...pendingDeposits, ...pendingWithdrawals].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+
+  return (
+    <>
+      <div className={styles.stats}>
+        <button type="button" className={styles.statCard} onClick={() => onGo("deposits")}>
+          <span className={`${styles.statIcon} ${styles.iconGreen}`}><ArrowDownToLine size={18} /></span>
+          <span className={styles.statLabel}>Deposits to review</span>
+          <span className={styles.statValue}>{pendingDeposits.length}</span>
+          <span className={styles.statSub}>{usd(sum(pendingDeposits))} waiting</span>
+        </button>
+        <button type="button" className={styles.statCard} onClick={() => onGo("withdrawals")}>
+          <span className={`${styles.statIcon} ${styles.iconAmber}`}><ArrowUpFromLine size={18} /></span>
+          <span className={styles.statLabel}>Withdrawals to review</span>
+          <span className={styles.statValue}>{pendingWithdrawals.length}</span>
+          <span className={styles.statSub}>{usd(sum(pendingWithdrawals))} on hold</span>
+        </button>
+        <button type="button" className={styles.statCard} onClick={() => onGo("users")}>
+          <span className={`${styles.statIcon} ${styles.iconBlue}`}><Users size={18} /></span>
+          <span className={styles.statLabel}>Investors</span>
+          <span className={styles.statValue}>{investors.length}</span>
+          <span className={styles.statSub}>{investors.filter((u) => u.status === "SUSPENDED").length} suspended</span>
+        </button>
+        <button type="button" className={styles.statCard} onClick={() => onGo("users")}>
+          <span className={`${styles.statIcon} ${styles.iconPurple}`}><DollarSign size={18} /></span>
+          <span className={styles.statLabel}>Investor balances</span>
+          <span className={styles.statValue}>{usd(totalBalances)}</span>
+          <span className={styles.statSub}>across all accounts</span>
+        </button>
+      </div>
+
+      <section className={styles.card}>
+        <div className={styles.cardHead}>
+          <h2><Clock size={17} /> Waiting for review</h2>
+          <span className={styles.muted}>Oldest first</span>
+        </div>
+        {waiting.length === 0 ? (
+          <Empty icon={<CheckCircle2 size={28} />} text="All caught up. Nothing is waiting for review." />
+        ) : (
+          <TxTable rows={waiting.slice(0, 8)} showType onReview={onReview} onPreview={onPreview} />
+        )}
+        {waiting.length > 8 && (
+          <p className={styles.muted} style={{ marginTop: 12 }}>
+            Showing 8 of {waiting.length}. Open Deposits or Withdrawals to see the rest.
+          </p>
+        )}
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.cardHead}>
+          <h2><ListOrdered size={17} /> Recent activity</h2>
+          <button type="button" className={styles.linkBtn} onClick={() => onGo("transactions")}>
+            View all
+          </button>
+        </div>
+        {transactions.length === 0 ? (
+          <Empty icon={<ListOrdered size={28} />} text="No transactions yet." />
+        ) : (
+          <TxTable rows={transactions.slice(0, 6)} showType onPreview={onPreview} />
+        )}
+      </section>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Deposits / withdrawals                                              */
+/* ------------------------------------------------------------------ */
+
+function TxSection({
+  pending,
+  history,
+  kind,
+  onReview,
+  onPreview,
+}: {
+  pending: AdminTx[];
+  history: AdminTx[];
+  kind: "deposit" | "withdrawal";
+  onReview: (tx: AdminTx, action: "approve" | "reject") => void;
+  onPreview: (url: string) => void;
+}) {
+  return (
+    <>
+      <section className={styles.card}>
+        <div className={styles.cardHead}>
+          <h2><Clock size={17} /> Waiting for review <span className={styles.countChip}>{pending.length}</span></h2>
+        </div>
+        {pending.length === 0 ? (
+          <Empty icon={<CheckCircle2 size={28} />} text={`No ${kind}s waiting for review.`} />
+        ) : (
+          <TxTable rows={pending} onReview={onReview} onPreview={onPreview} />
+        )}
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.cardHead}>
+          <h2><ListOrdered size={17} /> History</h2>
+        </div>
+        {history.length === 0 ? (
+          <Empty icon={<ListOrdered size={28} />} text={`No processed ${kind}s yet.`} />
+        ) : (
+          <TxTable rows={history} onPreview={onPreview} />
+        )}
+      </section>
+    </>
+  );
+}
+
+function AllTransactions({ transactions, onPreview }: { transactions: AdminTx[]; onPreview: (url: string) => void }) {
+  const [q, setQ] = useState("");
+  const [status, setStatus] = useState("all");
+  const [type, setType] = useState("all");
+
+  const rows = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return transactions.filter(
+      (t) =>
+        (status === "all" || t.status === status) &&
+        (type === "all" || (type === "TRADE" ? t.type.startsWith("TRADE") : t.type === type)) &&
+        (!s ||
+          (t.userEmail || "").toLowerCase().includes(s) ||
+          t.id.toLowerCase().includes(s) ||
+          (t.txHash || "").toLowerCase().includes(s)),
+    );
+  }, [transactions, q, status, type]);
+
+  return (
+    <section className={styles.card}>
+      <div className={styles.filters}>
+        <label className={styles.searchBox}>
+          <Search size={16} />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search email, reference or hash" />
+        </label>
+        <select className={styles.select} value={type} onChange={(e) => setType(e.target.value)} aria-label="Type">
+          <option value="all">All types</option>
+          <option value="DEPOSIT">Deposits</option>
+          <option value="WITHDRAWAL">Withdrawals</option>
+          <option value="INVESTMENT_SUBSCRIBE">Subscriptions</option>
+          <option value="TRADE">Trades</option>
+        </select>
+        <select className={styles.select} value={status} onChange={(e) => setStatus(e.target.value)} aria-label="Status">
+          <option value="all">All statuses</option>
+          <option value="PENDING">Pending</option>
+          <option value="APPROVED">Approved</option>
+          <option value="REJECTED">Rejected</option>
+        </select>
+      </div>
+      {rows.length === 0 ? (
+        <Empty icon={<Search size={28} />} text="No transactions match these filters." />
+      ) : (
+        <TxTable rows={rows} showType onPreview={onPreview} />
+      )}
+    </section>
+  );
+}
+
+function TxTable({
+  rows,
+  showType,
+  onReview,
+  onPreview,
+}: {
+  rows: AdminTx[];
+  showType?: boolean;
+  onReview?: (tx: AdminTx, action: "approve" | "reject") => void;
+  onPreview: (url: string) => void;
+}) {
+  return (
+    <>
+      <div className={styles.tableWrap}>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>User</th>
+            {showType && <th>Type</th>}
+            <th className={styles.right}>Amount</th>
+            <th>Asset</th>
+            <th>Proof</th>
+            <th>Date</th>
+            <th>{onReview ? "" : "Status"}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((t) => (
+            <tr key={t.id}>
+              <td className={styles.mono}>{shortId(t.id)}</td>
+              <td>
+                <div className={styles.userCell}>
+                  <span>{t.userFullName || "—"}</span>
+                  <small>{t.userEmail}</small>
+                </div>
+              </td>
+              {showType && <td>{typeLabel(t.type)}</td>}
+              <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>{usd(t.amount)}</td>
+              <td className={styles.muted}>{t.currency}</td>
+              <td>
+                {t.receiptUrl ? (
+                  <button type="button" className={styles.linkBtn} onClick={() => onPreview(t.receiptUrl!)}>
+                    <Eye size={14} /> View
+                  </button>
+                ) : t.txHash && !t.txHash.startsWith("PROOF_") && t.type === "DEPOSIT" ? (
+                  <span className={`${styles.mono} ${styles.muted}`} title={t.txHash}>
+                    {t.txHash.slice(0, 10)}…
+                  </span>
+                ) : (
+                  <span className={styles.muted}>—</span>
+                )}
+              </td>
+              <td className={styles.muted}>{when(t.createdAt)}</td>
+              <td>
+                {onReview && t.status === "PENDING" ? (
+                  <div className={styles.rowActions}>
+                    <button type="button" className={styles.btnSuccessSm} onClick={() => onReview(t, "approve")}>
+                      <Check size={14} /> Approve
+                    </button>
+                    <button type="button" className={styles.btnDangerSm} onClick={() => onReview(t, "reject")}>
+                      <X size={14} /> Reject
+                    </button>
+                  </div>
+                ) : (
+                  <StatusPill status={t.status} />
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      </div>
+
+      {/* Phone layout: one card per transaction */}
+      <ul className={styles.cardList}>
+        {rows.map((t) => (
+          <li key={t.id} className={styles.itemCard}>
+            <div className={styles.itemTop}>
+              <div className={styles.userCell}>
+                <span>{t.userFullName || t.userEmail}</span>
+                <small>{t.userEmail}</small>
+              </div>
+              <span className={`${styles.mono} ${styles.strong}`}>{usd(t.amount)}</span>
+            </div>
+            <div className={styles.itemMeta}>
+              <span>{typeLabel(t.type)}</span>
+              <span>{t.currency}</span>
+              <span>{when(t.createdAt)}</span>
+              <span className={styles.mono}>#{shortId(t.id)}</span>
+            </div>
+            <div className={styles.itemBottom}>
+              {t.receiptUrl ? (
+                <button type="button" className={styles.linkBtn} onClick={() => onPreview(t.receiptUrl!)}>
+                  <Eye size={14} /> View proof
+                </button>
+              ) : (
+                <span />
+              )}
+              {onReview && t.status === "PENDING" ? (
+                <div className={styles.rowActions}>
+                  <button type="button" className={styles.btnSuccessSm} onClick={() => onReview(t, "approve")}>
+                    <Check size={14} /> Approve
+                  </button>
+                  <button type="button" className={styles.btnDangerSm} onClick={() => onReview(t, "reject")}>
+                    <X size={14} /> Reject
+                  </button>
+                </div>
+              ) : (
+                <StatusPill status={t.status} />
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Users                                                               */
+/* ------------------------------------------------------------------ */
+
+function UsersSection({
+  users,
+  onChanged,
+  flash,
+}: {
+  users: AdminUser[];
+  onChanged: () => Promise<void>;
+  flash: (k: "ok" | "error", t: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const [selected, setSelected] = useState<AdminUser | null>(null);
+  const [amount, setAmount] = useState("");
+  const [action, setAction] = useState<"credit" | "debit">("credit");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [statusBusy, setStatusBusy] = useState<string | null>(null);
+
+  const rows = users.filter((u) => {
+    const s = q.trim().toLowerCase();
     return (
-      u.email.toLowerCase().includes(q) ||
-      (u.fullName && u.fullName.toLowerCase().includes(q)) ||
-      u.username.toLowerCase().includes(q) ||
-      u.role.toLowerCase().includes(q)
+      !s ||
+      u.email.toLowerCase().includes(s) ||
+      (u.fullName || "").toLowerCase().includes(s) ||
+      u.username.toLowerCase().includes(s)
     );
   });
 
+  const openAdjust = (u: AdminUser) => {
+    setSelected(u);
+    setAmount("");
+    setNote("");
+    setAction("credit");
+    setError("");
+  };
+
+  const submitAdjust = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selected) return;
+    const n = parseFloat(amount);
+    if (!n || n <= 0) return setError("Enter an amount greater than 0.");
+    if (note.trim().length < 3) return setError("Add a short reason. It is saved in the audit log.");
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/users/${selected.id}/balance`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: n, action, note: note.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Adjustment failed");
+      flash("ok", data.message);
+      setSelected(null);
+      await onChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Adjustment failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleStatus = async (u: AdminUser) => {
+    const next = u.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+    if (!window.confirm(`${next === "SUSPENDED" ? "Suspend" : "Reactivate"} ${u.email}?`)) return;
+    setStatusBusy(u.id);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Update failed");
+      flash("ok", `${u.email} is now ${next.toLowerCase()}.`);
+      await onChanged();
+    } catch (err) {
+      flash("error", err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setStatusBusy(null);
+    }
+  };
+
   return (
-    <div className={styles.container}>
-      {/* Top Header */}
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Super Admin Moderation Portal</h1>
-          <p style={{ color: "var(--color-text-tertiary)", fontSize: "0.9rem" }}>
-            Root privilege access • Financial audit logs, addresses &amp; balance control
-          </p>
+    <>
+      <section className={styles.card}>
+        <div className={styles.filters}>
+          <label className={styles.searchBox}>
+            <Search size={16} />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or username" />
+          </label>
+          <span className={styles.muted}>{rows.length} of {users.length}</span>
         </div>
-        <div className={styles.headerActions}>
-          <button
-            type="button"
-            onClick={() => {
-              fetchTransactions();
-              fetchAddresses();
-              fetchUsers();
-            }}
-            style={{
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              color: "#fff",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "0.85rem",
-            }}
-          >
-            <RefreshCw size={14} className={loading || loadingUsers ? "animate-spin" : ""} />
-            Refresh
-          </button>
-          <div className={styles.badge}>ADMIN SESSION ACTIVE</div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            style={{
-              background: "rgba(255, 51, 68, 0.1)",
-              border: "1px solid rgba(255, 51, 68, 0.25)",
-              color: "var(--color-negative)",
-              padding: "6px 12px",
-              borderRadius: "6px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-            }}
-          >
-            <LogOut size={14} />
-            Logout
-          </button>
-        </div>
-      </div>
-
-      {/* Admin Section Tabs */}
-      <div className={styles.tabs}>
-        <button
-          type="button"
-          onClick={() => setActiveTab("queue")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: activeTab === "queue" ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.08)",
-            background: activeTab === "queue" ? "rgba(59, 130, 246, 0.15)" : "#14171d",
-            color: activeTab === "queue" ? "#60a5fa" : "rgba(255,255,255,0.6)",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Approval Queue ({pendingQueue.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("users")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: activeTab === "users" ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.08)",
-            background: activeTab === "users" ? "rgba(59, 130, 246, 0.15)" : "#14171d",
-            color: activeTab === "users" ? "#60a5fa" : "rgba(255,255,255,0.6)",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          User Accounts ({users.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("addresses")}
-          style={{
-            padding: "8px 16px",
-            borderRadius: "8px",
-            border: activeTab === "addresses" ? "1px solid #3b82f6" : "1px solid rgba(255,255,255,0.08)",
-            background: activeTab === "addresses" ? "rgba(59, 130, 246, 0.15)" : "#14171d",
-            color: activeTab === "addresses" ? "#60a5fa" : "rgba(255,255,255,0.6)",
-            fontSize: "14px",
-            fontWeight: 600,
-            cursor: "pointer",
-          }}
-        >
-          Crypto Deposit Addresses ({addresses.length})
-        </button>
-      </div>
-
-      {/* ====================================================================
-          TAB 1: APPROVAL QUEUE & SETTLEMENT HISTORY
-          ==================================================================== */}
-      {activeTab === "queue" && (
-        <>
-          <div className={styles.card}>
-            <h2 className={styles.tableTitle}>
-              Pending Financial Operations ({pendingQueue.length})
-            </h2>
-            {pendingQueue.length === 0 ? (
-              <p style={{ color: "var(--color-positive)", padding: "1rem 0" }}>
-                All operations reviewed and cleared. Pending queue is empty.
-              </p>
-            ) : (
-              <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.th}>ID</th>
-                    <th className={styles.th}>User Account</th>
-                    <th className={styles.th}>Type</th>
-                    <th className={styles.th}>Amount</th>
-                    <th className={styles.th}>Payment Proof</th>
-                    <th className={styles.th}>Blockchain Ref</th>
-                    <th className={styles.th} style={{ textAlign: "right" }}>
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pendingQueue.map((item) => (
-                    <tr key={item.id}>
-                      <td className={styles.td} style={{ fontFamily: "var(--font-mono)" }}>
-                        {item.id.substring(0, 10)}...
-                      </td>
-                      <td className={styles.td}>
-                        <div>{item.userFullName || "Investor"}</div>
-                        <div style={{ fontSize: "0.75rem", color: "#888" }}>
-                          {item.userEmail}
-                        </div>
-                      </td>
-                      <td
-                        className={styles.td}
-                        style={{
-                          color: item.type.includes("DEPOSIT") ? "var(--color-positive)" : "#f59e0b",
-                          fontWeight: 700,
-                        }}
-                      >
-                        {item.type}
-                      </td>
-                      <td className={styles.td} style={{ fontFamily: "var(--font-mono)", fontWeight: 700 }}>
-                        ${item.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                        <div style={{ fontSize: "11px", color: "#888", fontWeight: 400 }}>
-                          {item.currency}
-                        </div>
-                      </td>
-
-                      {/* Payment Proof Column */}
-                      <td className={styles.td}>
-                        {item.receiptUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewProofUrl(item.receiptUrl)}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: "6px",
-                              backgroundColor: "rgba(59, 130, 246, 0.15)",
-                              border: "1px solid rgba(59, 130, 246, 0.3)",
-                              color: "#60a5fa",
-                              fontSize: "12px",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            <Eye size={13} />
-                            <span>View Screenshot</span>
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)" }}>
-                            No file attached
-                          </span>
-                        )}
-                      </td>
-
-                      <td
-                        className={styles.td}
-                        style={{ fontSize: "0.8rem", color: "#888", maxWidth: "160px", wordBreak: "break-all" }}
-                      >
-                        {item.txHash || item.cryptoAddress || "Direct Ledger Transfer"}
-                      </td>
-
-                      <td className={styles.td} style={{ textAlign: "right" }}>
-                        <button
-                          type="button"
-                          disabled={actionLoading === item.id}
-                          onClick={() => handleAction(item.id, "approve")}
-                          className={styles.approveBtn}
-                        >
-                          {actionLoading === item.id ? "Processing..." : "Approve"}
-                        </button>
-                        <button
-                          type="button"
-                          disabled={actionLoading === item.id}
-                          onClick={() => handleAction(item.id, "reject")}
-                          className={styles.rejectBtn}
-                        >
-                          Reject
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              </div>
-            )}
-          </div>
-
-          {/* Audit Log / Processed Operations */}
-          <div className={styles.card} style={{ marginTop: "2rem" }}>
-            <h2 className={styles.tableTitle}>
-              Settlement Audit History ({processedQueue.length})
-            </h2>
-            {processedQueue.length === 0 ? (
-              <p style={{ color: "#888", padding: "1rem 0" }}>
-                No past operations in audit log.
-              </p>
-            ) : (
-              <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th className={styles.th}>ID</th>
-                    <th className={styles.th}>User Account</th>
-                    <th className={styles.th}>Type</th>
-                    <th className={styles.th}>Amount</th>
-                    <th className={styles.th}>Proof</th>
-                    <th className={styles.th}>Outcome</th>
-                    <th className={styles.th} style={{ textAlign: "right" }}>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {processedQueue.slice(0, 15).map((item) => (
-                    <tr key={item.id}>
-                      <td className={styles.td} style={{ fontFamily: "var(--font-mono)" }}>
-                        {item.id.substring(0, 10)}...
-                      </td>
-                      <td className={styles.td}>{item.userEmail}</td>
-                      <td className={styles.td}>{item.type}</td>
-                      <td className={styles.td} style={{ fontFamily: "var(--font-mono)" }}>
-                        ${item.amount.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className={styles.td}>
-                        {item.receiptUrl ? (
-                          <button
-                            type="button"
-                            onClick={() => setPreviewProofUrl(item.receiptUrl)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              color: "#60a5fa",
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontSize: "12px",
-                            }}
-                          >
-                            <Eye size={13} /> View
-                          </button>
-                        ) : (
-                          <span style={{ color: "#666", fontSize: "11px" }}>-</span>
-                        )}
-                      </td>
-                      <td className={styles.td}>
-                        <span
-                          style={{
-                            padding: "2px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                            backgroundColor:
-                              item.status === "APPROVED"
-                                ? "rgba(1, 178, 139, 0.15)"
-                                : "rgba(255, 51, 68, 0.15)",
-                            color:
-                              item.status === "APPROVED"
-                                ? "var(--color-positive)"
-                                : "var(--color-negative)",
-                          }}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                      <td className={styles.td} style={{ textAlign: "right", color: "#888", fontSize: "0.8rem" }}>
-                        {new Date(item.createdAt).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* ====================================================================
-          TAB 2: USER ACCOUNTS DIRECTORY & BALANCE ADJUSTMENT
-          ==================================================================== */}
-      {activeTab === "users" && (
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <div>
-              <h2 className={styles.tableTitle} style={{ margin: 0 }}>
-                Registered User Directory ({users.length})
-              </h2>
-              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginTop: "4px" }}>
-                Inspect investor profiles, adjust account balances, and manage access statuses.
-              </p>
-            </div>
-            <div className={styles.search}>
-              <input
-                type="text"
-                placeholder="Search email, name or role..."
-                value={userSearchQuery}
-                onChange={(e) => setUserSearchQuery(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  backgroundColor: "#0d0f14",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: "#fff",
-                  fontSize: "13px",
-                  outline: "none",
-                }}
-              />
-            </div>
-          </div>
-
+        {rows.length === 0 ? (
+          <Empty icon={<Users size={28} />} text="No users match your search." />
+        ) : (
           <div className={styles.tableWrap}>
-
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.th}>User / Email</th>
-                <th className={styles.th}>Role</th>
-                <th className={styles.th}>Status</th>
-                <th className={styles.th}>Main Balance</th>
-                <th className={styles.th}>Yield Profit</th>
-                <th className={styles.th}>Total Deposited</th>
-                <th className={styles.th} style={{ textAlign: "right" }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.length === 0 ? (
+            <table className={styles.table}>
+              <thead>
                 <tr>
-                  <td colSpan={7} className={styles.td} style={{ textAlign: "center", color: "#888", padding: "20px 0" }}>
-                    No users match search query.
-                  </td>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th className={styles.right}>Balance</th>
+                  <th className={styles.right}>Deposited</th>
+                  <th className={styles.right}>Withdrawn</th>
+                  <th>Joined</th>
+                  <th></th>
                 </tr>
-              ) : (
-                filteredUsers.map((user) => (
-                  <tr key={user.id}>
-                    <td className={styles.td}>
-                      <div style={{ fontWeight: 600, color: "#fff" }}>{user.fullName || user.username}</div>
-                      <div style={{ fontSize: "12px", color: "#888" }}>{user.email}</div>
+              </thead>
+              <tbody>
+                {rows.map((u) => (
+                  <tr key={u.id}>
+                    <td>
+                      <div className={styles.userCell}>
+                        <span>{u.fullName || u.username}</span>
+                        <small>{u.email}</small>
+                      </div>
                     </td>
-                    <td className={styles.td}>
-                      <span
-                        style={{
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          backgroundColor: user.role === "ADMIN" ? "rgba(168, 85, 247, 0.15)" : "rgba(59, 130, 246, 0.15)",
-                          color: user.role === "ADMIN" ? "#c084fc" : "#60a5fa",
-                        }}
-                      >
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className={styles.td}>
-                      <span
-                        style={{
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          backgroundColor: user.status === "ACTIVE" ? "rgba(16, 185, 129, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                          color: user.status === "ACTIVE" ? "#10b981" : "#ef4444",
-                        }}
-                      >
-                        {user.status}
-                      </span>
-                    </td>
-                    <td className={styles.td} style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "#fff" }}>
-                      ${user.mainBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className={styles.td} style={{ fontFamily: "var(--font-mono)", color: "#10b981" }}>
-                      ${user.interestBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className={styles.td} style={{ fontFamily: "var(--font-mono)", color: "#888" }}>
-                      ${user.totalDeposited.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className={styles.td} style={{ textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", gap: "6px" }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedUserForBalance(user);
-                            setAdjustAmount("");
-                            setAdjustNote("");
-                            setAdjustStatus(null);
-                          }}
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: "5px",
-                            backgroundColor: "rgba(59, 130, 246, 0.15)",
-                            border: "1px solid rgba(59, 130, 246, 0.3)",
-                            color: "#60a5fa",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                          }}
-                        >
-                          <DollarSign size={13} />
-                          <span>Adjust Balance</span>
+                    <td>{u.role === "ADMIN" ? <span className={`${styles.pill} ${styles.pillBlue}`}>Admin</span> : "Investor"}</td>
+                    <td><StatusPill status={u.status} /></td>
+                    <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>{usd(u.mainBalance)}</td>
+                    <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalDeposited)}</td>
+                    <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalWithdrawn)}</td>
+                    <td className={styles.muted}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
+                    <td>
+                      <div className={styles.rowActions}>
+                        <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)}>
+                          <DollarSign size={14} /> Balance
                         </button>
-
-                        {user.role !== "ADMIN" && (
+                        {u.role !== "ADMIN" && (
                           <button
                             type="button"
-                            disabled={statusUpdatingId === user.id}
-                            onClick={() => handleToggleUserStatus(user)}
-                            style={{
-                              padding: "4px 8px",
-                              borderRadius: "5px",
-                              backgroundColor: user.status === "ACTIVE" ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
-                              border: user.status === "ACTIVE" ? "1px solid rgba(239, 68, 68, 0.25)" : "1px solid rgba(16, 185, 129, 0.25)",
-                              color: user.status === "ACTIVE" ? "#ef4444" : "#10b981",
-                              fontSize: "12px",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
+                            className={u.status === "ACTIVE" ? styles.btnDangerSm : styles.btnSuccessSm}
+                            onClick={() => toggleStatus(u)}
+                            disabled={statusBusy === u.id}
                           >
-                            {user.status === "ACTIVE" ? <UserX size={13} /> : <UserCheck size={13} />}
-                            <span>{user.status === "ACTIVE" ? "Suspend" : "Activate"}</span>
+                            {u.status === "ACTIVE" ? <UserX size={14} /> : <UserCheck size={14} />}
+                            {u.status === "ACTIVE" ? "Suspend" : "Reactivate"}
                           </button>
                         )}
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-          </div>
-        </div>
-      )}
-
-      {/* ====================================================================
-          TAB 3: CRYPTO DEPOSIT ADDRESSES MANAGEMENT (ADMIN CONTROL)
-          ==================================================================== */}
-      {activeTab === "addresses" && (
-        <div className={styles.card}>
-          <div className={styles.cardHeader}>
-            <div>
-              <h2 className={styles.tableTitle} style={{ margin: 0 }}>
-                Crypto Deposit Addresses Configuration
-              </h2>
-              <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", marginTop: "4px" }}>
-                Update receiving wallet addresses for each token and network. Changes immediately reflect in investor deposit modals.
-              </p>
-            </div>
-          </div>
-
-          {saveStatus && (
-            <div
-              style={{
-                padding: "12px 16px",
-                borderRadius: "8px",
-                marginBottom: "20px",
-                backgroundColor:
-                  saveStatus.type === "success"
-                    ? "rgba(16, 185, 129, 0.15)"
-                    : "rgba(239, 68, 68, 0.15)",
-                border:
-                  saveStatus.type === "success"
-                    ? "1px solid rgba(16, 185, 129, 0.3)"
-                    : "1px solid rgba(239, 68, 68, 0.3)",
-                color: saveStatus.type === "success" ? "#10b981" : "#ef4444",
-                fontSize: "13px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              {saveStatus.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-              <span>{saveStatus.message}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleSaveAddresses}>
-            <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.th}>Token</th>
-                  <th className={styles.th}>Symbol</th>
-                  <th className={styles.th}>Network</th>
-                  <th className={styles.th} style={{ width: "50%" }}>Receiving Address</th>
-                  <th className={styles.th}>Memo / Tag (Optional)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {addresses.map((item) => (
-                  <tr key={item.id}>
-                    <td className={styles.td} style={{ fontWeight: 600, color: "#fff" }}>
-                      {item.token}
-                    </td>
-                    <td className={styles.td}>
-                      <span
-                        style={{
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          backgroundColor: "rgba(255,255,255,0.06)",
-                          fontFamily: "monospace",
-                          fontSize: "12px",
-                        }}
-                      >
-                        {item.symbol}
-                      </span>
-                    </td>
-                    <td className={styles.td} style={{ color: "#60a5fa", fontWeight: 500 }}>
-                      {item.network}
-                    </td>
-                    <td className={styles.td}>
-                      <input
-                        type="text"
-                        value={item.address}
-                        onChange={(e) => handleAddressChange(item.id, "address", e.target.value)}
-                        required
-                        style={{
-                          width: "100%",
-                          padding: "8px 10px",
-                          backgroundColor: "#0d0f14",
-                          border: "1px solid rgba(255, 255, 255, 0.12)",
-                          borderRadius: "6px",
-                          color: "#fff",
-                          fontFamily: "ui-monospace, monospace",
-                          fontSize: "12px",
-                        }}
-                      />
-                    </td>
-                    <td className={styles.td}>
-                      <input
-                        type="text"
-                        value={item.memo || ""}
-                        onChange={(e) => handleAddressChange(item.id, "memo", e.target.value)}
-                        placeholder="None"
-                        style={{
-                          width: "100%",
-                          padding: "8px 10px",
-                          backgroundColor: "#0d0f14",
-                          border: "1px solid rgba(255, 255, 255, 0.12)",
-                          borderRadius: "6px",
-                          color: "#fff",
-                          fontFamily: "ui-monospace, monospace",
-                          fontSize: "12px",
-                        }}
-                      />
-                    </td>
-                  </tr>
                 ))}
               </tbody>
             </table>
-            </div>
+          </div>
+        )}
+        {rows.length > 0 && (
+          <ul className={styles.cardList}>
+            {rows.map((u) => (
+              <li key={u.id} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.userCell}>
+                    <span>{u.fullName || u.username}</span>
+                    <small>{u.email}</small>
+                  </div>
+                  <StatusPill status={u.status} />
+                </div>
+                <div className={styles.itemMeta}>
+                  <span>{u.role === "ADMIN" ? "Admin" : "Investor"}</span>
+                  <span>Balance <b className={styles.mono}>{usd(u.mainBalance)}</b></span>
+                  <span>Deposited {usd(u.totalDeposited)}</span>
+                </div>
+                <div className={styles.itemBottom}>
+                  <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)}>
+                    <DollarSign size={14} /> Balance
+                  </button>
+                  {u.role !== "ADMIN" && (
+                    <button
+                      type="button"
+                      className={u.status === "ACTIVE" ? styles.btnDangerSm : styles.btnSuccessSm}
+                      onClick={() => toggleStatus(u)}
+                      disabled={statusBusy === u.id}
+                    >
+                      {u.status === "ACTIVE" ? <UserX size={14} /> : <UserCheck size={14} />}
+                      {u.status === "ACTIVE" ? "Suspend" : "Reactivate"}
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
-            <div style={{ marginTop: "20px", display: "flex", justifyContent: "flex-end" }}>
-              <button
-                type="submit"
-                disabled={savingAddresses}
-                className={styles.approveBtn}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 20px",
-                  fontSize: "14px",
-                }}
-              >
-                <Save size={16} />
-                <span>{savingAddresses ? "Saving Addresses..." : "Save All Addresses"}</span>
+      {selected && (
+        <div className={styles.modalBackdrop} onClick={() => !busy && setSelected(null)}>
+          <form className={styles.modal} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} onSubmit={submitAdjust}>
+            <div className={styles.modalHead}>
+              <h2>Adjust balance</h2>
+              <button type="button" className={styles.iconBtn} onClick={() => setSelected(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <dl className={styles.detailList}>
+              <dt>User</dt>
+              <dd>{selected.email}</dd>
+              <dt>Current balance</dt>
+              <dd className={styles.mono}>{usd(selected.mainBalance)}</dd>
+            </dl>
+            <div className={styles.segmented} role="radiogroup" aria-label="Adjustment type">
+              <button type="button" role="radio" aria-checked={action === "credit"} className={action === "credit" ? styles.segActive : ""} onClick={() => setAction("credit")}>
+                Add funds
+              </button>
+              <button type="button" role="radio" aria-checked={action === "debit"} className={action === "debit" ? styles.segActive : ""} onClick={() => setAction("debit")}>
+                Remove funds
+              </button>
+            </div>
+            <label className={styles.field}>
+              <span>Amount (USD)</span>
+              <input className={styles.input} type="number" min="0" step="0.01" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" autoFocus />
+            </label>
+            <label className={styles.field}>
+              <span>Reason (saved in the audit log)</span>
+              <input className={styles.input} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Correction for deposit ABC123" maxLength={200} />
+            </label>
+            {error && (
+              <div className={styles.errorText}>
+                <AlertCircle size={15} /> {error}
+              </div>
+            )}
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnGhost} onClick={() => setSelected(null)} disabled={busy}>
+                Cancel
+              </button>
+              <button type="submit" className={action === "credit" ? styles.btnSuccess : styles.btnDanger} disabled={busy}>
+                {busy && <Loader2 size={15} className={styles.spin} />}
+                {action === "credit" ? "Add funds" : "Remove funds"}
               </button>
             </div>
           </form>
         </div>
       )}
+    </>
+  );
+}
 
-      {/* ====================================================================
-          BALANCE ADJUSTMENT MODAL
-          ==================================================================== */}
-      {selectedUserForBalance && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 11000,
-            backgroundColor: "rgba(0, 0, 0, 0.8)",
-            backdropFilter: "blur(6px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "20px",
-          }}
-          onClick={() => setSelectedUserForBalance(null)}
-        >
-          <div
-            style={{
-              maxWidth: "460px",
-              width: "100%",
-              backgroundColor: "#16191f",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "14px",
-              padding: "24px",
-              color: "#fff",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700 }}>
-                Adjust Investor Balance
-              </h3>
-              <button
-                type="button"
-                onClick={() => setSelectedUserForBalance(null)}
-                style={{ background: "none", border: "none", color: "#888", cursor: "pointer" }}
-              >
-                <X size={18} />
-              </button>
-            </div>
+/* ------------------------------------------------------------------ */
+/* Deposit addresses: each card saves on its own                       */
+/* ------------------------------------------------------------------ */
 
-            <div style={{ padding: "12px", backgroundColor: "#0f1217", borderRadius: "8px", marginBottom: "16px" }}>
-              <div style={{ fontSize: "12px", color: "#888" }}>Target Investor:</div>
-              <div style={{ fontWeight: 600, fontSize: "14px", color: "#fff" }}>{selectedUserForBalance.email}</div>
-              <div style={{ fontSize: "13px", marginTop: "4px" }}>
-                Current Balance: <span style={{ color: "#38bdf8", fontWeight: 700 }}>${selectedUserForBalance.mainBalance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>
-              </div>
-            </div>
+function AddressesSection({
+  addresses,
+  onSaved,
+  flash,
+}: {
+  addresses: AddressItem[];
+  onSaved: (a: AddressItem) => void;
+  flash: (k: "ok" | "error", t: string) => void;
+}) {
+  if (addresses.length === 0) {
+    return (
+      <section className={styles.card}>
+        <Empty icon={<Wallet size={28} />} text="No deposit addresses configured. Run the seed script to create them." />
+      </section>
+    );
+  }
+  return (
+    <div className={styles.addrGrid}>
+      {addresses.map((a) => (
+        <AddressCard key={a.id} item={a} onSaved={onSaved} flash={flash} />
+      ))}
+    </div>
+  );
+}
 
-            {adjustStatus && (
-              <div
-                style={{
-                  padding: "10px 12px",
-                  borderRadius: "6px",
-                  marginBottom: "14px",
-                  backgroundColor: adjustStatus.type === "success" ? "rgba(16,185,129,0.15)" : "rgba(239,68,68,0.15)",
-                  color: adjustStatus.type === "success" ? "#10b981" : "#ef4444",
-                  fontSize: "12px",
-                }}
-              >
-                {adjustStatus.message}
-              </div>
-            )}
+function AddressCard({
+  item,
+  onSaved,
+  flash,
+}: {
+  item: AddressItem;
+  onSaved: (a: AddressItem) => void;
+  flash: (k: "ok" | "error", t: string) => void;
+}) {
+  const [address, setAddress] = useState(item.address);
+  const [memo, setMemo] = useState(item.memo ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
-            <form onSubmit={handleBalanceSubmit}>
-              <div style={{ display: "flex", gap: "8px", marginBottom: "14px" }}>
-                <button
-                  type="button"
-                  onClick={() => setAdjustAction("credit")}
-                  style={{
-                    flex: 1,
-                    padding: "8px",
-                    borderRadius: "6px",
-                    border: adjustAction === "credit" ? "1px solid #10b981" : "1px solid rgba(255,255,255,0.1)",
-                    backgroundColor: adjustAction === "credit" ? "rgba(16,185,129,0.15)" : "transparent",
-                    color: adjustAction === "credit" ? "#10b981" : "#888",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    fontSize: "13px",
-                  }}
-                >
-                  + Credit Funds
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAdjustAction("debit")}
-                  style={{
-                    flex: 1,
-                    padding: "8px",
-                    borderRadius: "6px",
-                    border: adjustAction === "debit" ? "1px solid #ef4444" : "1px solid rgba(255,255,255,0.1)",
-                    backgroundColor: adjustAction === "debit" ? "rgba(239,68,68,0.15)" : "transparent",
-                    color: adjustAction === "debit" ? "#ef4444" : "#888",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    fontSize: "13px",
-                  }}
-                >
-                  - Debit Funds
-                </button>
-              </div>
+  // Keep in sync if the list is refreshed from the server
+  useEffect(() => {
+    setAddress(item.address);
+    setMemo(item.memo ?? "");
+  }, [item.address, item.memo]);
 
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", display: "block", marginBottom: "6px" }}>
-                  Adjustment Amount ($):
-                </label>
-                <input
-                  type="number"
-                  step="any"
-                  min="0.01"
-                  required
-                  placeholder="0.00"
-                  value={adjustAmount}
-                  onChange={(e) => setAdjustAmount(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "6px",
-                    backgroundColor: "#0d0f14",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    color: "#fff",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    outline: "none",
-                  }}
-                />
-              </div>
+  const dirty = address.trim() !== item.address || (memo.trim() || null) !== (item.memo ?? null);
+  const showMemo = ["XRP", "XLM", "EOS", "TON", "ATOM"].includes(item.symbol) || !!item.memo;
 
-              <div style={{ marginBottom: "20px" }}>
-                <label style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", display: "block", marginBottom: "6px" }}>
-                  Reason / Internal Audit Note:
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Wire transfer deposit confirmation, bonus credit"
-                  value={adjustNote}
-                  onChange={(e) => setAdjustNote(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    backgroundColor: "#0d0f14",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    color: "#fff",
-                    fontSize: "12px",
-                    outline: "none",
-                  }}
-                />
-              </div>
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!dirty) return;
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/admin/settings/addresses/${item.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: address.trim(), memo: memo.trim() || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Save failed");
+      onSaved(data.address);
+      setSavedAt(Date.now());
+      flash("ok", `${item.symbol} (${item.network}) address saved.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Save failed");
+    } finally {
+      setBusy(false);
+    }
+  };
 
-              <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedUserForBalance(null)}
-                  className={styles.rejectBtn}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={adjusting}
-                  className={styles.approveBtn}
-                >
-                  {adjusting ? "Processing..." : "Confirm Adjustment"}
-                </button>
-              </div>
-            </form>
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(item.address);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+
+  return (
+    <form className={`${styles.addrCard} ${dirty ? styles.addrDirty : ""}`} onSubmit={save}>
+      <div className={styles.addrHead}>
+        <div className={styles.addrToken}>
+          <span className={styles.addrSymbol}>{item.symbol}</span>
+          <div>
+            <div className={styles.strong}>{item.token}</div>
+            <div className={styles.muted}>{item.network} network</div>
           </div>
+        </div>
+        {dirty ? (
+          <span className={`${styles.pill} ${styles.pillAmber}`}>Unsaved</span>
+        ) : savedAt && Date.now() - savedAt < 5000 ? (
+          <span className={`${styles.pill} ${styles.pillGreen}`}>Saved</span>
+        ) : (
+          <button type="button" className={styles.iconBtn} onClick={copy} aria-label="Copy current address" title="Copy current address">
+            {copied ? <Check size={16} /> : <Copy size={16} />}
+          </button>
+        )}
+      </div>
+
+      <label className={styles.field}>
+        <span>Receiving address</span>
+        <input
+          className={`${styles.input} ${styles.mono}`}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          spellCheck={false}
+          autoComplete="off"
+        />
+      </label>
+
+      {showMemo && (
+        <label className={styles.field}>
+          <span>Memo / destination tag</span>
+          <input className={styles.input} value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="Optional" />
+        </label>
+      )}
+
+      {error && (
+        <div className={styles.errorText}>
+          <AlertCircle size={15} /> {error}
         </div>
       )}
 
-      {/* ====================================================================
-          SCREENSHOT PROOF LIGHTBOX MODAL
-          ==================================================================== */}
-      {previewProofUrl && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 11000,
-            backgroundColor: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(6px)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px",
-          }}
-          onClick={() => setPreviewProofUrl(null)}
-        >
-          <div
-            style={{
-              maxWidth: "720px",
-              width: "100%",
-              backgroundColor: "#16191f",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
-              borderRadius: "14px",
-              padding: "20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
+      <div className={styles.addrActions}>
+        {dirty && (
+          <button
+            type="button"
+            className={styles.btnGhostSm}
+            onClick={() => {
+              setAddress(item.address);
+              setMemo(item.memo ?? "");
+              setError("");
             }}
-            onClick={(e) => e.stopPropagation()}
+            disabled={busy}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: 600, color: "#fff", margin: 0 }}>
-                Investor Payment Proof Screenshot
-              </h3>
-              <button
-                type="button"
-                onClick={() => setPreviewProofUrl(null)}
-                style={{ background: "none", border: "none", color: "#888", cursor: "pointer" }}
-              >
-                <X size={20} />
-              </button>
-            </div>
+            <RotateCcw size={14} /> Undo
+          </button>
+        )}
+        <button type="submit" className={styles.btnPrimarySm} disabled={!dirty || busy}>
+          {busy ? <Loader2 size={14} className={styles.spin} /> : <Save size={14} />}
+          Save
+        </button>
+      </div>
+    </form>
+  );
+}
 
-            <div
-              style={{
-                maxHeight: "70vh",
-                overflowY: "auto",
-                backgroundColor: "#0b0d11",
-                borderRadius: "8px",
-                padding: "8px",
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={previewProofUrl}
-                alt="Payment proof screenshot"
-                style={{ maxWidth: "100%", height: "auto", borderRadius: "6px" }}
-              />
-            </div>
+/* ------------------------------------------------------------------ */
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <a
-                href={previewProofUrl}
-                target="_blank"
-                rel="noreferrer"
-                style={{
-                  color: "#60a5fa",
-                  fontSize: "13px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  textDecoration: "none",
-                }}
-              >
-                <ExternalLink size={14} /> Open full size in new tab
-              </a>
-              <button
-                type="button"
-                onClick={() => setPreviewProofUrl(null)}
-                className={styles.rejectBtn}
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+function Empty({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className={styles.empty}>
+      {icon}
+      <p>{text}</p>
     </div>
   );
 }
