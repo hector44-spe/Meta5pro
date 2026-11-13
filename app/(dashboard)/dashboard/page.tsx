@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { usePrices } from "@/lib/usePrices";
 import { useHoldings } from "@/lib/useHoldings";
 import assetCatalog from "@/data/assetsData.json";
@@ -255,10 +255,7 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [holdings, prices]);
 
-  // TradingView Embed Chart reference
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [chartInView, setChartInView] = useState(false);
-
+  // TradingView chart (official embed iframe, loaded lazily by the browser)
   // Live TradingView symbol for the asset selected in the trade panel.
   // CRYPTO:<coin>USD is TradingView's aggregated index, available in every region.
   const tvSymbol = (() => {
@@ -267,45 +264,8 @@ export default function DashboardPage() {
     return stocks[c] ?? `CRYPTO:${c}USD`;
   })();
 
-  // Only load the (heavy) chart once it is on screen
-  useEffect(() => {
-    const el = chartContainerRef.current;
-    if (!el || chartInView) return;
-    if (!("IntersectionObserver" in window)) {
-      setChartInView(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setChartInView(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "200px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [chartHidden, chartInView]);
-
-  useEffect(() => {
-    if (chartHidden || !chartInView) return;
-    const container = chartContainerRef.current;
-    if (!container) return;
-
-    container.innerHTML = "";
-
-    const widgetDiv = document.createElement("div");
-    widgetDiv.className = "tradingview-widget-container__widget";
-    widgetDiv.style.height = "100%";
-    widgetDiv.style.width = "100%";
-    container.appendChild(widgetDiv);
-
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.type = "text/javascript";
-    script.async = true;
-    script.innerHTML = JSON.stringify({
+  const tvChartUrl = useMemo(() => {
+    const config = {
       autosize: true,
       symbol: tvSymbol,
       interval: "15",
@@ -313,20 +273,17 @@ export default function DashboardPage() {
       theme: "dark",
       style: "1",
       locale: "en",
+      backgroundColor: "rgba(10, 12, 16, 1)",
+      gridColor: "rgba(255, 255, 255, 0.04)",
       hide_top_toolbar: false,
       hide_side_toolbar: false,
       allow_symbol_change: true,
       hide_volume: true,
       calendar: false,
       support_host: "https://www.tradingview.com",
-    });
-
-    container.appendChild(script);
-
-    return () => {
-      if (container) container.innerHTML = "";
     };
-  }, [chartHidden, chartInView, tvSymbol]);
+    return `https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=en#${encodeURIComponent(JSON.stringify(config))}`;
+  }, [tvSymbol]);
 
   // AI assistant for TP/SL
   const handleSetWithAi = () => {
@@ -1354,15 +1311,27 @@ export default function DashboardPage() {
 
             {/* Chart embed container */}
             <div
-              ref={chartContainerRef}
               style={{
+                position: "relative",
                 width: "100%",
                 height: "calc(100% - 36px)",
+                minHeight: "360px",
                 borderRadius: "8px",
                 overflow: "hidden",
-                backgroundColor: "rgba(0, 0, 0, 0.3)",
+                backgroundColor: "rgba(10, 12, 16, 1)",
               }}
-            />
+            >
+              <div className="tv-chart-loading" aria-hidden="true">Loading live chart…</div>
+              <iframe
+                key={tvChartUrl}
+                src={tvChartUrl}
+                title={`${tvSymbol} live chart`}
+                loading="lazy"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0, display: "block" }}
+              />
+            </div>
           </div>
         ) : (
           <div

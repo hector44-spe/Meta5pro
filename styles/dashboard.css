@@ -24042,3 +24042,66 @@
   -webkit-mask: none !important;
   mask: none !important;
 }
+
+/* TradingView chart: placeholder shown behind the iframe until it paints */
+.tv-chart-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
+   Pinned dashboard top bar on every page.
+   The dashboard is a fixed frame where only .dashboard-page-content
+   scrolls. On phones, 100vh is taller than the visible screen (it
+   includes the area behind Safari's address bar), which let the whole
+   page scroll and push the top bar out of view. Use the dynamic
+   viewport height and stop the outer page from scrolling.
+   ------------------------------------------------------------------ */
+html:has(.dashboard-page-container),
+body:has(.dashboard-page-container) {
+  height: 100%;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+.dashboard-page-container {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+}
+.dashboard-page-wrapper {
+  max-height: calc(100dvh - 16px);
+}
+.dashboard-header-container {
+  position: absolute; /* pinned: its frame never scrolls, only the content below does */
+  top: 0;
+  z-index: 50;
+}
+.dashboard-header-wrapper {
+  background: rgba(12, 15, 20, 0.92);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.dashboard-page-content {
+  max-height: calc(100dvh - 92px);
+}
+
+@media screen and (max-width: 768px) {
+  .dashboard-page-container {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+  }
+  .dashboard-page-wrapper {
+    max-height: 100dvh !important;
+  }
+  .dashboard-page-content {
+    max-height: calc(100dvh - 70px) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+}
