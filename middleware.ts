@@ -15,6 +15,7 @@ const PROTECTED_USER_PATHS: string[] = [
   "/signals",
   "/subscribe",
   "/cold-storage",
+  "/investing",
 ];
 
 const PROTECTED_ADMIN_PATHS = ["/admin"];
@@ -60,9 +61,6 @@ export async function middleware(request: NextRequest) {
 
   // 3. Redirect already logged-in users away from /login & /register
   if (isAuthPage && payload) {
-    if (payload.role === "ADMIN") {
-      return NextResponse.redirect(new URL("/admin", request.url));
-    }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -81,6 +79,7 @@ export const config = {
     "/signals/:path*",
     "/subscribe/:path*",
     "/cold-storage/:path*",
+    "/investing/:path*",
     "/admin/:path*",
     "/login",
     "/register",

@@ -120,6 +120,14 @@ function StatusPill({ status }: { status: string }) {
 
 export default function AdminPage() {
   const [section, setSection] = useState<Section>("overview");
+
+  // Deep links from the dashboard's admin Settings drawer, e.g. /admin?section=deposits
+  useEffect(() => {
+    const s = new URLSearchParams(window.location.search).get("section");
+    if (s && ["overview", "deposits", "withdrawals", "transactions", "users", "addresses"].includes(s)) {
+      setSection(s as Section);
+    }
+  }, []);
   const [navOpen, setNavOpen] = useState(false);
 
   const [transactions, setTransactions] = useState<AdminTx[]>([]);

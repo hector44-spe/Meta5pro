@@ -224,3 +224,13 @@ model Notification {
   @@index([userId, read, createdAt])
   @@map("notifications")
 }
+
+// Platform-wide settings managed from the admin Settings drawer (one row per group).
+model AppSetting {
+  key       String   @id // e.g. "general"
+  value     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+
+  @@map("app_settings")
+}

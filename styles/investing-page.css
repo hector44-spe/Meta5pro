@@ -1,0 +1,225 @@
+/* Investing page (Stocks / Real estate tabs) */
+.inv-page {
+  width: 100%;
+}
+
+.inv-card {
+  background: var(--color-card-background, rgba(255, 255, 255, 0.02));
+  border-radius: 12px;
+  padding: 24px 20px;
+  min-height: 560px;
+  box-sizing: border-box;
+}
+
+.inv-title {
+  margin: 0 0 24px;
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* Tabs */
+.inv-tabs {
+  display: flex;
+  gap: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 28px;
+}
+.inv-page .inv-tab {
+  position: relative;
+  background: none !important;
+  border: none !important;
+  height: auto !important;
+  padding: 0 0 12px 0 !important;
+  margin: 0 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+}
+.inv-page .inv-tab.active {
+  color: #ffffff !important;
+}
+.inv-page .inv-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: #4763f0;
+}
+
+/* Portfolio value */
+.inv-portfolio {
+  margin-bottom: 36px;
+}
+.inv-portfolio-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 14px;
+  font-weight: 500;
+}
+.inv-page .inv-eye {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  height: auto !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  cursor: pointer;
+}
+.inv-portfolio-value {
+  margin-top: 8px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section header with action */
+.inv-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.inv-section-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.inv-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #4763f0;
+  color: #ffffff !important;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none !important;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+.inv-primary-btn:hover {
+  background: #5a74ff;
+}
+
+/* Positions table */
+.inv-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+.inv-page .inv-table {
+  display: table;
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  padding: 0;
+  margin: 0;
+}
+.inv-page .inv-table thead {
+  display: table-header-group;
+}
+.inv-page .inv-table tbody {
+  display: table-row-group;
+  -webkit-mask: none !important;
+  mask: none !important;
+  padding: 0 !important;
+  overflow: visible;
+  height: auto;
+}
+.inv-page .inv-table tr {
+  display: table-row;
+}
+.inv-page .inv-table th,
+.inv-page .inv-table td {
+  display: table-cell;
+  text-align: left;
+  padding: 12px 10px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.inv-page .inv-table th {
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+.inv-page .inv-table td {
+  color: #ffffff;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+.inv-page .inv-table .right {
+  text-align: right;
+}
+.inv-page .inv-empty-row {
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 14px !important;
+  font-weight: 500;
+  padding: 20px 10px !important;
+  border-top: none !important;
+}
+.inv-stock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.inv-stock img {
+  border-radius: 50%;
+}
+.inv-stock-name {
+  font-weight: 600;
+}
+.inv-stock-symbol,
+.inv-muted {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+}
+
+/* Real estate empty state */
+.inv-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 64px 16px;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+}
+.inv-empty p {
+  margin: 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.inv-link {
+  color: #4763f0 !important;
+  text-decoration: none;
+  font-weight: 500;
+}
+.inv-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .inv-card {
+    padding: 18px 14px;
+  }
+  .inv-portfolio-value {
+    font-size: 24px;
+  }
+  .inv-section-head .inv-primary-btn {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+}

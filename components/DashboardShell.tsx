@@ -45,6 +45,7 @@ import DepositModal from "@/components/DepositModal";
 import WithdrawModal from "@/components/WithdrawModal";
 import { ProfileSettings, SecuritySettings, AccountSettings, type UserProfile } from "@/components/SettingsForms";
 import NotificationsPanel, { type AppNotification } from "@/components/NotificationsPanel";
+import AdminSettingsDrawer from "@/components/AdminSettingsDrawer";
 import { usePrices } from "@/lib/usePrices";
 import StakeModal from "@/components/StakeModal";
 import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
@@ -150,6 +151,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [realBalance, setRealBalance] = useState<number>(0);
   const [userRefCode, setUserRefCode] = useState<string>("vip-trader");
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState("");
   const displayName = profile?.fullName?.trim() || profile?.email?.split("@")[0] || "";
   const initials =
@@ -225,6 +227,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         }
         if (data.user?.id) {
           setUserRefCode(data.user.id.slice(0, 8));
+          setIsAdmin(data.user.role === "ADMIN");
           setProfile({
             fullName: data.user.fullName ?? null,
             email: data.user.email,
@@ -1646,7 +1649,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         />
 
         {/* Settings Drawer (Matches Image 1 on Mobile & Image 2 on Desktop) */}
-        {activeModal === "settings" && (
+        {/* Admin accounts: platform settings instead of the investor settings */}
+        {activeModal === "settings" && isAdmin && (
+          <AdminSettingsDrawer onClose={() => setActiveModal(null)} onLogout={() => void logout()} />
+        )}
+
+        {activeModal === "settings" && !isAdmin && (
           <div
             style={{
               position: "fixed",

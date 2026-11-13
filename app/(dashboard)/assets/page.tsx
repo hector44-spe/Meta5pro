@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Eye,
   EyeOff,
@@ -31,6 +31,12 @@ export default function AssetsPage() {
   // Search & Type Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
+
+  // Allow links like /assets?type=Stocks (e.g. "Buy stocks" on the Investing page)
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("type");
+    if (t && ["Crypto", "Fiat", "Stocks"].includes(t)) setSelectedType(t);
+  }, []);
   const [selectedAssetSymbol, setSelectedAssetSymbol] = useState<string | null>(null);
 
   // Live prices and the user's holdings
