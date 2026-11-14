@@ -42,41 +42,26 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 1. Fetch all user signal purchases from app_settings
-    const signalSettings = await prisma.appSetting.findMany({
-      where: { key: { startsWith: "signals_" } },
+    // 1. Fetch all user signal purchases from relational table
+    const rows = await prisma.signalPurchase.findMany({
+      include: {
+        user: { select: { email: true, fullName: true, username: true } },
+      },
+      orderBy: { createdAt: "desc" },
     });
 
-    const userIds = signalSettings.map((s) => s.key.replace("signals_", "")).filter(Boolean);
-    const users = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, email: true, username: true, fullName: true },
-    });
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    const purchases: AdminSignalPurchase[] = [];
-    for (const setting of signalSettings) {
-      const uId = setting.key.replace("signals_", "");
-      const u = userMap.get(uId);
-      if (Array.isArray(setting.value)) {
-        for (const item of setting.value as any[]) {
-          purchases.push({
-            id: item.ref || item.id || `sig_${Math.random().toString(36).slice(2)}`,
-            ref: item.ref || item.id || "SIG-REF",
-            userId: uId,
-            userEmail: u?.email || "Unknown user",
-            userFullName: u?.fullName || u?.username || "Investor",
-            signalTitle: item.signal || item.signalTitle || "Trading Signal",
-            amount: Number(item.price || item.amount || 0),
-            strength: Number(item.strength || 50),
-            status: item.status || "active",
-            date: item.date || new Date().toISOString(),
-          });
-        }
-      }
-    }
-
-    purchases.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const purchases: AdminSignalPurchase[] = rows.map((r) => ({
+      id: r.id,
+      ref: r.ref,
+      userId: r.userId,
+      userEmail: r.user?.email || "Unknown user",
+      userFullName: r.user?.fullName || r.user?.username || "Investor",
+      signalTitle: r.signalTitle,
+      amount: r.price.toNumber(),
+      strength: r.strength,
+      status: r.status,
+      date: r.createdAt.toISOString(),
+    }));
 
     // 2. Fetch signal offerings
     const setting = await prisma.appSetting.findUnique({
@@ -106,45 +91,36 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, userId, purchaseId, newStatus, signal, signalId } = body;
+    const { action, purchaseId, newStatus, signal, signalId } = body;
 
     // A. Update status of user signal purchase
     if (action === "updatePurchaseStatus") {
-      if (!userId || !purchaseId || !newStatus) {
+      if (!purchaseId || !newStatus) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
-      const key = `signals_${userId}`;
-      const setting = await prisma.appSetting.findUnique({ where: { key } });
-      if (!setting || !Array.isArray(setting.value)) {
-        return NextResponse.json({ error: "Signals record not found" }, { status: 404 });
-      }
-      const list = setting.value as any[];
-      const idx = list.findIndex((p) => p.ref === purchaseId || p.id === purchaseId);
-      if (idx === -1) {
+
+      const updated = await prisma.signalPurchase.updateMany({
+        where: { OR: [{ id: purchaseId }, { ref: purchaseId }] },
+        data: { status: newStatus },
+      });
+
+      if (updated.count === 0) {
         return NextResponse.json({ error: "Purchase not found" }, { status: 404 });
       }
-      list[idx].status = newStatus;
-      await prisma.appSetting.update({
-        where: { key },
-        data: { value: list },
-      });
-      return NextResponse.json({ success: true, item: list[idx] });
+
+      return NextResponse.json({ success: true });
     }
 
     // B. Delete purchase record
     if (action === "deletePurchase") {
-      if (!userId || !purchaseId) {
+      if (!purchaseId) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
-      const key = `signals_${userId}`;
-      const setting = await prisma.appSetting.findUnique({ where: { key } });
-      if (setting && Array.isArray(setting.value)) {
-        const filtered = (setting.value as any[]).filter((p) => p.ref !== purchaseId && p.id !== purchaseId);
-        await prisma.appSetting.update({
-          where: { key },
-          data: { value: filtered },
-        });
-      }
+
+      await prisma.signalPurchase.deleteMany({
+        where: { OR: [{ id: purchaseId }, { ref: purchaseId }] },
+      });
+
       return NextResponse.json({ success: true });
     }
 

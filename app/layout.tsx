@@ -15,6 +15,15 @@ export const metadata: Metadata = {
   title: "Meta Gold 5 - Trade With Ease",
   description:
     "Meta Gold 5 blends advanced power with simplicity, offering strong security, 24/7 support, and an intuitive trading platform.",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/dashboard_files/logo.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    shortcut: "/favicon.svg",
+    apple: "/dashboard_files/logo.svg",
+  },
   keywords: [
     "Meta Gold 5",
     "crypto trading",
@@ -37,7 +46,10 @@ export default function RootLayout({
     // elements' own attributes; mismatches deeper in the tree are still reported.
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/dashboard_files/logo.svg" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/dashboard_files/logo.svg" />
         <meta name="HandheldFriendly" content="true" />
         <meta name="MobileOptimized" content="width" />
       </head>

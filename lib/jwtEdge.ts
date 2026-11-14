@@ -1,9 +1,9 @@
-
 export interface EdgeTokenPayload {
   userId: string;
   email: string;
   role: string;
   username: string;
+  tokenVersion?: number;
   exp?: number;
 }
 

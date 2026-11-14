@@ -23,6 +23,7 @@ export interface DepositAddressItem {
   network: string;
   address: string;
   memo: string | null;
+  qrCode?: string | null;
 }
 
 interface DepositModalProps {
@@ -55,7 +56,10 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
 
   // Address & Copy
   const [activeAddress, setActiveAddress] = useState<string>("");
+  const [activeMemo, setActiveMemo] = useState<string>("");
+  const [activeQrCode, setActiveQrCode] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [memoCopied, setMemoCopied] = useState(false);
 
   // Confirmation form (Image 4)
   const [amountInput, setAmountInput] = useState<string>("100");
@@ -119,12 +123,18 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
       );
       if (found) {
         setActiveAddress(found.address);
+        setActiveMemo(found.memo || "");
+        setActiveQrCode(found.qrCode || "");
       } else {
         // No address configured for this token/network: never show a made-up one.
         setActiveAddress("");
+        setActiveMemo("");
+        setActiveQrCode("");
       }
     } else {
       setActiveAddress("");
+      setActiveMemo("");
+      setActiveQrCode("");
     }
   }, [selectedToken, selectedNetwork, addresses]);
 
@@ -416,18 +426,68 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
                   <div className="dm-step-title">Deposit details</div>
 
                   {activeAddress ? (
-                    <div className="dm-address-box">
-                      <span className="dm-address-text">{activeAddress || "Not available for this network"}</span>
-                      <div className="dm-address-actions">
-                        <button
-                          type="button"
-                          className="dm-icon-action-btn"
-                          onClick={handleCopyAddress}
-                          title="Copy address"
-                        >
-                          {copied ? <CheckCircle2 size={16} color="#10b981" /> : <Copy size={16} />}
-                        </button>
+                    <div>
+                      {activeQrCode && (
+                        <div style={{ textAlign: "center", marginBottom: "12px" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={activeQrCode}
+                            alt="Deposit QR"
+                            style={{
+                              width: "140px",
+                              height: "140px",
+                              borderRadius: "10px",
+                              border: "1px solid rgba(255, 255, 255, 0.12)",
+                              background: "#ffffff",
+                              padding: "6px",
+                              display: "inline-block",
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="dm-address-box">
+                        <span className="dm-address-text">{activeAddress}</span>
+                        <div className="dm-address-actions">
+                          <button
+                            type="button"
+                            className="dm-icon-action-btn"
+                            onClick={handleCopyAddress}
+                            title="Copy address"
+                          >
+                            {copied ? <CheckCircle2 size={16} color="#10b981" /> : <Copy size={16} />}
+                          </button>
+                        </div>
                       </div>
+                      {activeMemo && (
+                        <div
+                          style={{
+                            marginTop: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "8px 12px",
+                            background: "rgba(255, 255, 255, 0.03)",
+                            borderRadius: "6px",
+                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                            fontSize: "12.5px",
+                          }}
+                        >
+                          <span style={{ color: "rgba(255, 255, 255, 0.5)" }}>Memo:</span>
+                          <span style={{ fontFamily: "monospace", color: "#f5a524", fontWeight: 600 }}>{activeMemo}</span>
+                          <button
+                            type="button"
+                            className="dm-icon-action-btn"
+                            onClick={() => {
+                              navigator.clipboard?.writeText(activeMemo);
+                              setMemoCopied(true);
+                              setTimeout(() => setMemoCopied(false), 2000);
+                            }}
+                            title="Copy memo"
+                          >
+                            {memoCopied ? <CheckCircle2 size={14} color="#10b981" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div

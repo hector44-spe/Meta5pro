@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, hashPassword } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +10,10 @@ export interface UserCard {
   userId: string;
   type: "Regular" | "Virtual" | "Physical";
   cardNumber: string;
+  last4: string;
   expiryDate: string;
   cvv: string;
-  cardPin: string;
+  cardPin?: string;
   status: "active" | "pending" | "blocked";
   balance: number;
   issuanceFee: number;
@@ -57,15 +58,48 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const key = `cards_${session.userId}`;
-    const setting = await prisma.appSetting.findUnique({
-      where: { key },
+    const rows = await prisma.card.findMany({
+      where: { userId: session.userId },
+      orderBy: { createdAt: "desc" },
     });
 
-    let cards: UserCard[] = [];
-    if (setting && Array.isArray(setting.value)) {
-      cards = setting.value as unknown as UserCard[];
-    }
+    const cards: UserCard[] = rows.map((c) => ({
+      id: c.id,
+      ref: c.ref,
+      userId: c.userId,
+      type: c.type as "Regular" | "Virtual" | "Physical",
+      cardNumber: c.cardNumber,
+      last4: c.last4,
+      expiryDate: c.expiryDate,
+      cvv: "***",
+      status: c.status as "active" | "pending" | "blocked",
+      balance: c.balance.toNumber(),
+      issuanceFee: c.issuanceFee.toNumber(),
+      createdAt: c.createdAt.toISOString(),
+      trackingDetails:
+        c.type === "Physical"
+          ? [
+              {
+                id: "t1",
+                status: "Card requested and approved",
+                date: c.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                time: "10:00 AM",
+              },
+              {
+                id: "t2",
+                status: "Production & packaging",
+                date: c.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                time: "02:30 PM",
+              },
+              {
+                id: "t3",
+                status: "Dispatched with express courier",
+                date: new Date(c.createdAt.getTime() + 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                time: "09:15 AM",
+              },
+            ]
+          : undefined,
+    }));
 
     return NextResponse.json({
       success: true,
@@ -89,140 +123,138 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { action, cardType, cardPin, cardId, amount, newPin, newStatus } = body;
-    const key = `cards_${session.userId}`;
-
-    const setting = await prisma.appSetting.findUnique({
-      where: { key },
-    });
-
-    let cards: UserCard[] = [];
-    if (setting && Array.isArray(setting.value)) {
-      cards = setting.value as unknown as UserCard[];
-    }
 
     if (action === "request" || !action) {
       const type = (cardType || "Regular") as "Regular" | "Virtual" | "Physical";
-      
+
       // Check if user already has this card type
-      const existing = cards.find((c) => c.type.toLowerCase() === type.toLowerCase());
+      const existing = await prisma.card.findFirst({
+        where: { userId: session.userId, type: { equals: type, mode: "insensitive" } },
+      });
       if (existing) {
         return NextResponse.json(
           { error: `You already have a ${type} card.` },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
+      const rawNumber = generateCardNumber();
+      const last4 = rawNumber.slice(-4);
+      const masked = `${rawNumber.slice(0, 4)} **** **** ${last4}`;
       const ref = `CRD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+      const pinHash = await hashPassword(String(cardPin || "1234").trim());
+
+      const card = await prisma.card.create({
+        data: {
+          userId: session.userId,
+          ref,
+          type,
+          cardNumber: masked,
+          last4,
+          expiryDate: generateExpiry(),
+          pinHash,
+          status: "active",
+          balance: 0,
+          issuanceFee: 1000,
+        },
+      });
+
       const newCard: UserCard = {
-        id: `card_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-        ref,
-        userId: session.userId,
-        type,
-        cardNumber: generateCardNumber(),
-        expiryDate: generateExpiry(),
+        id: card.id,
+        ref: card.ref,
+        userId: card.userId,
+        type: card.type as "Regular" | "Virtual" | "Physical",
+        cardNumber: card.cardNumber,
+        last4: card.last4,
+        expiryDate: card.expiryDate,
         cvv: generateCVV(),
-        cardPin: String(cardPin || "1234").trim(),
-        status: "active",
-        balance: 0,
-        issuanceFee: 1000,
-        createdAt: new Date().toISOString(),
-        transactions: [],
-        trackingDetails:
-          type === "Physical"
-            ? [
-                {
-                  id: "t1",
-                  status: "Card requested and approved",
-                  date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                  time: "10:00 AM",
-                },
-                {
-                  id: "t2",
-                  status: "Production & packaging",
-                  date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                  time: "02:30 PM",
-                },
-                {
-                  id: "t3",
-                  status: "Dispatched with express courier",
-                  date: new Date(Date.now() + 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                  time: "09:15 AM",
-                },
-              ]
-            : undefined,
+        status: card.status as "active" | "pending" | "blocked",
+        balance: card.balance.toNumber(),
+        issuanceFee: card.issuanceFee.toNumber(),
+        createdAt: card.createdAt.toISOString(),
       };
 
-      cards.unshift(newCard);
-
-      await prisma.appSetting.upsert({
-        where: { key },
-        update: { value: cards as any },
-        create: { key, value: cards as any },
+      const userCards = await prisma.card.findMany({
+        where: { userId: session.userId },
+        orderBy: { createdAt: "desc" },
       });
 
       return NextResponse.json({
         success: true,
         message: "You requested a card successfully",
-        cards,
+        cards: userCards.map((c) => ({
+          ...c,
+          balance: c.balance.toNumber(),
+          issuanceFee: c.issuanceFee.toNumber(),
+          cvv: "***",
+        })),
         newCard,
       });
     }
 
     if (action === "topup") {
-      const target = cards.find((c) => c.id === cardId || c.ref === cardId);
+      const target = await prisma.card.findFirst({
+        where: {
+          userId: session.userId,
+          OR: [{ id: cardId }, { ref: cardId }],
+        },
+      });
       if (!target) {
         return NextResponse.json({ error: "Card not found" }, { status: 404 });
       }
       const topupAmount = Number(amount) || 0;
-      target.balance = (target.balance || 0) + topupAmount;
-      if (!target.transactions) target.transactions = [];
-      target.transactions.unshift({
-        id: `tx_${Date.now()}`,
-        type: "top-up",
-        description: "Card Top-Up",
-        amount: topupAmount,
-        date: new Date().toISOString(),
+      await prisma.card.update({
+        where: { id: target.id },
+        data: { balance: { increment: topupAmount } },
       });
 
-      await prisma.appSetting.upsert({
-        where: { key },
-        update: { value: cards as any },
-        create: { key, value: cards as any },
+      const userCards = await prisma.card.findMany({
+        where: { userId: session.userId },
+        orderBy: { createdAt: "desc" },
       });
 
-      return NextResponse.json({ success: true, cards });
+      return NextResponse.json({
+        success: true,
+        cards: userCards.map((c) => ({ ...c, balance: c.balance.toNumber(), issuanceFee: c.issuanceFee.toNumber() })),
+      });
     }
 
     if (action === "changePin") {
-      const target = cards.find((c) => c.id === cardId || c.ref === cardId);
+      const target = await prisma.card.findFirst({
+        where: {
+          userId: session.userId,
+          OR: [{ id: cardId }, { ref: cardId }],
+        },
+      });
       if (!target) {
         return NextResponse.json({ error: "Card not found" }, { status: 404 });
       }
-      target.cardPin = String(newPin || "").trim();
-
-      await prisma.appSetting.upsert({
-        where: { key },
-        update: { value: cards as any },
-        create: { key, value: cards as any },
+      const pinHash = await hashPassword(String(newPin || "").trim());
+      await prisma.card.update({
+        where: { id: target.id },
+        data: { pinHash },
       });
 
-      return NextResponse.json({ success: true, message: "PIN changed successfully", cards });
+      return NextResponse.json({ success: true, message: "PIN changed successfully" });
     }
 
     if (action === "toggleStatus") {
-      const target = cards.find((c) => c.id === cardId || c.ref === cardId);
+      const target = await prisma.card.findFirst({
+        where: {
+          userId: session.userId,
+          OR: [{ id: cardId }, { ref: cardId }],
+        },
+      });
       if (!target) {
         return NextResponse.json({ error: "Card not found" }, { status: 404 });
       }
-      target.status = (newStatus || (target.status === "blocked" ? "active" : "blocked")) as "active" | "blocked";
-
-      await prisma.appSetting.upsert({
-        where: { key },
-        update: { value: cards as any },
-        create: { key, value: cards as any },
+      const nextStatus = newStatus || (target.status === "blocked" ? "active" : "blocked");
+      const updated = await prisma.card.update({
+        where: { id: target.id },
+        data: { status: nextStatus },
       });
 
-      return NextResponse.json({ success: true, message: `Card ${target.status} successfully`, cards });
+      return NextResponse.json({ success: true, message: `Card ${updated.status} successfully` });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

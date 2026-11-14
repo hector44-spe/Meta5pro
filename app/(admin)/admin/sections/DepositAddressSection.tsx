@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
-import { X, Loader2, Save } from "lucide-react";
+import { X, Loader2, Save, Trash2 } from "lucide-react";
 import "@/styles/deposit-addresses.css";
 import { FullAddressItem } from "@/app/api/admin/settings/addresses/route";
 
@@ -307,6 +307,27 @@ export default function DepositAddressSection({
     }
   };
 
+  const handleDirectDelete = async (item: FullAddressItem, forSignal: boolean) => {
+    const label = item.token || item.symbol;
+    if (!window.confirm(`Are you sure you want to delete this ${label} address (${item.network})?`)) return;
+    try {
+      const res = await fetch("/api/admin/settings/addresses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "deleteAddress",
+          addressId: item.id,
+          isSignal: forSignal,
+        }),
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      flash("ok", `${label} address deleted.`);
+      loadData();
+    } catch (e: any) {
+      flash("error", e.message || "Failed to delete address");
+    }
+  };
+
   return (
     <div className="dep_container">
       {/* Regular Deposit Addresses (Image 1) */}
@@ -338,13 +359,24 @@ export default function DepositAddressSection({
                 <span className="dep_badge">
                   {item.network.toUpperCase() === "DEFAULT" ? "DEFAULT" : item.network}
                 </span>
-                <button
-                  type="button"
-                  className="dep_edit_btn"
-                  onClick={() => openEditModal(item, false)}
-                >
-                  Edit
-                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <button
+                    type="button"
+                    className="dep_edit_btn"
+                    onClick={() => openEditModal(item, false)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="dep_delete_btn"
+                    title="Delete address"
+                    onClick={() => handleDirectDelete(item, false)}
+                  >
+                    <Trash2 size={13} />
+                    Delete
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -394,13 +426,24 @@ export default function DepositAddressSection({
                   <span className="dep_badge">
                     {item.network.toUpperCase() === "DEFAULT" ? "DEFAULT" : item.network}
                   </span>
-                  <button
-                    type="button"
-                    className="dep_edit_btn"
-                    onClick={() => openEditModal(item, true)}
-                  >
-                    Edit
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <button
+                      type="button"
+                      className="dep_edit_btn"
+                      onClick={() => openEditModal(item, true)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="dep_delete_btn"
+                      title="Delete address"
+                      onClick={() => handleDirectDelete(item, true)}
+                    >
+                      <Trash2 size={13} />
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
 

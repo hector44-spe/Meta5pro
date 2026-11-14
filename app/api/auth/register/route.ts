@@ -4,6 +4,7 @@ import { hashPassword, signToken, AUTH_COOKIE, rateLimited, clientIp } from "@/l
 import { z } from "zod";
 import { notify } from "@/lib/notify";
 import crypto from "node:crypto";
+import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,12 @@ const registerSchema = z.object({
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().optional(),
 });
+
+function generateUsernameCandidate(email: string): string {
+  const cleanPrefix = email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "").slice(0, 14) || "trader";
+  const suffix = crypto.randomBytes(3).toString("hex");
+  return `${cleanPrefix}_${suffix}`;
+}
 
 export async function POST(req: Request) {
   try {
@@ -46,40 +53,68 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await hashPassword(password);
-    const username = email.split("@")[0] + "_" + crypto.randomInt(1000, 10000);
 
-    // Create user and initial wallet
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase(),
-        username,
-        fullName: `${firstName} ${lastName}`.trim(),
-        phoneNumber: phone || null,
-        passwordHash,
-        role: "INVESTOR",
-        status: "ACTIVE",
-        wallet: {
-          create: {
-            mainBalance: 0.0,
-            interestBalance: 0.0,
-            totalDeposited: 0.0,
-            totalWithdrawn: 0.0,
+    // Create user and initial wallet with retry loop against username collisions
+    let user = null;
+    let attempts = 0;
+    while (attempts < 5) {
+      attempts++;
+      const username = generateUsernameCandidate(email);
+      try {
+        user = await prisma.user.create({
+          data: {
+            email: email.toLowerCase(),
+            username,
+            fullName: `${firstName} ${lastName}`.trim(),
+            phoneNumber: phone || null,
+            passwordHash,
+            role: "INVESTOR",
+            status: "ACTIVE",
+            tokenVersion: 1,
+            wallet: {
+              create: {
+                mainBalance: 0.0,
+                interestBalance: 0.0,
+                totalDeposited: 0.0,
+                totalWithdrawn: 0.0,
+              },
+            },
           },
-        },
-      },
-      include: {
-        wallet: true,
-      },
-    });
+          include: {
+            wallet: true,
+          },
+        });
+        break;
+      } catch (err: any) {
+        if (
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === "P2002" &&
+          Array.isArray(err.meta?.target) &&
+          (err.meta.target as string[]).includes("username")
+        ) {
+          // Username collided; retry with a new unique suffix
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unable to generate a unique username. Please try again." },
+        { status: 500 },
+      );
+    }
 
     await notify(user.id, "account", "Welcome to Meta Gold 5", "Your account is ready. Make a deposit to get started.");
 
-    // Sign session token
+    // Sign session token including tokenVersion
     const token = signToken({
       userId: user.id,
       email: user.email,
       role: user.role,
       username: user.username,
+      tokenVersion: user.tokenVersion,
     });
 
     const response = NextResponse.json({

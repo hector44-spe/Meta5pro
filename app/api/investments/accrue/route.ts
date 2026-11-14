@@ -4,11 +4,19 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { atomic, money } from "@/lib/ledger";
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
+    // Allow either Admin browser session OR Bearer CRON_SECRET authorization for scheduled jobs
+    const authHeader = req.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET || process.env.JWT_SECRET;
+    const isCronAuthorized =
+      authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`;
+
+    if (!isCronAuthorized) {
+      const session = await getSession();
+      if (!session || session.role !== "ADMIN") {
+        return NextResponse.json({ error: "Forbidden: Super Admin access or valid CRON_SECRET required" }, { status: 403 });
+      }
     }
 
     // Only investments not paid in the last 23 hours, so triggering this twice in a day pays once.

@@ -464,12 +464,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             </Link>
             <button
               type="button"
-              className="dashboard-mobile-grid-item"
+              className={`dashboard-mobile-grid-item ${activeModal === "cards" ? "active" : ""}`}
               onClick={() => {
                 setMobileSidebarOpen(false);
                 setActiveModal("cards");
               }}
-              style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", font: "inherit" }}
             >
               <CreditCard size={22} color={activeModal === "cards" ? "#4763f0" : "currentColor"} />
               <span>Cards</span>

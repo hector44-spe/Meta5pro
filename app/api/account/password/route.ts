@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, hashPassword, verifyPassword, rateLimited } from "@/lib/auth";
+import { getSession, hashPassword, verifyPassword, signToken, AUTH_COOKIE, rateLimited } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 import { z } from "zod";
 
@@ -33,14 +33,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
     }
 
-    await prisma.user.update({
+    const updatedUser = await prisma.user.update({
       where: { id: session.userId },
-      data: { passwordHash: await hashPassword(parsed.data.newPassword) },
+      data: {
+        passwordHash: await hashPassword(parsed.data.newPassword),
+        tokenVersion: { increment: 1 },
+      },
+      select: { id: true, email: true, role: true, username: true, tokenVersion: true },
     });
 
     await notify(session.userId, "security", "Password changed", "Your password was changed. If this wasn't you, reset your password immediately and contact support.");
 
-    return NextResponse.json({ success: true, message: "Password changed" });
+    // Issue new cookie with updated tokenVersion so current device stays authenticated,
+    // while all other sessions/tokens are immediately revoked!
+    const newToken = signToken({
+      userId: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      username: updatedUser.username,
+      tokenVersion: updatedUser.tokenVersion,
+    });
+
+    const response = NextResponse.json({ success: true, message: "Password changed" });
+    response.cookies.set({
+      name: AUTH_COOKIE,
+      value: newToken,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24 * 7,
+      path: "/",
+    });
+    return response;
   } catch (error) {
     console.error("Password change error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

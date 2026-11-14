@@ -262,30 +262,15 @@ export default function CopyTradingPage() {
 
                 return (
                   <div key={expert.id || expert.ref} className="expert_card">
-                    {/* Admin Edit Action - strictly matches original (top right 'Edit' link, delete is inside Step 3 of modal) */}
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        className="edit_btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingExpert(expert);
-                          setIsEditModalOpen(true);
-                        }}
-                        title="Edit this expert"
-                      >
-                        <p>Edit</p>
-                      </button>
-                    )}
-
-                    {/* Top Row: Avatar + Details */}
+                    {/* Top Section: Avatar + Profile + Bio */}
                     <div>
                       <div className="profile_wrapper">
                         {/* Avatar */}
                         <div className="image_wrapper">
                           <img
                             src={expert.picture || "/assets/copy-trading/albania_support.png"}
-                            alt={expert.name}
+                            alt="profile"
+                            style={{ width: "52px", height: "52px", borderRadius: "8px", objectFit: "cover" }}
                             onError={(e) => {
                               (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
                             }}
@@ -293,34 +278,59 @@ export default function CopyTradingPage() {
                         </div>
 
                         {/* Name + Username + Followers */}
-                        <div className="profile_content">
-                          <div className="name_row">
-                            <p className="expert_name">{expert.name}</p>
-                            {expert.tickType === "gold" && (
-                              <img
-                                src="/assets/copy-trading/gold-tick.svg"
-                                alt="gold tick"
-                                className="tick_icon"
-                              />
-                            )}
-                            {expert.tickType === "blue" && (
-                              <img
-                                src="/assets/copy-trading/blue-tick.svg"
-                                alt="blue tick"
-                                className="tick_icon"
-                              />
-                            )}
-                          </div>
+                        <div style={{ flex: "1", display: "flex", flexDirection: "column", justifyContent: "space-between", height: "52px" }}>
+                          <div>
+                            <div style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                                <p style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff", lineHeight: "20px", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                  {expert.name}
+                                </p>
+                                {expert.tickType === "gold" && (
+                                  <img
+                                    src="/assets/copy-trading/gold-tick.svg"
+                                    alt="gold tick"
+                                    style={{ width: "18px", height: "18px" }}
+                                  />
+                                )}
+                                {expert.tickType === "blue" && (
+                                  <img
+                                    src="/assets/copy-trading/blue-tick.svg"
+                                    alt="blue tick"
+                                    style={{ width: "18px", height: "18px" }}
+                                  />
+                                )}
+                              </span>
 
-                          <p className="expert_username">
-                            {expert.username
-                              ? `@${expert.username}`
-                              : `@${expert.name.replace(/\s+/g, "_").toLowerCase()}`}
-                          </p>
+                              {isAdmin && (
+                                <button
+                                  type="button"
+                                  className="edit_btn"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingExpert(expert);
+                                    setIsEditModalOpen(true);
+                                  }}
+                                  title="Edit this expert"
+                                >
+                                  <p>Edit</p>
+                                </button>
+                              )}
+                            </div>
+
+                            <div style={{ width: "100%" }}>
+                              <p style={{ fontSize: "12px", fontWeight: 400, color: "rgba(255, 255, 255, 0.5)", lineHeight: "14px", margin: "2px 0 0 0" }}>
+                                {expert.username
+                                  ? `@${expert.username}`
+                                  : `@${expert.name.replace(/\s+/g, "_").toLowerCase()}`}
+                              </p>
+                            </div>
+                          </div>
 
                           <div className="details_row">
                             <div className="details_row_left">
-                              <Copy size={11} color="rgba(255, 255, 255, 0.45)" />
+                              <div className="helper_icons">
+                                <Copy size={11} color="rgba(255, 255, 255, 0.5)" />
+                              </div>
                               <span className="details_row_left_item">
                                 <p>{formatFollowers(expert.followers || 0)}</p>
                                 <p>Followers</p>
@@ -334,17 +344,17 @@ export default function CopyTradingPage() {
                       <p className="expert_bio">{expert.bio || "I can give you a life you dreamed for"}</p>
                     </div>
 
-                    {/* Mid Section: 2 rows x 3 columns (Matches Images 2 & 3) */}
+                    {/* Bottom Section: Mid Metrics + Footer Buttons */}
                     <div>
                       <div className="mid_section">
                         <div className="mid_section_item win_rate">
                           <p className="label">Win rate</p>
-                          <p className="value">{expert.winRate}%</p>
+                          <p className="value" style={{ color: "#01B28B" }}>{expert.winRate}%</p>
                         </div>
 
                         <div className="mid_section_item profit_share">
                           <p className="label">Profit share</p>
-                          <p className="value">{expert.profitShare}%</p>
+                          <p className="value" style={{ color: "#31AACE" }}>{expert.profitShare}%</p>
                         </div>
 
                         <div className="mid_section_item wins">

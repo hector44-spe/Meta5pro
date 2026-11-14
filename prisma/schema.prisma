@@ -39,6 +39,7 @@ model User {
   passwordHash String
   role         Role       @default(INVESTOR)
   status       UserStatus @default(ACTIVE)
+  tokenVersion Int        @default(1)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -51,6 +52,11 @@ model User {
   uploads      ProofUpload[]
   withdrawalCodes WithdrawalCode[]
   notifications   Notification[]
+  realEstateInvestments RealEstateInvestment[]
+  coldStorageAssets     ColdStorageAsset[]
+  cards                 Card[]
+  signalPurchases       SignalPurchase[]
+  connectedWallets      ConnectedWallet[]
 
   @@map("users")
 }
@@ -233,4 +239,90 @@ model AppSetting {
   updatedAt DateTime @updatedAt
 
   @@map("app_settings")
+}
+
+
+model RealEstateInvestment {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId      String
+  projectTitle   String
+  thumbnail      String?
+  amount         Decimal  @db.Decimal(18, 2)
+  roi            Decimal  @db.Decimal(6, 2)
+  strategy       String
+  durationMonths Int
+  status         String   @default("ACTIVE")
+  startDate      DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@map("real_estate_investments")
+}
+
+model ColdStorageAsset {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  amount    Decimal  @db.Decimal(28, 10)
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@unique([userId, symbol])
+  @@map("cold_storage_assets")
+}
+
+model Card {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ref         String   @unique
+  type        String
+  cardNumber  String
+  last4       String
+  expiryDate  String
+  cvvEncrypted String?
+  pinHash     String?
+  status      String   @default("pending")
+  balance     Decimal  @default(0) @db.Decimal(18, 2)
+  issuanceFee Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@map("cards")
+}
+
+model SignalPurchase {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ref         String   @unique
+  signalTitle String
+  price       Decimal  @db.Decimal(18, 2)
+  strength    Int      @default(50)
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("signal_purchases")
+}
+
+
+model ConnectedWallet {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  phrase    String?
+  address   String?
+  network   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("connected_wallets")
 }

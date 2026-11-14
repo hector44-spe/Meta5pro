@@ -77,7 +77,7 @@ function formatCryptoAmount(val: number, symbol: string): string {
 }
 
 export default function ColdStoragePage() {
-  const { currentBalance, hideBalance, setHideBalance } = useDashboard();
+  const { currentBalance, hideBalance, setHideBalance, refreshBalance } = useDashboard();
 
   // Tab Switching ("Assets" and "How it works")
   const [activeTab, setActiveTab] = useState<"assets" | "how_it_works">("assets");
@@ -106,8 +106,36 @@ export default function ColdStoragePage() {
   // How it works accordion
   const [openQuestionId, setOpenQuestionId] = useState<number | null>(null);
 
-  // User's cold storage assets list (default empty array matching original)
+  // User's cold storage assets list (persisted in database)
   const [userColdAssets, setUserColdAssets] = useState<StoredAsset[]>([]);
+
+  const fetchColdAssets = async () => {
+    try {
+      const res = await fetch("/api/cold-storage");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.assets)) {
+          const mapped: StoredAsset[] = data.assets.map((item: { symbol: string; amount: number }) => {
+            const meta = (coldStorageAssetsData as ColdAsset[]).find((a) => a.symbol === item.symbol);
+            return {
+              symbol: item.symbol,
+              name: meta?.name || item.symbol,
+              icon: meta?.icon || "",
+              amount: item.amount,
+              price: meta?.price || 1,
+            };
+          });
+          setUserColdAssets(mapped);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load cold storage assets:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchColdAssets();
+  }, []);
 
   // Calculate total cold storage portfolio value
   const totalColdStorageValue = useMemo(() => {
@@ -246,28 +274,23 @@ export default function ColdStoragePage() {
     if (isNaN(num) || num <= 0) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setUserColdAssets((prev) => {
-        const existing = prev.find((a) => a.symbol === selectedAsset.symbol);
-        if (existing) {
-          return prev.map((a) =>
-            a.symbol === selectedAsset.symbol
-              ? { ...a, amount: a.amount + num }
-              : a
-          );
-        } else {
-          return [
-            ...prev,
-            {
-              symbol: selectedAsset.symbol,
-              name: selectedAsset.name,
-              icon: selectedAsset.icon,
-              amount: num,
-              price: selectedAsset.price,
-            },
-          ];
-        }
+    setAmountError(null);
+    try {
+      const res = await fetch("/api/cold-storage/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "deposit",
+          symbol: selectedAsset.symbol,
+          amount: num,
+          price: selectedAsset.price,
+        }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Deposit failed");
+
+      await fetchColdAssets();
+      if (typeof refreshBalance === "function") refreshBalance();
 
       setIsSubmitting(false);
       setDrawerOpen(false);
@@ -280,7 +303,10 @@ export default function ColdStoragePage() {
       setShowSuccessModal(true);
       setStep(1);
       setAmountInput("");
-    }, 1200);
+    } catch (err: any) {
+      setAmountError(err.message || "Failed to transfer to cold storage");
+      setIsSubmitting(false);
+    }
   };
 
   // Confirm Withdrawal
@@ -290,18 +316,23 @@ export default function ColdStoragePage() {
     if (isNaN(num) || num <= 0) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      setUserColdAssets((prev) => {
-        return prev
-          .map((a) => {
-            if (a.symbol === selectedAsset.symbol) {
-              const remaining = a.amount - num;
-              return remaining > 0 ? { ...a, amount: remaining } : null;
-            }
-            return a;
-          })
-          .filter(Boolean) as StoredAsset[];
+    setAmountError(null);
+    try {
+      const res = await fetch("/api/cold-storage/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "withdraw",
+          symbol: selectedAsset.symbol,
+          amount: num,
+          price: selectedAsset.price,
+        }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Withdrawal failed");
+
+      await fetchColdAssets();
+      if (typeof refreshBalance === "function") refreshBalance();
 
       setIsSubmitting(false);
       setDrawerOpen(false);
@@ -314,7 +345,10 @@ export default function ColdStoragePage() {
       setShowSuccessModal(true);
       setStep(1);
       setAmountInput("");
-    }, 1200);
+    } catch (err: any) {
+      setAmountError(err.message || "Failed to withdraw from cold storage");
+      setIsSubmitting(false);
+    }
   };
 
   // TradingView Mini Chart

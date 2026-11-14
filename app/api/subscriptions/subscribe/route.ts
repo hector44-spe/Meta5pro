@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { atomic, debitMain, insertTransaction, InsufficientFundsError } from "@/lib/ledger";
+import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { notify, fmtUsd } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
@@ -13,12 +13,26 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const key = `subscriptions_${session.userId}`;
-    const setting = await prisma.appSetting.findUnique({
-      where: { key },
+    // Query real relational investments for this user
+    const rows = await prisma.investment.findMany({
+      where: { userId: session.userId },
+      include: { plan: true },
+      orderBy: { createdAt: "desc" },
     });
 
-    const history = (setting && Array.isArray(setting.value)) ? setting.value : [];
+    const history = rows.map((inv) => ({
+      id: inv.id,
+      ref: `INV-${inv.id.slice(0, 8).toUpperCase()}`,
+      plan: inv.plan?.name || "Subscription Plan",
+      duration: inv.plan?.durationDays || 3,
+      daysLeft: inv.daysRemaining,
+      amount: inv.amount.toNumber(),
+      roi: inv.plan ? Number((inv.plan.dailyRoiPercentage.toNumber() * inv.plan.durationDays).toFixed(1)) : 200,
+      accruedProfit: inv.accruedProfit.toNumber(),
+      status: inv.status.toLowerCase(),
+      date: inv.createdAt.toISOString(),
+    }));
+
     return NextResponse.json({ success: true, history });
   } catch (error) {
     console.error("Fetch subscription history error:", error);
@@ -35,64 +49,117 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { planId, amount, planName, duration, roi } = body;
-    const subAmount = Number(amount);
+    const subAmount = money(Number(amount));
 
     if (!subAmount || subAmount <= 0) {
       return NextResponse.json({ error: "Please enter a valid investment amount" }, { status: 400 });
     }
 
+    const planDuration = Number(duration) || 3;
+    const totalRoi = Number(roi) || 200;
+    const dailyRoi = Number((totalRoi / planDuration).toFixed(3));
+    const targetName = planName || "Subscription Plan";
+
+    // 1. Find or create matching relational Plan in Postgres
+    let plan = await prisma.plan.findFirst({
+      where: {
+        OR: [
+          ...(planId ? [{ id: planId }] : []),
+          { name: { equals: targetName, mode: "insensitive" } },
+        ],
+      },
+    });
+
+    if (!plan) {
+      plan = await prisma.plan.create({
+        data: {
+          name: targetName,
+          minDeposit: money(subAmount > 1000 ? 1000 : subAmount),
+          maxDeposit: money(subAmount * 10),
+          dailyRoiPercentage: dailyRoi,
+          durationDays: planDuration,
+          capitalRefund: true,
+          isActive: true,
+        },
+      });
+    }
+
     try {
-      const { newBalance, subscriptionItem } = await atomic(async (tx) => {
+      const { newBalance, investment } = await atomic(async (tx) => {
+        // 2. Atomically debit user balance
         const newBalance = await debitMain(tx, session.userId, subAmount);
 
+        // 3. Create real relational Investment
+        const investment = await tx.investment.create({
+          data: {
+            userId: session.userId,
+            planId: plan.id,
+            amount: subAmount,
+            daysRemaining: plan.durationDays,
+            status: "RUNNING",
+          },
+          include: {
+            plan: true,
+          },
+        });
+
+        // 4. Record ledger transaction
         await insertTransaction(tx, {
           userId: session.userId,
           type: "INVESTMENT_SUBSCRIBE",
           amount: subAmount,
           currency: "USD",
-          txHash: `SUB_${Date.now().toString(36).toUpperCase()}`,
+          txHash: `SUB_${investment.id.substring(0, 8).toUpperCase()}`,
           status: "APPROVED",
         });
 
-        const subscriptionItem = {
-          ref: `SUB-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`,
-          plan: planName || "Subscription Plan",
-          duration: Number(duration) || 3,
-          daysLeft: Number(duration) || 3,
-          amount: subAmount,
-          roi: Number(roi) || 200,
-          status: "open",
-          date: new Date().toISOString(),
-        };
-
-        return { newBalance, subscriptionItem };
-      });
-
-      // Update user's subscriptions history in AppSetting
-      const key = `subscriptions_${session.userId}`;
-      const existing = await prisma.appSetting.findUnique({ where: { key } });
-      const currentHistory = (existing && Array.isArray(existing.value)) ? existing.value : [];
-      const updatedHistory = [subscriptionItem, ...currentHistory];
-
-      await prisma.appSetting.upsert({
-        where: { key },
-        update: { value: updatedHistory as any },
-        create: { key, value: updatedHistory as any },
+        return { newBalance, investment };
       });
 
       await notify(
         session.userId,
         "investment",
         "Subscription Started",
-        `${fmtUsd(subAmount)} successfully subscribed to ${planName || "Plan"} for ${duration || 3} days.`
+        `${fmtUsd(subAmount)} successfully subscribed to ${plan.name} for ${plan.durationDays} days.`,
       );
+
+      // Fetch updated history
+      const allRows = await prisma.investment.findMany({
+        where: { userId: session.userId },
+        include: { plan: true },
+        orderBy: { createdAt: "desc" },
+      });
+
+      const history = allRows.map((inv) => ({
+        id: inv.id,
+        ref: `INV-${inv.id.slice(0, 8).toUpperCase()}`,
+        plan: inv.plan?.name || "Subscription Plan",
+        duration: inv.plan?.durationDays || 3,
+        daysLeft: inv.daysRemaining,
+        amount: inv.amount.toNumber(),
+        roi: inv.plan ? Number((inv.plan.dailyRoiPercentage.toNumber() * inv.plan.durationDays).toFixed(1)) : 200,
+        accruedProfit: inv.accruedProfit.toNumber(),
+        status: inv.status.toLowerCase(),
+        date: inv.createdAt.toISOString(),
+      }));
+
+      const subscriptionItem = {
+        ref: `INV-${investment.id.slice(0, 8).toUpperCase()}`,
+        plan: investment.plan.name,
+        duration: investment.plan.durationDays,
+        daysLeft: investment.daysRemaining,
+        amount: investment.amount.toNumber(),
+        roi: totalRoi,
+        status: investment.status.toLowerCase(),
+        date: investment.createdAt.toISOString(),
+      };
 
       return NextResponse.json({
         success: true,
-        message: `Successfully subscribed $${subAmount.toLocaleString()} to ${planName || "Plan"}!`,
+        message: `Successfully subscribed $${subAmount.toLocaleString()} to ${investment.plan.name}!`,
         newBalance,
         subscription: subscriptionItem,
-        history: updatedHistory,
+        history,
       });
     } catch (err) {
       if (err instanceof InsufficientFundsError) {
@@ -101,7 +168,7 @@ export async function POST(req: Request) {
       throw err;
     }
   } catch (error: any) {
-    console.error("Subscription error:", error);
-    return NextResponse.json({ error: error.message || "Failed to process subscription" }, { status: 500 });
+    console.error("Subscription purchase error:", error);
+    return NextResponse.json({ error: error.message || "Failed to subscribe" }, { status: 500 });
   }
 }

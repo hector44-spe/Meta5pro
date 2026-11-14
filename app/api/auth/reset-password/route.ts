@@ -58,9 +58,13 @@ export async function POST(req: Request) {
       );
     }
 
+    // Invalidate all existing sessions by incrementing tokenVersion
     await prisma.user.update({
       where: { id: tokenRecord.userId },
-      data: { passwordHash },
+      data: {
+        passwordHash,
+        tokenVersion: { increment: 1 },
+      },
     });
 
     return NextResponse.json({

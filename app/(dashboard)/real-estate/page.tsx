@@ -281,30 +281,24 @@ export default function RealEstateDashboardPage() {
   // FAQ open question accordion state
   const [openQuestionId, setOpenQuestionId] = useState<number | null>(1);
 
-  // Initialize investments from localStorage if available
-  useEffect(() => {
+  // Fetch real estate investments from database
+  const fetchUserInvestments = async () => {
     try {
-      const saved = localStorage.getItem("mg5_real_estate_investments");
-      if (saved) {
-        setUserInvestments(JSON.parse(saved));
+      const res = await fetch("/api/real-estate/invest");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.investments) {
+          setUserInvestments(data.investments);
+        }
       }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  // Save investments to localStorage when updated
-  const saveInvestments = (newInv: UserRealEstateInvestment[]) => {
-    setUserInvestments(newInv);
-    try {
-      localStorage.setItem(
-        "mg5_real_estate_investments",
-        JSON.stringify(newInv)
-      );
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Failed to fetch real estate investments:", err);
     }
   };
+
+  useEffect(() => {
+    fetchUserInvestments();
+  }, []);
 
   // Calculate Real Estate Portfolio Value
   const portfolioValue = useMemo(() => {
@@ -353,7 +347,7 @@ export default function RealEstateDashboardPage() {
     if (!selectedProjectForInvest) return;
     if (parsedAmount < selectedProjectForInvest.minimum) {
       setInvestError(
-        `Minimum investment is $${selectedProjectForInvest.minimum.toLocaleString()}`
+        `Minimum investment is ${selectedProjectForInvest.minimum.toLocaleString()}`
       );
       return;
     }
@@ -365,46 +359,52 @@ export default function RealEstateDashboardPage() {
     }
 
     setIsSubmittingInvest(true);
+    setInvestError(null);
 
-    // Simulate investment record creation
-    setTimeout(() => {
-      const newInv: UserRealEstateInvestment = {
-        id: "re_" + Date.now().toString(36),
-        projectId: selectedProjectForInvest.id,
-        projectTitle: selectedProjectForInvest.title,
-        thumbnail: selectedProjectForInvest.thumbnail,
-        amount: parsedAmount,
-        roi: selectedProjectForInvest.roi,
-        strategy: selectedProjectForInvest.strategy,
-        durationMonths: investDuration,
-        startDate: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
+    try {
+      const res = await fetch("/api/real-estate/invest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: selectedProjectForInvest.id,
+          projectTitle: selectedProjectForInvest.title,
+          thumbnail: selectedProjectForInvest.thumbnail,
+          amount: parsedAmount,
+          roi: selectedProjectForInvest.roi,
+          strategy: selectedProjectForInvest.strategy,
+          durationMonths: investDuration,
         }),
-        projectedReturn: projectedTotalReturn,
-        status: "ACTIVE",
-      };
+      });
 
-      const updated = [newInv, ...userInvestments];
-      saveInvestments(updated);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit real estate investment");
+      }
 
-      setIsSubmittingInvest(false);
+      if (data.investment) {
+        setUserInvestments((prev) => [data.investment, ...prev]);
+      } else {
+        await fetchUserInvestments();
+      }
+
       setSelectedProjectForInvest(null);
       if (selectedProjectForView) {
         setSelectedProjectForView(null);
       }
 
       setToastMessage(
-        `Successfully invested $${parsedAmount.toLocaleString()} in ${
+        `Successfully invested ${parsedAmount.toLocaleString()} in ${
           selectedProjectForInvest.title
         }!`
       );
       setTimeout(() => setToastMessage(null), 5000);
 
-      // Refresh balances if hooked
       refreshBalance();
-    }, 1200);
+    } catch (err: any) {
+      setInvestError(err.message || "Failed to complete investment");
+    } finally {
+      setIsSubmittingInvest(false);
+    }
   };
 
   return (

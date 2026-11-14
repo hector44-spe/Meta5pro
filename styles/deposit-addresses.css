@@ -122,6 +122,27 @@
   color: #4f5bf5;
 }
 
+.dep_delete_btn {
+  background: transparent;
+  border: none;
+  color: #ff4d5e;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dep_delete_btn:hover {
+  background: rgba(255, 77, 94, 0.12);
+  color: #ff6b7a;
+}
+
 /* Primary "Add new wallet address" Blue Button */
 .dep_add_btn {
   width: 100%;

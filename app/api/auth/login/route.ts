@@ -66,6 +66,7 @@ export async function POST(req: Request) {
       email: user.email,
       role: user.role,
       username: user.username,
+      tokenVersion: user.tokenVersion,
     });
 
     const response = NextResponse.json({

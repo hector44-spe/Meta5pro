@@ -149,28 +149,47 @@ function StatusPill({ status }: { status: string }) {
 export default function AdminPage() {
   const [section, setSection] = useState<Section>("overview");
 
-  // Deep links from the dashboard's admin Settings drawer, e.g. /admin?section=deposits
+  // Keep section synced across refresh, deep links, and browser back/forward
   useEffect(() => {
-    const s = new URLSearchParams(window.location.search).get("section");
-    if (
-      s &&
-      [
-        "overview",
-        "deposits",
-        "withdrawals",
-        "users",
-        "experts",
-        "trades",
-        "signals",
-        "card-requests",
-        "cards",
-        "subscriptions",
-        "addresses",
-        "transactions",
-      ].includes(s)
-    ) {
-      setSection(s as Section);
-    }
+    const validSections: Section[] = [
+      "overview",
+      "deposits",
+      "withdrawals",
+      "users",
+      "experts",
+      "trades",
+      "signals",
+      "card-requests",
+      "cards",
+      "subscriptions",
+      "addresses",
+      "transactions",
+    ];
+
+    try {
+      const urlParam = new URLSearchParams(window.location.search).get("section");
+      const saved = localStorage.getItem("admin_active_section");
+      const target = (urlParam || saved) as Section;
+      if (target && validSections.includes(target)) {
+        setSection(target);
+        if (!urlParam) {
+          const u = new URL(window.location.href);
+          u.searchParams.set("section", target);
+          window.history.replaceState(null, "", u.toString());
+        }
+      }
+    } catch {}
+
+    const onPop = () => {
+      try {
+        const s = new URLSearchParams(window.location.search).get("section") as Section;
+        if (s && validSections.includes(s)) {
+          setSection(s);
+        }
+      } catch {}
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
   const [navOpen, setNavOpen] = useState(false);
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
@@ -220,11 +239,17 @@ export default function AdminPage() {
     loadAll();
   }, [loadAll]);
 
-  // Close the mobile menu when switching sections
+  // Close the mobile menu when switching sections and persist URL + localStorage
   const go = (s: Section) => {
     setSection(s);
     setNavOpen(false);
     window.scrollTo({ top: 0 });
+    try {
+      localStorage.setItem("admin_active_section", s);
+      const u = new URL(window.location.href);
+      u.searchParams.set("section", s);
+      window.history.replaceState(null, "", u.toString());
+    } catch {}
   };
 
   const pendingDeposits = transactions.filter((t) => t.type === "DEPOSIT" && t.status === "PENDING");

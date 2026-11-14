@@ -51,41 +51,32 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 1. Fetch all user cards from app_settings where key starts with "cards_"
-    const cardSettings = await prisma.appSetting.findMany({
-      where: {
-        key: {
-          startsWith: "cards_",
-        },
+    // 1. Fetch all user cards directly from relational cards table
+    const cardRows = await prisma.card.findMany({
+      include: {
+        user: { select: { id: true, email: true, username: true, fullName: true } },
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    const userIds = cardSettings.map((s) => s.key.replace("cards_", "")).filter(Boolean);
-    const users = await prisma.user.findMany({
-      where: { id: { in: userIds } },
-      select: { id: true, email: true, username: true, fullName: true },
-    });
-    const userMap = new Map(users.map((u) => [u.id, u]));
+    const allCards = cardRows.map((c) => ({
+      id: c.id,
+      ref: c.ref,
+      userId: c.userId,
+      userEmail: c.user?.email || "Unknown",
+      userFullName: c.user?.fullName || c.user?.username || "Investor",
+      type: c.type,
+      cardNumber: c.cardNumber,
+      last4: c.last4,
+      expiryDate: c.expiryDate,
+      cvv: "***",
+      status: c.status,
+      balance: c.balance.toNumber(),
+      issuanceFee: c.issuanceFee.toNumber(),
+      createdAt: c.createdAt.toISOString(),
+    }));
 
-    const allCards: any[] = [];
-    for (const setting of cardSettings) {
-      const uId = setting.key.replace("cards_", "");
-      const u = userMap.get(uId);
-      if (Array.isArray(setting.value)) {
-        for (const card of setting.value as any[]) {
-          allCards.push({
-            ...card,
-            userId: uId,
-            userEmail: u?.email || "Unknown",
-            userFullName: u?.fullName || u?.username || "Investor",
-          });
-        }
-      }
-    }
-
-    allCards.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-
-    // 2. Fetch card options
+    // 2. Fetch card options (platform product configurations)
     const optionsSetting = await prisma.appSetting.findUnique({
       where: { key: "card_options" },
     });
@@ -113,48 +104,40 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, userId, cardId, newStatus, cardOption, optionId } = body;
+    const { action, cardId, newStatus, cardOption, optionId } = body;
 
     // A. Update card request status (active, blocked, pending)
     if (action === "updateCardStatus") {
-      if (!userId || !cardId || !newStatus) {
-        return NextResponse.json({ error: "Missing fields" }, { status: 400 });
-      }
-      const key = `cards_${userId}`;
-      const setting = await prisma.appSetting.findUnique({ where: { key } });
-      if (!setting || !Array.isArray(setting.value)) {
-        return NextResponse.json({ error: "Card setting not found" }, { status: 404 });
+      if (!cardId || !newStatus) {
+        return NextResponse.json({ error: "Missing cardId or newStatus" }, { status: 400 });
       }
 
-      const cards = setting.value as any[];
-      const idx = cards.findIndex((c) => c.id === cardId || c.ref === cardId);
-      if (idx === -1) {
-        return NextResponse.json({ error: "Card not found" }, { status: 404 });
-      }
-
-      cards[idx].status = newStatus;
-      await prisma.appSetting.update({
-        where: { key },
-        data: { value: cards },
+      const updated = await prisma.card.update({
+        where: { id: cardId },
+        data: { status: newStatus },
       });
 
-      return NextResponse.json({ success: true, card: cards[idx] });
+      return NextResponse.json({
+        success: true,
+        card: {
+          id: updated.id,
+          ref: updated.ref,
+          status: updated.status,
+          balance: updated.balance.toNumber(),
+        },
+      });
     }
 
     // B. Delete a user card request
     if (action === "deleteCard") {
-      if (!userId || !cardId) {
-        return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      if (!cardId) {
+        return NextResponse.json({ error: "Missing cardId" }, { status: 400 });
       }
-      const key = `cards_${userId}`;
-      const setting = await prisma.appSetting.findUnique({ where: { key } });
-      if (setting && Array.isArray(setting.value)) {
-        const filtered = (setting.value as any[]).filter((c) => c.id !== cardId && c.ref !== cardId);
-        await prisma.appSetting.update({
-          where: { key },
-          data: { value: filtered },
-        });
-      }
+
+      await prisma.card.deleteMany({
+        where: { OR: [{ id: cardId }, { ref: cardId }] },
+      });
+
       return NextResponse.json({ success: true });
     }
 

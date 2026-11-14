@@ -18,6 +18,7 @@ export interface TokenPayload {
   email: string;
   role: string;
   username: string;
+  tokenVersion?: number;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -47,6 +48,7 @@ export function verifyToken(token: string): TokenPayload | null {
 /**
  * Returns the session only if the token is valid AND the user still exists and is ACTIVE.
  * Role is taken from the database, so demoting or suspending a user takes effect immediately.
+ * Validates tokenVersion: if password was changed/reset, older sessions are rejected.
  */
 export async function getSession(): Promise<TokenPayload | null> {
   try {
@@ -58,21 +60,35 @@ export async function getSession(): Promise<TokenPayload | null> {
     if (!payload) return null;
     const row = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { role: true, status: true },
+      select: { role: true, status: true, tokenVersion: true },
     });
     if (!row || row.status !== "ACTIVE") return null;
-    return { ...payload, role: row.role };
+    if (payload.tokenVersion !== undefined && row.tokenVersion !== payload.tokenVersion) {
+      return null;
+    }
+    return { ...payload, role: row.role, tokenVersion: row.tokenVersion };
   } catch {
     return null;
   }
 }
 
-/* ---------- simple in-memory rate limiter (per process) ---------- */
+/* ---------- in-memory rate limiter with periodic cleanup ---------- */
 const attempts = new Map<string, { count: number; resetAt: number }>();
+
+function pruneExpiredAttempts() {
+  const now = Date.now();
+  for (const [key, entry] of attempts.entries()) {
+    if (entry.resetAt < now) {
+      attempts.delete(key);
+    }
+  }
+}
 
 /** Returns true if the key is over the limit. */
 export function rateLimited(key: string, max = 5, windowMs = 15 * 60 * 1000): boolean {
   const now = Date.now();
+  if (attempts.size > 2000) pruneExpiredAttempts();
+
   const entry = attempts.get(key);
   if (!entry || entry.resetAt < now) {
     attempts.set(key, { count: 1, resetAt: now + windowMs });

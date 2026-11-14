@@ -4,7 +4,16 @@
 
 .real-estate-page-wrapper {
   width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
   box-sizing: border-box;
+}
+
+@media screen and (max-width: 768px) {
+  .real-estate-page-wrapper {
+    padding: 16px 14px 90px;
+  }
 }
 
 .real-estate-toast-banner {
@@ -43,12 +52,6 @@
   box-sizing: border-box !important;
   border: none !important;
   min-height: auto;
-}
-
-@media screen and (max-width: 768px) {
-  .real-estate-content-card {
-    padding: 16px 12px 140px;
-  }
 }
 
 /* -------------------- Top Portfolio Balance Card -------------------- */

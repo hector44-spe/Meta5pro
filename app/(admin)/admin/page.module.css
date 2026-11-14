@@ -953,11 +953,36 @@
   font-weight: 600;
 }
 
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 640px) {
   .tableWrap {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+  }
+  .table {
+    min-width: 640px;
+  }
+  .card:has(.cardList) .tableWrap {
     display: none;
   }
   .cardList {
     display: flex;
+  }
+  .cardHead {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .searchBox {
+    width: 100%;
+    max-width: 100%;
   }
 }
