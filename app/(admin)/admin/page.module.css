@@ -21,7 +21,9 @@
 
   display: grid;
   grid-template-columns: var(--a-sidebar) minmax(0, 1fr);
-  min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
   background: var(--a-bg);
   color: var(--a-text);
   font-size: 14px;
@@ -41,6 +43,9 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   background: var(--a-panel);
@@ -220,6 +225,9 @@
 
 /* ---------------- Main ---------------- */
 .main {
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-width: 0;
   padding: 24px 28px 48px;
   display: flex;

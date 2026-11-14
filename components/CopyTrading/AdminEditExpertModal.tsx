@@ -1,7 +1,15 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Loader2, Trash2 } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  X,
+  ChevronLeft,
+  FileUp,
+  WandSparkles,
+  Loader2,
+  Trash2,
+  Check,
+} from "lucide-react";
 import { CopyExpert } from "@/app/api/copy-trading/experts/route";
 
 interface AdminEditExpertModalProps {
@@ -21,61 +29,128 @@ export default function AdminEditExpertModal({
 }: AdminEditExpertModalProps) {
   const isEditing = Boolean(expert && expert.id);
 
+  // Modal Step State: 1 = Details, 2 = Stats, 3 = Settings
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  // Form Fields - Step 1: Details
   const [name, setName] = useState(expert?.name || "");
   const [username, setUsername] = useState(expert?.username || "");
+  const [picture, setPicture] = useState(expert?.picture || "");
+  const [badge, setBadge] = useState("");
   const [bio, setBio] = useState(expert?.bio || "");
-  const [picture, setPicture] = useState(expert?.picture || "/assets/copy-trading/albania_support.png");
+  const [tickType, setTickType] = useState<"gold" | "blue" | "none">(
+    expert?.tickType || "none"
+  );
+
+  // Form Fields - Step 2: Stats
   const [winRate, setWinRate] = useState(expert?.winRate?.toString() || "92");
-  const [profitShare, setProfitShare] = useState(expert?.profitShare?.toString() || "15");
+  const [profitShare, setProfitShare] = useState(
+    expert?.profitShare?.toString() || "15"
+  );
   const [wins, setWins] = useState(expert?.wins?.toString() || "6988");
   const [losses, setLosses] = useState(expert?.losses?.toString() || "11");
-  const [tradesCount, setTradesCount] = useState(expert?.tradesCount?.toString() || "6999");
-  const [minimumStartUp, setMinimumStartUp] = useState(expert?.minimumStartUp?.toString() || "1000");
-  const [followers, setFollowers] = useState(expert?.followers?.toString() || "13800");
-  const [tickType, setTickType] = useState<"gold" | "blue" | "none">(expert?.tickType || "gold");
+  const [tradesCount, setTradesCount] = useState(
+    expert?.tradesCount?.toString() || "6999"
+  );
+  const [followers, setFollowers] = useState(
+    expert?.followers?.toString() || "13800"
+  );
 
+  // Form Fields - Step 3: Settings
+  const [useMinimumStartup, setUseMinimumStartup] = useState(true);
+  const [minimumStartUp, setMinimumStartUp] = useState(
+    expert?.minimumStartUp?.toString() || "1000"
+  );
+  const [autoGenerateTrades, setAutoGenerateTrades] = useState(true);
+
+  // Loading & Error States
   const [saving, setSaving] = useState(false);
+  const [autoFilling, setAutoFilling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // File Inputs
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+  const badgeInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (expert) {
+      setStep(1);
       setName(expert.name || "");
       setUsername(expert.username || "");
-      setBio(expert.bio || "");
       setPicture(expert.picture || "/assets/copy-trading/albania_support.png");
+      setBio(expert.bio || "");
+      setTickType(expert.tickType || "gold");
       setWinRate(expert.winRate?.toString() || "92");
       setProfitShare(expert.profitShare?.toString() || "15");
       setWins(expert.wins?.toString() || "6988");
       setLosses(expert.losses?.toString() || "11");
       setTradesCount(expert.tradesCount?.toString() || "6999");
-      setMinimumStartUp(expert.minimumStartUp?.toString() || "1000");
       setFollowers(expert.followers?.toString() || "13800");
-      setTickType(expert.tickType || "gold");
+      setMinimumStartUp(expert.minimumStartUp?.toString() || "1000");
+      setUseMinimumStartup(Boolean(expert.minimumStartUp && expert.minimumStartUp > 0));
     } else {
+      setStep(1);
       setName("");
       setUsername("");
+      setPicture("");
+      setBadge("");
       setBio("");
-      setPicture("/assets/copy-trading/albania_support.png");
+      setTickType("none");
       setWinRate("90");
       setProfitShare("15");
-      setWins("500");
+      setWins("1000");
       setLosses("10");
-      setTradesCount("510");
-      setMinimumStartUp("1000");
+      setTradesCount("1010");
       setFollowers("5000");
-      setTickType("gold");
+      setMinimumStartUp("1000");
+      setUseMinimumStartup(true);
+      setAutoGenerateTrades(true);
     }
-  }, [expert]);
+    setError(null);
+  }, [expert, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) {
-      setError("Expert name is required");
-      return;
+  // Handle Image Upload locally with object URL preview
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPicture(url);
     }
+  };
 
+  const handleBadgeFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setBadge(url);
+    }
+  };
+
+  // Step 2: Auto Fill generator
+  const handleAutoFill = () => {
+    setAutoFilling(true);
+    setTimeout(() => {
+      const generatedWinRate = (Math.random() * 20 + 80).toFixed(0);
+      const generatedProfitShare = (Math.random() * 15 + 10).toFixed(0);
+      const generatedWins = Math.floor(Math.random() * 8000) + 500;
+      const generatedLosses = Math.floor(Math.random() * 200) + 5;
+      const generatedTrades = generatedWins + generatedLosses;
+      const generatedFollowers = Math.floor(Math.random() * 50000) + 1000;
+
+      setWinRate(generatedWinRate);
+      setProfitShare(generatedProfitShare);
+      setWins(generatedWins.toString());
+      setLosses(generatedLosses.toString());
+      setTradesCount(generatedTrades.toString());
+      setFollowers(generatedFollowers.toString());
+      setAutoFilling(false);
+    }, 600);
+  };
+
+  // Step 3: Final Save
+  const handleSaveExpert = async () => {
     setSaving(true);
     setError(null);
 
@@ -91,7 +166,7 @@ export default function AdminEditExpertModal({
       wins: Number(wins) || 0,
       losses: Number(losses) || 0,
       tradesCount: Number(tradesCount) || 0,
-      minimumStartUp: Number(minimumStartUp) || 0,
+      minimumStartUp: useMinimumStartup ? Number(minimumStartUp) || 0 : 0,
       followers: Number(followers) || 0,
       tickType,
     };
@@ -114,22 +189,15 @@ export default function AdminEditExpertModal({
       onSaved();
       onClose();
     } catch (err: any) {
-      setError(err.message || "Failed to save expert");
+      setError(err.message || "Failed to save expert. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteClick = () => {
-    if (expert && onRequestDelete) {
-      onClose();
-      onRequestDelete(expert);
-    }
-  };
-
   return (
     <div
-      className="admin-expert-modal-overlay"
+      className="meta-gold-modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -145,31 +213,59 @@ export default function AdminEditExpertModal({
       onClick={onClose}
     >
       <div
-        className="admin-expert-modal-dialog"
+        className="meta-gold-modal-dialog"
         style={{
           width: "100%",
-          maxWidth: "520px",
+          maxWidth: "460px",
           backgroundColor: "#16181d",
           border: "1px solid rgba(255, 255, 255, 0.08)",
           borderRadius: "14px",
-          padding: "24px",
+          padding: "20px",
           maxHeight: "90vh",
-          overflowY: "auto",
-          boxShadow: "0 20px 48px rgba(0,0,0,0.7)",
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 24px 50px rgba(0, 0, 0, 0.8)",
+          boxSizing: "border-box",
         }}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* ===================== MODAL HEADER ===================== */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "20px",
+            marginBottom: "16px",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: "#ffffff" }}>
-            {isEditing ? "Edit Copy Trading Expert" : "Add Copy Trading Expert"}
-          </h3>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={() => setStep((s) => (s === 3 ? 2 : 1))}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#ffffff",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  padding: "2px",
+                }}
+              >
+                <ChevronLeft size={18} />
+              </button>
+            )}
+            <p style={{ margin: 0, fontSize: "14.5px", fontWeight: 600, color: "#ffffff" }}>
+              {step === 1 && "Expert Details"}
+              {step === 2 && "Expert Stats"}
+              {step === 3 && "Expert Settings"}{" "}
+              <strong style={{ fontWeight: 400, color: "rgba(255, 255, 255, 0.45)", marginLeft: "6px" }}>
+                Step {step}/3
+              </strong>
+            </p>
+          </div>
+
           <button
             type="button"
             onClick={onClose}
@@ -179,389 +275,794 @@ export default function AdminEditExpertModal({
               color: "rgba(255, 255, 255, 0.5)",
               cursor: "pointer",
               padding: "4px",
+              display: "flex",
+              alignItems: "center",
             }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
-        {error && (
-          <div
-            style={{
-              padding: "10px 14px",
-              backgroundColor: "rgba(255, 59, 78, 0.1)",
-              border: "1px solid rgba(255, 59, 78, 0.3)",
-              borderRadius: "8px",
-              color: "#ff3b4e",
-              fontSize: "13px",
-              marginBottom: "16px",
-            }}
-          >
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-              Expert Name
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Albania fx"
+        {/* Scrollable Body */}
+        <div style={{ overflowY: "auto", overflowX: "hidden", maxHeight: "70vh", paddingRight: "2px" }}>
+          {error && (
+            <div
               style={{
-                width: "100%",
-                height: "42px",
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                padding: "10px 14px",
+                backgroundColor: "rgba(255, 59, 78, 0.1)",
+                border: "1px solid rgba(255, 59, 78, 0.3)",
                 borderRadius: "8px",
-                padding: "0 12px",
-                color: "#ffffff",
-                fontSize: "14px",
-                boxSizing: "border-box",
+                color: "#ff3b4e",
+                fontSize: "13px",
+                marginBottom: "16px",
               }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Username (@)
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Support"
-                style={{
-                  width: "100%",
-                  height: "42px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 12px",
-                  color: "#ffffff",
-                  fontSize: "14px",
-                  boxSizing: "border-box",
-                }}
-              />
+            >
+              {error}
             </div>
+          )}
+
+          {/* ===================== STEP 1 / 3: EXPERT DETAILS ===================== */}
+          {step === 1 && (
             <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Verification Tick
-              </label>
-              <select
-                value={tickType}
-                onChange={(e) => setTickType(e.target.value as any)}
+              <p
                 style={{
-                  width: "100%",
-                  height: "42px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 12px",
-                  color: "#ffffff",
-                  fontSize: "14px",
-                  boxSizing: "border-box",
+                  color: "rgba(255, 255, 255, 0.5)",
+                  fontSize: "13px",
+                  lineHeight: "18px",
+                  margin: "0 0 20px 0",
                 }}
               >
-                <option value="gold" style={{ background: "#16181d" }}>Gold Tick</option>
-                <option value="blue" style={{ background: "#16181d" }}>Blue Tick</option>
-                <option value="none" style={{ background: "#16181d" }}>None</option>
-              </select>
-            </div>
-          </div>
+                {isEditing
+                  ? "To edit this expert, fill in the details, and click on the continue button. You can leave things as they are if you don't want to change them."
+                  : "To add an expert, fill in the details, and click on the continue button."}
+              </p>
 
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-              Avatar / Picture Path
-            </label>
-            <input
-              type="text"
-              value={picture}
-              onChange={(e) => setPicture(e.target.value)}
-              placeholder="/assets/copy-trading/albania_support.png"
+              <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+                {/* Expert name */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "13px",
+                      color: "rgba(255, 255, 255, 0.5)",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Expert name:
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    placeholder="Alexis Sanchez"
+                    onChange={(e) => setName(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "44px",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: "8px",
+                      padding: "0 14px",
+                      color: "#ffffff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      boxSizing: "border-box",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+
+                {/* Expert username */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "13px",
+                      color: "rgba(255, 255, 255, 0.5)",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Expert username:
+                  </label>
+                  <input
+                    type="text"
+                    value={username}
+                    placeholder="alexis_sanchez"
+                    onChange={(e) => setUsername(e.target.value)}
+                    style={{
+                      width: "100%",
+                      height: "44px",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: "8px",
+                      padding: "0 14px",
+                      color: "#ffffff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      boxSizing: "border-box",
+                      outline: "none",
+                    }}
+                  />
+                </div>
+
+                {/* Expert image picker button (Matches Image 1 & Image 3) */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "13px",
+                      color: "rgba(255, 255, 255, 0.5)",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Expert image
+                  </label>
+                  <div
+                    onClick={() => imageInputRef.current?.click()}
+                    style={{
+                      width: "100%",
+                      height: "44px",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: "8px",
+                      padding: "0 14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      cursor: "pointer",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    {picture ? (
+                      <img
+                        src={picture}
+                        alt="preview"
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                          borderRadius: "4px",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <FileUp size={16} color="#4F6BFF" />
+                    )}
+                    <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4F6BFF" }}>
+                      {picture ? "Click here to change expert image" : "Click here to upload expert image"}
+                    </span>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFile}
+                      style={{ display: "none" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Expert badge picker button (Matches Image 1 & Image 3) */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "13px",
+                      color: "rgba(255, 255, 255, 0.5)",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Expert badge
+                  </label>
+                  <div
+                    onClick={() => badgeInputRef.current?.click()}
+                    style={{
+                      width: "100%",
+                      height: "44px",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: "8px",
+                      padding: "0 14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      cursor: "pointer",
+                      boxSizing: "border-box",
+                    }}
+                  >
+                    {badge ? (
+                      <img
+                        src={badge}
+                        alt="badge"
+                        style={{ width: "20px", height: "20px", objectFit: "contain" }}
+                      />
+                    ) : (
+                      <FileUp size={16} color="#4F6BFF" />
+                    )}
+                    <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4F6BFF" }}>
+                      {badge ? "Click to change badge" : "Click to upload badge"}
+                    </span>
+                    <input
+                      ref={badgeInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleBadgeFile}
+                      style={{ display: "none" }}
+                    />
+                  </div>
+                </div>
+
+                {/* Bio */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "13px",
+                      color: "rgba(255, 255, 255, 0.5)",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Bio:
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={bio}
+                    placeholder="Enter expert bio"
+                    onChange={(e) => setBio(e.target.value)}
+                    style={{
+                      width: "100%",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                      borderRadius: "8px",
+                      padding: "10px 14px",
+                      color: "#ffffff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      boxSizing: "border-box",
+                      outline: "none",
+                      resize: "none",
+                    }}
+                  />
+                </div>
+
+                {/* Verification Dropdown (Matches Image 2 & Image 4) */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "13px",
+                      color: "rgba(255, 255, 255, 0.5)",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Verification:
+                  </label>
+                  <div style={{ position: "relative" }}>
+                    <select
+                      value={tickType}
+                      onChange={(e) => setTickType(e.target.value as any)}
+                      style={{
+                        width: "100%",
+                        height: "44px",
+                        backgroundColor: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                        borderRadius: "8px",
+                        padding: "0 14px",
+                        color: "#ffffff",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        boxSizing: "border-box",
+                        outline: "none",
+                        appearance: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="gold" style={{ background: "#16181d" }}>
+                        gold
+                      </option>
+                      <option value="blue" style={{ background: "#16181d" }}>
+                        blue
+                      </option>
+                      <option value="none" style={{ background: "#16181d" }}>
+                        none
+                      </option>
+                    </select>
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: "14px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        pointerEvents: "none",
+                        color: "rgba(255, 255, 255, 0.5)",
+                        fontSize: "10px",
+                      }}
+                    >
+                      ▼
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== STEP 2 / 3: EXPERT STATS ===================== */}
+          {step === 2 && (
+            <div>
+              <p
+                style={{
+                  color: "rgba(255, 255, 255, 0.5)",
+                  fontSize: "13px",
+                  lineHeight: "18px",
+                  margin: "0 0 20px 0",
+                }}
+              >
+                To continue, fill in the stats, and click on the continue button. You can use the &quot;Auto fill&quot; button to do it automatically.
+                {isEditing && (
+                  <span>
+                    {" "}
+                    You are editing <strong style={{ color: "#ffffff" }}>{name}</strong>
+                  </span>
+                )}
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* Row 1: Win Rate & Profit Share */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>
+                      Win Rate:
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="number"
+                        value={winRate}
+                        onChange={(e) => setWinRate(e.target.value)}
+                        placeholder="10"
+                        style={{
+                          width: "100%",
+                          height: "44px",
+                          backgroundColor: "rgba(255, 255, 255, 0.03)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          borderRadius: "8px",
+                          padding: "0 34px 0 12px",
+                          color: "#ffffff",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <span style={{ position: "absolute", right: "12px", top: "14px", color: "rgba(255,255,255,0.45)", fontSize: "13px" }}>
+                        %
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>
+                      Profit share:
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="number"
+                        value={profitShare}
+                        onChange={(e) => setProfitShare(e.target.value)}
+                        placeholder="40"
+                        style={{
+                          width: "100%",
+                          height: "44px",
+                          backgroundColor: "rgba(255, 255, 255, 0.03)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          borderRadius: "8px",
+                          padding: "0 34px 0 12px",
+                          color: "#ffffff",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <span style={{ position: "absolute", right: "12px", top: "14px", color: "rgba(255,255,255,0.45)", fontSize: "13px" }}>
+                        %
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 2: Wins & Losses */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>
+                      Wins:
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="number"
+                        value={wins}
+                        onChange={(e) => setWins(e.target.value)}
+                        placeholder="1000"
+                        style={{
+                          width: "100%",
+                          height: "44px",
+                          backgroundColor: "rgba(255, 255, 255, 0.03)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          borderRadius: "8px",
+                          padding: "0 46px 0 12px",
+                          color: "#ffffff",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <span style={{ position: "absolute", right: "10px", top: "14px", color: "rgba(255,255,255,0.4)", fontSize: "11px", fontWeight: 600 }}>
+                        WINS
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>
+                      Losses:
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <input
+                        type="number"
+                        value={losses}
+                        onChange={(e) => setLosses(e.target.value)}
+                        placeholder="100"
+                        style={{
+                          width: "100%",
+                          height: "44px",
+                          backgroundColor: "rgba(255, 255, 255, 0.03)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          borderRadius: "8px",
+                          padding: "0 54px 0 12px",
+                          color: "#ffffff",
+                          fontSize: "14px",
+                          fontWeight: 600,
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <span style={{ position: "absolute", right: "10px", top: "14px", color: "rgba(255,255,255,0.4)", fontSize: "11px", fontWeight: 600 }}>
+                        LOSSES
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 3: Followers & Trades */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>
+                      Followers:
+                    </label>
+                    <input
+                      type="number"
+                      value={followers}
+                      onChange={(e) => setFollowers(e.target.value)}
+                      placeholder="1000"
+                      style={{
+                        width: "100%",
+                        height: "44px",
+                        backgroundColor: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                        borderRadius: "8px",
+                        padding: "0 12px",
+                        color: "#ffffff",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>
+                      Trades:
+                    </label>
+                    <input
+                      type="number"
+                      value={tradesCount}
+                      onChange={(e) => setTradesCount(e.target.value)}
+                      placeholder="1000"
+                      style={{
+                        width: "100%",
+                        height: "44px",
+                        backgroundColor: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                        borderRadius: "8px",
+                        padding: "0 12px",
+                        color: "#ffffff",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ===================== STEP 3 / 3: EXPERT SETTINGS ===================== */}
+          {step === 3 && (
+            <div>
+              <p
+                style={{
+                  color: "rgba(255, 255, 255, 0.5)",
+                  fontSize: "13px",
+                  lineHeight: "18px",
+                  margin: "0 0 20px 0",
+                }}
+              >
+                To finish, modify the settings, and click on the button below. You may also leave the settings as they are.
+                {isEditing && (
+                  <span>
+                    {" "}
+                    You are editing <strong style={{ color: "#ffffff" }}>{name}</strong>
+                  </span>
+                )}
+              </p>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                {/* Minimum Startup Toggle */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "14px",
+                    background: "rgba(255, 255, 255, 0.02)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                  }}
+                >
+                  <label style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
+                    Use minimum startup for this expert
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setUseMinimumStartup(!useMinimumStartup)}
+                    style={{
+                      width: "44px",
+                      height: "24px",
+                      borderRadius: "12px",
+                      backgroundColor: useMinimumStartup ? "#4F6BFF" : "rgba(255, 255, 255, 0.2)",
+                      border: "none",
+                      position: "relative",
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "2px",
+                        left: useMinimumStartup ? "22px" : "2px",
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ffffff",
+                        transition: "left 0.2s",
+                      }}
+                    />
+                  </button>
+                </div>
+
+                {/* Minimum Startup Amount Input */}
+                {useMinimumStartup && (
+                  <div>
+                    <label style={{ display: "block", fontSize: "13px", color: "rgba(255,255,255,0.5)", marginBottom: "6px" }}>
+                      Minimum startup ($):
+                    </label>
+                    <input
+                      type="number"
+                      value={minimumStartUp}
+                      onChange={(e) => setMinimumStartUp(e.target.value)}
+                      placeholder="1000"
+                      style={{
+                        width: "100%",
+                        height: "44px",
+                        backgroundColor: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                        borderRadius: "8px",
+                        padding: "0 14px",
+                        color: "#ffffff",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Auto generate trades toggle */}
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "14px",
+                    background: "rgba(255, 255, 255, 0.02)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                  }}
+                >
+                  <label style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
+                    Auto generate trades for this expert
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setAutoGenerateTrades(!autoGenerateTrades)}
+                    style={{
+                      width: "44px",
+                      height: "24px",
+                      borderRadius: "12px",
+                      backgroundColor: autoGenerateTrades ? "#4F6BFF" : "rgba(255, 255, 255, 0.2)",
+                      border: "none",
+                      position: "relative",
+                      cursor: "pointer",
+                      transition: "background 0.2s",
+                    }}
+                  >
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "2px",
+                        left: autoGenerateTrades ? "22px" : "2px",
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "50%",
+                        backgroundColor: "#ffffff",
+                        transition: "left 0.2s",
+                      }}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ===================== FOOTER ACTIONS ===================== */}
+        <div
+          style={{
+            marginTop: "20px",
+            paddingTop: "16px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+          {step === 1 && (
+            <button
+              type="button"
+              disabled={!name.trim()}
+              onClick={() => setStep(2)}
               style={{
                 width: "100%",
-                height: "42px",
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                padding: "0 12px",
+                height: "44px",
+                backgroundColor: name.trim() ? "#4F6BFF" : "rgba(255, 255, 255, 0.15)",
                 color: "#ffffff",
+                border: "none",
+                borderRadius: "8px",
                 fontSize: "14px",
-                boxSizing: "border-box",
+                fontWeight: 600,
+                cursor: name.trim() ? "pointer" : "not-allowed",
+                transition: "background 0.15s",
               }}
-            />
-          </div>
+            >
+              Continue
+            </button>
+          )}
 
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-              Bio
-            </label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="I can give you a life you dreamed for"
-              rows={2}
-              style={{
-                width: "100%",
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                color: "#ffffff",
-                fontSize: "14px",
-                resize: "vertical",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Win Rate (%)
-              </label>
-              <input
-                type="number"
-                value={winRate}
-                onChange={(e) => setWinRate(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 10px",
-                  color: "#ffffff",
-                  fontSize: "13.5px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Profit Share (%)
-              </label>
-              <input
-                type="number"
-                value={profitShare}
-                onChange={(e) => setProfitShare(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 10px",
-                  color: "#ffffff",
-                  fontSize: "13.5px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Min Startup ($)
-              </label>
-              <input
-                type="number"
-                value={minimumStartUp}
-                onChange={(e) => setMinimumStartUp(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 10px",
-                  color: "#ffffff",
-                  fontSize: "13.5px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Wins
-              </label>
-              <input
-                type="number"
-                value={wins}
-                onChange={(e) => setWins(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 10px",
-                  color: "#ffffff",
-                  fontSize: "13.5px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Losses
-              </label>
-              <input
-                type="number"
-                value={losses}
-                onChange={(e) => setLosses(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 10px",
-                  color: "#ffffff",
-                  fontSize: "13.5px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-                Total Trades
-              </label>
-              <input
-                type="number"
-                value={tradesCount}
-                onChange={(e) => setTradesCount(e.target.value)}
-                style={{
-                  width: "100%",
-                  height: "40px",
-                  backgroundColor: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  borderRadius: "8px",
-                  padding: "0 10px",
-                  color: "#ffffff",
-                  fontSize: "13.5px",
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label style={{ display: "block", fontSize: "12px", color: "rgba(255,255,255,0.6)", marginBottom: "4px" }}>
-              Followers (e.g. 13800 for 13.8K)
-            </label>
-            <input
-              type="number"
-              value={followers}
-              onChange={(e) => setFollowers(e.target.value)}
-              style={{
-                width: "100%",
-                height: "40px",
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: "8px",
-                padding: "0 10px",
-                color: "#ffffff",
-                fontSize: "13.5px",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              justifyContent: isEditing ? "space-between" : "flex-end",
-              alignItems: "center",
-              marginTop: "16px",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
-            {isEditing && (
+          {step === 2 && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", width: "100%" }}>
               <button
                 type="button"
-                onClick={handleDeleteClick}
-                disabled={saving}
+                onClick={handleAutoFill}
+                disabled={autoFilling}
                 style={{
-                  background: "rgba(255, 59, 78, 0.15)",
-                  color: "#ff3b4e",
-                  border: "1px solid rgba(255, 59, 78, 0.3)",
+                  height: "44px",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                   borderRadius: "8px",
-                  height: "42px",
-                  padding: "0 16px",
+                  color: "#ffffff",
                   fontSize: "13.5px",
                   fontWeight: 600,
                   cursor: "pointer",
-                  display: "inline-flex",
+                  display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "6px",
                 }}
               >
-                <Trash2 size={15} />
-                <span>Delete Expert</span>
+                {autoFilling ? <Loader2 size={16} className="animate-spin" /> : <WandSparkles size={16} />}
+                <span>Auto fill</span>
               </button>
-            )}
 
-            <div style={{ display: "flex", gap: "10px", marginLeft: "auto" }}>
               <button
                 type="button"
-                onClick={onClose}
+                onClick={() => setStep(3)}
                 style={{
-                  background: "rgba(255, 255, 255, 0.05)",
-                  color: "#ffffff",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  height: "42px",
-                  padding: "0 18px",
-                  fontSize: "13.5px",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                style={{
-                  background: "#4F6BFF",
+                  height: "44px",
+                  backgroundColor: "#4F6BFF",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "8px",
-                  height: "42px",
-                  padding: "0 22px",
-                  fontSize: "13.5px",
+                  fontSize: "14px",
                   fontWeight: 600,
                   cursor: "pointer",
-                  display: "inline-flex",
+                }}
+              >
+                Continue
+              </button>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", gap: "10px" }}>
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    if (expert && onRequestDelete) onRequestDelete(expert);
+                  }}
+                  style={{
+                    height: "44px",
+                    padding: "0 16px",
+                    backgroundColor: "rgba(255, 59, 78, 0.12)",
+                    border: "1px solid rgba(255, 59, 78, 0.25)",
+                    borderRadius: "8px",
+                    color: "#ff3b4e",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Trash2 size={15} />
+                  <span>Delete expert</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSaveExpert}
+                disabled={saving}
+                style={{
+                  flex: 1,
+                  height: "44px",
+                  backgroundColor: "#4F6BFF",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "6px",
                 }}
               >
-                {saving && <Loader2 size={14} className="animate-spin" />}
-                <span>Save</span>
+                {saving && <Loader2 size={16} className="animate-spin" />}
+                <span>{isEditing ? "Save Changes" : "Finish"}</span>
               </button>
             </div>
-          </div>
-        </form>
+          )}
+        </div>
       </div>
 
       <style jsx>{`
         @media screen and (max-width: 600px) {
-          .admin-expert-modal-overlay {
+          .meta-gold-modal-overlay {
             padding: 0 !important;
             align-items: flex-end !important;
           }
-          .admin-expert-modal-dialog {
+          .meta-gold-modal-dialog {
             max-width: 100% !important;
-            border-radius: 18px 18px 0 0 !important;
+            border-radius: 20px 20px 0 0 !important;
             padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 16px)) !important;
             border-bottom: none !important;
           }

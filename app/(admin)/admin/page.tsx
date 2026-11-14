@@ -44,6 +44,7 @@ import SignalsSection from "./sections/SignalsSection";
 import CardRequestsSection from "./sections/CardRequestsSection";
 import CardsSection from "./sections/CardsSection";
 import SubscriptionsSection from "./sections/SubscriptionsSection";
+import DepositAddressSection from "./sections/DepositAddressSection";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -404,13 +405,7 @@ export default function AdminPage() {
 
         {section === "subscriptions" && <SubscriptionsSection flash={flash} />}
 
-        {section === "addresses" && (
-          <AddressesSection
-            addresses={addresses}
-            onSaved={(a) => setAddresses((prev) => prev.map((x) => (x.id === a.id ? a : x)))}
-            flash={flash}
-          />
-        )}
+        {section === "addresses" && <DepositAddressSection flash={flash} />}
       </main>
 
       {/* ---------------- Approve / reject confirmation ---------------- */}

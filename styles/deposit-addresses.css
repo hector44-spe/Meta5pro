@@ -1,0 +1,396 @@
+/* =====================================================================
+   Deposit Addresses Management & Modal (Matches Image 1, 2, 3)
+   ===================================================================== */
+
+.dep_container {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 680px;
+  width: 100%;
+}
+
+.dep_section_title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.dep_section_subtitle {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+}
+
+.dep_subheading {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 10px;
+  margin-bottom: 2px;
+}
+
+.dep_list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Individual Address Row */
+.dep_row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: #15181f;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s ease;
+}
+
+.dep_row:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background-color: #191c24;
+}
+
+.dep_coin_icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.dep_coin_icon img,
+.dep_coin_icon svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dep_addr_code {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dep_badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.dep_edit_btn {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.dep_edit_btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #4f5bf5;
+}
+
+/* Primary "Add new wallet address" Blue Button */
+.dep_add_btn {
+  width: 100%;
+  background: #4f5bf5;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 20px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dep_add_btn:hover {
+  background: #5f6af7;
+  transform: translateY(-1px);
+}
+
+.dep_add_btn:active {
+  transform: translateY(0);
+}
+
+/* Toggle Switch Row */
+.dep_toggle_card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background-color: #15181f;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  margin-top: 6px;
+}
+
+.dep_toggle_label {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+/* Modal styles (Image 3) */
+.dep_modal_backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.dep_modal {
+  width: 440px;
+  max-width: 100%;
+  background: #171a21;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: depModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes depModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.dep_modal_head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 14px;
+}
+
+.dep_modal_head h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.dep_modal_close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.45);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.dep_modal_close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dep_modal_body {
+  padding: 6px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dep_field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.dep_field_label {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.dep_select_wrap,
+.dep_input {
+  width: 100%;
+  background: #111318;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.dep_input {
+  padding: 12px 14px;
+}
+
+.dep_input:focus,
+.dep_select_wrap:focus-within {
+  border-color: #4f5bf5;
+  background: #14171e;
+}
+
+.dep_select {
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.dep_select option {
+  background: #171a21;
+  color: #ffffff;
+}
+
+/* QR Code Box */
+.dep_qr_box {
+  width: 100%;
+  min-height: 120px;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.dep_qr_box:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.dep_qr_text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.45);
+  max-width: 280px;
+  margin: 0;
+  user-select: none;
+}
+
+.dep_qr_preview {
+  width: 110px;
+  height: 110px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.dep_qr_remove {
+  margin-top: 8px;
+  background: rgba(255, 77, 94, 0.15);
+  border: 1px solid rgba(255, 77, 94, 0.3);
+  color: #ff7a87;
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.dep_qr_remove:hover {
+  background: rgba(255, 77, 94, 0.25);
+}
+
+/* Modal Save Button */
+.dep_modal_save {
+  width: 100%;
+  height: 48px;
+  background: #686c76;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dep_modal_save.active,
+.dep_modal_save:hover:not(:disabled) {
+  background: #4f5bf5;
+}
+
+.dep_modal_save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.dep_delete_link {
+  background: transparent;
+  border: none;
+  color: #ff7a87;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: center;
+  margin-top: -6px;
+}
+
+.dep_delete_link:hover {
+  text-decoration: underline;
+}

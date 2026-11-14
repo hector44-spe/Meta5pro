@@ -46,13 +46,13 @@ const DEFAULT_EXPERTS: CopyExpert[] = [
     name: "Alex",
     username: "Alexfx",
     picture: "/assets/copy-trading/alex_avatar.png",
-    bio: "High probability swing trades with strict risk management.",
-    winRate: 88,
-    profitShare: 20,
-    wins: 2140,
-    losses: 312,
-    tradesCount: 2452,
-    minimumStartUp: 2500,
+    bio: "We all can make it",
+    winRate: 91,
+    profitShare: 12,
+    wins: 11350,
+    losses: 235,
+    tradesCount: 2428,
+    minimumStartUp: 1000,
     followers: 67500,
     tickType: "gold",
     subscriberList: [],
@@ -252,7 +252,7 @@ export async function POST(req: Request) {
       );
     }
 
-    let experts = await getStoredExperts();
+    const experts = await getStoredExperts();
     const idx = experts.findIndex(
       (e) => e.id === expertId || e.ref === expertId
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Check, TrendingUp, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { X, TrendingUp, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
 
 interface PlanItem {

@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import "@/styles/app-forms.css";
 import "@/styles/admin-settings.css";
+import DepositAddressSection from "@/app/(admin)/admin/sections/DepositAddressSection";
 
 type View =
   | "menu"
@@ -114,13 +115,12 @@ export default function AdminSettingsDrawer({ onClose, onLogout }: { onClose: ()
           {view === "general" && <GeneralSettings />}
 
           {view === "deposit" && (
-            <ReviewLink
-              text="Review and approve incoming deposits, and manage the wallet addresses investors pay into."
-              links={[
-                { label: "Open deposit reviews", href: "/admin?section=deposits" },
-                { label: "Manage deposit addresses", href: "/admin?section=addresses" },
-              ]}
-            />
+            <div style={{ padding: "4px 0" }}>
+              <DepositAddressSection
+                flash={(k, t) => console.log(k, t)}
+                isDrawerMode={true}
+              />
+            </div>
           )}
 
           {view === "withdrawal" && (

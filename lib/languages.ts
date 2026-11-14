@@ -195,9 +195,10 @@ export function changeLanguage(langCode: string): void {
   }
 
   // Also trigger window.doGTranslate if available
-  if ((window as any).doGTranslate) {
+  const win = window as unknown as { doGTranslate?: (lang: string) => void };
+  if (win.doGTranslate) {
     try {
-      (window as any).doGTranslate(`en|${langCode}`);
+      win.doGTranslate(`en|${langCode}`);
       selectUpdated = true;
     } catch {
       // ignore
