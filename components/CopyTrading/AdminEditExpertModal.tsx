@@ -10,7 +10,7 @@ import {
   Trash2,
   Check,
 } from "lucide-react";
-import { CopyExpert } from "@/app/api/copy-trading/experts/route";
+import type { CopyExpert } from "@/types/copy-trading";
 
 interface AdminEditExpertModalProps {
   isOpen: boolean;

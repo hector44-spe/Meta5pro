@@ -15,7 +15,7 @@ import {
 import AdminEditExpertModal from "@/components/CopyTrading/AdminEditExpertModal";
 import CustomDeleteConfirmModal from "@/components/CopyTrading/CustomDeleteConfirmModal";
 import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/CustomNotificationBar";
-import { CopyExpert } from "@/app/api/copy-trading/experts/route";
+import type { CopyExpert } from "@/types/copy-trading";
 import "@/styles/copy-trading.css";
 
 function formatFollowers(count: number): string {
@@ -262,31 +262,20 @@ export default function CopyTradingPage() {
 
                 return (
                   <div key={expert.id || expert.ref} className="expert_card">
-                    {/* Admin Edit & Delete Actions (Matches Image 2 & 3) */}
+                    {/* Admin Edit Action - strictly matches original (top right 'Edit' link, delete is inside Step 3 of modal) */}
                     {isAdmin && (
-                      <div className="expert_admin_actions">
-                        <button
-                          className="edit_btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingExpert(expert);
-                            setIsEditModalOpen(true);
-                          }}
-                          title="Edit this expert"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          className="delete_btn"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingExpert(expert);
-                          }}
-                          title="Delete this expert"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        className="edit_btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingExpert(expert);
+                          setIsEditModalOpen(true);
+                        }}
+                        title="Edit this expert"
+                      >
+                        <p>Edit</p>
+                      </button>
                     )}
 
                     {/* Top Row: Avatar + Details */}

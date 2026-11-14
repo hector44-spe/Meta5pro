@@ -110,6 +110,66 @@
   color: rgba(255, 255, 255, 0.55);
   line-height: 1.25;
 }
+
+/* User Card at top of Drawer */
+.as-user-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #25282e;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+.as-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: rgba(71, 99, 240, 0.2);
+  color: #7a94ff;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.as-user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.as-user-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.as-user-email {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Group Headers: Profile, Setup, Admin */
+.as-category-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 14px;
+  margin-bottom: 6px;
+  padding-left: 4px;
+}
+
 .as-panel .as-logout {
   margin-top: 16px !important;
   min-height: 48px;

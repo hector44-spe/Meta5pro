@@ -1,26 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import type { CopyExpert } from "@/types/copy-trading";
 
 export const dynamic = "force-dynamic";
 
-export interface CopyExpert {
-  id: string;
-  ref: string;
-  name: string;
-  username: string;
-  picture: string;
-  bio: string;
-  winRate: number;
-  profitShare: number;
-  wins: number;
-  losses: number;
-  tradesCount: number;
-  minimumStartUp: number;
-  followers: number;
-  tickType?: "gold" | "blue" | "none";
-  subscriberList: string[];
-}
+export type { CopyExpert };
 
 const DEFAULT_EXPERTS: CopyExpert[] = [
   {
