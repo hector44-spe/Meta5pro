@@ -2,6 +2,7 @@ import React from "react";
 import DashboardShell from "@/components/DashboardShell";
 import "@/styles/dashboard.css";
 import "@/styles/cold-storage-page.css";
+import "@/styles/real-estate-page.css";
 import "@/styles/transactions-page.css";
 
 export default function DashboardLayout({

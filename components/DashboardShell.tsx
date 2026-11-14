@@ -1,9 +1,9 @@
 "use client";
 import { logout } from "@/lib/logout";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   House,
   CirclePlus,
@@ -30,6 +30,7 @@ import {
   UserPlus,
   CandlestickChart,
   History,
+  Wrench,
   Copy,
   CheckCircle2,
   MessageSquare,
@@ -39,6 +40,8 @@ import {
   SquareUser,
   Send,
   Menu,
+  SquarePlus,
+  SquareMinus,
 } from "lucide-react";
 import "@/styles/dashboard.css";
 import DepositModal from "@/components/DepositModal";
@@ -49,6 +52,7 @@ import AdminSettingsDrawer from "@/components/AdminSettingsDrawer";
 import { usePrices } from "@/lib/usePrices";
 import StakeModal from "@/components/StakeModal";
 import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
+import CardsDrawer from "@/components/Cards/CardsDrawer";
 import {
   ALL_LANGUAGES,
   getCurrentLanguageCode,
@@ -66,6 +70,7 @@ export type ActiveModalType =
   | "verify"
   | "connectWallet"
   | "referrals"
+  | "cards"
   | null;
 
 interface DashboardContextType {
@@ -101,10 +106,13 @@ export function useDashboard() {
 // ===================== DASHBOARD SHELL COMPONENT =====================
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname: string = usePathname() ?? "";
+  const router = useRouter();
 
   // Navigation & Dropdown states
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [accountDropdownOpen, setAccountDropdownOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
   const [servicesOpen, setServicesOpen] = useState(true);
   const [earnOpen, setEarnOpen] = useState(true);
   const [tradeOpen, setTradeOpen] = useState(true);
@@ -146,7 +154,23 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   // Close mobile drawer on route changes
   useEffect(() => {
     setMobileSidebarOpen(false);
+    setProfileDropdownOpen(false);
   }, [pathname]);
+
+  // Click outside for user profile dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    if (profileDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [profileDropdownOpen]);
 
   const [realBalance, setRealBalance] = useState<number>(0);
   const [userRefCode, setUserRefCode] = useState<string>("vip-trader");
@@ -438,14 +462,18 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <Snowflake size={22} color={pathname.startsWith("/cold-storage") ? "#4763f0" : "currentColor"} />
               <span>Cold storage</span>
             </Link>
-            <Link
-              href="/cards"
+            <button
+              type="button"
               className="dashboard-mobile-grid-item"
-              onClick={() => setMobileSidebarOpen(false)}
+              onClick={() => {
+                setMobileSidebarOpen(false);
+                setActiveModal("cards");
+              }}
+              style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", font: "inherit" }}
             >
-              <CreditCard size={22} />
+              <CreditCard size={22} color={activeModal === "cards" ? "#4763f0" : "currentColor"} />
               <span>Cards</span>
-            </Link>
+            </button>
             <Link
               href="/subscribe"
               className={`dashboard-mobile-grid-item ${pathname.startsWith("/subscribe") ? "active" : ""}`}
@@ -498,10 +526,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             </Link>
             <Link
               href="/real-estate"
-              className="dashboard-mobile-grid-item"
+              className={`dashboard-mobile-grid-item ${pathname.startsWith("/real-estate") ? "active" : ""}`}
               onClick={() => setMobileSidebarOpen(false)}
             >
-              <Building size={22} />
+              <Building size={22} color={pathname.startsWith("/real-estate") ? "#4763f0" : "currentColor"} />
               <span>Real estate</span>
             </Link>
             <Link
@@ -537,6 +565,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             >
               <CandlestickChart size={22} />
               <span>Markets</span>
+            </Link>
+            <Link
+              href="/admin"
+              className={`dashboard-mobile-grid-item ${pathname.startsWith("/admin") ? "active" : ""}`}
+              onClick={() => setMobileSidebarOpen(false)}
+            >
+              <Wrench size={22} />
+              <span>Manage</span>
             </Link>
           </div>
         </div>
@@ -777,22 +813,29 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       />
                       <span>Cold storage</span>
                     </Link>
-                    <Link
-                      href="/cards"
+                    <button
+                      type="button"
+                      onClick={() => setActiveModal("cards")}
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: "10px",
                         padding: "7px 10px",
-                        color: "rgba(255, 255, 255, 0.65)",
+                        color: activeModal === "cards" ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
+                        backgroundColor: activeModal === "cards" ? "rgba(255, 255, 255, 0.05)" : "transparent",
                         fontSize: "12.5px",
-                        textDecoration: "none",
                         borderRadius: "6px",
+                        border: "none",
+                        width: "100%",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                        fontWeight: activeModal === "cards" ? 600 : 500,
                       }}
                     >
-                      <CreditCard size={15} strokeWidth={1.5} />
+                      <CreditCard size={15} strokeWidth={1.5} color={activeModal === "cards" ? "#4763f0" : "currentColor"} />
                       <span>Cards</span>
-                    </Link>
+                    </button>
                     <Link
                       href="/subscribe"
                       style={{
@@ -944,13 +987,15 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         alignItems: "center",
                         gap: "10px",
                         padding: "7px 10px",
-                        color: "rgba(255, 255, 255, 0.65)",
+                        color: pathname.startsWith("/real-estate") ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
+                        backgroundColor: pathname.startsWith("/real-estate") ? "rgba(255, 255, 255, 0.05)" : "transparent",
                         fontSize: "12.5px",
                         textDecoration: "none",
                         borderRadius: "6px",
+                        fontWeight: pathname.startsWith("/real-estate") ? 600 : 500,
                       }}
                     >
-                      <Building size={15} strokeWidth={1.5} />
+                      <Building size={15} strokeWidth={1.5} color={pathname.startsWith("/real-estate") ? "#4763f0" : "currentColor"} />
                       <span>Real estate</span>
                     </Link>
                     <Link
@@ -1052,6 +1097,37 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     >
                       <CandlestickChart size={15} strokeWidth={1.5} />
                       <span>Trade</span>
+                    </Link>
+                    <Link
+                      href="/admin"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "7px 10px",
+                        color: pathname.startsWith("/admin") ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
+                        backgroundColor: pathname.startsWith("/admin") ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                        fontSize: "12.5px",
+                        textDecoration: "none",
+                        borderRadius: "6px",
+                        fontWeight: pathname.startsWith("/admin") ? 600 : 400,
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!pathname.startsWith("/admin")) {
+                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                          e.currentTarget.style.color = "#ffffff";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!pathname.startsWith("/admin")) {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                          e.currentTarget.style.color = "rgba(255, 255, 255, 0.65)";
+                        }
+                      }}
+                    >
+                      <Wrench size={15} strokeWidth={1.5} />
+                      <span>Manage</span>
                     </Link>
                   </div>
                 )}
@@ -1197,6 +1273,60 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     fontWeight: 600,
                   }}
                 >
+                  {pathname.startsWith("/real-estate") && (
+                    <>
+                      <Building size={16} strokeWidth={2} />
+                      <span>Real Estate</span>
+                    </>
+                  )}
+                  {pathname === "/dashboard" && (
+                    <>
+                      <House size={16} strokeWidth={2} />
+                      <span>Dashboard</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/cold-storage") && (
+                    <>
+                      <Snowflake size={16} strokeWidth={2} />
+                      <span>Cold Storage</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/subscribe") && (
+                    <>
+                      <Layers size={16} strokeWidth={2} />
+                      <span>Subscribe</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/signals") && (
+                    <>
+                      <Radio size={16} strokeWidth={2} />
+                      <span>Signals</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/investing") && (
+                    <>
+                      <TrendingUp size={16} strokeWidth={2} />
+                      <span>Investing</span>
+                    </>
+                  )}
+                  {(pathname.startsWith("/assets") || pathname.startsWith("/wallet")) && (
+                    <>
+                      <WalletMinimal size={16} strokeWidth={2} />
+                      <span>Assets</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/deposit") && (
+                    <>
+                      <CirclePlus size={16} strokeWidth={2} />
+                      <span>Deposit</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/withdraw") && (
+                    <>
+                      <CircleMinus size={16} strokeWidth={2} />
+                      <span>Withdraw</span>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -1420,14 +1550,152 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   {unreadCount > 0 && <span className="tp-bell-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
                 </button>
 
-                {/* User Avatar */}
-                <div
-                  onClick={() => setActiveModal("settings")}
-                  className="tp-avatar-box"
-                  title="Settings & profile"
-                >
-                  {initials}
-                  <span className="tp-avatar-diamond" />
+                {/* User Avatar with Profile Dropdown (Matches Image 1) */}
+                <div style={{ position: "relative" }} ref={profileDropdownRef}>
+                  <div
+                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    className="tp-avatar-box"
+                    title="Account & profile"
+                    style={{ cursor: "pointer" }}
+                  >
+                    {initials}
+                    <span className="tp-avatar-diamond" />
+                  </div>
+
+                  {profileDropdownOpen && (
+                    <div className="user-account-dropdown">
+                      {/* Left Column: Account Profile & Stats */}
+                      <div className="uad-left">
+                        <div className="uad-user-header">
+                          <div className="uad-avatar">
+                            {initials}
+                            <span className="uad-avatar-diamond" />
+                          </div>
+                          <div className="uad-user-info">
+                            <p className="uad-username">{displayName || "user"}</p>
+                            <button
+                              type="button"
+                              className="uad-verify-link"
+                              onClick={() => {
+                                setProfileDropdownOpen(false);
+                                setActiveModal("verify");
+                              }}
+                            >
+                              <span>Verify your account</span>
+                              <ChevronRight size={12} strokeWidth={2} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Tier Box */}
+                        <div className="uad-tier-box">
+                          <span className="uad-tier-title">
+                            Starter <span style={{ fontSize: "9px" }}>◆</span>
+                          </span>
+                          <span className="uad-tier-pct">1%</span>
+                          <button
+                            type="button"
+                            className="uad-upgrade-btn"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              router.push("/subscribe");
+                            }}
+                          >
+                            UPGRADE
+                          </button>
+                        </div>
+
+                        {/* Account Summary Header */}
+                        <div className="uad-summary-title">Account Summary</div>
+
+                        {/* Stats List */}
+                        <div className="uad-summary-list">
+                          <div className="uad-summary-row">
+                            <span>Total Deposits</span>
+                            <span>$0.00</span>
+                          </div>
+                          <div className="uad-summary-row">
+                            <span>Total Withdrawals</span>
+                            <span>$0.00</span>
+                          </div>
+                          <div className="uad-summary-row">
+                            <span>Total Profits</span>
+                            <span>$0.00</span>
+                          </div>
+                          <div className="uad-summary-row">
+                            <span>Total trades</span>
+                            <span>0</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Column: Actions */}
+                      <div className="uad-right">
+                        <div className="uad-actions-list">
+                          <button
+                            type="button"
+                            className="uad-action-item"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              setActiveModal("deposit");
+                            }}
+                          >
+                            <SquarePlus size={16} strokeWidth={1.5} />
+                            <span>Add funds</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="uad-action-item"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              setActiveModal("withdraw");
+                            }}
+                          >
+                            <SquareMinus size={16} strokeWidth={1.5} />
+                            <span>Withdraw</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="uad-action-item"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              setActiveModal("settings");
+                            }}
+                          >
+                            <Settings size={16} strokeWidth={1.5} />
+                            <span>Settings</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className="uad-action-item"
+                            onClick={() => {
+                              setProfileDropdownOpen(false);
+                              fetchNotifications();
+                              setActiveModal("notifications");
+                            }}
+                          >
+                            <Bell size={16} strokeWidth={1.5} />
+                            <span>Notifications</span>
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="uad-action-item logout"
+                          onClick={() => {
+                            setProfileDropdownOpen(false);
+                            void logout();
+                          }}
+                        >
+                          <LogOut size={16} strokeWidth={1.5} />
+                          <span>Log out</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -2388,6 +2656,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         {/* Connect Wallet Drawer */}
         <ConnectWalletDrawer
           isOpen={activeModal === "connectWallet"}
+          onClose={() => setActiveModal(null)}
+        />
+
+        {/* Cards Drawer (Slide-over drawer matches Meta Gold design) */}
+        <CardsDrawer
+          isOpen={activeModal === "cards"}
           onClose={() => setActiveModal(null)}
         />
 

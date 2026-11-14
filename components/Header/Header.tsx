@@ -50,6 +50,17 @@ export default function Header() {
     setActiveMenu(null);
   }, [pathname]);
 
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const navCategories: NavCategory[] = [
     {
       title: "Explore",
@@ -258,14 +269,24 @@ export default function Header() {
   return (
     <header
       style={{
-        position: "absolute",
+        position: "fixed",
         top: 0,
         left: 0,
         right: 0,
         width: "100%",
         zIndex: 9999,
-        background: "transparent",
-        borderBottom: "none",
+        backgroundColor: scrolled
+          ? "rgba(5, 8, 11, 0.92)"
+          : "rgba(5, 8, 11, 0.72)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderBottom: scrolled
+          ? "1px solid rgba(255, 255, 255, 0.1)"
+          : "1px solid rgba(255, 255, 255, 0.05)",
+        boxShadow: scrolled
+          ? "0 10px 30px -10px rgba(0, 0, 0, 0.6)"
+          : "none",
+        transition: "background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
       }}
     >
       <div

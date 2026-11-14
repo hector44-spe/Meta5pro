@@ -1,0 +1,236 @@
+/* ==========================================================================
+   ADMIN EDIT MODALS (Exact Meta Gold Design for Subscriptions & Signals)
+   ========================================================================== */
+
+.admin_edit_link {
+  background: none;
+  border: none;
+  color: #4F6BFF;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  transition: opacity 0.15s ease;
+}
+
+.admin_edit_link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.admin_add_button {
+  background: #4F6BFF;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.admin_add_button:hover {
+  background: #3b57e6;
+}
+
+.admin_edit_modal_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: adminModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.admin_edit_modal_dialog {
+  background: #17181c;
+  border: 1px solid #2b2e36;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+  box-sizing: border-box;
+  animation: adminModalScaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes adminModalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes adminModalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.admin_edit_modal_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.admin_edit_modal_header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.admin_edit_modal_header .close_btn {
+  background: none;
+  border: none;
+  color: #848e9c;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.admin_edit_modal_header .close_btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.admin_form_group {
+  margin-bottom: 16px;
+}
+
+.admin_form_group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 8px;
+}
+
+.admin_two_col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.admin_input_row {
+  background: #202227;
+  border: 1px solid #2d313a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  height: 46px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.admin_input_row:focus-within {
+  border-color: #4F6BFF;
+}
+
+.admin_input_row input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+  padding: 0;
+}
+
+.admin_input_row .suffix {
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 700;
+  margin-left: 8px;
+  user-select: none;
+}
+
+.admin_profit_note {
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.admin_modal_actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.admin_modal_actions .btn_delete {
+  flex: 1;
+  height: 44px;
+  border-radius: 8px;
+  background: #ff3b4e;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.admin_modal_actions .btn_delete:hover:not(:disabled) {
+  background: #e03243;
+}
+
+.admin_modal_actions .btn_delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin_modal_actions .btn_save {
+  flex: 1;
+  height: 44px;
+  border-radius: 8px;
+  background: #4F6BFF;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.admin_modal_actions .btn_save:hover:not(:disabled) {
+  background: #3b57e6;
+}
+
+.admin_modal_actions .btn_save:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

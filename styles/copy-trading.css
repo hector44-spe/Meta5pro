@@ -1,0 +1,492 @@
+/* ==========================================================================
+   Meta Gold Copy Trading Styles - Pixel-Perfect Replica of User Images
+   ========================================================================== */
+
+.copy_trading_page {
+  padding: 0 0 60px 0;
+  width: 100%;
+  max-width: 1200px;
+  box-sizing: border-box;
+}
+
+.copy_trading_header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.copy_trading_title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 16px 0;
+}
+
+/* Switcher / Tabs: Exact match to Image 1 & Image 3 (Clean text tabs, no bottom border) */
+.copy_trading_switcher {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 24px;
+  border-bottom: none;
+  overflow-x: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.copy_trading_switcher::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.copy_trading_tab_btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+}
+
+.copy_trading_tab_btn:hover {
+  color: #ffffff;
+}
+
+.copy_trading_tab_btn.active {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.copy_trading_tab_btn.active::after {
+  display: none !important;
+}
+
+.copy_trading_tab_badge {
+  background: rgba(79, 107, 255, 0.18);
+  color: #4F6BFF;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+/* Section Title below tabs */
+.copy_section_title {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+}
+
+/* Actions Row: Search bar & Add Expert Button */
+.copy_trading_actions_row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  width: 100%;
+}
+
+.copy_trading_search_box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #121316;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0 14px;
+  height: 44px;
+  flex: 1;
+  box-sizing: border-box;
+}
+
+.copy_trading_search_box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 13.5px;
+  width: 100%;
+}
+
+.copy_trading_search_box input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.btn_add_expert {
+  background: #4F6BFF;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  height: 44px;
+  padding: 0 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.btn_add_expert:hover {
+  background: #3e59ea;
+}
+
+/* Grids */
+.copy_trading_grids {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   Exact Expert Card (Matching Images 2 & 3)
+   ========================================================================== */
+.expert_card {
+  padding: 20px;
+  border-radius: 12px;
+  background: #14151a !important;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.expert_card:hover {
+  border-color: rgba(79, 107, 255, 0.25);
+}
+
+/* Admin Edit & Delete text buttons at top right */
+.expert_admin_actions {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 5;
+}
+
+.expert_admin_actions .edit_btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 16px;
+  font-weight: 600;
+  color: #4F6BFF;
+  transition: opacity 0.15s;
+}
+
+.expert_admin_actions .edit_btn:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.expert_admin_actions .delete_btn {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 16px;
+  font-weight: 600;
+  color: #ff3b4e;
+  transition: opacity 0.15s;
+}
+
+.expert_admin_actions .delete_btn:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Profile wrapper */
+.expert_card .profile_wrapper {
+  display: grid;
+  grid-template-columns: 44px auto;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.expert_card .image_wrapper {
+  height: 44px;
+  width: 44px;
+  background: #181a20;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.expert_card .image_wrapper img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
+.expert_card .profile_content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.expert_card .name_row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expert_card .expert_name {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 18px;
+  margin: 0;
+}
+
+.expert_card .tick_icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.expert_card .expert_username {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  line-height: 16px;
+  margin: 2px 0 4px 0;
+}
+
+.expert_card .details_row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expert_card .details_row_left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.expert_card .details_row_left_item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.expert_card .details_row_left_item p:first-of-type {
+  font-size: 12.5px;
+  line-height: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+.expert_card .details_row_left_item p:last-of-type {
+  font-size: 12.5px;
+  line-height: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+/* Bio Text */
+.expert_card .expert_bio {
+  font-size: 13.5px;
+  line-height: 18px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 14px;
+  margin-bottom: 20px;
+  min-height: 36px;
+}
+
+/* Mid Section 3-Column Metrics (2 rows x 3 columns) */
+.expert_card .mid_section {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  row-gap: 16px;
+  column-gap: 12px;
+  margin-bottom: 22px;
+}
+
+.expert_card .mid_section_item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.expert_card .mid_section_item .label {
+  font-size: 12.5px;
+  line-height: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0;
+}
+
+.expert_card .mid_section_item .value {
+  font-size: 15px;
+  line-height: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+
+/* Vibrant colors matching Image 2 */
+.expert_card .mid_section_item.win_rate .value {
+  color: #00d68f !important;
+}
+
+.expert_card .mid_section_item.profit_share .value {
+  color: #38bdf8 !important;
+}
+
+.expert_card .startup,
+.expert_card .wins {
+  text-align: right;
+  align-items: flex-end;
+}
+
+/* Footer Buttons */
+.expert_card .footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  height: 42px;
+}
+
+.expert_card .btn_view {
+  width: 100%;
+  height: 42px;
+  border-radius: 8px;
+  border: none;
+  background-color: #1e2025;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.expert_card .btn_view p {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.expert_card .btn_view:hover {
+  background-color: #272a32;
+}
+
+.expert_card .btn_copy {
+  width: 100%;
+  height: 42px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #4F6BFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.expert_card .btn_copy p {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0;
+}
+
+.expert_card .btn_copy:hover {
+  background-color: #3e59ea;
+}
+
+.expert_card .btn_cancel {
+  width: 100%;
+  height: 42px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #ff3344;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.expert_card .btn_cancel p {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #ffffff;
+  margin: 0;
+}
+
+.expert_card .btn_cancel:hover {
+  background-color: #e02a3a;
+}
+
+/* How It Works Tab */
+.copy_how_it_works_wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 800px;
+}
+
+.copy_how_card {
+  padding: 20px;
+  border-radius: 12px;
+  background: #14151a;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.copy_how_card h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.copy_how_card p {
+  font-size: 13.5px;
+  line-height: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 768px) {
+  .copy_trading_grids {
+    grid-template-columns: 1fr;
+  }
+}

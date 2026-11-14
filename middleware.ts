@@ -16,6 +16,9 @@ const PROTECTED_USER_PATHS: string[] = [
   "/subscribe",
   "/cold-storage",
   "/investing",
+  "/real-estate",
+  "/cards",
+  "/copy-trading",
 ];
 
 const PROTECTED_ADMIN_PATHS = ["/admin"];
@@ -80,6 +83,9 @@ export const config = {
     "/subscribe/:path*",
     "/cold-storage/:path*",
     "/investing/:path*",
+    "/real-estate/:path*",
+    "/cards/:path*",
+    "/copy-trading/:path*",
     "/admin/:path*",
     "/login",
     "/register",

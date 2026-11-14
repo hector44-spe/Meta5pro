@@ -8,9 +8,12 @@ import {
   ChevronDown,
   CheckCircle2,
   Loader2,
+  X,
+  Plus,
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
 import "@/styles/signal-page.css";
+import "@/styles/admin-edit-modals.css";
 
 // ==========================================================================
 // Types & Signal Definitions
@@ -208,10 +211,14 @@ function getSignalColor(strength: number) {
 // ==========================================================================
 
 export default function SignalPage() {
-  const { currentBalance, hideBalance, setHideBalance, openModal } = useDashboard();
+  const { currentBalance, hideBalance, setHideBalance, openModal, refreshBalance } = useDashboard();
 
-  // Signal Balance (starts at $0.00 by default like the original)
-  const [signalBalance, setSignalBalance] = useState<number>(0);
+  // Signal Balance (synced with real client balance from wallet)
+  const [signalBalance, setSignalBalance] = useState<number>(currentBalance || 0);
+
+  useEffect(() => {
+    setSignalBalance(currentBalance);
+  }, [currentBalance]);
 
   // Active Signal Name and Strength
   const [activeSignal, setActiveSignal] = useState<string | null>(null);
@@ -219,6 +226,25 @@ export default function SignalPage() {
 
   // Signal History items list
   const [historyList, setHistoryList] = useState<SignalHistoryItem[]>([]);
+
+  // Fetch user signal history on mount
+  useEffect(() => {
+    fetch("/api/signals/purchase")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.history && Array.isArray(d.history)) {
+          setHistoryList(d.history);
+          if (d.history.length > 0) {
+            const active = d.history[0];
+            if (active) {
+              setActiveSignal(active.signal);
+              setActiveStrength(Number(active.strength) || 50);
+            }
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   // Tab Switching State
   const [activeTab, setActiveTab] = useState<"signals" | "history" | "how_it_works">("signals");
@@ -250,6 +276,109 @@ export default function SignalPage() {
       });
     }
   }, [activeTab]);
+
+  // Signals & Admin State
+  const [signals, setSignals] = useState<SignalItem[]>(ORIGINAL_SIGNALS);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editingSignal, setEditingSignal] = useState<SignalItem | null>(null);
+  const [isCreatingSignal, setIsCreatingSignal] = useState(false);
+  const [signalName, setSignalName] = useState("");
+  const [signalPrice, setSignalPrice] = useState("");
+  const [signalStrength, setSignalStrength] = useState("");
+  const [savingSignal, setSavingSignal] = useState(false);
+
+  const fetchSignals = useCallback(async () => {
+    try {
+      const res = await fetch("/api/signals");
+      const data = await res.json();
+      if (data.signals) setSignals(data.signals);
+      if (typeof data.isAdmin === "boolean") setIsAdmin(data.isAdmin);
+    } catch (e) {
+      console.error("Fetch signals error:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSignals();
+  }, [fetchSignals]);
+
+  const handleOpenEditModal = (s: SignalItem) => {
+    setIsCreatingSignal(false);
+    setEditingSignal(s);
+    setSignalName(s.name || s.title);
+    setSignalPrice(String(s.price));
+    setSignalStrength(String(s.strength));
+  };
+
+  const handleOpenAddModal = () => {
+    setIsCreatingSignal(true);
+    setEditingSignal(null);
+    setSignalName("");
+    setSignalPrice("2000");
+    setSignalStrength("20");
+  };
+
+  const handleSaveSignal = async () => {
+    if (!signalName || !signalPrice || !signalStrength) return;
+    setSavingSignal(true);
+    try {
+      const id = isCreatingSignal
+        ? `sig_${Date.now()}`
+        : (editingSignal?.id || `sig_${Date.now()}`);
+      const cleanName = signalName.trim();
+      const updated: SignalItem = {
+        id,
+        name: cleanName,
+        title: cleanName,
+        price: Number(signalPrice),
+        strength: Math.min(100, Math.max(1, Number(signalStrength))),
+        placeholder: Number(signalPrice),
+      };
+
+      const res = await fetch("/api/signals", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save", signal: updated }),
+      });
+      const data = await res.json();
+      if (data.success && data.signals) {
+        setSignals(data.signals);
+        setEditingSignal(null);
+        setIsCreatingSignal(false);
+        setToastMessage("Signal saved successfully");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingSignal(false);
+    }
+  };
+
+  const handleDeleteSignal = async () => {
+    if (!editingSignal) return;
+    if (!confirm(`Are you sure you want to delete ${editingSignal.title}?`)) return;
+    setSavingSignal(true);
+    try {
+      const res = await fetch("/api/signals", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", signalId: editingSignal.id }),
+      });
+      const data = await res.json();
+      if (data.success && data.signals) {
+        setSignals(data.signals);
+        setEditingSignal(null);
+        setIsCreatingSignal(false);
+        setToastMessage("Signal deleted");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingSignal(false);
+    }
+  };
 
   // Form Inputs & Error State per Card
   const [inputs, setInputs] = useState<Record<string, string>>({});
@@ -308,38 +437,40 @@ export default function SignalPage() {
 
     setPurchasingSignalId(signal.id);
 
-    setTimeout(() => {
-      // Deduct from signal balance
-      setSignalBalance((prev) => Math.max(0, prev - num));
+    try {
+      const res = await fetch("/api/signals/purchase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          signalId: signal.id,
+          amount: num,
+          signalTitle: signal.title,
+          strength: signal.strength,
+        }),
+      });
 
-      // Update active signal and strength
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Signal purchase failed");
+      }
+
+      refreshBalance();
       setActiveSignal(signal.name);
       setActiveStrength(signal.strength);
 
-      // Add to history
-      const randomSuffix = Math.floor(100000 + Math.random() * 900000);
-      const newRef = `sig${randomSuffix}`;
-      const newHistoryItem: SignalHistoryItem = {
-        ref: newRef,
-        signal: signal.name,
-        price: num,
-        strength: signal.strength,
-        status: "active",
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-      };
-
-      setHistoryList((prev) => [newHistoryItem, ...prev]);
-      setPurchasingSignalId(null);
+      if (data.history) {
+        setHistoryList(data.history);
+      } else if (data.signal) {
+        setHistoryList((prev) => [data.signal, ...prev]);
+      }
       setInputs((prev) => ({ ...prev, [signal.id]: "" }));
-
-      // Show toast
-      setToastMessage(`You purchased ${signal.name} successfully`);
-      setTimeout(() => setToastMessage(null), 4000);
-    }, 1000);
+      setToastMessage(data.message || `You purchased ${signal.name} successfully`);
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch (err: any) {
+      setErrors((prev) => ({ ...prev, [signal.id]: err.message || "Failed to purchase signal" }));
+    } finally {
+      setPurchasingSignalId(null);
+    }
   };
 
   // Active signal colors for the top card (15 bars)
@@ -492,12 +623,29 @@ export default function SignalPage() {
           {/* ===================== TAB 1: SIGNALS ===================== */}
           {activeTab === "signals" && (
             <div className="signals_view">
-              <div className="signals_header">
+              <div
+                className="signals_header"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <p>Signals</p>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="admin_add_button"
+                    onClick={handleOpenAddModal}
+                  >
+                    <Plus size={16} />
+                    <span>Add signal</span>
+                  </button>
+                )}
               </div>
 
               <div className="signals-cards-grid">
-                {ORIGINAL_SIGNALS.map((signal) => {
+                {signals.map((signal) => {
                   const currentVal = inputs[signal.id] || "";
                   const errorMsg = errors[signal.id];
                   const isPurchasing = purchasingSignalId === signal.id;
@@ -512,9 +660,18 @@ export default function SignalPage() {
 
                   return (
                     <div key={signal.id} className="signal_card">
-                      {/* Card Top Title */}
+                      {/* Card Top Title & Admin Edit */}
                       <div className="signal_card_top">
                         <p className="signal_title">{signal.title}</p>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            className="admin_edit_link"
+                            onClick={() => handleOpenEditModal(signal)}
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
 
                       {/* Card Details */}
@@ -763,6 +920,97 @@ export default function SignalPage() {
           )}
         </div>
       </div>
+
+      {/* ===================== ADMIN EDIT SIGNAL MODAL (Matches Image 6) ===================== */}
+      {(editingSignal || isCreatingSignal) && (
+        <div
+          className="admin_edit_modal_overlay"
+          onClick={() => {
+            setEditingSignal(null);
+            setIsCreatingSignal(false);
+          }}
+        >
+          <div
+            className="admin_edit_modal_dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="admin_edit_modal_header">
+              <h3>{isCreatingSignal ? "Add signal" : "Edit signal"}</h3>
+              <button
+                type="button"
+                className="close_btn"
+                onClick={() => {
+                  setEditingSignal(null);
+                  setIsCreatingSignal(false);
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Signal name */}
+            <div className="admin_form_group">
+              <label>Signal name:</label>
+              <div className="admin_input_row">
+                <input
+                  type="text"
+                  value={signalName}
+                  onChange={(e) => setSignalName(e.target.value)}
+                  placeholder="Signal name"
+                />
+              </div>
+            </div>
+
+            {/* Signal price */}
+            <div className="admin_form_group">
+              <label>Signal price:</label>
+              <div className="admin_input_row">
+                <input
+                  type="number"
+                  value={signalPrice}
+                  onChange={(e) => setSignalPrice(e.target.value)}
+                />
+                <span className="suffix">USD</span>
+              </div>
+            </div>
+
+            {/* Signal strength */}
+            <div className="admin_form_group">
+              <label>Signal strength:</label>
+              <div className="admin_input_row">
+                <input
+                  type="number"
+                  value={signalStrength}
+                  onChange={(e) => setSignalStrength(e.target.value)}
+                />
+                <span className="suffix">%</span>
+              </div>
+            </div>
+
+            {/* Modal Actions (Matches Image 6) */}
+            <div className="admin_modal_actions">
+              {!isCreatingSignal && (
+                <button
+                  type="button"
+                  className="btn_delete"
+                  disabled={savingSignal}
+                  onClick={handleDeleteSignal}
+                >
+                  Delete signal
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn_save"
+                disabled={savingSignal}
+                onClick={handleSaveSignal}
+              >
+                {savingSignal ? <Loader2 size={16} className="animate-spin" /> : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

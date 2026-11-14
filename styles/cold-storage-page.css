@@ -1219,3 +1219,15 @@
     padding-left: 0;
   }
 }
+
+.cold-storage-switcher::-webkit-scrollbar,
+.cold-storage-table-wrapper::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.cold-storage-switcher,
+.cold-storage-table-wrapper {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}

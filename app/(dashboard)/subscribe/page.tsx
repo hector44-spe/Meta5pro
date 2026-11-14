@@ -8,9 +8,12 @@ import {
   ChevronDown,
   CheckCircle2,
   Loader2,
+  X,
+  Plus,
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
 import "@/styles/subscribe-page.css";
+import "@/styles/admin-edit-modals.css";
 
 // ==========================================================================
 // Types & Plan Definitions
@@ -174,16 +177,36 @@ function EmptyStateIcon() {
 // ==========================================================================
 
 export default function SubscribePage() {
-  const { currentBalance, hideBalance, setHideBalance, openModal } = useDashboard();
+  const { currentBalance, hideBalance, setHideBalance, openModal, refreshBalance } = useDashboard();
 
-  // Subscription Balance (initialized to $0.00 by default like the original, or user's balance)
-  const [subscriptionBalance, setSubscriptionBalance] = useState<number>(0);
+  // Subscription Balance (synced with real client balance from wallet)
+  const [subscriptionBalance, setSubscriptionBalance] = useState<number>(currentBalance || 0);
+
+  useEffect(() => {
+    setSubscriptionBalance(currentBalance);
+  }, [currentBalance]);
 
   // Active Subscription Plan Name (starts as "-" if none, or plan name)
   const [activePlan, setActivePlan] = useState<string | null>(null);
 
   // Subscription History items list
   const [historyList, setHistoryList] = useState<SubscriptionHistoryItem[]>([]);
+
+  // Fetch user active subscriptions history from backend
+  useEffect(() => {
+    fetch("/api/subscriptions/subscribe")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.history && Array.isArray(d.history)) {
+          setHistoryList(d.history);
+          if (d.history.length > 0) {
+            const active = d.history.find((h: any) => h.status === "open");
+            if (active) setActivePlan(`${active.plan} plan`);
+          }
+        }
+      })
+      .catch(console.error);
+  }, []);
 
   // Tab Switching State
   const [activeTab, setActiveTab] = useState<"plans" | "history" | "how_it_works">("plans");
@@ -215,6 +238,118 @@ export default function SubscribePage() {
       });
     }
   }, [activeTab]);
+
+  // Plans & Admin State
+  const [plans, setPlans] = useState<SubscriptionPlan[]>(ORIGINAL_PLANS);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+  const [isCreatingPlan, setIsCreatingPlan] = useState(false);
+  const [planName, setPlanName] = useState("");
+  const [planMin, setPlanMin] = useState("");
+  const [planMax, setPlanMax] = useState("");
+  const [planDuration, setPlanDuration] = useState("");
+  const [planRoi, setPlanRoi] = useState("");
+  const [savingPlan, setSavingPlan] = useState(false);
+
+  const fetchPlans = useCallback(async () => {
+    try {
+      const res = await fetch("/api/subscriptions/plans");
+      const data = await res.json();
+      if (data.plans) setPlans(data.plans);
+      if (typeof data.isAdmin === "boolean") setIsAdmin(data.isAdmin);
+    } catch (e) {
+      console.error("Fetch plans error:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPlans();
+  }, [fetchPlans]);
+
+  const handleOpenEditModal = (p: SubscriptionPlan) => {
+    setIsCreatingPlan(false);
+    setEditingPlan(p);
+    setPlanName(p.name || p.title.replace(/ plan$/i, ""));
+    setPlanMin(String(p.minimum));
+    setPlanMax(String(p.maximum));
+    setPlanDuration(String(p.duration));
+    setPlanRoi(String(p.roi));
+  };
+
+  const handleOpenAddModal = () => {
+    setIsCreatingPlan(true);
+    setEditingPlan(null);
+    setPlanName("");
+    setPlanMin("10000");
+    setPlanMax("50000");
+    setPlanDuration("3");
+    setPlanRoi("150");
+  };
+
+  const handleSavePlan = async () => {
+    if (!planName || !planMin || !planMax || !planDuration || !planRoi) return;
+    setSavingPlan(true);
+    try {
+      const id = isCreatingPlan
+        ? `plan_${Date.now()}`
+        : (editingPlan?.id || `plan_${Date.now()}`);
+      const cleanName = planName.trim();
+      const title = cleanName.toLowerCase().endsWith("plan") ? cleanName : `${cleanName} plan`;
+      const updated: SubscriptionPlan = {
+        id,
+        name: cleanName,
+        title,
+        minimum: Number(planMin),
+        maximum: Number(planMax),
+        duration: Number(planDuration),
+        roi: Number(planRoi),
+        placeholder: Number(planMin),
+      };
+
+      const res = await fetch("/api/subscriptions/plans", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save", plan: updated }),
+      });
+      const data = await res.json();
+      if (data.success && data.plans) {
+        setPlans(data.plans);
+        setEditingPlan(null);
+        setIsCreatingPlan(false);
+        setToastMessage("Subscription plan saved successfully");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const handleDeletePlan = async () => {
+    if (!editingPlan) return;
+    if (!confirm(`Are you sure you want to delete ${editingPlan.title}?`)) return;
+    setSavingPlan(true);
+    try {
+      const res = await fetch("/api/subscriptions/plans", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delete", planId: editingPlan.id }),
+      });
+      const data = await res.json();
+      if (data.success && data.plans) {
+        setPlans(data.plans);
+        setEditingPlan(null);
+        setIsCreatingPlan(false);
+        setToastMessage("Subscription plan deleted");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setSavingPlan(false);
+    }
+  };
 
   // Form Inputs & Error State per Card
   const [inputs, setInputs] = useState<Record<string, string>>({});
@@ -276,39 +411,39 @@ export default function SubscribePage() {
 
     setSubmittingPlanId(plan.id);
 
-    setTimeout(() => {
-      // Deduct from subscription balance
-      setSubscriptionBalance((prev) => Math.max(0, prev - num));
-
-      // Set active subscription
-      setActivePlan(`${plan.name} plan`);
-
-      // Add to history
-      const randomSuffix = Math.floor(100000 + Math.random() * 900000);
-      const newRef = `sub${randomSuffix}`;
-      const newHistoryItem: SubscriptionHistoryItem = {
-        ref: newRef,
-        plan: plan.name,
-        duration: plan.duration,
-        daysLeft: plan.duration,
-        amount: num,
-        roi: plan.roi,
-        status: "open",
-        date: new Date().toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
+    try {
+      const res = await fetch("/api/subscriptions/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId: plan.id,
+          amount: num,
+          planName: plan.name || plan.title,
+          duration: plan.duration,
+          roi: plan.roi,
         }),
-      };
+      });
 
-      setHistoryList((prev) => [newHistoryItem, ...prev]);
-      setSubmittingPlanId(null);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Subscription failed");
+      }
+
+      refreshBalance();
+      setActivePlan(`${plan.name} plan`);
+      if (data.history) {
+        setHistoryList(data.history);
+      } else if (data.subscription) {
+        setHistoryList((prev) => [data.subscription, ...prev]);
+      }
       setInputs((prev) => ({ ...prev, [plan.id]: "" }));
-
-      // Show toast
-      setToastMessage(`You subscribed to ${plan.name} plan successfully`);
-      setTimeout(() => setToastMessage(null), 4000);
-    }, 1000);
+      setToastMessage(data.message || `You subscribed to ${plan.name} plan successfully`);
+      setTimeout(() => setToastMessage(null), 3500);
+    } catch (err: any) {
+      setErrors((prev) => ({ ...prev, [plan.id]: err.message || "Failed to subscribe" }));
+    } finally {
+      setSubmittingPlanId(null);
+    }
   };
 
   return (
@@ -418,12 +553,29 @@ export default function SubscribePage() {
           {/* ===================== TAB 1: PLANS ===================== */}
           {activeTab === "plans" && (
             <div className="subscription_plans_view">
-              <div className="subscription_plans_header">
+              <div
+                className="subscription_plans_header"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <p>Plans</p>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="admin_add_button"
+                    onClick={handleOpenAddModal}
+                  >
+                    <Plus size={16} />
+                    <span>Add plan</span>
+                  </button>
+                )}
               </div>
 
               <div className="subscription-cards-grid">
-                {ORIGINAL_PLANS.map((plan) => {
+                {plans.map((plan) => {
                   const currentVal = inputs[plan.id] || "";
                   const errorMsg = errors[plan.id];
                   const isSubmitting = submittingPlanId === plan.id;
@@ -435,9 +587,18 @@ export default function SubscribePage() {
 
                   return (
                     <div key={plan.id} className="subscribe_card">
-                      {/* Card Top Title */}
+                      {/* Card Top Title & Admin Edit */}
                       <div className="subscribe_card_top">
                         <p className="subscribe_title">{plan.title}</p>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            className="admin_edit_link"
+                            onClick={() => handleOpenEditModal(plan)}
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
 
                       {/* Card Details */}
@@ -668,6 +829,129 @@ export default function SubscribePage() {
           )}
         </div>
       </div>
+
+      {/* ===================== ADMIN EDIT SUBSCRIPTION PLAN MODAL (Matches Image 4) ===================== */}
+      {(editingPlan || isCreatingPlan) && (
+        <div
+          className="admin_edit_modal_overlay"
+          onClick={() => {
+            setEditingPlan(null);
+            setIsCreatingPlan(false);
+          }}
+        >
+          <div
+            className="admin_edit_modal_dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="admin_edit_modal_header">
+              <h3>{isCreatingPlan ? "Add subscription plan" : "Edit subscription plan"}</h3>
+              <button
+                type="button"
+                className="close_btn"
+                onClick={() => {
+                  setEditingPlan(null);
+                  setIsCreatingPlan(false);
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Plan Name */}
+            <div className="admin_form_group">
+              <label>Plan Name:</label>
+              <div className="admin_input_row">
+                <input
+                  type="text"
+                  value={planName}
+                  onChange={(e) => setPlanName(e.target.value)}
+                  placeholder="Plan Name"
+                />
+              </div>
+            </div>
+
+            {/* Minimum & Maximum in 2 columns */}
+            <div className="admin_two_col">
+              <div className="admin_form_group">
+                <label>Minimum:</label>
+                <div className="admin_input_row">
+                  <input
+                    type="number"
+                    value={planMin}
+                    onChange={(e) => setPlanMin(e.target.value)}
+                  />
+                  <span className="suffix">USD</span>
+                </div>
+              </div>
+
+              <div className="admin_form_group">
+                <label>Maximum:</label>
+                <div className="admin_input_row">
+                  <input
+                    type="number"
+                    value={planMax}
+                    onChange={(e) => setPlanMax(e.target.value)}
+                  />
+                  <span className="suffix">USD</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div className="admin_form_group">
+              <label>Duration:</label>
+              <div className="admin_input_row">
+                <input
+                  type="number"
+                  value={planDuration}
+                  onChange={(e) => setPlanDuration(e.target.value)}
+                />
+                <span className="suffix">days</span>
+              </div>
+            </div>
+
+            {/* ROI */}
+            <div className="admin_form_group">
+              <label>ROI:</label>
+              <div className="admin_input_row">
+                <input
+                  type="number"
+                  value={planRoi}
+                  onChange={(e) => setPlanRoi(e.target.value)}
+                />
+                <span className="suffix">%</span>
+              </div>
+            </div>
+
+            {/* Calculated Profit Note (Matches Image 4) */}
+            <div className="admin_profit_note">
+              A user will earn ${((Number(planRoi || 0) / 100) * Number(planMin || 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })} if they subscribe ${Number(planMin || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}. To calculate the profits, use ROI divided by 100 times the amount
+            </div>
+
+            {/* Modal Actions */}
+            <div className="admin_modal_actions">
+              {!isCreatingPlan && (
+                <button
+                  type="button"
+                  className="btn_delete"
+                  disabled={savingPlan}
+                  onClick={handleDeletePlan}
+                >
+                  Delete plan
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn_save"
+                disabled={savingPlan}
+                onClick={handleSavePlan}
+              >
+                {savingPlan ? <Loader2 size={16} className="animate-spin" /> : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

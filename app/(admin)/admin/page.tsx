@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import {
   LayoutDashboard,
   ArrowDownToLine,
@@ -27,8 +28,22 @@ import {
   ExternalLink,
   Loader2,
   RotateCcw,
+  Wrench,
+  TrendingUp,
+  Radio,
+  CreditCard,
+  Layers,
+  Sparkles,
+  ArrowLeft,
 } from "lucide-react";
 import styles from "./page.module.css";
+import AdminSettingsDrawer from "@/components/AdminSettingsDrawer";
+import ExpertsSection from "./sections/ExpertsSection";
+import TradesSection from "./sections/TradesSection";
+import SignalsSection from "./sections/SignalsSection";
+import CardRequestsSection from "./sections/CardRequestsSection";
+import CardsSection from "./sections/CardsSection";
+import SubscriptionsSection from "./sections/SubscriptionsSection";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -75,7 +90,19 @@ interface AdminUser {
   totalWithdrawn: number;
 }
 
-type Section = "overview" | "deposits" | "withdrawals" | "transactions" | "users" | "addresses";
+type Section =
+  | "overview"
+  | "deposits"
+  | "withdrawals"
+  | "users"
+  | "experts"
+  | "trades"
+  | "signals"
+  | "card-requests"
+  | "cards"
+  | "subscriptions"
+  | "addresses"
+  | "transactions";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -124,11 +151,28 @@ export default function AdminPage() {
   // Deep links from the dashboard's admin Settings drawer, e.g. /admin?section=deposits
   useEffect(() => {
     const s = new URLSearchParams(window.location.search).get("section");
-    if (s && ["overview", "deposits", "withdrawals", "transactions", "users", "addresses"].includes(s)) {
+    if (
+      s &&
+      [
+        "overview",
+        "deposits",
+        "withdrawals",
+        "users",
+        "experts",
+        "trades",
+        "signals",
+        "card-requests",
+        "cards",
+        "subscriptions",
+        "addresses",
+        "transactions",
+      ].includes(s)
+    ) {
       setSection(s as Section);
     }
   }, []);
   const [navOpen, setNavOpen] = useState(false);
+  const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
 
   const [transactions, setTransactions] = useState<AdminTx[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -216,8 +260,13 @@ export default function AdminPage() {
     { id: "overview", label: "Overview", icon: <LayoutDashboard size={18} /> },
     { id: "deposits", label: "Deposits", icon: <ArrowDownToLine size={18} />, count: pendingDeposits.length },
     { id: "withdrawals", label: "Withdrawals", icon: <ArrowUpFromLine size={18} />, count: pendingWithdrawals.length },
-    { id: "transactions", label: "All transactions", icon: <ListOrdered size={18} /> },
     { id: "users", label: "Users", icon: <Users size={18} /> },
+    { id: "experts", label: "Experts", icon: <UserCheck size={18} /> },
+    { id: "trades", label: "Trades", icon: <TrendingUp size={18} /> },
+    { id: "signals", label: "Signals", icon: <Radio size={18} /> },
+    { id: "card-requests", label: "Card requests", icon: <CreditCard size={18} /> },
+    { id: "cards", label: "Cards", icon: <Layers size={18} /> },
+    { id: "subscriptions", label: "Subscription", icon: <Sparkles size={18} /> },
     { id: "addresses", label: "Deposit addresses", icon: <Wallet size={18} /> },
   ];
 
@@ -225,9 +274,15 @@ export default function AdminPage() {
     overview: ["Overview", "What needs your attention right now."],
     deposits: ["Deposits", "Check each payment on the blockchain or in the proof, then approve or reject it."],
     withdrawals: ["Withdrawals", "Funds are on hold until you approve (send the crypto) or reject (refund the balance)."],
-    transactions: ["All transactions", "Every deposit, withdrawal, subscription and trade, newest first."],
     users: ["Users", "Find an account, adjust its balance, or suspend access."],
+    experts: ["Experts", "Users who paid/subscribed to copy trading experts."],
+    trades: ["Trades", "Live and closed trades placed by platform users."],
+    signals: ["Signals", "Users who purchased trading signals and available signal packages."],
+    "card-requests": ["Card Requests", "Users who requested and paid issuance fees for crypto cards."],
+    cards: ["Cards", "Manage card types, issuance fees, and eligibility requirements."],
+    subscriptions: ["Subscription", "Users subscribed to investment plans and plan settings."],
     addresses: ["Deposit addresses", "The wallets investors pay into. Each one saves on its own."],
+    transactions: ["All transactions", "Every deposit, withdrawal, subscription and trade, newest first."],
   };
 
   return (
@@ -251,7 +306,10 @@ export default function AdminPage() {
               key={item.id}
               type="button"
               className={`${styles.navItem} ${section === item.id ? styles.navItemActive : ""}`}
-              onClick={() => go(item.id)}
+              onClick={() => {
+                setManageDrawerOpen(false);
+                go(item.id);
+              }}
               aria-current={section === item.id ? "page" : undefined}
             >
               {item.icon}
@@ -262,6 +320,10 @@ export default function AdminPage() {
         </nav>
 
         <div className={styles.sidebarFooter}>
+          <Link href="/dashboard" className={styles.backToPanelBtn}>
+            <ArrowLeft size={16} />
+            <span>Back to Panel</span>
+          </Link>
           <div className={styles.adminWho} title={adminEmail}>
             <div className={styles.adminAvatar}>{(adminEmail[0] || "A").toUpperCase()}</div>
             <span>{adminEmail || "Administrator"}</span>
@@ -284,6 +346,10 @@ export default function AdminPage() {
             <h1>{titles[section][0]}</h1>
             <p>{titles[section][1]}</p>
           </div>
+          <Link href="/dashboard" className={styles.topbarBackBtn} title="Return to Client Dashboard">
+            <ArrowLeft size={15} />
+            <span className={styles.hideSm}>Back to Panel</span>
+          </Link>
           <button type="button" className={styles.btnGhost} onClick={loadAll} disabled={loading}>
             <RefreshCw size={15} className={loading ? styles.spin : ""} />
             <span className={styles.hideSm}>Refresh</span>
@@ -325,6 +391,18 @@ export default function AdminPage() {
         {section === "transactions" && <AllTransactions transactions={transactions} onPreview={setPreviewProofUrl} />}
 
         {section === "users" && <UsersSection users={users} onChanged={loadAll} flash={flash} />}
+
+        {section === "experts" && <ExpertsSection flash={flash} />}
+
+        {section === "trades" && <TradesSection users={users} flash={flash} />}
+
+        {section === "signals" && <SignalsSection flash={flash} />}
+
+        {section === "card-requests" && <CardRequestsSection flash={flash} />}
+
+        {section === "cards" && <CardsSection flash={flash} />}
+
+        {section === "subscriptions" && <SubscriptionsSection flash={flash} />}
 
         {section === "addresses" && (
           <AddressesSection
@@ -434,6 +512,13 @@ export default function AdminPage() {
           {toast.kind === "ok" ? <CheckCircle2 size={17} /> : <AlertCircle size={17} />}
           {toast.text}
         </div>
+      )}
+
+      {manageDrawerOpen && (
+        <AdminSettingsDrawer
+          onClose={() => setManageDrawerOpen(false)}
+          onLogout={handleLogout}
+        />
       )}
     </div>
   );

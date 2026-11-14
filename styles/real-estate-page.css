@@ -1,0 +1,1355 @@
+/* ==============================================================================
+   REAL ESTATE DASHBOARD PAGE STYLES (METAGOLD CLONE)
+   ============================================================================== */
+
+.real-estate-page-wrapper {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.real-estate-toast-banner {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #01b28b;
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 99999;
+  animation: slideInToast 0.3s ease-out forwards;
+}
+
+@keyframes slideInToast {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.real-estate-content-card {
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  border: none !important;
+  min-height: auto;
+}
+
+@media screen and (max-width: 768px) {
+  .real-estate-content-card {
+    padding: 16px 12px 140px;
+  }
+}
+
+/* -------------------- Top Portfolio Balance Card -------------------- */
+.real_estate_top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.real-estate-balance-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.real_estate_top .balance_label_wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.real_estate_top .balance_label {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.real_estate_top .eyes_button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.real_estate_top .eyes_button:hover {
+  color: #ffffff;
+}
+
+.real_estate_top .user_balance {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 40px;
+  margin-top: 4px;
+  letter-spacing: -0.02em;
+}
+
+.real_estate_top .user_balance.hidden {
+  letter-spacing: 2px;
+  font-size: 26px;
+}
+
+.real-estate-withdraw-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.real-estate-withdraw-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  transform: translateY(-1px);
+}
+
+/* -------------------- Bottom Section: Tabs & View -------------------- */
+.real_estate_bottom {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Switcher Navigation */
+.real-estate-switcher {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  padding: 0;
+  border: none;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 20px;
+  margin-bottom: 24px;
+}
+
+.real-estate-switcher::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.real-estate-switcher .switcher_wrapper_inner {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 4px;
+}
+
+.real-estate-switcher .switcher_item {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 24px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+  z-index: 2;
+}
+
+.real-estate-switcher .switcher_item:hover {
+  color: #ffffff;
+}
+
+.real-estate-switcher .switcher_item.active {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.real-estate-switcher .switcher_indicator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1;
+}
+
+/* -------------------- Projects Grid -------------------- */
+.projects_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.projects_header p {
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.realestate_grids {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+
+@media screen and (min-width: 1024px) {
+  .realestate_grids {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.realestate_card {
+  padding: 0px;
+  border-radius: 12px !important;
+  transition: all 180ms ease-in-out;
+  background: #111215 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.realestate_card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.realestate_card .project_image_wrapper {
+  position: relative;
+  width: 100%;
+  height: 200px !important;
+  overflow: hidden;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+}
+
+.realestate_card .project_image {
+  width: 100%;
+  height: 200px !important;
+  max-height: 200px !important;
+  object-fit: cover;
+  display: block !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  transition: transform 0.4s ease;
+}
+
+.realestate_card:hover .project_image {
+  transform: scale(1.025);
+}
+
+.realestate_card .project_image.closed {
+  filter: grayscale(100%);
+  opacity: 0.75;
+}
+
+/* Floating Admin Edit Pill on card image (Admin only) - Exact match to Image 4 */
+.realestate_card .admin_edit_badge {
+  position: absolute !important;
+  top: 14px !important;
+  right: 14px !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: auto !important;
+  height: auto !important;
+  z-index: 10 !important;
+  background: #4F6BFF !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding: 6px 18px !important;
+  cursor: pointer !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.realestate_card .admin_edit_badge:hover {
+  background: #3e59ea !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(79, 107, 255, 0.4) !important;
+}
+
+.realestate_card .closed_badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #ff5555;
+  border: 1px solid rgba(255, 85, 85, 0.3);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.realestate_card .project_wrapper {
+  padding: 16px !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  justify-content: space-between !important;
+}
+
+.realestate_card .project_details {
+  height: 88px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.realestate_card .project_title {
+  margin: 0 0 6px 0 !important;
+  padding: 0 !important;
+  font-size: 15px !important;
+  line-height: 18px !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+}
+
+.realestate_card .project_description_text {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 14px !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+/* Original Meta Gold 3-column metrics without horizontal divider line (Image 2 reference) */
+.realestate_card .project_summary {
+  display: flex !important;
+  margin-top: 24px !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  padding: 0 !important;
+  border-top: none !important;
+  width: 100% !important;
+}
+
+.realestate_card .project_summary span.minimum,
+.realestate_card .project_summary span.roi,
+.realestate_card .project_summary span.strategy {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.realestate_card .project_summary span.minimum {
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+
+.realestate_card .project_summary span.roi {
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+
+.realestate_card .project_summary span.strategy {
+  align-items: flex-end !important;
+  text-align: right !important;
+}
+
+.realestate_card .project_summary span p:first-of-type {
+  font-size: 13px !important;
+  line-height: 16px !important;
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.5) !important;
+  margin: 0 0 6px 0 !important;
+  display: block !important;
+}
+
+.realestate_card .project_summary span p:last-of-type {
+  font-size: 18px !important;
+  line-height: 22px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  white-space: nowrap !important;
+  display: block !important;
+}
+
+/* Action Buttons: Solid dark View project & Vibrant blue Invest now */
+.realestate_card .project_actions {
+  margin-top: 28px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+.realestate_card .btn_view_project {
+  height: 46px !important;
+  border-radius: 10px !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}
+
+.realestate_card .btn_view_project:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.realestate_card .btn_invest_now {
+  height: 46px !important;
+  border-radius: 10px !important;
+  background: #4763f0 !important;
+  border: none !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}
+
+.realestate_card .btn_invest_now:hover {
+  background: #3e59ea !important;
+  box-shadow: 0 4px 16px rgba(79, 107, 255, 0.35) !important;
+}
+
+.realestate_card .btn_closed {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: not-allowed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* -------------------- Slide-Over Details Drawer (ProjectView) -------------------- */
+.project_view_backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 99990;
+  animation: fadeInBackdrop 0.2s ease-out;
+}
+
+@keyframes fadeInBackdrop {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.project_view_drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 580px;
+  background: #141417;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.6);
+  z-index: 99995;
+  display: flex;
+  flex-direction: column;
+  animation: slideInDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+}
+
+@keyframes slideInDrawer {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.project_view_top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
+  top: 0;
+  background: #141417;
+  z-index: 10;
+}
+
+.project_view_back_btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.project_view_close_btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.project_view_close_btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.project_view_content {
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+
+.project_view_hero_image {
+  width: 100%;
+  height: 240px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.project_view_title_section h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.project_view_title_section p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  margin-top: 8px;
+  line-height: 1.5;
+}
+
+.project_view_summary_cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.project_view_summary_col p:first-child {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.project_view_summary_col p:last-child {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* Inner Switcher (This project vs Documents) */
+.inner_switcher_wrapper {
+  display: flex;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 20px;
+  padding: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  width: fit-content;
+}
+
+.inner_switcher_btn {
+  background: none;
+  border: none;
+  padding: 6px 16px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 18px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.inner_switcher_btn.active {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.project_view_section_heading {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 10px;
+}
+
+.project_view_breakdown_grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.breakdown_item {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.breakdown_item p:first-child {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.breakdown_item p:last-child {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-top: 2px;
+}
+
+.highlights_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.highlight_item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.45;
+}
+
+.highlight_bullet {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3861fb;
+  margin-top: 7px;
+  flex-shrink: 0;
+}
+
+.documents_list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.document_item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  text-decoration: none;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.document_item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.doc_info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.doc_title {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.doc_size {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.project_view_footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  position: sticky;
+  bottom: 0;
+  background: #141417;
+  z-index: 10;
+}
+
+.project_view_invest_btn {
+  width: 100%;
+  height: 44px;
+  border-radius: 8px;
+  background: #3861fb;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.project_view_invest_btn:hover {
+  background: #2b50ec;
+}
+
+/* -------------------- Invest Modal -------------------- */
+.invest_modal_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  animation: fadeInBackdrop 0.2s ease-out;
+}
+
+.invest_modal_container {
+  background: #18181b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.invest_modal_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.invest_modal_header h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.invest_modal_close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.15s;
+}
+
+.invest_modal_close:hover {
+  color: #ffffff;
+}
+
+.invest_modal_balance_banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+
+.invest_modal_balance_banner span:first-child {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.invest_modal_balance_banner span:last-child {
+  color: #01b28b;
+  font-weight: 600;
+}
+
+.invest_input_group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.invest_input_group label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.invest_input_wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.invest_input_prefix {
+  position: absolute;
+  left: 14px;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.invest_input_field {
+  width: 100%;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0 14px 0 32px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.invest_input_field:focus {
+  border-color: #3861fb;
+}
+
+.invest_input_field.error {
+  border-color: #ff4d4f;
+}
+
+.invest_error_text {
+  font-size: 12px;
+  color: #ff4d4f;
+}
+
+.invest_calculator_box {
+  background: rgba(56, 97, 251, 0.06);
+  border: 1px solid rgba(56, 97, 251, 0.2);
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.calc_row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.calc_row span:first-child {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.calc_row span:last-child {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.calc_row.total {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.calc_row.total span:last-child {
+  color: #01b28b;
+  font-size: 14px;
+}
+
+.invest_modal_confirm_btn {
+  height: 44px;
+  border-radius: 8px;
+  background: #3861fb;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.invest_modal_confirm_btn:hover:not(:disabled) {
+  background: #2b50ec;
+  box-shadow: 0 4px 14px rgba(56, 97, 251, 0.4);
+}
+
+.invest_modal_confirm_btn:disabled {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.3);
+  cursor: not-allowed;
+}
+
+/* -------------------- Empty State (Your Investments) -------------------- */
+.real_estate_empty_state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.empty_state_icon_wrapper {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 16px;
+}
+
+.real_estate_empty_state h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin: 0 0 6px;
+}
+
+.real_estate_empty_state p {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 400px;
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+
+.real_estate_empty_state button {
+  background: #3861fb;
+  border: none;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.real_estate_empty_state button:hover {
+  background: #2b50ec;
+}
+
+/* -------------------- How It Works View -------------------- */
+.how_it_works_view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.how_it_works_header p {
+  font-size: 15px;
+  line-height: 24px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.how_it_works_content {
+  width: 100%;
+  max-width: 720px;
+}
+
+.questions_wrapper {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.question_item {
+  padding: 14px 16px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.025);
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.question_item:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.question_item.open {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.question_header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.question_header_left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.question_number {
+  height: 24px;
+  width: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.question_item.open .question_number {
+  background: #3861fb;
+  color: #ffffff;
+  border-color: #3861fb;
+}
+
+.question_title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+}
+
+.question_chevron {
+  color: rgba(255, 255, 255, 0.4);
+  transition: transform 0.25s ease;
+}
+
+.question_item.open .question_chevron {
+  transform: rotate(180deg);
+  color: #ffffff;
+}
+
+.question_answer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ==========================================================================
+   ADMIN EDIT ESTATE PROJECT MODAL
+   ========================================================================== */
+
+.re_admin_modal_overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: reModalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.re_admin_modal {
+  background: #17181c;
+  border: 1px solid #2b2e36;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 440px;
+  padding: 24px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.7);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.re_admin_modal_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.re_admin_modal_header h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 350px;
+}
+
+.re_admin_modal_header .close_btn {
+  background: #23272f;
+  border: none;
+  color: #848e9c;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.re_admin_modal_header .close_btn:hover {
+  color: #ffffff;
+  background: #2e3440;
+}
+
+.re_admin_form_group {
+  margin-bottom: 18px;
+}
+
+.re_admin_form_group label {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-bottom: 8px;
+}
+
+.re_admin_input_row {
+  background: #202227;
+  border: 1px solid #2d313a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.re_admin_input_row:focus-within {
+  border-color: #4F6BFF;
+}
+
+.re_admin_input_row input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  width: 100%;
+  outline: none;
+}
+
+.re_admin_input_row .suffix {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  margin-left: 8px;
+  user-select: none;
+}
+
+.re_admin_duration_row {
+  background: #202227;
+  border: 1px solid #2d313a;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 48px;
+  padding: 0 16px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+  position: relative;
+}
+
+.re_admin_duration_row:focus-within {
+  border-color: #4F6BFF;
+}
+
+.re_admin_duration_row input {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  width: 100px;
+  outline: none;
+  padding: 0;
+  margin: 0;
+}
+
+.re_admin_duration_unit_box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  position: relative;
+  user-select: none;
+}
+
+.re_admin_duration_unit_box select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  padding-right: 20px;
+  text-transform: uppercase;
+  z-index: 2;
+}
+
+.re_admin_duration_unit_box select option {
+  background: #202227;
+  color: #ffffff;
+}
+
+.re_admin_duration_unit_box .unit_chevron {
+  position: absolute;
+  right: 0;
+  pointer-events: none;
+  color: #ffffff;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.re_admin_modal_actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.re_admin_modal_actions .btn_delete_project {
+  flex: 1;
+  height: 46px;
+  border-radius: 8px;
+  background: #f6465d;
+  border: none;
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.re_admin_modal_actions .btn_delete_project:hover {
+  background: #e0384e;
+}
+
+.re_admin_modal_actions .btn_delete_project:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.re_admin_modal_actions .btn_save_project {
+  flex: 1;
+  height: 46px;
+  border-radius: 8px;
+  background: #4F6BFF;
+  border: none;
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.re_admin_modal_actions .btn_save_project:hover {
+  background: #3e59ea;
+  box-shadow: 0 4px 14px rgba(79, 107, 255, 0.4);
+}
+
+.re_admin_modal_actions .btn_save_project:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
