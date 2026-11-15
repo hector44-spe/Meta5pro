@@ -143,6 +143,25 @@
   color: #ff6b7a;
 }
 
+@media (max-width: 480px) {
+  .dep_row {
+    gap: 8px;
+    padding: 10px 10px;
+  }
+  .dep_addr_code {
+    font-size: 12.5px;
+  }
+  .dep_badge {
+    padding: 3px 6px;
+    font-size: 10.5px;
+  }
+  .dep_edit_btn,
+  .dep_delete_btn {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+}
+
 /* Primary "Add new wallet address" Blue Button */
 .dep_add_btn {
   width: 100%;

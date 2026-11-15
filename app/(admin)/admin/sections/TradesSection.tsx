@@ -203,8 +203,8 @@ export default function TradesSection({
             <h2>User Trades & Orders</h2>
             <p>Live trading orders and positions funded by platform users.</p>
           </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <div className={styles.searchBox}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", width: "100%", maxWidth: "560px" }}>
+            <div className={styles.searchBox} style={{ flex: "1 1 200px" }}>
               <Search size={15} />
               <input
                 type="search"
@@ -215,12 +215,15 @@ export default function TradesSection({
             </div>
             <select
               style={{
-                padding: "8px 12px",
+                height: "40px",
+                padding: "0 12px",
                 borderRadius: 8,
                 border: "1px solid var(--a-border)",
                 background: "var(--a-raised)",
                 color: "#fff",
                 fontSize: "13px",
+                flex: "0 1 auto",
+                boxSizing: "border-box",
               }}
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
@@ -232,6 +235,7 @@ export default function TradesSection({
             <button
               type="button"
               className={styles.btnPrimarySm}
+              style={{ height: "40px", flexShrink: 0 }}
               onClick={() =>
                 setEditTrade({
                   userId: users[0]?.id || "",

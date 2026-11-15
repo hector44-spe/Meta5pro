@@ -23499,104 +23499,10 @@
 
 /* MAIN CONTENT: Completely independent scroll container */
 .dashboard-page-content {
-  height: 100%;
-  margin-top: 76px;
-  max-height: calc(100vh - 92px);
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  padding-bottom: 80px;
-  box-sizing: border-box;
-}
-
-.dashboard-content-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  width: 100%;
-}
-
-/* ===================== RESPONSIVENESS ===================== */
-/* Desktop / Wide Laptop (> 1274px) */
-.dashboard-upper-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 500px;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.dashboard-midsection-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 400px;
-  gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Base display rules for desktop/wider screens */
-.dashboard-mobile-menu-trigger {
-  display: none !important;
-}
-
-.dashboard-sidebar-container {
-  display: block !important;
-}
-
-/* Tablet (max-width: 1274px) */
-@media screen and (max-width: 1274px) {
-  .dashboard-upper-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    background: transparent !important;
-    gap: 8px !important;
-  }
-}
-
-/* Tablet (max-width: 1200px) */
-@media screen and (max-width: 1200px) {
-  .dashboard-midsection-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    gap: 8px !important;
-  }
-}
-
-/* Mobile (max-width: 768px) */
-@media screen and (max-width: 768px) {
-  .dashboard-page-container {
-    grid-template-columns: 1fr !important;
-    padding: 0 !important;
-    padding-top: 4px !important;
-    overflow-x: hidden !important;
-  }
-  .dashboard-sidebar-container {
-    display: none !important;
-  }
-  .dashboard-header-left-titles {
-    display: none !important;
-  }
-  .dashboard-mobile-menu-trigger {
-    display: flex !important;
-  }
-  .dashboard-page-wrapper {
-    padding: 0 4px !important;
-    overflow-x: hidden !important;
-  }
-  .dashboard-header-container {
-    width: calc(100% - 8px) !important;
-    left: 4px !important;
-  }
-  .dashboard-header-wrapper {
-    padding: 10px 14px !important;
-    height: 56px !important;
-  }
-  .dashboard-page-content {
-    margin-top: 66px !important;
-    max-height: calc(100vh - 70px) !important;
+    margin-top: 6px !important;
+    max-height: calc(100dvh - 64px) !important;
     padding-bottom: 90px !important;
   }
-}
 
 /* Small Mobile Screens (max-width: 480px) */
 @media screen and (max-width: 480px) {

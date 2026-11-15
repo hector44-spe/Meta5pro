@@ -26,6 +26,179 @@ function formatFollowers(count: number): string {
   return count.toLocaleString();
 }
 
+function ExpertCardItem({
+  expert,
+  userId,
+  isAdmin,
+  isActionLoading,
+  onView,
+  onToggleCopy,
+  onEdit,
+}: {
+  expert: CopyExpert;
+  userId: string;
+  isAdmin: boolean;
+  isActionLoading: boolean;
+  onView: (expert: CopyExpert) => void;
+  onToggleCopy: (expert: CopyExpert) => void;
+  onEdit?: (expert: CopyExpert) => void;
+}) {
+  const isCopied = Array.isArray(expert.subscriberList) && expert.subscriberList.includes(userId);
+  const usernameClean = expert.username
+    ? expert.username.replace(/^@/, "")
+    : expert.name.replace(/\s+/g, "_").toLowerCase();
+
+  // If tickType is gold or this is Albania fx (matching reference screenshot), render gold-tick
+  const isGoldTick = expert.tickType === "gold" || expert.id === "albania-fx" || expert.name.toLowerCase().includes("albania");
+
+  return (
+    <div className="expert_card">
+      <div>
+        {/* Top Header Row: Profile (Avatar + Texts) on Left, Edit on Right */}
+        <div className="expert_card_top_header">
+          <div className="expert_card_profile">
+            <div className="expert_avatar_wrapper">
+              <img
+                src={expert.picture || "/assets/copy-trading/albania_support.png"}
+                alt={expert.name}
+                className="expert_avatar_img"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
+                }}
+              />
+            </div>
+
+            <div className="expert_profile_info">
+              <div className="expert_name_row">
+                <span className="expert_name_text" title={expert.name}>
+                  {expert.name}
+                </span>
+                {isGoldTick ? (
+                  <img
+                    src="/assets/copy-trading/gold-tick.svg"
+                    alt="gold tick"
+                    className="expert_tick_icon"
+                  />
+                ) : expert.tickType === "blue" ? (
+                  <img
+                    src="/assets/copy-trading/blue-tick.svg"
+                    alt="blue tick"
+                    className="expert_tick_icon"
+                  />
+                ) : null}
+              </div>
+
+              <p className="expert_handle_text">@{usernameClean}</p>
+
+              <div className="expert_followers_row">
+                <Copy size={13} className="expert_followers_icon" />
+                <span className="expert_followers_count">{formatFollowers(expert.followers || 0)}</span>
+                <span className="expert_followers_label">Followers</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Edit button in top right of header row */}
+          {isAdmin && onEdit && (
+            <button
+              type="button"
+              className="expert_edit_link"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(expert);
+              }}
+              title="Edit this expert"
+            >
+              Edit
+            </button>
+          )}
+        </div>
+
+        {/* Bio */}
+        <p className="expert_bio_text" title={expert.bio}>
+          {expert.bio || "I can give you a life you dreamed for"}
+        </p>
+      </div>
+
+      {/* Metrics Grid & Action Buttons */}
+      <div>
+        <div className="expert_metrics_grid">
+          {/* Row 1 */}
+          <div className="expert_metric_col">
+            <span className="expert_metric_label">Win rate</span>
+            <span className="expert_metric_value expert_metric_winrate">{expert.winRate}%</span>
+          </div>
+
+          <div className="expert_metric_col">
+            <span className="expert_metric_label">Profit share</span>
+            <span className="expert_metric_value expert_metric_profitshare">{expert.profitShare}%</span>
+          </div>
+
+          <div className="expert_metric_col expert_col_right">
+            <span className="expert_metric_label">Wins</span>
+            <span className="expert_metric_value">{expert.wins?.toLocaleString() || 0}</span>
+          </div>
+
+          {/* Row 2 */}
+          <div className="expert_metric_col">
+            <span className="expert_metric_label">Losses</span>
+            <span className="expert_metric_value">{expert.losses?.toLocaleString() || 0}</span>
+          </div>
+
+          <div className="expert_metric_col">
+            <span className="expert_metric_label">Trades</span>
+            <span className="expert_metric_value">{expert.tradesCount?.toLocaleString() || 0}</span>
+          </div>
+
+          <div className="expert_metric_col expert_col_right">
+            <span className="expert_metric_label">Min. startup</span>
+            <span className="expert_metric_value">${Number(expert.minimumStartUp || 0).toLocaleString()}</span>
+          </div>
+        </div>
+
+        {/* Footer Buttons: View & Copy */}
+        <div className="expert_actions_footer">
+          <button
+            type="button"
+            className="expert_btn_view"
+            onClick={() => onView(expert)}
+          >
+            View
+          </button>
+
+          {isCopied ? (
+            <button
+              type="button"
+              className="expert_btn_cancel"
+              disabled={isActionLoading}
+              onClick={() => onToggleCopy(expert)}
+            >
+              {isActionLoading ? (
+                <Loader2 size={16} className="animate-spin" color="#ffffff" />
+              ) : (
+                "Cancel"
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="expert_btn_copy"
+              disabled={isActionLoading}
+              onClick={() => onToggleCopy(expert)}
+            >
+              {isActionLoading ? (
+                <Loader2 size={16} className="animate-spin" color="#ffffff" />
+              ) : (
+                "Copy"
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CopyTradingPage() {
   const { currentBalance, refreshBalance } = useDashboard();
 
@@ -256,169 +429,21 @@ export default function CopyTradingPage() {
             </div>
           ) : (
             <div className="copy_trading_grids">
-              {filteredExperts.map((expert) => {
-                const isCopied = Array.isArray(expert.subscriberList) && expert.subscriberList.includes(userId);
-                const isActionLoading = actionLoadingId === (expert.id || expert.ref);
-
-                return (
-                  <div key={expert.id || expert.ref} className="expert_card">
-                    {/* Top Section: Avatar + Profile + Bio */}
-                    <div>
-                      <div className="profile_wrapper">
-                        {/* Avatar */}
-                        <div className="image_wrapper">
-                          <img
-                            src={expert.picture || "/assets/copy-trading/albania_support.png"}
-                            alt="profile"
-                            style={{ width: "52px", height: "52px", borderRadius: "8px", objectFit: "cover" }}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
-                            }}
-                          />
-                        </div>
-
-                        {/* Name + Username + Followers */}
-                        <div style={{ flex: "1", display: "flex", flexDirection: "column", justifyContent: "space-between", height: "52px" }}>
-                          <div>
-                            <div style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                                <p style={{ fontSize: "14px", fontWeight: 600, color: "#ffffff", lineHeight: "20px", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                  {expert.name}
-                                </p>
-                                {expert.tickType === "gold" && (
-                                  <img
-                                    src="/assets/copy-trading/gold-tick.svg"
-                                    alt="gold tick"
-                                    style={{ width: "18px", height: "18px" }}
-                                  />
-                                )}
-                                {expert.tickType === "blue" && (
-                                  <img
-                                    src="/assets/copy-trading/blue-tick.svg"
-                                    alt="blue tick"
-                                    style={{ width: "18px", height: "18px" }}
-                                  />
-                                )}
-                              </span>
-
-                              {isAdmin && (
-                                <button
-                                  type="button"
-                                  className="edit_btn"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingExpert(expert);
-                                    setIsEditModalOpen(true);
-                                  }}
-                                  title="Edit this expert"
-                                >
-                                  <p>Edit</p>
-                                </button>
-                              )}
-                            </div>
-
-                            <div style={{ width: "100%" }}>
-                              <p style={{ fontSize: "12px", fontWeight: 400, color: "rgba(255, 255, 255, 0.5)", lineHeight: "14px", margin: "2px 0 0 0" }}>
-                                {expert.username
-                                  ? `@${expert.username}`
-                                  : `@${expert.name.replace(/\s+/g, "_").toLowerCase()}`}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="details_row">
-                            <div className="details_row_left">
-                              <div className="helper_icons">
-                                <Copy size={11} color="rgba(255, 255, 255, 0.5)" />
-                              </div>
-                              <span className="details_row_left_item">
-                                <p>{formatFollowers(expert.followers || 0)}</p>
-                                <p>Followers</p>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bio */}
-                      <p className="expert_bio">{expert.bio || "I can give you a life you dreamed for"}</p>
-                    </div>
-
-                    {/* Bottom Section: Mid Metrics + Footer Buttons */}
-                    <div>
-                      <div className="mid_section">
-                        <div className="mid_section_item win_rate">
-                          <p className="label">Win rate</p>
-                          <p className="value" style={{ color: "#01B28B" }}>{expert.winRate}%</p>
-                        </div>
-
-                        <div className="mid_section_item profit_share">
-                          <p className="label">Profit share</p>
-                          <p className="value" style={{ color: "#31AACE" }}>{expert.profitShare}%</p>
-                        </div>
-
-                        <div className="mid_section_item wins">
-                          <p className="label">Wins</p>
-                          <p className="value">{expert.wins?.toLocaleString() || 0}</p>
-                        </div>
-
-                        <div className="mid_section_item losses">
-                          <p className="label">Losses</p>
-                          <p className="value">{expert.losses?.toLocaleString() || 0}</p>
-                        </div>
-
-                        <div className="mid_section_item trades">
-                          <p className="label">Trades</p>
-                          <p className="value">{expert.tradesCount?.toLocaleString() || 0}</p>
-                        </div>
-
-                        <div className="mid_section_item startup">
-                          <p className="label">Min. startup</p>
-                          <p className="value">
-                            ${Number(expert.minimumStartUp || 0).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Footer Buttons: View & Copy */}
-                      <div className="footer">
-                        <button
-                          className="btn_view"
-                          onClick={() => setSelectedExpertForView(expert)}
-                        >
-                          <p>View</p>
-                        </button>
-
-                        {isCopied ? (
-                          <button
-                            className="btn_cancel"
-                            disabled={isActionLoading}
-                            onClick={() => handleToggleCopy(expert)}
-                          >
-                            {isActionLoading ? (
-                              <Loader2 size={16} className="animate-spin" color="#ffffff" />
-                            ) : (
-                              <p>Cancel</p>
-                            )}
-                          </button>
-                        ) : (
-                          <button
-                            className="btn_copy"
-                            disabled={isActionLoading}
-                            onClick={() => handleToggleCopy(expert)}
-                          >
-                            {isActionLoading ? (
-                              <Loader2 size={16} className="animate-spin" color="#ffffff" />
-                            ) : (
-                              <p>Copy</p>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {filteredExperts.map((expert) => (
+                <ExpertCardItem
+                  key={expert.id || expert.ref}
+                  expert={expert}
+                  userId={userId}
+                  isAdmin={isAdmin}
+                  isActionLoading={actionLoadingId === (expert.id || expert.ref)}
+                  onView={(exp) => setSelectedExpertForView(exp)}
+                  onToggleCopy={(exp) => handleToggleCopy(exp)}
+                  onEdit={(exp) => {
+                    setEditingExpert(exp);
+                    setIsEditModalOpen(true);
+                  }}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -464,121 +489,21 @@ export default function CopyTradingPage() {
             </div>
           ) : (
             <div className="copy_trading_grids">
-              {copiedExperts.map((expert) => {
-                const isActionLoading = actionLoadingId === (expert.id || expert.ref);
-
-                return (
-                  <div key={expert.id || expert.ref} className="expert_card">
-                    <div>
-                      <div className="profile_wrapper">
-                        <div className="image_wrapper">
-                          <img
-                            src={expert.picture || "/assets/copy-trading/albania_support.png"}
-                            alt={expert.name}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
-                            }}
-                          />
-                        </div>
-
-                        <div className="profile_content">
-                          <div className="name_row">
-                            <p className="expert_name">{expert.name}</p>
-                            {expert.tickType === "gold" && (
-                              <img
-                                src="/assets/copy-trading/gold-tick.svg"
-                                alt="gold tick"
-                                className="tick_icon"
-                              />
-                            )}
-                            {expert.tickType === "blue" && (
-                              <img
-                                src="/assets/copy-trading/blue-tick.svg"
-                                alt="blue tick"
-                                className="tick_icon"
-                              />
-                            )}
-                          </div>
-
-                          <p className="expert_username">
-                            {expert.username
-                              ? `@${expert.username}`
-                              : `@${expert.name.replace(/\s+/g, "_").toLowerCase()}`}
-                          </p>
-
-                          <div className="details_row">
-                            <div className="details_row_left">
-                              <CheckCircle2 size={12} color="#00d68f" />
-                              <span className="details_row_left_item">
-                                <p style={{ color: "#00d68f" }}>Active Copy</p>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="expert_bio">{expert.bio || "I can give you a life you dreamed for"}</p>
-                    </div>
-
-                    <div>
-                      <div className="mid_section">
-                        <div className="mid_section_item win_rate">
-                          <p className="label">Win rate</p>
-                          <p className="value">{expert.winRate}%</p>
-                        </div>
-
-                        <div className="mid_section_item profit_share">
-                          <p className="label">Profit share</p>
-                          <p className="value">{expert.profitShare}%</p>
-                        </div>
-
-                        <div className="mid_section_item wins">
-                          <p className="label">Wins</p>
-                          <p className="value">{expert.wins?.toLocaleString() || 0}</p>
-                        </div>
-
-                        <div className="mid_section_item losses">
-                          <p className="label">Losses</p>
-                          <p className="value">{expert.losses?.toLocaleString() || 0}</p>
-                        </div>
-
-                        <div className="mid_section_item trades">
-                          <p className="label">Trades</p>
-                          <p className="value">{expert.tradesCount?.toLocaleString() || 0}</p>
-                        </div>
-
-                        <div className="mid_section_item startup">
-                          <p className="label">Min. startup</p>
-                          <p className="value">
-                            ${Number(expert.minimumStartUp || 0).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="footer">
-                        <button
-                          className="btn_view"
-                          onClick={() => setSelectedExpertForView(expert)}
-                        >
-                          <p>View</p>
-                        </button>
-
-                        <button
-                          className="btn_cancel"
-                          disabled={isActionLoading}
-                          onClick={() => handleToggleCopy(expert)}
-                        >
-                          {isActionLoading ? (
-                            <Loader2 size={16} className="animate-spin" color="#ffffff" />
-                          ) : (
-                            <p>Cancel</p>
-                          )}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+              {copiedExperts.map((expert) => (
+                <ExpertCardItem
+                  key={expert.id || expert.ref}
+                  expert={expert}
+                  userId={userId}
+                  isAdmin={isAdmin}
+                  isActionLoading={actionLoadingId === (expert.id || expert.ref)}
+                  onView={(exp) => setSelectedExpertForView(exp)}
+                  onToggleCopy={(exp) => handleToggleCopy(exp)}
+                  onEdit={(exp) => {
+                    setEditingExpert(exp);
+                    setIsEditModalOpen(true);
+                  }}
+                />
+              ))}
             </div>
           )}
         </div>

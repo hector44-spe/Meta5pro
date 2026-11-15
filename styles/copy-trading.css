@@ -156,300 +156,301 @@
 }
 
 /* ==========================================================================
-   Exact Expert Card (NewExpertCardWrapper - Meta Gold Original)
+   Exact Expert Card (Meta Gold Original - Exact Visual Parity)
+   Fully namespaced with high specificity and resets to prevent leaking.
    ========================================================================== */
 .expert_card {
-  padding: 24px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 150ms ease-in;
-  background: #0f1215 !important;
-  border: 1px solid rgba(255, 255, 255, 0.035);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  box-sizing: border-box;
+  padding: 24px !important;
+  border-radius: 16px !important;
+  background: #0f1115 !important;
+  background-color: #0f1115 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  transition: border-color 0.15s ease !important;
 }
 
 .expert_card:hover {
-  border-color: rgba(79, 107, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Admin Edit text button at top right (Exact match to screenshot) */
-.expert_card .edit_btn {
-  background: transparent;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  padding: 0;
-  margin: 0;
-  position: absolute;
-  top: 24px;
-  right: 24px;
-  z-index: 5;
+/* Header row containing profile (avatar + texts) on left, and Edit button on right */
+.expert_card_top_header {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  gap: 12px !important;
 }
 
-.expert_card .edit_btn p {
-  font-size: 14px;
-  line-height: 18px;
-  font-weight: 600;
-  color: #4c68f0;
-  margin: 0;
-  cursor: pointer;
-  transition: opacity 0.15s;
+.expert_card_profile {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  flex: 1 !important;
+  min-width: 0 !important;
 }
 
-.expert_card .edit_btn:hover p {
-  opacity: 0.8;
-  text-decoration: underline;
+.expert_avatar_wrapper {
+  height: 56px !important;
+  width: 56px !important;
+  background: #000000 !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
 }
 
-/* Profile wrapper: 52px auto with align-items center */
-.expert_card .profile_wrapper {
-  display: grid;
-  grid-template-columns: 52px auto;
-  align-items: center;
-  gap: 12px;
+.expert_avatar_img {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 12px !important;
+  object-fit: cover !important;
+  display: block !important;
 }
 
-.expert_card .image_wrapper {
-  height: 52px;
-  width: 52px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 8px;
-  overflow: hidden;
-  flex-shrink: 0;
+.expert_profile_info {
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  gap: 2px !important;
 }
 
-.expert_card .image_wrapper img {
-  width: 52px;
-  height: 52px;
-  border-radius: 8px;
-  object-fit: cover;
-  display: block;
+.expert_name_row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
 }
 
-.expert_card .profile_content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100%;
+.expert_name_text {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  line-height: 20px !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
 }
 
-.expert_card .name_row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.expert_tick_icon {
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+  display: block !important;
 }
 
-.expert_card .expert_name {
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  line-height: 20px;
-  margin: 0;
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.expert_handle_text {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #848e9c !important;
+  line-height: 18px !important;
+  margin: 1px 0 0 0 !important;
 }
 
-.expert_card .tick_icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
+.expert_followers_row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-top: 3px !important;
+  line-height: 16px !important;
 }
 
-.expert_card .expert_username {
-  font-size: 12px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.5);
-  line-height: 14px;
-  margin: 2px 0 4px 0;
+.expert_followers_icon {
+  color: #848e9c !important;
+  flex-shrink: 0 !important;
 }
 
-.expert_card .details_row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.expert_followers_count {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
 }
 
-.expert_card .details_row_left {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.expert_followers_label {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #848e9c !important;
+  margin-left: 2px !important;
 }
 
-.expert_card .details_row_left_item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+/* Edit link anchored to top right */
+.expert_edit_link {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 14px !important;
+  line-height: 20px !important;
+  font-weight: 600 !important;
+  color: #4b70f5 !important;
+  flex-shrink: 0 !important;
+  transition: opacity 0.15s !important;
 }
 
-.expert_card .details_row_left_item p:first-of-type {
-  font-size: 13px;
-  line-height: 13px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0;
-}
-
-.expert_card .details_row_left_item p:last-of-type {
-  font-size: 13px;
-  line-height: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
+.expert_edit_link:hover {
+  opacity: 0.8 !important;
+  text-decoration: underline !important;
 }
 
 /* Bio Text */
-.expert_card .expert_bio {
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 20px;
-  min-height: 36px;
+.expert_bio_text {
+  font-size: 14px !important;
+  line-height: 20px !important;
+  font-weight: 400 !important;
+  color: #94a3b8 !important;
+  margin: 20px 0 24px 0 !important;
+  min-height: 40px !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
 }
 
-/* Mid Section 3-Column Metrics (repeat(3, 1fr) with gap: 24px) */
-.expert_card .mid_section {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 24px;
+/* Mid Section 3-Column Metrics (2 rows x 3 columns) */
+.expert_metrics_grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important;
+  row-gap: 20px !important;
+  column-gap: 16px !important;
+  width: 100% !important;
 }
 
-.expert_card .mid_section_item {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  white-space: nowrap;
+.expert_metric_col {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+  white-space: nowrap !important;
 }
 
-.expert_card .mid_section_item .label {
-  font-size: 13px;
-  line-height: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
+/* Hard reset to override dashboard.css .label pills */
+.expert_metric_label {
+  display: block !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 13px !important;
+  line-height: 14px !important;
+  font-weight: 400 !important;
+  color: #848e9c !important;
+  text-align: left !important;
 }
 
-.expert_card .mid_section_item .value {
-  font-size: 14px;
-  line-height: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0;
+.expert_metric_value {
+  display: block !important;
+  font-size: 16px !important;
+  line-height: 18px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  margin: 0 !important;
+  text-align: left !important;
 }
 
-/* Vibrant colors matching Meta Gold */
-.expert_card .mid_section_item.win_rate .value {
-  color: #01B28B !important;
+/* Vibrant colors matching Meta Gold screenshot */
+.expert_metric_winrate {
+  color: #00d395 !important;
 }
 
-.expert_card .mid_section_item.profit_share .value {
-  color: #31AACE !important;
+.expert_metric_profitshare {
+  color: #2196f3 !important;
 }
 
-.expert_card .startup,
-.expert_card .wins {
-  text-align: end;
-  align-items: flex-end;
+.expert_col_right {
+  text-align: right !important;
+  align-items: flex-end !important;
 }
 
-.expert_card .profit_share,
-.expert_card .trades {
-  align-self: flex-start;
+.expert_col_right .expert_metric_label {
+  text-align: right !important;
 }
 
-/* Footer Buttons: 40px height, gap: 12px, margin-top: 40px */
-.expert_card .footer {
-  margin-top: 40px;
-  display: flex;
-  gap: 12px;
-  height: 40px;
+.expert_col_right .expert_metric_value {
+  text-align: right !important;
 }
 
-.expert_card .btn_view {
-  flex: 1;
-  width: 100%;
-  height: 40px;
-  border-radius: 6px;
-  border: none;
-  background-color: #222527;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
+/* Footer Buttons: 46px height, gap 12px, border-radius 12px */
+.expert_actions_footer {
+  margin-top: 28px !important;
+  display: flex !important;
+  gap: 12px !important;
+  height: 46px !important;
+  width: 100% !important;
 }
 
-.expert_card .btn_view p {
-  font-size: 14px;
-  line-height: 18px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0;
+.expert_btn_view {
+  flex: 1 !important;
+  width: 100% !important;
+  height: 46px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  background: #1e2229 !important;
+  background-color: #1e2229 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  transition: background 0.15s ease !important;
 }
 
-.expert_card .btn_view:hover {
-  background-color: #2d3135;
+.expert_btn_view:hover {
+  background-color: #282e38 !important;
 }
 
-.expert_card .btn_copy {
-  flex: 1;
-  width: 100%;
-  height: 40px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  background-color: #4c68f0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
+.expert_btn_copy {
+  flex: 1 !important;
+  width: 100% !important;
+  height: 46px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  cursor: pointer !important;
+  background: #4b68ff !important;
+  background-color: #4b70f5 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  transition: background 0.15s ease !important;
 }
 
-.expert_card .btn_copy p {
-  font-size: 14px;
-  line-height: 18px;
-  font-weight: 600;
-  color: #ffffff;
-  margin: 0;
+.expert_btn_copy:hover {
+  background-color: #3b5fe3 !important;
 }
 
-.expert_card .btn_copy:hover {
-  background-color: #3e59ea;
+.expert_btn_cancel {
+  flex: 1 !important;
+  width: 100% !important;
+  height: 46px !important;
+  border-radius: 12px !important;
+  border: none !important;
+  cursor: pointer !important;
+  background: #ef4444 !important;
+  background-color: #ef4444 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #ffffff !important;
+  transition: background 0.15s ease !important;
 }
 
-.expert_card .btn_cancel {
-  flex: 1;
-  width: 100%;
-  height: 40px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  background-color: #ff3344;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s ease;
-}
-
-.expert_card .btn_cancel p {
-  font-size: 13px;
-  line-height: 18px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: #ffffff;
-  margin: 0;
-}
-
-.expert_card .btn_cancel:hover {
-  background-color: #e02a3a;
+.expert_btn_cancel:hover {
+  background-color: #dc2626 !important;
 }
 
 /* How It Works Tab */

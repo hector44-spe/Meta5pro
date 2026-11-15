@@ -35,28 +35,24 @@ export default function WalletPage() {
   // Toast state
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Load connected wallets from localStorage
-  useEffect(() => {
+  // Load connected wallets from PostgreSQL database
+  const fetchConnectedWallets = async () => {
     try {
-      const stored = localStorage.getItem("metagold_connected_wallets");
-      if (stored) {
-        setConnectedWallets(JSON.parse(stored));
+      const res = await fetch("/api/wallet/connected");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.wallets) {
+          setConnectedWallets(data.wallets);
+        }
       }
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const saveWallets = (updated: {
-    [walletName: string]: { name: string; phrase?: string };
-  }) => {
-    setConnectedWallets(updated);
-    try {
-      localStorage.setItem("metagold_connected_wallets", JSON.stringify(updated));
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Failed to fetch connected wallets:", err);
     }
   };
+
+  useEffect(() => {
+    fetchConnectedWallets();
+  }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -135,33 +131,45 @@ export default function WalletPage() {
     setPhraseError(false);
     setIsSaving(true);
 
-    setTimeout(() => {
-      const updated = {
-        ...connectedWallets,
-        [walletNameInput.trim()]: {
+    try {
+      const res = await fetch("/api/wallet/connected", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           name: walletNameInput.trim(),
           phrase: seedPhraseInput.trim(),
-        },
-      };
-      saveWallets(updated);
-      setIsSaving(false);
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save wallet");
+      if (data.wallets) setConnectedWallets(data.wallets);
       setActiveModalWallet(null);
       showToast("Wallet connected successfully");
-    }, 600);
+    } catch (err: any) {
+      showToast(err.message || "Failed to connect wallet");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleDisconnectWallet = async () => {
     if (!activeModalWallet || activeModalWallet.isNew) return;
 
     setIsDisconnecting(true);
-    setTimeout(() => {
-      const updated = { ...connectedWallets };
-      delete updated[activeModalWallet.name];
-      saveWallets(updated);
-      setIsDisconnecting(false);
+    try {
+      const res = await fetch(`/api/wallet/connected?name=${encodeURIComponent(activeModalWallet.name)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to disconnect wallet");
+      if (data.wallets) setConnectedWallets(data.wallets);
       setActiveModalWallet(null);
       showToast("Wallet disconnected successfully");
-    }, 600);
+    } catch (err: any) {
+      showToast(err.message || "Failed to disconnect wallet");
+    } finally {
+      setIsDisconnecting(false);
+    }
   };
 
   return (

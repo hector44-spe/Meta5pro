@@ -157,8 +157,8 @@ export default function CardRequestsSection({
             <h2>User Card Requests</h2>
             <p>Users who submitted requests and paid issuance fees for crypto cards.</p>
           </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <div className={styles.searchBox}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", width: "100%", maxWidth: "560px" }}>
+            <div className={styles.searchBox} style={{ flex: "1 1 200px" }}>
               <Search size={15} />
               <input
                 type="search"
@@ -169,12 +169,15 @@ export default function CardRequestsSection({
             </div>
             <select
               style={{
-                padding: "8px 12px",
+                height: "40px",
+                padding: "0 12px",
                 borderRadius: 8,
                 border: "1px solid var(--a-border)",
                 background: "var(--a-raised)",
                 color: "#fff",
                 fontSize: "13px",
+                boxSizing: "border-box",
+                flex: "0 1 auto",
               }}
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}

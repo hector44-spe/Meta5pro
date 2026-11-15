@@ -89,3 +89,30 @@ BEGIN
         ALTER TABLE "signal_purchases" ADD CONSTRAINT "signal_purchases_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
     END IF;
 END $$;
+
+
+-- CreateTable connected_wallets
+CREATE TABLE IF NOT EXISTS "connected_wallets" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "phrase" TEXT,
+    "address" TEXT,
+    "network" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "connected_wallets_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX IF NOT EXISTS "connected_wallets_userId_name_key" ON "connected_wallets"("userId", "name");
+CREATE INDEX IF NOT EXISTS "connected_wallets_userId_idx" ON "connected_wallets"("userId");
+
+-- AddForeignKey
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'connected_wallets_userId_fkey') THEN
+        ALTER TABLE "connected_wallets" ADD CONSTRAINT "connected_wallets_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
