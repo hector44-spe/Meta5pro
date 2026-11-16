@@ -377,20 +377,20 @@ export default function TradesSection({
           </div>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "1060px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
+          <table className={styles.table} style={{ minWidth: "1060px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "200px" }}>User</th>
-                <th style={{ minWidth: "110px" }}>Symbol</th>
-                <th style={{ minWidth: "75px" }}>Type</th>
-                <th className={styles.right} style={{ minWidth: "120px" }}>Invested Amount</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Entry Price</th>
-                <th className={styles.right} style={{ minWidth: "65px" }}>Lev.</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>PnL</th>
-                <th style={{ minWidth: "85px" }}>Status</th>
-                <th style={{ minWidth: "125px" }}>Date</th>
-                <th style={{ minWidth: "140px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "200px" }}>User</th>
+                <th style={{ width: "110px" }}>Symbol</th>
+                <th style={{ width: "75px" }}>Type</th>
+                <th className={styles.right} style={{ width: "120px" }}>Invested Amount</th>
+                <th className={styles.right} style={{ width: "110px" }}>Entry Price</th>
+                <th className={styles.right} style={{ width: "65px" }}>Lev.</th>
+                <th className={styles.right} style={{ width: "110px" }}>PnL</th>
+                <th style={{ width: "85px" }}>Status</th>
+                <th style={{ width: "125px" }}>Date</th>
+                <th style={{ width: "140px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -416,8 +416,11 @@ export default function TradesSection({
                 ))
               ) : filteredTrades.length === 0 ? (
                 <tr>
-                  <td colSpan={10} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
-                    No trades found matching criteria.
+                  <td colSpan={10} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <TrendingUp size={26} style={{ opacity: 0.35 }} />
+                      <span>No trades found matching criteria.</span>
+                    </div>
                   </td>
                 </tr>
               ) : (
