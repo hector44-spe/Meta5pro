@@ -1118,11 +1118,11 @@
 }
 
 .cold-storage-success-badge.deposit p {
-  color: #ffaf33;
+  color: #01b28b;
 }
 
 .cold-storage-success-badge.withdraw p {
-  color: #f7495b;
+  color: #f84960;
 }
 
 .cold-storage-success-texts {
