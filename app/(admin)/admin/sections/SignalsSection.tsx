@@ -183,7 +183,7 @@ export default function SignalsSection({
   const totalRevenue = useMemo(() => purchases.reduce((a, p) => a + (p.amount || 0), 0), [purchases]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       {/* Stats Cards */}
       <div className={styles.stats}>
         <div className={styles.statCard}>
@@ -245,43 +245,46 @@ export default function SignalsSection({
           </div>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "1020px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
+          <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "200px" }}>User</th>
-                <th style={{ minWidth: "140px" }}>Signal Purchased</th>
-                <th style={{ minWidth: "110px" }}>Strength</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Amount Paid</th>
-                <th style={{ minWidth: "100px" }}>Reference</th>
-                <th style={{ minWidth: "120px" }}>Purchase Date</th>
-                <th style={{ minWidth: "90px" }}>Status</th>
-                <th style={{ minWidth: "130px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "220px" }}>User</th>
+                <th style={{ width: "150px" }}>Signal Purchased</th>
+                <th style={{ width: "110px" }}>Strength</th>
+                <th className={styles.right} style={{ width: "120px" }}>Amount Paid</th>
+                <th style={{ width: "110px" }}>Reference</th>
+                <th style={{ width: "130px" }}>Purchase Date</th>
+                <th style={{ width: "95px" }}>Status</th>
+                <th style={{ width: "125px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ minWidth: "200px" }}>
+                    <td>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 130 }} />
                         <div className={styles.skeletonCell} style={{ width: 90 }} />
                       </div>
                     </td>
-                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
-                    <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
-                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ minWidth: "130px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredPurchases.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
-                    No signal purchases recorded yet.
+                  <td colSpan={8} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <Radio size={26} style={{ opacity: 0.35 }} />
+                      <span>No signal purchases recorded yet.</span>
+                    </div>
                   </td>
                 </tr>
               ) : (
