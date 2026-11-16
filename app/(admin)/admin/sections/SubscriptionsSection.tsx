@@ -55,7 +55,13 @@ export default function SubscriptionsSection({
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/subscriptions");
+      const res = await fetch("/api/admin/subscriptions", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setInvestments(data.investments || []);
@@ -72,6 +78,17 @@ export default function SubscriptionsSection({
 
   useEffect(() => {
     loadData();
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const handleUpdateStatus = async (investmentId: string, newStatus: string) => {
@@ -173,28 +190,36 @@ export default function SubscriptionsSection({
           <div className={styles.statIcon} style={{ background: "rgba(71, 99, 240, 0.15)", color: "#7a94ff" }}>
             <Sparkles size={18} />
           </div>
-          <div className={styles.statValue}>{investments.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : investments.length}
+          </div>
           <div className={styles.statLabel}>Total Subscriptions</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
             <CheckCircle2 size={18} />
           </div>
-          <div className={styles.statValue}>{investments.filter((i) => i.status === "RUNNING").length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : investments.filter((i) => i.status === "RUNNING").length}
+          </div>
           <div className={styles.statLabel}>Active Running Plans</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(245, 165, 36, 0.15)", color: "#fbbf24" }}>
             <DollarSign size={18} />
           </div>
-          <div className={styles.statValue}>{usd(totalInvested)}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : usd(totalInvested)}
+          </div>
           <div className={styles.statLabel}>Subscribed Capital</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(167, 139, 250, 0.15)", color: "#c4b5fd" }}>
             <TrendingUp size={18} />
           </div>
-          <div className={styles.statValue}>{usd(totalAccruedProfit)}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : usd(totalAccruedProfit)}
+          </div>
           <div className={styles.statLabel}>Total Accrued Profits</div>
         </div>
       </div>
@@ -250,12 +275,23 @@ export default function SubscriptionsSection({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    <Loader2 size={20} className={styles.spin} style={{ display: "inline-block", marginRight: 8 }} />
-                    Loading subscriptions...
-                  </td>
-                </tr>
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div className={styles.skeletonCell} style={{ width: 130 }} />
+                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
               ) : filteredInvestments.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
@@ -352,7 +388,24 @@ export default function SubscriptionsSection({
               </tr>
             </thead>
             <tbody>
-              {plans.map((p) => (
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i}>
+                    <td><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
+              ) : plans.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
+                    No investment plans configured. Click Add Plan Tier to create one.
+                  </td>
+                </tr>
+              ) : plans.map((p) => (
                 <tr key={p.id}>
                   <td style={{ fontWeight: 600 }}>{p.title || p.name}</td>
                   <td className={styles.mono}>{usd(p.minimum)}</td>

@@ -39,7 +39,13 @@ export default function SignalsSection({
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/signals");
+      const res = await fetch("/api/admin/signals", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setPurchases(data.purchases || []);
@@ -56,6 +62,17 @@ export default function SignalsSection({
 
   useEffect(() => {
     loadData();
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const handleUpdateStatus = async (userId: string, purchaseId: string, newStatus: string) => {
@@ -173,21 +190,27 @@ export default function SignalsSection({
           <div className={styles.statIcon} style={{ background: "rgba(71, 99, 240, 0.15)", color: "#7a94ff" }}>
             <Radio size={18} />
           </div>
-          <div className={styles.statValue}>{purchases.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : purchases.length}
+          </div>
           <div className={styles.statLabel}>Total Signal Purchases</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
             <Zap size={18} />
           </div>
-          <div className={styles.statValue}>{signals.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : signals.length}
+          </div>
           <div className={styles.statLabel}>Available Signal Tiers</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(245, 165, 36, 0.15)", color: "#fbbf24" }}>
             <DollarSign size={18} />
           </div>
-          <div className={styles.statValue}>{usd(totalRevenue)}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : usd(totalRevenue)}
+          </div>
           <div className={styles.statLabel}>Total Signal Revenue</div>
         </div>
         <div className={styles.statCard}>
@@ -195,7 +218,11 @@ export default function SignalsSection({
             <CheckCircle2 size={18} />
           </div>
           <div className={styles.statValue}>
-            {purchases.filter((p) => p.status === "active").length}
+            {loading ? (
+              <span className={styles.skeletonStatVal} />
+            ) : (
+              purchases.filter((p) => p.status === "active").length
+            )}
           </div>
           <div className={styles.statLabel}>Active Signals</div>
         </div>
@@ -234,12 +261,23 @@ export default function SignalsSection({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    <Loader2 size={20} className={styles.spin} style={{ display: "inline-block", marginRight: 8 }} />
-                    Loading signal purchases...
-                  </td>
-                </tr>
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div className={styles.skeletonCell} style={{ width: 130 }} />
+                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
               ) : filteredPurchases.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
@@ -340,7 +378,22 @@ export default function SignalsSection({
               </tr>
             </thead>
             <tbody>
-              {signals.map((sig) => (
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i}>
+                    <td><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
+              ) : signals.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
+                    No signal packages configured. Click Add Signal Tier to create one.
+                  </td>
+                </tr>
+              ) : signals.map((sig) => (
                 <tr key={sig.id}>
                   <td style={{ fontWeight: 600 }}>{sig.title || sig.name}</td>
                   <td className={styles.mono} style={{ fontWeight: 700, color: "#34d399" }}>

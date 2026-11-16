@@ -49,7 +49,13 @@ export default function CardRequestsSection({
   const loadCards = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/cards");
+      const res = await fetch("/api/admin/cards", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setCards(data.cards || []);
@@ -65,6 +71,17 @@ export default function CardRequestsSection({
 
   useEffect(() => {
     loadCards();
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadCards();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const handleUpdateStatus = async (userId: string, cardId: string, newStatus: string) => {
@@ -135,28 +152,36 @@ export default function CardRequestsSection({
           <div className={styles.statIcon} style={{ background: "rgba(71, 99, 240, 0.15)", color: "#7a94ff" }}>
             <CreditCard size={18} />
           </div>
-          <div className={styles.statValue}>{cards.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : cards.length}
+          </div>
           <div className={styles.statLabel}>Total Card Requests</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
             <CheckCircle2 size={18} />
           </div>
-          <div className={styles.statValue}>{cards.filter((c) => c.status === "active").length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : cards.filter((c) => c.status === "active").length}
+          </div>
           <div className={styles.statLabel}>Active Cards</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(245, 165, 36, 0.15)", color: "#fbbf24" }}>
             <Clock size={18} />
           </div>
-          <div className={styles.statValue}>{cards.filter((c) => c.status === "pending").length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : cards.filter((c) => c.status === "pending").length}
+          </div>
           <div className={styles.statLabel}>Pending Verification</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(167, 139, 250, 0.15)", color: "#c4b5fd" }}>
             <DollarSign size={18} />
           </div>
-          <div className={styles.statValue}>{usd(totalFees)}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : usd(totalFees)}
+          </div>
           <div className={styles.statLabel}>Issuance Fees Collected</div>
         </div>
       </div>
@@ -216,12 +241,23 @@ export default function CardRequestsSection({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    <Loader2 size={20} className={styles.spin} style={{ display: "inline-block", marginRight: 8 }} />
-                    Loading card requests...
-                  </td>
-                </tr>
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div className={styles.skeletonCell} style={{ width: 130 }} />
+                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 110 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
               ) : filteredCards.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>

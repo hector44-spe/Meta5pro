@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
@@ -22,10 +23,19 @@ export async function GET() {
       userFullName: user?.fullName ?? null,
     }));
 
-    return NextResponse.json({
-      success: true,
-      transactions,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        transactions,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Admin transactions fetch error:", error);
     return NextResponse.json(

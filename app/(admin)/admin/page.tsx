@@ -149,7 +149,31 @@ function StatusPill({ status }: { status: string }) {
 /* ------------------------------------------------------------------ */
 
 export default function AdminPage() {
-  const [section, setSection] = useState<Section>("overview");
+  const [section, setSection] = useState<Section>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const urlParam = new URLSearchParams(window.location.search).get("section");
+        const saved = localStorage.getItem("admin_active_section");
+        const validSections: Section[] = [
+          "overview",
+          "deposits",
+          "withdrawals",
+          "users",
+          "experts",
+          "trades",
+          "signals",
+          "card-requests",
+          "cards",
+          "subscriptions",
+          "addresses",
+          "transactions",
+        ];
+        if (urlParam && validSections.includes(urlParam as Section)) return urlParam as Section;
+        if (saved && validSections.includes(saved as Section)) return saved as Section;
+      } catch {}
+    }
+    return "overview";
+  });
 
   // Keep section synced across refresh, deep links, and browser back/forward
   useEffect(() => {
@@ -220,11 +244,18 @@ export default function AdminPage() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
+      const fetchOpts: RequestInit = {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      };
       const [txRes, userRes, addrRes, meRes] = await Promise.all([
-        fetch("/api/admin/transactions"),
-        fetch("/api/admin/users"),
-        fetch("/api/settings/addresses"),
-        fetch("/api/auth/me"),
+        fetch("/api/admin/transactions", fetchOpts),
+        fetch("/api/admin/users", fetchOpts),
+        fetch("/api/settings/addresses", fetchOpts),
+        fetch("/api/auth/me", fetchOpts),
       ]);
       if (txRes.ok) setTransactions((await txRes.json()).transactions || []);
       if (userRes.ok) setUsers((await userRes.json()).users || []);
@@ -237,9 +268,21 @@ export default function AdminPage() {
     }
   }, [flash]);
 
+  // Re-fetch whenever section changes or window gets focus so data is ALWAYS fresh immediately on entry
   useEffect(() => {
     loadAll();
-  }, [loadAll]);
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadAll();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [loadAll, section]);
 
   // Close the mobile menu when switching sections and persist URL + localStorage
   const go = (s: Section) => {
@@ -386,6 +429,7 @@ export default function AdminPage() {
 
         {section === "overview" && (
           <Overview
+            loading={loading}
             transactions={transactions}
             users={users}
             pendingDeposits={pendingDeposits}
@@ -398,6 +442,7 @@ export default function AdminPage() {
 
         {section === "deposits" && (
           <TxSection
+            loading={loading}
             pending={pendingDeposits}
             history={transactions.filter((t) => t.type === "DEPOSIT" && t.status !== "PENDING")}
             kind="deposit"
@@ -408,6 +453,7 @@ export default function AdminPage() {
 
         {section === "withdrawals" && (
           <TxSection
+            loading={loading}
             pending={pendingWithdrawals}
             history={transactions.filter((t) => t.type === "WITHDRAWAL" && t.status !== "PENDING")}
             kind="withdrawal"
@@ -416,9 +462,22 @@ export default function AdminPage() {
           />
         )}
 
-        {section === "transactions" && <AllTransactions transactions={transactions} onPreview={setPreviewProofUrl} />}
+        {section === "transactions" && (
+          <AllTransactions
+            loading={loading}
+            transactions={transactions}
+            onPreview={setPreviewProofUrl}
+          />
+        )}
 
-        {section === "users" && <UsersSection users={users} onChanged={loadAll} flash={flash} />}
+        {section === "users" && (
+          <UsersSection
+            loading={loading}
+            users={users}
+            onChanged={loadAll}
+            flash={flash}
+          />
+        )}
 
         {section === "experts" && <ExpertsSection flash={flash} />}
 
@@ -558,6 +617,7 @@ function Overview({
   onReview,
   onGo,
   onPreview,
+  loading = false,
 }: {
   transactions: AdminTx[];
   users: AdminUser[];
@@ -566,6 +626,7 @@ function Overview({
   onReview: (tx: AdminTx, action: "approve" | "reject") => void;
   onGo: (s: Section) => void;
   onPreview: (url: string) => void;
+  loading?: boolean;
 }) {
   const sum = (list: AdminTx[]) => list.reduce((a, t) => a + Number(t.amount), 0);
   const investors = users.filter((u) => u.role !== "ADMIN");
@@ -580,26 +641,42 @@ function Overview({
         <button type="button" className={styles.statCard} onClick={() => onGo("deposits")}>
           <span className={`${styles.statIcon} ${styles.iconGreen}`}><ArrowDownToLine size={18} /></span>
           <span className={styles.statLabel}>Deposits to review</span>
-          <span className={styles.statValue}>{pendingDeposits.length}</span>
-          <span className={styles.statSub}>{usd(sum(pendingDeposits))} waiting</span>
+          <span className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : pendingDeposits.length}
+          </span>
+          <span className={styles.statSub}>
+            {loading ? <span className={styles.skeletonStatSub} /> : `${usd(sum(pendingDeposits))} waiting`}
+          </span>
         </button>
         <button type="button" className={styles.statCard} onClick={() => onGo("withdrawals")}>
           <span className={`${styles.statIcon} ${styles.iconAmber}`}><ArrowUpFromLine size={18} /></span>
           <span className={styles.statLabel}>Withdrawals to review</span>
-          <span className={styles.statValue}>{pendingWithdrawals.length}</span>
-          <span className={styles.statSub}>{usd(sum(pendingWithdrawals))} on hold</span>
+          <span className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : pendingWithdrawals.length}
+          </span>
+          <span className={styles.statSub}>
+            {loading ? <span className={styles.skeletonStatSub} /> : `${usd(sum(pendingWithdrawals))} on hold`}
+          </span>
         </button>
         <button type="button" className={styles.statCard} onClick={() => onGo("users")}>
           <span className={`${styles.statIcon} ${styles.iconBlue}`}><Users size={18} /></span>
           <span className={styles.statLabel}>Investors</span>
-          <span className={styles.statValue}>{investors.length}</span>
-          <span className={styles.statSub}>{investors.filter((u) => u.status === "SUSPENDED").length} suspended</span>
+          <span className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : investors.length}
+          </span>
+          <span className={styles.statSub}>
+            {loading ? <span className={styles.skeletonStatSub} /> : `${investors.filter((u) => u.status === "SUSPENDED").length} suspended`}
+          </span>
         </button>
         <button type="button" className={styles.statCard} onClick={() => onGo("users")}>
           <span className={`${styles.statIcon} ${styles.iconPurple}`}><DollarSign size={18} /></span>
           <span className={styles.statLabel}>Investor balances</span>
-          <span className={styles.statValue}>{usd(totalBalances)}</span>
-          <span className={styles.statSub}>across all accounts</span>
+          <span className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : usd(totalBalances)}
+          </span>
+          <span className={styles.statSub}>
+            {loading ? <span className={styles.skeletonStatSub} /> : "across all accounts"}
+          </span>
         </button>
       </div>
 
@@ -608,12 +685,14 @@ function Overview({
           <h2><Clock size={17} /> Waiting for review</h2>
           <span className={styles.muted}>Oldest first</span>
         </div>
-        {waiting.length === 0 ? (
+        {loading ? (
+          <TxTable rows={[]} showType loading />
+        ) : waiting.length === 0 ? (
           <Empty icon={<CheckCircle2 size={28} />} text="All caught up. Nothing is waiting for review." />
         ) : (
           <TxTable rows={waiting.slice(0, 8)} showType onReview={onReview} onPreview={onPreview} />
         )}
-        {waiting.length > 8 && (
+        {!loading && waiting.length > 8 && (
           <p className={styles.muted} style={{ marginTop: 12 }}>
             Showing 8 of {waiting.length}. Open Deposits or Withdrawals to see the rest.
           </p>
@@ -627,7 +706,9 @@ function Overview({
             View all
           </button>
         </div>
-        {transactions.length === 0 ? (
+        {loading ? (
+          <TxTable rows={[]} showType loading />
+        ) : transactions.length === 0 ? (
           <Empty icon={<ListOrdered size={28} />} text="No transactions yet." />
         ) : (
           <TxTable rows={transactions.slice(0, 6)} showType onPreview={onPreview} />
@@ -647,20 +728,31 @@ function TxSection({
   kind,
   onReview,
   onPreview,
+  loading = false,
 }: {
   pending: AdminTx[];
   history: AdminTx[];
   kind: "deposit" | "withdrawal";
   onReview: (tx: AdminTx, action: "approve" | "reject") => void;
   onPreview: (url: string) => void;
+  loading?: boolean;
 }) {
   return (
     <>
       <section className={styles.card}>
         <div className={styles.cardHead}>
-          <h2><Clock size={17} /> Waiting for review <span className={styles.countChip}>{pending.length}</span></h2>
+          <h2>
+            <Clock size={17} /> Waiting for review{" "}
+            {loading ? (
+              <span className={styles.skeletonBox} style={{ width: 24, height: 18, borderRadius: 10 }} />
+            ) : (
+              <span className={styles.countChip}>{pending.length}</span>
+            )}
+          </h2>
         </div>
-        {pending.length === 0 ? (
+        {loading ? (
+          <TxTable rows={[]} showType loading onPreview={onPreview} />
+        ) : pending.length === 0 ? (
           <Empty icon={<CheckCircle2 size={28} />} text={`No ${kind}s waiting for review.`} />
         ) : (
           <TxTable rows={pending} onReview={onReview} onPreview={onPreview} />
@@ -671,7 +763,9 @@ function TxSection({
         <div className={styles.cardHead}>
           <h2><ListOrdered size={17} /> History</h2>
         </div>
-        {history.length === 0 ? (
+        {loading ? (
+          <TxTable rows={[]} showType loading onPreview={onPreview} />
+        ) : history.length === 0 ? (
           <Empty icon={<ListOrdered size={28} />} text={`No processed ${kind}s yet.`} />
         ) : (
           <TxTable rows={history} onPreview={onPreview} />
@@ -681,7 +775,15 @@ function TxSection({
   );
 }
 
-function AllTransactions({ transactions, onPreview }: { transactions: AdminTx[]; onPreview: (url: string) => void }) {
+function AllTransactions({
+  transactions,
+  onPreview,
+  loading = false,
+}: {
+  transactions: AdminTx[];
+  onPreview: (url: string) => void;
+  loading?: boolean;
+}) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
@@ -720,7 +822,9 @@ function AllTransactions({ transactions, onPreview }: { transactions: AdminTx[];
           <option value="REJECTED">Rejected</option>
         </select>
       </div>
-      {rows.length === 0 ? (
+      {loading ? (
+        <TxTable rows={[]} showType loading onPreview={onPreview} />
+      ) : rows.length === 0 ? (
         <Empty icon={<Search size={28} />} text="No transactions match these filters." />
       ) : (
         <TxTable rows={rows} showType onPreview={onPreview} />
@@ -734,11 +838,13 @@ function TxTable({
   showType,
   onReview,
   onPreview,
+  loading = false,
 }: {
   rows: AdminTx[];
   showType?: boolean;
   onReview?: (tx: AdminTx, action: "approve" | "reject") => void;
-  onPreview: (url: string) => void;
+  onPreview?: (url: string) => void;
+  loading?: boolean;
 }) {
   return (
     <>
@@ -757,7 +863,26 @@ function TxTable({
           </tr>
         </thead>
         <tbody>
-          {rows.map((t) => (
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <tr key={i}>
+                <td><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
+                <td>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div className={styles.skeletonCell} style={{ width: 130 }} />
+                    <div className={styles.skeletonCell} style={{ width: 90 }} />
+                  </div>
+                </td>
+                {showType && <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>}
+                <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+              </tr>
+            ))
+          ) : (
+            rows.map((t) => (
             <tr key={t.id}>
               <td className={styles.mono}>{shortId(t.id)}</td>
               <td>
@@ -780,7 +905,7 @@ function TxTable({
               </td>
               <td>
                 {t.receiptUrl ? (
-                  <button type="button" className={styles.linkBtn} onClick={() => onPreview(t.receiptUrl!)}>
+                  <button type="button" className={styles.linkBtn} onClick={() => onPreview?.(t.receiptUrl!)}>
                     <Eye size={14} /> View
                   </button>
                 ) : t.txHash && !t.txHash.startsWith("PROOF_") && t.type === "DEPOSIT" ? (
@@ -807,14 +932,25 @@ function TxTable({
                 )}
               </td>
             </tr>
-          ))}
+          )))}
         </tbody>
       </table>
       </div>
 
       {/* Phone layout: one card per transaction */}
       <ul className={styles.cardList}>
-        {rows.map((t) => (
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <li key={i} className={styles.itemCard}>
+              <div className={styles.itemTop}>
+                <div className={styles.skeletonCell} style={{ width: 140 }} />
+                <div className={styles.skeletonCell} style={{ width: 60 }} />
+              </div>
+              <div className={styles.skeletonCell} style={{ width: "80%" }} />
+            </li>
+          ))
+        ) : (
+          rows.map((t) => (
           <li key={t.id} className={styles.itemCard}>
             <div className={styles.itemTop}>
               <div className={styles.userCell}>
@@ -831,7 +967,7 @@ function TxTable({
             </div>
             <div className={styles.itemBottom}>
               {t.receiptUrl ? (
-                <button type="button" className={styles.linkBtn} onClick={() => onPreview(t.receiptUrl!)}>
+                <button type="button" className={styles.linkBtn} onClick={() => onPreview?.(t.receiptUrl!)}>
                   <Eye size={14} /> View proof
                 </button>
               ) : (
@@ -851,7 +987,7 @@ function TxTable({
               )}
             </div>
           </li>
-        ))}
+        )))}
       </ul>
     </>
   );
@@ -862,10 +998,12 @@ function TxTable({
 /* ------------------------------------------------------------------ */
 
 function UsersSection({
+  loading,
   users,
   onChanged,
   flash,
 }: {
+  loading?: boolean;
   users: AdminUser[];
   onChanged: () => Promise<void>;
   flash: (k: "ok" | "error", t: string) => void;
@@ -1007,7 +1145,43 @@ function UsersSection({
           </label>
           <span className={styles.muted}>{rows.length} of {users.length}</span>
         </div>
-        {rows.length === 0 ? (
+        {loading ? (
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th className={styles.right}>Balance</th>
+                  <th className={styles.right}>Deposited</th>
+                  <th className={styles.right}>Withdrawn</th>
+                  <th>Joined</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div className={styles.skeletonCell} style={{ width: 140 }} />
+                        <div className={styles.skeletonCell} style={{ width: 100 }} />
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : rows.length === 0 ? (
           <Empty icon={<Users size={28} />} text="No users match your search." />
         ) : (
           <div className={styles.tableWrap}>

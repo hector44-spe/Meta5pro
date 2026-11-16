@@ -519,7 +519,13 @@ export default function SignalPage() {
             {/* Deposit Button */}
             <button
               className="signal-deposit-btn"
-              onClick={() => openModal("deposit")}
+              onClick={() => {
+                if (signals.length > 0) {
+                  handlePurchase(signals[0]);
+                } else {
+                  openModal("deposit");
+                }
+              }}
             >
               <CreditCard size={16} strokeWidth={2} />
               <p>Deposit</p>

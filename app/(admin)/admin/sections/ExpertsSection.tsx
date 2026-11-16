@@ -46,7 +46,13 @@ export default function ExpertsSection({
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/experts");
+      const res = await fetch("/api/admin/experts", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setCopiers(data.copiers || []);
@@ -63,6 +69,17 @@ export default function ExpertsSection({
 
   useEffect(() => {
     loadData();
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const handleRemoveCopier = (expertId: string, userId: string, userEmail: string) => {
@@ -159,14 +176,18 @@ export default function ExpertsSection({
           <div className={styles.statIcon} style={{ background: "rgba(71, 99, 240, 0.15)", color: "#7a94ff" }}>
             <Users size={18} />
           </div>
-          <div className={styles.statValue}>{copiers.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : copiers.length}
+          </div>
           <div className={styles.statLabel}>Active Copiers</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
             <Award size={18} />
           </div>
-          <div className={styles.statValue}>{experts.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : experts.length}
+          </div>
           <div className={styles.statLabel}>Trading Experts</div>
         </div>
         <div className={styles.statCard}>
@@ -174,7 +195,11 @@ export default function ExpertsSection({
             <DollarSign size={18} />
           </div>
           <div className={styles.statValue}>
-            {usd(copiers.reduce((acc, c) => acc + (c.userBalance || 0), 0))}
+            {loading ? (
+              <span className={styles.skeletonStatVal} />
+            ) : (
+              usd(copiers.reduce((acc, c) => acc + (c.userBalance || 0), 0))
+            )}
           </div>
           <div className={styles.statLabel}>Total Copier Balance</div>
         </div>
@@ -183,7 +208,11 @@ export default function ExpertsSection({
             <TrendingUp size={18} />
           </div>
           <div className={styles.statValue}>
-            {experts.reduce((acc, e) => acc + (Number(e.followers) || 0), 0).toLocaleString()}
+            {loading ? (
+              <span className={styles.skeletonStatVal} />
+            ) : (
+              experts.reduce((acc, e) => acc + (Number(e.followers) || 0), 0).toLocaleString()
+            )}
           </div>
           <div className={styles.statLabel}>Total Followers</div>
         </div>
@@ -221,12 +250,22 @@ export default function ExpertsSection({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    <Loader2 size={20} className={styles.spin} style={{ display: "inline-block", marginRight: 8 }} />
-                    Loading copiers...
-                  </td>
-                </tr>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div className={styles.skeletonCell} style={{ width: 130 }} />
+                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
               ) : filteredCopiers.length === 0 ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
@@ -324,7 +363,33 @@ export default function ExpertsSection({
               </tr>
             </thead>
             <tbody>
-              {experts.map((exp) => (
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div className={styles.skeletonCell} style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div className={styles.skeletonCell} style={{ width: 110 }} />
+                          <div className={styles.skeletonCell} style={{ width: 70 }} />
+                        </div>
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
+              ) : experts.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
+                    No experts in catalog. Click Add Expert to create one.
+                  </td>
+                </tr>
+              ) : experts.map((exp) => (
                 <tr key={exp.id || exp.ref}>
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

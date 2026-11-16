@@ -66,7 +66,13 @@ export default function TradesSection({
   const loadTrades = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/trades");
+      const res = await fetch("/api/admin/trades", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setTrades(data.positions || []);
@@ -82,6 +88,17 @@ export default function TradesSection({
 
   useEffect(() => {
     loadTrades();
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadTrades();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const handleSaveTrade = async () => {
@@ -263,21 +280,27 @@ export default function TradesSection({
           <div className={styles.statIcon} style={{ background: "rgba(71, 99, 240, 0.15)", color: "#7a94ff" }}>
             <TrendingUp size={18} />
           </div>
-          <div className={styles.statValue}>{trades.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : trades.length}
+          </div>
           <div className={styles.statLabel}>Total Trades</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
             <CheckCircle2 size={18} />
           </div>
-          <div className={styles.statValue}>{trades.filter((t) => t.status === "OPEN").length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : trades.filter((t) => t.status === "OPEN").length}
+          </div>
           <div className={styles.statLabel}>Open Positions</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(245, 165, 36, 0.15)", color: "#fbbf24" }}>
             <DollarSign size={18} />
           </div>
-          <div className={styles.statValue}>{usd(totalVolume)}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : usd(totalVolume)}
+          </div>
           <div className={styles.statLabel}>Total Trading Volume</div>
         </div>
         <div className={styles.statCard}>
@@ -285,7 +308,13 @@ export default function TradesSection({
             <Layers size={18} />
           </div>
           <div className={styles.statValue} style={{ color: totalPnL >= 0 ? "#34d399" : "#ff7a87" }}>
-            {totalPnL >= 0 ? `+${usd(totalPnL)}` : `-${usd(Math.abs(totalPnL))}`}
+            {loading ? (
+              <span className={styles.skeletonStatVal} />
+            ) : totalPnL >= 0 ? (
+              `+${usd(totalPnL)}`
+            ) : (
+              `-${usd(Math.abs(totalPnL))}`
+            )}
           </div>
           <div className={styles.statLabel}>Net User PnL</div>
         </div>
@@ -366,12 +395,25 @@ export default function TradesSection({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={10} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    <Loader2 size={20} className={styles.spin} style={{ display: "inline-block", marginRight: 8 }} />
-                    Loading trades...
-                  </td>
-                </tr>
+                Array.from({ length: 4 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div className={styles.skeletonCell} style={{ width: 130 }} />
+                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 35 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 80, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
               ) : filteredTrades.length === 0 ? (
                 <tr>
                   <td colSpan={10} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>

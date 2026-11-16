@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -72,11 +73,20 @@ export async function GET() {
       signals = setting.value as unknown as AdminSignalItem[];
     }
 
-    return NextResponse.json({
-      success: true,
-      purchases,
-      signals,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        purchases,
+        signals,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Fetch admin signals error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

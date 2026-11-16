@@ -38,7 +38,13 @@ export default function CardsSection({
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/cards");
+      const res = await fetch("/api/admin/cards", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setCardOptions(data.cardOptions || []);
@@ -55,6 +61,17 @@ export default function CardsSection({
 
   useEffect(() => {
     loadData();
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const handleSaveOption = async () => {
@@ -121,14 +138,18 @@ export default function CardsSection({
           <div className={styles.statIcon} style={{ background: "rgba(71, 99, 240, 0.15)", color: "#7a94ff" }}>
             <Layers size={18} />
           </div>
-          <div className={styles.statValue}>{cardOptions.length}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : cardOptions.length}
+          </div>
           <div className={styles.statLabel}>Available Card Tiers</div>
         </div>
         <div className={styles.statCard}>
           <div className={styles.statIcon} style={{ background: "rgba(16, 185, 129, 0.15)", color: "#34d399" }}>
             <CreditCard size={18} />
           </div>
-          <div className={styles.statValue}>{totalCardsIssued}</div>
+          <div className={styles.statValue}>
+            {loading ? <span className={styles.skeletonStatVal} /> : totalCardsIssued}
+          </div>
           <div className={styles.statLabel}>Total Cards Issued</div>
         </div>
         <div className={styles.statCard}>
@@ -143,7 +164,11 @@ export default function CardsSection({
             <ShieldCheck size={18} />
           </div>
           <div className={styles.statValue}>
-            {cardOptions.filter((c) => c.kycRequired).length}
+            {loading ? (
+              <span className={styles.skeletonStatVal} />
+            ) : (
+              cardOptions.filter((c) => c.kycRequired).length
+            )}
           </div>
           <div className={styles.statLabel}>KYC Protected Tiers</div>
         </div>
@@ -188,12 +213,21 @@ export default function CardsSection({
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    <Loader2 size={20} className={styles.spin} style={{ display: "inline-block", marginRight: 8 }} />
-                    Loading card options...
-                  </td>
-                </tr>
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i}>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div className={styles.skeletonCell} style={{ width: 120 }} />
+                        <div className={styles.skeletonCell} style={{ width: 70 }} />
+                      </div>
+                    </td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                  </tr>
+                ))
               ) : cardOptions.length === 0 ? (
                 <tr>
                   <td colSpan={6} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>

@@ -467,6 +467,35 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <Settings size={22} />
               <span>Settings</span>
             </button>
+            <button
+              className="dashboard-mobile-grid-item"
+              onClick={() => {
+                fetchNotifications();
+                setActiveModal("notifications");
+                setMobileSidebarOpen(false);
+              }}
+              style={{ position: "relative" }}
+            >
+              <Bell size={22} />
+              <span>Notifications</span>
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "6px",
+                    right: "14px",
+                    background: "#4763f0",
+                    color: "#ffffff",
+                    borderRadius: "10px",
+                    padding: "1px 6px",
+                    fontSize: "10.5px",
+                    fontWeight: 700,
+                  }}
+                >
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
             <Link
               href="/cold-storage"
               className={`dashboard-mobile-grid-item ${pathname.startsWith("/cold-storage") ? "active" : ""}`}
@@ -771,6 +800,63 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     color={activeModal === "settings" ? "#4763f0" : "currentColor"}
                   />
                   <span>Settings</span>
+                </button>
+
+                {/* Notifications Sidebar Button */}
+                <button
+                  onClick={() => {
+                    fetchNotifications();
+                    setActiveModal("notifications");
+                  }}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    backgroundColor:
+                      activeModal === "notifications"
+                        ? "var(--color-control-active, rgba(255, 255, 255, 0.075))"
+                        : "transparent",
+                    boxShadow:
+                      activeModal === "notifications"
+                        ? "inset 0 0 0 1px rgba(255, 255, 255, 0.05)"
+                        : "none",
+                    color:
+                      activeModal === "notifications"
+                        ? "#ffffff"
+                        : "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                    fontSize: "13.5px",
+                    fontWeight: activeModal === "notifications" ? 600 : 500,
+                    border: "none",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <Bell
+                      size={17}
+                      strokeWidth={1.5}
+                      color={activeModal === "notifications" ? "#4763f0" : "currentColor"}
+                    />
+                    <span>Notifications</span>
+                  </div>
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        background: "#4763f0",
+                        color: "#ffffff",
+                        borderRadius: "10px",
+                        padding: "1px 7px",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
                 </button>
 
                 {/* Admin Control Panel Manage Button (Admins Only) */}
@@ -1262,27 +1348,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   aria-label="Open navigation"
                 >
                   <Menu size={22} color="#ffffff" strokeWidth={2} />
-                  {unreadCount > 0 && (
-                  <span
-                    style={{
-                      position: "absolute",
-                      top: "-2px",
-                      right: "-2px",
-                      background: "#ff3344",
-                      color: "#ffffff",
-                      borderRadius: "50%",
-                      width: "15px",
-                      height: "15px",
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                  )}
                 </button>
               </div>
 
@@ -1491,20 +1556,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     </div>
                   )}
                 </div>
-
-                {/* Notifications Bell */}
-                <button
-                  onClick={() => {
-                    fetchNotifications();
-                    setActiveModal("notifications");
-                  }}
-                  className="tp-header-btn dashboard-header-bell"
-                  title="Notifications"
-                  aria-label="Notifications"
-                >
-                  <Bell size={18} color="#ffffff" />
-                  {unreadCount > 0 && <span className="tp-bell-badge">{unreadCount > 9 ? "9+" : unreadCount}</span>}
-                </button>
 
                 {/* User Avatar with Profile Dropdown (Matches Image 1) */}
                 <div style={{ position: "relative" }} ref={profileDropdownRef}>

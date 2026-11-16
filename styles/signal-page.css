@@ -2,23 +2,46 @@
    Signal Page Styles - Exact MetaGold 5 Replica
    ========================================================================== */
 
+.signal-deposit-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .signal-deposit-modal-dialog {
   width: 100%;
   max-width: 480px;
   background-color: #0f1216;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
   padding: 24px;
-  max-height: 92vh;
+  max-height: min(92vh, calc(100dvh - 24px));
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box;
+  margin: auto;
 }
 
 @media (max-width: 480px) {
+  .signal-deposit-modal-backdrop {
+    padding: 12px 10px !important;
+    align-items: flex-start !important;
+  }
   .signal-deposit-modal-dialog {
-    padding: 16px 14px !important;
-    border-radius: 12px !important;
+    padding: 16px 14px 24px !important;
+    border-radius: 14px !important;
+    max-height: calc(100dvh - 24px) !important;
+    margin: auto 0 !important;
   }
 }
 

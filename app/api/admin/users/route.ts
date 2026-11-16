@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
@@ -26,10 +27,19 @@ export async function GET() {
       totalWithdrawn: wallet?.totalWithdrawn.toNumber() ?? 0,
     }));
 
-    return NextResponse.json({
-      success: true,
-      users,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        users,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Fetch admin users error:", error);
     return NextResponse.json(

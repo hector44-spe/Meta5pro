@@ -8,10 +8,13 @@
   z-index: 10000;
   background-color: rgba(0, 0, 0, 0.78);
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: dmFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -572,22 +575,49 @@
 
 @media (max-width: 480px) {
   .dm-backdrop {
-    padding: 8px !important;
+    padding: 10px 8px !important;
+    align-items: flex-start !important;
   }
   .dm-card {
-    padding: 16px 14px !important;
-    border-radius: 12px !important;
-    max-height: 92vh !important;
+    padding: 16px 14px 22px !important;
+    border-radius: 14px !important;
+    max-height: calc(100dvh - 20px) !important;
     overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin: auto 0 !important;
+    box-sizing: border-box !important;
   }
   .dm-title {
     font-size: 16px !important;
+  }
+  .dm-limits-box {
+    margin: 10px 0 !important;
+    gap: 8px !important;
+  }
+  .dm-form-group {
+    margin-bottom: 12px !important;
+  }
+  .dm-upload-dropzone {
+    padding: 12px !important;
+  }
+  .dm-total-value-row {
+    margin: 10px 0 16px 0 !important;
+  }
+  .dm-primary-btn {
+    height: 44px !important;
+    min-height: 44px !important;
+  }
+  .dm-stepper {
+    margin-bottom: 14px !important;
+  }
+  .dm-step-item {
+    padding-bottom: 12px !important;
   }
   .dm-input-row {
     padding: 8px 10px !important;
   }
   .dm-qr-box {
-    width: 140px !important;
-    height: 140px !important;
+    width: 130px !important;
+    height: 130px !important;
   }
 }

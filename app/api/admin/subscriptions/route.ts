@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -86,22 +87,31 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({
-      success: true,
-      plans,
-      investments: investments.map((inv) => ({
-        id: inv.id,
-        userId: inv.userId,
-        userEmail: inv.user?.email || "Unknown",
-        userFullName: inv.user?.fullName || inv.user?.username || "Investor",
-        planName: inv.plan?.name || "Subscription",
-        amount: Number(inv.amount),
-        accruedProfit: Number(inv.accruedProfit),
-        daysRemaining: inv.daysRemaining,
-        status: inv.status,
-        createdAt: inv.createdAt.toISOString(),
-      })),
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        plans,
+        investments: investments.map((inv) => ({
+          id: inv.id,
+          userId: inv.userId,
+          userEmail: inv.user?.email || "Unknown",
+          userFullName: inv.user?.fullName || inv.user?.username || "Investor",
+          planName: inv.plan?.name || "Subscription",
+          amount: Number(inv.amount),
+          accruedProfit: Number(inv.accruedProfit),
+          daysRemaining: inv.daysRemaining,
+          status: inv.status,
+          createdAt: inv.createdAt.toISOString(),
+        })),
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (error) {
     console.error("Fetch admin subscriptions error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

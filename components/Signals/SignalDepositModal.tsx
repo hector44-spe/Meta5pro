@@ -83,7 +83,13 @@ export default function SignalDepositModal({
   const fetchAddresses = async () => {
     setLoadingAddresses(true);
     try {
-      const res = await fetch("/api/settings/addresses");
+      const res = await fetch("/api/settings/addresses", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         const combined = [
@@ -204,24 +210,11 @@ export default function SignalDepositModal({
 
   return (
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        backdropFilter: "blur(4px)",
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px",
-      }}
+      className="signal-deposit-modal-backdrop"
       onClick={onClose}
     >
       <div
         className="signal-deposit-modal-dialog"
-        style={{
-          boxSizing: "border-box",
-        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -298,20 +291,37 @@ export default function SignalDepositModal({
           style={{
             display: "flex",
             alignItems: "flex-start",
-            gap: "8px",
+            gap: "10px",
             backgroundColor: "rgba(52, 211, 153, 0.08)",
-            border: "1px solid rgba(52, 211, 153, 0.2)",
-            borderRadius: "8px",
+            border: "1px solid rgba(52, 211, 153, 0.22)",
+            borderRadius: "10px",
             padding: "10px 12px",
             marginBottom: "18px",
-            fontSize: "12px",
-            color: "#d1fae5",
           }}
         >
-          <ShieldCheck size={16} color="#34d399" style={{ flexShrink: 0, marginTop: "2px" }} />
-          <span>
-            Signals must be purchased via a <strong>fresh deposit</strong>. This payment is kept independent and will not deduct from your wallet balance.
-          </span>
+          <ShieldCheck size={18} color="#34d399" style={{ flexShrink: 0, marginTop: "1px" }} />
+          <p
+            style={{
+              margin: 0,
+              fontSize: "12px",
+              lineHeight: 1.55,
+              color: "#d1fae5",
+              flex: 1,
+            }}
+          >
+            Signals must be purchased via a{" "}
+            <span
+              style={{
+                color: "#34d399",
+                fontWeight: 700,
+                textDecoration: "none",
+                display: "inline",
+              }}
+            >
+              fresh deposit
+            </span>
+            . This payment is kept independent and will not deduct from your wallet balance.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -412,14 +422,16 @@ export default function SignalDepositModal({
             </div>
             <div
               style={{
-                fontFamily: "monospace",
-                fontSize: "12.5px",
-                color: "#fff",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                fontSize: "clamp(10.5px, 3.2vw, 12px)",
+                color: "#ffffff",
                 wordBreak: "break-all",
                 backgroundColor: "rgba(255, 255, 255, 0.03)",
-                padding: "8px 10px",
-                borderRadius: "6px",
-                border: "1px solid rgba(255, 255, 255, 0.04)",
+                padding: "10px 12px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                letterSpacing: "-0.01em",
+                lineHeight: 1.45,
               }}
             >
               {loadingAddresses ? "Loading deposit address..." : activeAddress?.address || "Address available on confirmation"}
@@ -524,16 +536,23 @@ export default function SignalDepositModal({
             </div>
           )}
 
-          <div style={{ display: "flex", gap: "10px", marginTop: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              marginTop: "20px",
+              paddingBottom: "4px",
+            }}
+          >
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
               style={{
-                flex: 1,
-                padding: "12px",
+                flex: "0 0 35%",
+                minHeight: "44px",
                 borderRadius: "10px",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
                 backgroundColor: "#1e2229",
                 color: "#fff",
                 fontSize: "13.5px",
@@ -547,8 +566,8 @@ export default function SignalDepositModal({
               type="submit"
               disabled={submitting}
               style={{
-                flex: 2,
-                padding: "12px",
+                flex: "1 1 auto",
+                minHeight: "44px",
                 borderRadius: "10px",
                 border: "none",
                 backgroundColor: "#4F6BFF",
@@ -565,10 +584,10 @@ export default function SignalDepositModal({
               {submitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Submitting Deposit...</span>
+                  <span>Submitting...</span>
                 </>
               ) : (
-                <span>Confirm & Submit Deposit</span>
+                <span>Confirm &amp; Submit</span>
               )}
             </button>
           </div>

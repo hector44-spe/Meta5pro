@@ -162,7 +162,13 @@ export default function DepositAddressSection({
   const loadData = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/settings/addresses");
+      const res = await fetch("/api/admin/settings/addresses", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         setAddresses(data.addresses || []);
@@ -180,6 +186,17 @@ export default function DepositAddressSection({
 
   useEffect(() => {
     loadData();
+    const handleFocus = () => {
+      if (document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
   }, []);
 
   const handleToggleSameAddress = async () => {
@@ -358,10 +375,13 @@ export default function DepositAddressSection({
         )}
         <div className="dep_list">
           {loading ? (
-            <div style={{ textAlign: "center", padding: "28px", color: "rgba(255,255,255,0.4)" }}>
-              <Loader2 size={20} className="spin" style={{ display: "inline-block", marginRight: 8 }} />
-              Loading addresses...
-            </div>
+            Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="dep_row" style={{ opacity: 0.7 }}>
+                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,255,255,0.08)" }} />
+                <div style={{ flex: 1, height: 16, borderRadius: 4, background: "rgba(255,255,255,0.08)" }} />
+                <div style={{ width: 70, height: 22, borderRadius: 6, background: "rgba(255,255,255,0.06)" }} />
+              </div>
+            ))
           ) : addresses.length === 0 ? (
             <div style={{ textAlign: "center", padding: "24px", color: "rgba(255,255,255,0.4)" }}>
               No deposit addresses configured. Add one below.
