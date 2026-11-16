@@ -25,6 +25,10 @@ import {
   Key,
   Contact,
   ShieldCheck,
+  SquarePen,
+  Gem,
+  Sparkles,
+  Star,
 } from "lucide-react";
 import "@/styles/app-forms.css";
 import "@/styles/admin-settings.css";

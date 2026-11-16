@@ -26,7 +26,7 @@
   color: var(--a-text);
   font-size: 14px;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
   box-sizing: border-box;
 }
 
@@ -238,7 +238,28 @@
   flex-direction: column;
   gap: 20px;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: clip;
+}
+
+.sectionWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  animation: aSectionFadeIn 0.15s ease-out;
+}
+
+@keyframes aSectionFadeIn {
+  from {
+    opacity: 0.9;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ---------------- Skeletons & Polished Loading ---------------- */
@@ -478,6 +499,7 @@
   padding: 0 4px;
   position: relative;
   clear: both;
+  min-height: 160px;
 }
 .table {
   width: 100%;
@@ -987,7 +1009,7 @@
 
 /* ---------------- Phone card lists (replace tables under 640px) ---------------- */
 .cardList {
-  display: none;
+  display: none !important;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -1058,10 +1080,10 @@
     min-width: 600px;
   }
   .card:has(.cardList) .tableWrap {
-    display: none;
+    display: none !important;
   }
   .cardList {
-    display: flex;
+    display: flex !important;
   }
   .cardHead {
     flex-direction: column !important;

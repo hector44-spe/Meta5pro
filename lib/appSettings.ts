@@ -42,6 +42,79 @@ export const SETTING_GROUPS = {
     }),
     defaults: { useMinerPictures: true },
   },
+  referrals: {
+    schema: z.object({
+      usePercentage: z.boolean(),
+      percentage: z.number().min(0).max(100),
+    }),
+    defaults: { usePercentage: true, percentage: 40 },
+  },
+  cards: {
+    schema: z.object({
+      kycRequired: z.boolean(),
+      issuanceFee: z.number().nonnegative(),
+      minDepositTotal: z.number().nonnegative(),
+    }),
+    defaults: { kycRequired: true, issuanceFee: 1000, minDepositTotal: 50000 },
+  },
+  levels: {
+    schema: z.object({
+      levels: z.array(
+        z.object({
+          id: z.string(),
+          name: z.string(),
+          minBalance: z.string(),
+          profitLimit: z.string(),
+          iconType: z.string(),
+          color: z.string(),
+        })
+      ),
+    }),
+    defaults: {
+      levels: [
+        {
+          id: "bronze",
+          name: "Bronze",
+          minBalance: "$300,000",
+          profitLimit: "No Limit",
+          iconType: "diamond",
+          color: "#d97706",
+        },
+        {
+          id: "starter",
+          name: "Starter",
+          minBalance: "$15,000",
+          profitLimit: "$15,000",
+          iconType: "diamond",
+          color: "#94a3b8",
+        },
+        {
+          id: "vip",
+          name: "VIP",
+          minBalance: "Unlimited",
+          profitLimit: "No Limit",
+          iconType: "gem",
+          color: "#9333ea",
+        },
+        {
+          id: "silver",
+          name: "Silver",
+          minBalance: "$500,000",
+          profitLimit: "No Limit",
+          iconType: "sparkle",
+          color: "#cbd5e1",
+        },
+        {
+          id: "gold",
+          name: "Gold",
+          minBalance: "$1,000,000",
+          profitLimit: "No Limit",
+          iconType: "star",
+          color: "#eab308",
+        },
+      ],
+    },
+  },
 } as const;
 
 export type SettingGroup = keyof typeof SETTING_GROUPS;
@@ -50,6 +123,9 @@ export type DepositSettings = z.infer<(typeof SETTING_GROUPS)["deposit"]["schema
 export type WithdrawalSettings = z.infer<(typeof SETTING_GROUPS)["withdrawal"]["schema"]>;
 export type CopyExpertsSettings = z.infer<(typeof SETTING_GROUPS)["copyExperts"]["schema"]>;
 export type MiningSettings = z.infer<(typeof SETTING_GROUPS)["mining"]["schema"]>;
+export type ReferralsSettings = z.infer<(typeof SETTING_GROUPS)["referrals"]["schema"]>;
+export type CardsSettings = z.infer<(typeof SETTING_GROUPS)["cards"]["schema"]>;
+export type LevelsSettings = z.infer<(typeof SETTING_GROUPS)["levels"]["schema"]>;
 
 export function isSettingGroup(g: string): g is SettingGroup {
   return Object.prototype.hasOwnProperty.call(SETTING_GROUPS, g);

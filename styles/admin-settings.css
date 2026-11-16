@@ -427,3 +427,75 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Level Cards */
+.as-level-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: #25282e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.as-level-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.as-level-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.as-level-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.as-level-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+}
+.as-level-edit-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: #4763f0 !important;
+  color: #ffffff !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0 !important;
+  transition: background 0.15s ease;
+}
+.as-level-edit-btn:hover {
+  background: #3b57e8 !important;
+}
+.as-level-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.as-level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.as-level-row-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+.as-level-row-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+}

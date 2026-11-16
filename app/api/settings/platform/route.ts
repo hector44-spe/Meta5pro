@@ -4,18 +4,27 @@ import { getSettings } from "@/lib/appSettings";
 
 /** Public platform flags the investor UI needs (no admin-only data). */
 export async function GET() {
-  const [general, deposit, withdrawal, copyExperts, mining] = await Promise.all([
+  const [general, deposit, withdrawal, copyExperts, mining, referrals, cards, levels] = await Promise.all([
     getSettings("general"),
     getSettings("deposit"),
     getSettings("withdrawal"),
     getSettings("copyExperts"),
     getSettings("mining"),
+    getSettings("referrals"),
+    getSettings("cards"),
+    getSettings("levels"),
   ]);
 
   return NextResponse.json({
     success: true,
     verificationRequired: general.lockVerification,
-    cards: { regular: general.allowRegularCard, virtual: general.allowVirtualCard },
+    cards: {
+      regular: general.allowRegularCard,
+      virtual: general.allowVirtualCard,
+      kycRequired: cards.kycRequired,
+      issuanceFee: cards.issuanceFee,
+      minDepositTotal: cards.minDepositTotal,
+    },
     deposit: { minDeposit: deposit.minDeposit, maxDeposit: deposit.maxDeposit },
     withdrawal: {
       minWithdrawal: withdrawal.minWithdrawal,
@@ -25,5 +34,7 @@ export async function GET() {
     },
     copyExperts: { lockCopyExpertsPage: copyExperts.lockCopyExpertsPage },
     mining: { useMinerPictures: mining.useMinerPictures },
+    referrals: { usePercentage: referrals.usePercentage, percentage: referrals.percentage },
+    levels: levels.levels,
   });
 }
