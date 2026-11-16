@@ -386,9 +386,9 @@ export default function DashboardPage() {
 
     const heldMap = new Map<string, { units: number; usd: number }>();
 
-    // 1. From wallet holdings (approved deposits, conversions)
+    // 1. From wallet holdings (strictly approved deposits, conversions, bought assets)
     for (const h of holdings) {
-      const u = h.units > 0 ? h.units : (h.pendingUnits || 0);
+      const u = h.units; // Only approved units; do not add unapproved pending deposits
       if (u > 0) {
         const p = prices[h.symbol] ?? h.price ?? 0;
         heldMap.set(h.symbol.toUpperCase(), { units: u, usd: u * p });
@@ -801,30 +801,31 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ===================== UPPER SECTION (MainCard) ===================== */}
+      {/* ===================== UPPER SECTION (MainCard: Matches Image 1) ===================== */}
       <div
         className="dashboard-upper-grid dashboard-maincard-grid"
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 440px",
-          gap: "8px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
           width: "100%",
           boxSizing: "border-box",
         }}
       >
-        {/* LEFT COLUMN: Balance Card + Categories Card (Image 4) */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", width: "100%" }}>
-          <div
-            style={{
-              backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
-              borderRadius: "12px",
-              padding: "18px 20px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              boxSizing: "border-box",
-            }}
-          >
+        {/* Full-width Balance & Top Assets Card (Image 1) */}
+        <div
+          style={{
+            backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
+            borderRadius: "12px",
+            padding: "20px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "18px",
+            boxSizing: "border-box",
+            border: "1px solid rgba(255, 255, 255, 0.04)",
+            width: "100%",
+          }}
+        >
           {/* Balance Top Header */}
           <div
             style={{
@@ -846,7 +847,7 @@ export default function DashboardPage() {
                   fontWeight: 500,
                 }}
               >
-                <span>Total balance</span>
+                <span>Total Balance</span>
                 <button
                   onClick={() => setHideBalance(!hideBalance)}
                   style={{
@@ -872,7 +873,7 @@ export default function DashboardPage() {
                   lineHeight: 1.1,
                 }}
               >
-                {hideBalance ? "••••••" : !balanceLoaded ? "…" : formatMoney(currentBalance)}
+                {hideBalance ? "••••••" : !balanceLoaded ? "…" : currentBalance === 0 ? "$0" : formatMoney(currentBalance)}
               </div>
             </div>
 
@@ -1071,14 +1072,14 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Desktop Top Assets Table */}
+          {/* Top Assets Table (Image 1) */}
           <div className="balance-card-desktop-assets">
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: "10px",
+                marginBottom: "12px",
               }}
             >
               <div
@@ -1088,13 +1089,13 @@ export default function DashboardPage() {
                   color: "#ffffff",
                 }}
               >
-                Top assets
+                Top Assets
               </div>
               <Link
                 href="/assets"
                 style={{
                   fontSize: "12.5px",
-                  color: "#4763f0",
+                  color: "#3861fb",
                   fontWeight: 500,
                   textDecoration: "none",
                   display: "flex",
@@ -1116,7 +1117,7 @@ export default function DashboardPage() {
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "8px 10px",
+                    padding: "10px 10px",
                     borderRadius: "8px",
                     transition: "background 0.15s ease",
                     cursor: "pointer",
@@ -1132,7 +1133,7 @@ export default function DashboardPage() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
+                      gap: "12px",
                     }}
                   >
                     <AssetBrandIcon symbol={asset.symbol} size={28} />
@@ -1183,14 +1184,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Desktop Categories Card (Image 4: Located below Balance & Top Assets on Left Column) */}
+        {/* Categories Section (Image 1: Positioned below Main Card) */}
         <div
           className="dashboard-desktop-categories-card"
           style={{
-            backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
-            borderRadius: "12px",
-            padding: "16px 20px",
+            padding: "8px 4px 12px 4px",
             boxSizing: "border-box",
+            width: "100%",
           }}
         >
           <div
@@ -1198,187 +1198,110 @@ export default function DashboardPage() {
               fontSize: "14px",
               fontWeight: 600,
               color: "#ffffff",
-              marginBottom: "12px",
+              marginBottom: "8px",
             }}
           >
-            Portfolio Categories
+            Categories
           </div>
 
-          {/* Visual allocation bar */}
-          <div
-            style={{
-              display: "flex",
-              height: "8px",
-              borderRadius: "4px",
-              overflow: "hidden",
-              gap: "2px",
-              marginBottom: "14px",
-              backgroundColor: "rgba(255, 255, 255, 0.05)",
-            }}
-          >
-            {categoriesData.map((cat, idx) => (
-              <div
-                key={idx}
+          {/* If no categories yet or balance is 0, display Image 1 exact empty state */}
+          {categoriesData.every((c) => c.value === 0) || (currentBalance === 0 && assetsList.every((a) => a.usdNum === 0)) ? (
+            <div
+              style={{
+                fontSize: "13px",
+                color: "rgba(255, 255, 255, 0.65)",
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: "4px",
+              }}
+            >
+              <span>No categories yet.</span>
+              <button
+                type="button"
+                onClick={() => openModal("deposit")}
                 style={{
-                  width: `${Math.max(cat.pct, cat.value > 0 ? 6 : 0)}%`,
-                  backgroundColor: cat.color,
-                  transition: "width 0.3s ease",
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: "#3861fb",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontSize: "inherit",
                 }}
-                title={`${cat.name}: ${cat.pct}%`}
-              />
-            ))}
-          </div>
-
-          <div style={{ display: "grid", gap: "8px" }}>
-            {categoriesData.map((cat, idx) => (
+              >
+                Deposit now
+              </button>
+              <span>to see your portfolio breakdown.</span>
+            </div>
+          ) : (
+            <div>
+              {/* Visual allocation bar */}
               <div
-                key={idx}
                 style={{
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "8px 10px",
-                  backgroundColor: "rgba(255, 255, 255, 0.03)",
-                  borderRadius: "8px",
-                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                  height: "8px",
+                  borderRadius: "4px",
+                  overflow: "hidden",
+                  gap: "2px",
+                  marginBottom: "14px",
+                  backgroundColor: "rgba(255, 255, 255, 0.05)",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {categoriesData.map((cat, idx) => (
                   <div
+                    key={idx}
                     style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
+                      width: `${Math.max(cat.pct, cat.value > 0 ? 6 : 0)}%`,
                       backgroundColor: cat.color,
+                      transition: "width 0.3s ease",
                     }}
+                    title={`${cat.name}: ${cat.pct}%`}
                   />
-                  <span style={{ fontSize: "12.5px", fontWeight: 500, color: "#ffffff" }}>
-                    {cat.name}
-                  </span>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#ffffff" }}>
-                    ${cat.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </span>
-                  <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.45)", width: "32px", textAlign: "right" }}>
-                    {cat.pct}%
-                  </span>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
 
-      {/* RIGHT COLUMN: Desktop Trading Progress & Signal Strength (Image 2) */}
-      <div
-        className="dashboard-desktop-trading-stats-card"
-        style={{
-          backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
-          borderRadius: "12px",
-          padding: "18px 20px",
-          display: "flex",
-          flexDirection: "column",
-          gap: "18px",
-          boxSizing: "border-box",
-          height: "fit-content",
-        }}
-      >
-        {/* Trading progress & Signal strength */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px", width: "100%" }}>
-          {/* Trading progress */}
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "8px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "12.5px",
-                  color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                  fontWeight: 500,
-                }}
-              >
-                Trading progress
-              </span>
-              <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#fff" }}>
-                0%
-              </span>
+              <div style={{ display: "grid", gap: "8px" }}>
+                {categoriesData.map((cat, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "8px 10px",
+                      backgroundColor: "rgba(255, 255, 255, 0.03)",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(255, 255, 255, 0.05)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <div
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          backgroundColor: cat.color,
+                        }}
+                      />
+                      <span style={{ fontSize: "12.5px", fontWeight: 500, color: "#ffffff" }}>
+                        {cat.name}
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#ffffff" }}>
+                        ${cat.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                      <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.45)", width: "32px", textAlign: "right" }}>
+                        {cat.pct}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div
-              style={{
-                width: "100%",
-                height: "4px",
-                borderRadius: "2px",
-                backgroundColor: "rgba(255, 255, 255, 0.06)",
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "#01b28b",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Signal strength (15 red segments) */}
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "8px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "12.5px",
-                  color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                  fontWeight: 500,
-                }}
-              >
-                Signal strength
-              </span>
-              <span
-                style={{
-                  fontSize: "12.5px",
-                  fontWeight: 600,
-                  color: "#ff3344",
-                }}
-              >
-                0%
-              </span>
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(15, 1fr)",
-                gap: "4px",
-                height: "7px",
-              }}
-            >
-              {Array.from({ length: 15 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    height: "100%",
-                    borderRadius: "2px",
-                    backgroundColor: "#ef4444",
-                  }}
-                />
-              ))}
-            </div>
-          </div>
+          )}
         </div>
-      </div>
       </div>
 
       {/* ===================== MOBILE CARD 2: TABBED CARD (Top Assets | Overview | Categories) ===================== */}

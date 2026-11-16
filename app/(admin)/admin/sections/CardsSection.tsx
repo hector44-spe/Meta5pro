@@ -200,32 +200,32 @@ export default function CardsSection({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ minWidth: "750px" }}>
             <thead>
               <tr>
-                <th>Tier Name</th>
-                <th>Issuance Fee</th>
-                <th>Deposit Minimum</th>
-                <th>KYC Verification</th>
-                <th>Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "160px" }}>Tier Name</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Issuance Fee</th>
+                <th className={styles.right} style={{ minWidth: "130px" }}>Deposit Minimum</th>
+                <th style={{ minWidth: "120px" }}>KYC Verification</th>
+                <th style={{ minWidth: "90px" }}>Status</th>
+                <th style={{ minWidth: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
-                    <td>
+                    <td style={{ minWidth: "160px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 120 }} />
                         <div className={styles.skeletonCell} style={{ width: 70 }} />
                       </div>
                     </td>
-                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "130px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td style={{ minWidth: "110px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : cardOptions.length === 0 ? (

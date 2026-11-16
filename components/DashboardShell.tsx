@@ -1328,7 +1328,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           <header className="dashboard-header-container">
             <div className="dashboard-header-wrapper">
               {/* Breadcrumb / Mobile trigger */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 {/* Mobile menu button: shown on mobile/tablet viewports */}
                 <button
                   type="button"
@@ -1349,6 +1349,41 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 >
                   <Menu size={22} color="#ffffff" strokeWidth={2} />
                 </button>
+
+                <div
+                  className="dashboard-header-title-badge"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "#ffffff",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                  }}
+                >
+                  <House size={18} color="rgba(255, 255, 255, 0.85)" strokeWidth={2} />
+                  <span>
+                    {pathname.startsWith("/cold-storage")
+                      ? "Cold storage"
+                      : pathname.startsWith("/signals")
+                      ? "Signals"
+                      : pathname.startsWith("/copy-trading")
+                      ? "Copy trading"
+                      : pathname.startsWith("/staking")
+                      ? "Staking"
+                      : pathname.startsWith("/subscribe")
+                      ? "Subscriptions"
+                      : pathname.startsWith("/real-estate")
+                      ? "Real estate"
+                      : pathname.startsWith("/assets")
+                      ? "Assets"
+                      : pathname.startsWith("/wallet")
+                      ? "Wallet"
+                      : pathname.startsWith("/cards")
+                      ? "Cards"
+                      : "Dashboard"}
+                  </span>
+                </div>
               </div>
 
               {/* Right Header Controls */}
@@ -1475,9 +1510,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       style={{
                         color: accountType === "real" ? "#3861fb" : "#01b28b",
                         fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.2px",
                       }}
                     >
-                      {accountType === "real" ? "Real" : "Demo"}
+                      {accountType === "real" ? "REAL" : "DEMO"}
                     </span>
                     <ChevronDown size={14} color="#ffffff" />
                   </button>

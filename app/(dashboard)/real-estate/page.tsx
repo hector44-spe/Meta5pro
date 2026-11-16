@@ -96,7 +96,8 @@ export default function RealEstateDashboardPage() {
   const [selectedProjectForInvest, setSelectedProjectForInvest] =
     useState<RealEstateProject | null>(null);
   const [investInput, setInvestInput] = useState<string>("");
-  const [investDuration, setInvestDuration] = useState<number>(12); // months
+  const [investDuration, setInvestDuration] = useState<number>(1); // months
+  const [investDurationStr, setInvestDurationStr] = useState<string>("20 days");
   const [isSubmittingInvest, setIsSubmittingInvest] = useState<boolean>(false);
   const [investError, setInvestError] = useState<string | null>(null);
 
@@ -316,11 +317,22 @@ export default function RealEstateDashboardPage() {
     return userInvestments.reduce((sum, inv) => sum + inv.amount, 0);
   }, [userInvestments]);
 
+  const DURATION_OPTIONS = [
+    { label: "20 days", months: 1 },
+    { label: "30 days", months: 1 },
+    { label: "60 days", months: 2 },
+    { label: "90 days", months: 3 },
+    { label: "180 days", months: 6 },
+    { label: "1 year", months: 12 },
+    { label: "2 years", months: 24 },
+  ];
+
   // Handle Opening the Invest Modal
   const handleOpenInvest = (project: RealEstateProject) => {
     setSelectedProjectForInvest(project);
     setInvestInput(project.minimum.toString());
-    setInvestDuration(12);
+    setInvestDuration(1);
+    setInvestDurationStr("20 days");
     setInvestError(null);
   };
 
@@ -1004,159 +1016,297 @@ export default function RealEstateDashboardPage() {
         </>
       )}
 
-      {/* ===================== INVEST MODAL ===================== */}
+      {/* ===================== INVEST MODAL (EXACT VISUAL REPLICA OF IMAGE 2) ===================== */}
       {selectedProjectForInvest && (
-        <div className="invest_modal_overlay">
-          <div className="invest_modal_container">
+        <div
+          className="invest_modal_overlay"
+          onClick={() => setSelectedProjectForInvest(null)}
+        >
+          <div
+            className="invest_modal_container"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#12141a",
+              border: "2px solid #2563eb",
+              borderRadius: "16px",
+              padding: "24px 22px",
+              width: "100%",
+              maxWidth: "430px",
+              boxSizing: "border-box",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(37, 99, 235, 0.2)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "18px",
+            }}
+          >
             {/* Modal Header */}
-            <div className="invest_modal_header">
-              <h3>Invest in {selectedProjectForInvest.title}</h3>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "4px",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 650,
+                  color: "#ffffff",
+                  margin: 0,
+                  lineHeight: 1.3,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Invest {selectedProjectForInvest.title}
+              </h3>
               <button
-                className="invest_modal_close"
+                type="button"
                 onClick={() => setSelectedProjectForInvest(null)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "rgba(255, 255, 255, 0.6)",
+                  cursor: "pointer",
+                  padding: "4px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                aria-label="Close"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Available Balance Banner */}
-            <div className="invest_modal_balance_banner">
-              <span>Available wallet balance:</span>
-              <span>
-                $
-                {currentBalance.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </span>
-            </div>
-
-            {/* Amount Input */}
-            <div className="invest_input_group">
-              <label>Investment amount (USD)</label>
-              <div className="invest_input_wrapper">
-                <span className="invest_input_prefix">$</span>
+            {/* Field 1: Amount */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label
+                style={{
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  color: "#9ca3af",
+                  margin: 0,
+                }}
+              >
+                Amount:
+              </label>
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  background: "#1c202a",
+                  border: investError ? "1px solid #ef4444" : "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "8px",
+                  height: "46px",
+                  boxSizing: "border-box",
+                  padding: "0 8px 0 14px",
+                }}
+              >
                 <input
                   type="text"
-                  className={`invest_input_field ${
-                    investError ? "error" : ""
-                  }`}
                   value={investInput}
                   onChange={handleAmountChange}
-                  placeholder={`Min. $${selectedProjectForInvest.minimum.toLocaleString()}`}
-                />
-              </div>
-              {investError ? (
-                <p className="invest_error_text">{investError}</p>
-              ) : (
-                <p
+                  placeholder={selectedProjectForInvest.minimum.toString()}
                   style={{
+                    flex: 1,
+                    minWidth: 0,
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "#ffffff",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                  }}
+                />
+                <span
+                  style={{
+                    background: "#272c38",
+                    color: "#f1f5f9",
+                    padding: "4px 10px",
+                    borderRadius: "6px",
                     fontSize: "12px",
-                    color: "rgba(255, 255, 255, 0.45)",
+                    fontWeight: 700,
+                    letterSpacing: "0.02em",
+                    flexShrink: 0,
                   }}
                 >
-                  Minimum requirement: $
-                  {selectedProjectForInvest.minimum.toLocaleString()}
+                  USD
+                </span>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginTop: "2px",
+                  fontSize: "12.5px",
+                }}
+              >
+                <span style={{ color: "#9ca3af" }}>Current USD balance:</span>
+                <span style={{ color: "#ffffff", fontWeight: 500 }}>
+                  ${currentBalance.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              {investError && (
+                <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#ef4444" }}>
+                  {investError}
                 </p>
               )}
             </div>
 
-            {/* Duration Selector */}
-            <div className="invest_input_group">
-              <label>Investment horizon</label>
-              <div style={{ display: "flex", gap: "8px" }}>
-                {[
-                  { label: "1 Year", months: 12 },
-                  { label: "2 Years", months: 24 },
-                  { label: "3 Years", months: 36 },
-                ].map((d) => (
-                  <button
-                    key={d.months}
-                    type="button"
-                    style={{
-                      flex: 1,
-                      height: "38px",
-                      borderRadius: "6px",
-                      border:
-                        investDuration === d.months
-                          ? "1px solid #3861fb"
-                          : "1px solid rgba(255, 255, 255, 0.1)",
-                      background:
-                        investDuration === d.months
-                          ? "rgba(56, 97, 251, 0.15)"
-                          : "rgba(255, 255, 255, 0.04)",
-                      color:
-                        investDuration === d.months ? "#ffffff" : "rgba(255, 255, 255, 0.6)",
-                      fontSize: "13px",
-                      fontWeight: investDuration === d.months ? 600 : 500,
-                      cursor: "pointer",
-                      transition: "all 0.2s",
-                    }}
-                    onClick={() => setInvestDuration(d.months)}
-                  >
-                    {d.label}
-                  </button>
-                ))}
+            {/* Field 2: Duration */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label
+                style={{
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  color: "#9ca3af",
+                  margin: 0,
+                }}
+              >
+                Duration:
+              </label>
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  background: "#1c202a",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "8px",
+                  height: "46px",
+                  boxSizing: "border-box",
+                }}
+              >
+                <select
+                  value={investDurationStr}
+                  onChange={(e) => {
+                    setInvestDurationStr(e.target.value);
+                    const opt = DURATION_OPTIONS.find((o) => o.label === e.target.value);
+                    if (opt) setInvestDuration(opt.months);
+                  }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    background: "transparent",
+                    border: "none",
+                    outline: "none",
+                    color: "#ffffff",
+                    fontSize: "14.5px",
+                    fontWeight: 500,
+                    padding: "0 34px 0 14px",
+                    appearance: "none",
+                    WebkitAppearance: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  {DURATION_OPTIONS.map((opt) => (
+                    <option key={opt.label} value={opt.label} style={{ background: "#1c202a", color: "#ffffff" }}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  size={16}
+                  color="rgba(255, 255, 255, 0.7)"
+                  style={{ position: "absolute", right: "12px", pointerEvents: "none" }}
+                />
               </div>
             </div>
 
-            {/* Projected Returns Calculator */}
-            <div className="invest_calculator_box">
-              <div className="calc_row">
-                <span>Committed principal:</span>
-                <span>
-                  $
-                  {parsedAmount.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="calc_row">
-                <span>Target ROI rate:</span>
-                <span style={{ color: "#3861fb" }}>
+            {/* Field 3: ROI */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <label
+                style={{
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  color: "#9ca3af",
+                  margin: 0,
+                }}
+              >
+                ROI:
+              </label>
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "#1c202a",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "8px",
+                  height: "46px",
+                  boxSizing: "border-box",
+                  padding: "0 8px 0 14px",
+                }}
+              >
+                <span
+                  style={{
+                    color: "#ffffff",
+                    fontSize: "15px",
+                    fontWeight: 600,
+                  }}
+                >
                   {selectedProjectForInvest.roi}%
                 </span>
-              </div>
-              <div className="calc_row">
-                <span>Target profit:</span>
-                <span style={{ color: "#01b28b" }}>
-                  +$
-                  {projectedProfit.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </span>
-              </div>
-              <div className="calc_row total">
-                <span>Total return upon exit:</span>
-                <span>
-                  $
-                  {projectedTotalReturn.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                <span
+                  style={{
+                    background: "#272c38",
+                    color: "#f1f5f9",
+                    padding: "4px 12px",
+                    borderRadius: "6px",
+                    fontSize: "12.5px",
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  %
                 </span>
               </div>
             </div>
 
-            {/* Confirm Button */}
+            {/* Action Button: Invest */}
             <button
-              className="invest_modal_confirm_btn"
+              type="button"
               disabled={
                 Boolean(investError) ||
                 parsedAmount < selectedProjectForInvest.minimum ||
                 isSubmittingInvest
               }
               onClick={handleConfirmInvestment}
+              style={{
+                width: "100%",
+                height: "48px",
+                borderRadius: "10px",
+                background:
+                  Boolean(investError) || parsedAmount < selectedProjectForInvest.minimum || isSubmittingInvest
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "#64748b",
+                border: "none",
+                color: "#ffffff",
+                fontSize: "15px",
+                fontWeight: 600,
+                cursor:
+                  Boolean(investError) || parsedAmount < selectedProjectForInvest.minimum || isSubmittingInvest
+                    ? "not-allowed"
+                    : "pointer",
+                marginTop: "4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                transition: "all 0.15s ease",
+              }}
             >
               {isSubmittingInvest ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
-                  <span>Processing investment...</span>
+                  <span>Processing...</span>
                 </>
               ) : (
-                <span>Confirm Investment</span>
+                <span>Invest</span>
               )}
             </button>
           </div>

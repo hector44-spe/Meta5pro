@@ -31,7 +31,11 @@ export async function GET() {
       _sum: { assetAmount: true },
     }),
     prisma.transaction.findMany({
-      where: { userId: session.userId, type: "TRADE_CONVERT", status: "APPROVED" },
+      where: {
+        userId: session.userId,
+        type: { in: ["TRADE_CONVERT", "TRADE_BUY", "BUY", "TRADE_SELL", "SELL"] },
+        status: "APPROVED",
+      },
     }),
     prisma.position.findMany({
       where: { userId: session.userId, status: "OPEN" },
@@ -41,7 +45,7 @@ export async function GET() {
 
   const units = new Map<string, number>();
 
-  // 1. Deposits
+  // 1. Deposits (Strictly APPROVED deposits only)
   for (const d of deposits) {
     if (d.assetSymbol) {
       const sym = d.assetSymbol.toUpperCase();
@@ -57,15 +61,33 @@ export async function GET() {
     }
   }
 
-  // 3. Conversions
+  // 3. Conversions & Bought/Sold Trades
   for (const c of converts) {
-    if (c.assetSymbol && c.assetSymbol !== "USD") {
-      const sym = c.assetSymbol.toUpperCase();
-      units.set(sym, (units.get(sym) ?? 0) + Number(c.assetAmount ?? 0));
-    }
-    if (c.currency && c.currency !== "USD") {
-      const sym = c.currency.toUpperCase();
-      units.set(sym, (units.get(sym) ?? 0) - Number(c.amount ?? 0));
+    if (c.type === "TRADE_CONVERT") {
+      if (c.assetSymbol && c.assetSymbol !== "USD") {
+        const sym = c.assetSymbol.toUpperCase();
+        units.set(sym, (units.get(sym) ?? 0) + Number(c.assetAmount ?? 0));
+      }
+      if (c.currency && c.currency !== "USD") {
+        const sym = c.currency.toUpperCase();
+        units.set(sym, (units.get(sym) ?? 0) - Number(c.amount ?? 0));
+      }
+    } else if (c.type === "TRADE_BUY" || c.type === "BUY") {
+      const sym = (c.assetSymbol || c.currency || "").toUpperCase().replace(/\/USDT$|\/USD$|USDT$|USD$/, "").trim();
+      if (sym && sym !== "USD") {
+        const qty = Number(c.assetAmount || 0);
+        if (qty > 0) {
+          units.set(sym, (units.get(sym) ?? 0) + qty);
+        }
+      }
+    } else if (c.type === "TRADE_SELL" || c.type === "SELL") {
+      const sym = (c.assetSymbol || c.currency || "").toUpperCase().replace(/\/USDT$|\/USD$|USDT$|USD$/, "").trim();
+      if (sym && sym !== "USD") {
+        const qty = Number(c.assetAmount || 0);
+        if (qty > 0) {
+          units.set(sym, Math.max(0, (units.get(sym) ?? 0) - qty));
+        }
+      }
     }
   }
 

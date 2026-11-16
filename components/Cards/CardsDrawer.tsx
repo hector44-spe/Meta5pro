@@ -92,6 +92,10 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
   const isDetailsRevealed = currentCard ? revealedCards.has(currentCard.id) : false;
 
   const toggleRevealDetails = (cardId: string) => {
+    if (currentCard?.status !== "active") {
+      showToast("Card credentials are locked until admin confirms payment.");
+      return;
+    }
     setRevealedCards((prev) => {
       const next = new Set(prev);
       if (next.has(cardId)) {
@@ -284,14 +288,16 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
                       <div className="active-card-type-tag">
                         <span>{currentCard.type} Card</span>
                         <span className={`active-card-status-badge ${currentCard.status}`}>
-                          {currentCard.status}
+                          {currentCard.status === "pending" ? "Awaiting Payment Confirmation" : currentCard.status}
                         </span>
                       </div>
                       <CreditCard size={16} color="#ffffff" strokeWidth={1.5} />
                     </div>
 
                     <div className="active-card-number">
-                      {isDetailsRevealed
+                      {currentCard.status !== "active"
+                        ? "•••• •••• •••• ••••"
+                        : isDetailsRevealed
                         ? currentCard.cardNumber.replace(/(\d{4})/g, "$1 ").trim()
                         : `${currentCard.cardNumber.slice(0, 4)} ${currentCard.cardNumber.slice(4, 6)}** **** ****`}
                     </div>
@@ -300,15 +306,39 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
                       <div className="active-card-meta">
                         <div className="active-card-meta-col">
                           <p>EXPIRY</p>
-                          <p>{isDetailsRevealed ? currentCard.expiryDate : "**/**"}</p>
+                          <p>{currentCard.status !== "active" ? "Locked" : isDetailsRevealed ? currentCard.expiryDate : "**/**"}</p>
                         </div>
                         <div className="active-card-meta-col">
                           <p>CVV</p>
-                          <p>{isDetailsRevealed ? currentCard.cvv : "***"}</p>
+                          <p>{currentCard.status !== "active" ? "Locked" : isDetailsRevealed ? currentCard.cvv : "***"}</p>
                         </div>
                       </div>
                       <MastercardLogo />
                     </div>
+                  </div>
+                )}
+
+                {/* Pending Verification Notice */}
+                {currentCard && currentCard.status === "pending" && (
+                  <div
+                    style={{
+                      margin: "14px 0",
+                      padding: "12px 14px",
+                      background: "rgba(245, 165, 36, 0.08)",
+                      border: "1px solid rgba(245, 165, 36, 0.25)",
+                      borderRadius: "10px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#fbbf24", fontSize: "13px", fontWeight: 600 }}>
+                      <Clock size={16} />
+                      <span>Payment Verification Pending</span>
+                    </div>
+                    <p style={{ margin: 0, fontSize: "12px", color: "rgba(255, 255, 255, 0.7)", lineHeight: 1.45 }}>
+                      Your card issuance fee ($1,000.00) is awaiting administrator confirmation. All card credentials (full card number, CVV, expiry, and PIN) remain securely locked until payment is verified.
+                    </p>
                   </div>
                 )}
 
@@ -324,21 +354,37 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
                       <button
                         type="button"
                         className="card-utility-btn primary"
+                        disabled={currentCard.status !== "active"}
                         onClick={() => setTopUpModalOpen(true)}
+                        style={{
+                          opacity: currentCard.status !== "active" ? 0.45 : 1,
+                          cursor: currentCard.status !== "active" ? "not-allowed" : "pointer",
+                        }}
                       >
                         Add funds
                       </button>
                       <button
                         type="button"
                         className="card-utility-btn"
+                        disabled={currentCard.status !== "active"}
                         onClick={() => toggleRevealDetails(currentCard.id)}
+                        style={{
+                          opacity: currentCard.status !== "active" ? 0.45 : 1,
+                          cursor: currentCard.status !== "active" ? "not-allowed" : "pointer",
+                        }}
+                        title={currentCard.status !== "active" ? "Details locked until payment confirmed by admin" : undefined}
                       >
-                        {isDetailsRevealed ? "Hide details" : "View details"}
+                        {currentCard.status !== "active" ? "Details locked" : isDetailsRevealed ? "Hide details" : "View details"}
                       </button>
                       <button
                         type="button"
                         className="card-utility-btn"
+                        disabled={currentCard.status !== "active"}
                         onClick={() => setSettingsModalOpen(true)}
+                        style={{
+                          opacity: currentCard.status !== "active" ? 0.45 : 1,
+                          cursor: currentCard.status !== "active" ? "not-allowed" : "pointer",
+                        }}
                       >
                         Settings
                       </button>

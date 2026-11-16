@@ -849,36 +849,36 @@ function TxTable({
   return (
     <>
       <div className={styles.tableWrap}>
-      <table className={styles.table}>
+      <table className={styles.table} style={{ minWidth: showType ? "980px" : "860px" }}>
         <thead>
           <tr>
-            <th>Reference</th>
-            <th>User</th>
-            {showType && <th>Type</th>}
-            <th className={styles.right}>Amount</th>
-            <th>Asset</th>
-            <th>Proof</th>
-            <th>Date</th>
-            <th>{onReview ? "" : "Status"}</th>
+            <th style={{ minWidth: "100px" }}>Reference</th>
+            <th style={{ minWidth: "200px" }}>User</th>
+            {showType && <th style={{ minWidth: "110px" }}>Type</th>}
+            <th className={styles.right} style={{ minWidth: "110px" }}>Amount</th>
+            <th style={{ minWidth: "90px" }}>Asset</th>
+            <th style={{ minWidth: "85px" }}>Proof</th>
+            <th style={{ minWidth: "125px" }}>Date</th>
+            <th style={{ minWidth: "135px" }}>{onReview ? "Action" : "Status"}</th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <tr key={i}>
-                <td><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
-                <td>
+                <td style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
+                <td style={{ minWidth: "200px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <div className={styles.skeletonCell} style={{ width: 130 }} />
                     <div className={styles.skeletonCell} style={{ width: 90 }} />
                   </div>
                 </td>
-                {showType && <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>}
-                <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
-                <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
-                <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                {showType && <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>}
+                <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                <td style={{ minWidth: "85px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                <td style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                <td style={{ minWidth: "135px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
               </tr>
             ))
           ) : (
@@ -1147,35 +1147,35 @@ function UsersSection({
         </div>
         {loading ? (
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
+            <table className={styles.table} style={{ minWidth: "1020px" }}>
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th className={styles.right}>Balance</th>
-                  <th className={styles.right}>Deposited</th>
-                  <th className={styles.right}>Withdrawn</th>
-                  <th>Joined</th>
-                  <th></th>
+                  <th style={{ minWidth: "200px" }}>User</th>
+                  <th style={{ minWidth: "80px" }}>Role</th>
+                  <th style={{ minWidth: "90px" }}>Status</th>
+                  <th className={styles.right} style={{ minWidth: "110px" }}>Balance</th>
+                  <th className={styles.right} style={{ minWidth: "110px" }}>Deposited</th>
+                  <th className={styles.right} style={{ minWidth: "110px" }}>Withdrawn</th>
+                  <th style={{ minWidth: "110px" }}>Joined</th>
+                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td>
+                    <td style={{ minWidth: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 140 }} />
                         <div className={styles.skeletonCell} style={{ width: 100 }} />
                       </div>
                     </td>
-                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
-                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                    <td style={{ minWidth: "80px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td style={{ minWidth: "180px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 100, marginLeft: "auto" }} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -1185,17 +1185,17 @@ function UsersSection({
           <Empty icon={<Users size={28} />} text="No users match your search." />
         ) : (
           <div className={styles.tableWrap}>
-            <table className={styles.table}>
+            <table className={styles.table} style={{ minWidth: "1020px" }}>
               <thead>
                 <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th className={styles.right}>Balance</th>
-                  <th className={styles.right}>Deposited</th>
-                  <th className={styles.right}>Withdrawn</th>
-                  <th>Joined</th>
-                  <th></th>
+                  <th style={{ minWidth: "200px" }}>User</th>
+                  <th style={{ minWidth: "80px" }}>Role</th>
+                  <th style={{ minWidth: "90px" }}>Status</th>
+                  <th className={styles.right} style={{ minWidth: "110px" }}>Balance</th>
+                  <th className={styles.right} style={{ minWidth: "110px" }}>Deposited</th>
+                  <th className={styles.right} style={{ minWidth: "110px" }}>Withdrawn</th>
+                  <th style={{ minWidth: "110px" }}>Joined</th>
+                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>

@@ -236,34 +236,34 @@ export default function ExpertsSection({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ minWidth: "960px" }}>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Main Balance</th>
-                <th>Copied Expert</th>
-                <th>Min. Startup</th>
-                <th>Profit Share</th>
-                <th>Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "200px" }}>User</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Main Balance</th>
+                <th style={{ minWidth: "140px" }}>Copied Expert</th>
+                <th className={styles.right} style={{ minWidth: "100px" }}>Min. Startup</th>
+                <th className={styles.right} style={{ minWidth: "90px" }}>Profit Share</th>
+                <th style={{ minWidth: "95px" }}>Status</th>
+                <th style={{ minWidth: "100px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
-                    <td>
+                    <td style={{ minWidth: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 130 }} />
                         <div className={styles.skeletonCell} style={{ width: 90 }} />
                       </div>
                     </td>
-                    <td><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td style={{ minWidth: "100px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredCopiers.length === 0 ? (
@@ -286,7 +286,7 @@ export default function ExpertsSection({
                         </div>
                       </div>
                     </td>
-                    <td className={styles.mono}>{usd(copier.userBalance)}</td>
+                    <td className={`${styles.right} ${styles.mono}`}>{usd(copier.userBalance)}</td>
                     <td>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         {copier.expertPicture && (
@@ -300,8 +300,8 @@ export default function ExpertsSection({
                         <span style={{ fontWeight: 500 }}>{copier.expertName}</span>
                       </div>
                     </td>
-                    <td className={styles.mono}>{usd(copier.minimumStartUp)}</td>
-                    <td className={styles.mono}>{copier.profitShare}%</td>
+                    <td className={`${styles.right} ${styles.mono}`}>{usd(copier.minimumStartUp)}</td>
+                    <td className={`${styles.right} ${styles.mono}`}>{copier.profitShare}%</td>
                     <td>
                       <span className={`${styles.pill} ${styles.pillGreen}`}>Active Copy</span>
                     </td>
@@ -350,23 +350,23 @@ export default function ExpertsSection({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ minWidth: "860px" }}>
             <thead>
               <tr>
-                <th>Expert</th>
-                <th>Win Rate</th>
-                <th>Profit Share</th>
-                <th>Min. Startup</th>
-                <th>Followers</th>
-                <th>Badge</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "180px" }}>Expert</th>
+                <th style={{ minWidth: "90px" }}>Win Rate</th>
+                <th style={{ minWidth: "90px" }}>Profit Share</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Min. Startup</th>
+                <th style={{ minWidth: "95px" }}>Followers</th>
+                <th style={{ minWidth: "85px" }}>Badge</th>
+                <th style={{ minWidth: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td>
+                    <td style={{ minWidth: "180px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div className={styles.skeletonCell} style={{ width: 32, height: 32, borderRadius: "50%" }} />
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -375,12 +375,12 @@ export default function ExpertsSection({
                         </div>
                       </div>
                     </td>
-                    <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td style={{ minWidth: "85px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td style={{ minWidth: "110px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : experts.length === 0 ? (

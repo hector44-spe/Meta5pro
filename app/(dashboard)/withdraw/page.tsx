@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useDashboard } from "@/components/DashboardShell";
-import { Search, CreditCard, ChevronDown } from "lucide-react";
+import { Search, CreditCard, ChevronDown, Clock } from "lucide-react";
 import "@/styles/transactions-page.css";
 
 interface WithdrawalItem {
@@ -72,6 +72,10 @@ export default function WithdrawPage() {
     };
   }, []);
 
+  const pendingWithdrawals = useMemo(() => {
+    return withdrawals.filter((wd) => wd.status.toLowerCase() === "pending");
+  }, [withdrawals]);
+
   const filteredWithdrawals = withdrawals.filter((wd) => {
     const matchesSearch =
       wd.reference.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -96,6 +100,56 @@ export default function WithdrawPage() {
           <span>Withdraw now</span>
         </button>
       </div>
+
+      {/* Pending Confirmation Notice Banner */}
+      {pendingWithdrawals.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
+            backgroundColor: "rgba(245, 158, 11, 0.08)",
+            border: "1px solid rgba(245, 158, 11, 0.28)",
+            borderRadius: "10px",
+            padding: "14px 16px",
+            marginBottom: "16px",
+            boxSizing: "border-box",
+            width: "100%",
+          }}
+        >
+          <Clock size={20} color="#f59e0b" style={{ flexShrink: 0, marginTop: "2px" }} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: "14px", fontWeight: 600, color: "#fef3c7", marginBottom: "4px" }}>
+              Withdrawal Pending Confirmation ({pendingWithdrawals.length})
+            </div>
+            <p style={{ margin: 0, fontSize: "12.5px", lineHeight: "1.5", color: "#fde68a" }}>
+              {pendingWithdrawals.length === 1 ? (
+                <>
+                  Your withdrawal of <strong>{pendingWithdrawals[0].amount}</strong> ({pendingWithdrawals[0].totalUSD}) submitted on {pendingWithdrawals[0].date} is currently awaiting confirmation. Funds are held securely until approved.
+                </>
+              ) : (
+                <>
+                  You have {pendingWithdrawals.length} withdrawals currently awaiting confirmation. They will be processed once verified.
+                </>
+              )}
+            </p>
+          </div>
+          <span
+            style={{
+              padding: "4px 10px",
+              borderRadius: "999px",
+              fontSize: "11px",
+              fontWeight: 700,
+              backgroundColor: "rgba(245, 158, 11, 0.2)",
+              color: "#fbbf24",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            Pending Confirmation
+          </span>
+        </div>
+      )}
 
       {/* Filter / Search Row */}
       <div className="tp-filter-bar">
@@ -136,8 +190,8 @@ export default function WithdrawPage() {
               <th>Reference</th>
               <th>Method</th>
               <th className="tp-desktop-col">Type</th>
-              <th className="tp-desktop-col">Amount</th>
-              <th className="tp-desktop-col">Status</th>
+              <th>Amount</th>
+              <th>Status</th>
               <th className="tp-desktop-col">Total (USD)</th>
             </tr>
           </thead>
@@ -169,31 +223,38 @@ export default function WithdrawPage() {
                   </td>
                   <td>{wd.method}</td>
                   <td className="tp-desktop-col">{wd.type}</td>
-                  <td className="tp-desktop-col" style={{ fontWeight: 600 }}>
+                  <td style={{ fontWeight: 600 }}>
                     {wd.amount}
                   </td>
-                  <td className="tp-desktop-col">
+                  <td>
                     <span
                       style={{
                         padding: "3px 8px",
                         borderRadius: "4px",
                         fontSize: "11px",
                         fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        whiteSpace: "nowrap",
                         backgroundColor:
                           wd.status === "approved"
                             ? "rgba(16, 185, 129, 0.15)"
                             : wd.status === "rejected"
                             ? "rgba(239, 68, 68, 0.15)"
-                            : "rgba(245, 158, 11, 0.15)",
+                            : "rgba(245, 158, 11, 0.18)",
                         color:
                           wd.status === "approved"
                             ? "#10b981"
                             : wd.status === "rejected"
                             ? "#ef4444"
-                            : "#f59e0b",
+                            : "#fbbf24",
                       }}
                     >
-                      {wd.status.charAt(0).toUpperCase() + wd.status.slice(1).toLowerCase()}
+                      {wd.status === "pending" && <Clock size={11} />}
+                      {wd.status === "pending"
+                        ? "Pending Confirmation"
+                        : wd.status.charAt(0).toUpperCase() + wd.status.slice(1).toLowerCase()}
                     </span>
                   </td>
                   <td className="tp-desktop-col" style={{ fontWeight: 600 }}>

@@ -260,36 +260,36 @@ export default function SubscriptionsSection({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ minWidth: "950px" }}>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Subscribed Plan</th>
-                <th>Amount Subscribed</th>
-                <th>Accrued Profit</th>
-                <th>Days Remaining</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "200px" }}>User</th>
+                <th style={{ minWidth: "140px" }}>Subscribed Plan</th>
+                <th className={styles.right} style={{ minWidth: "125px" }}>Amount Subscribed</th>
+                <th className={styles.right} style={{ minWidth: "115px" }}>Accrued Profit</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Days Remaining</th>
+                <th style={{ minWidth: "95px" }}>Status</th>
+                <th style={{ minWidth: "125px" }}>Date</th>
+                <th style={{ minWidth: "120px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td>
+                    <td style={{ minWidth: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 130 }} />
                         <div className={styles.skeletonCell} style={{ width: 90 }} />
                       </div>
                     </td>
-                    <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 95 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "115px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td style={{ minWidth: "120px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredInvestments.length === 0 ? (
@@ -311,14 +311,14 @@ export default function SubscriptionsSection({
                       </div>
                     </td>
                     <td style={{ fontWeight: 600 }}>{inv.planName}</td>
-                    <td className={styles.mono} style={{ color: "#34d399", fontWeight: 700 }}>
+                    <td className={`${styles.right} ${styles.mono}`} style={{ color: "#34d399", fontWeight: 700 }}>
                       {usd(inv.amount)}
                     </td>
-                    <td className={styles.mono} style={{ color: "#34d399", fontWeight: 600 }}>
+                    <td className={`${styles.right} ${styles.mono}`} style={{ color: "#34d399", fontWeight: 600 }}>
                       +{usd(inv.accruedProfit)}
                     </td>
-                    <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <td className={styles.right}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
                         <Clock size={14} color="var(--a-muted)" />
                         <span className={styles.mono}>{inv.daysRemaining} days</span>
                       </div>
@@ -376,27 +376,27 @@ export default function SubscriptionsSection({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ minWidth: "720px" }}>
             <thead>
               <tr>
-                <th>Plan Name</th>
-                <th>Min. Deposit</th>
-                <th>Max. Deposit</th>
-                <th>Duration</th>
-                <th>Target ROI</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "170px" }}>Plan Name</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Min. Deposit</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Max. Deposit</th>
+                <th className={styles.right} style={{ minWidth: "100px" }}>Duration</th>
+                <th className={styles.right} style={{ minWidth: "90px" }}>Target ROI</th>
+                <th style={{ minWidth: "100px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
-                    <td><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "170px" }}><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 50, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "100px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : plans.length === 0 ? (
@@ -408,10 +408,10 @@ export default function SubscriptionsSection({
               ) : plans.map((p) => (
                 <tr key={p.id}>
                   <td style={{ fontWeight: 600 }}>{p.title || p.name}</td>
-                  <td className={styles.mono}>{usd(p.minimum)}</td>
-                  <td className={styles.mono}>{usd(p.maximum)}</td>
-                  <td className={styles.mono}>{p.duration} days</td>
-                  <td className={styles.mono} style={{ color: "#34d399", fontWeight: 700 }}>
+                  <td className={`${styles.right} ${styles.mono}`}>{usd(p.minimum)}</td>
+                  <td className={`${styles.right} ${styles.mono}`}>{usd(p.maximum)}</td>
+                  <td className={`${styles.right} ${styles.mono}`}>{p.duration} days</td>
+                  <td className={`${styles.right} ${styles.mono}`} style={{ color: "#34d399", fontWeight: 700 }}>
                     {p.roi}%
                   </td>
                   <td style={{ textAlign: "right" }}>

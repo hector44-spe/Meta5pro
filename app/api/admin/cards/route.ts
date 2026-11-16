@@ -127,6 +127,42 @@ export async function POST(req: Request) {
         data: { status: newStatus },
       });
 
+      // If approved & activated by admin, confirm related issuance deposit and notify user
+      if (newStatus === "active") {
+        try {
+          const depositTx = await prisma.transaction.findFirst({
+            where: {
+              userId: updated.userId,
+              type: "DEPOSIT",
+              status: "PENDING",
+              amount: { gte: 900 },
+            },
+            orderBy: { createdAt: "desc" },
+          });
+
+          if (depositTx) {
+            await prisma.transaction.update({
+              where: { id: depositTx.id },
+              data: {
+                status: "APPROVED",
+                approvedAt: new Date(),
+              },
+            });
+          }
+
+          await prisma.notification.create({
+            data: {
+              userId: updated.userId,
+              kind: "account",
+              title: "Card Approved & Details Unlocked",
+              body: `Your ${updated.type} card payment has been confirmed by administration. Your card is active and credentials (card number, CVV, expiry & PIN) are now unlocked.`,
+            },
+          });
+        } catch (e) {
+          console.error("Card activation side-effects error:", e);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         card: {

@@ -91,17 +91,23 @@ export default function ColdStoragePage() {
   const howItWorksTabRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    if (activeTab === "assets" && assetsTabRef.current) {
-      setTabIndicatorStyle({
-        left: `${assetsTabRef.current.offsetLeft}px`,
-        width: `${assetsTabRef.current.offsetWidth}px`,
-      });
-    } else if (activeTab === "how_it_works" && howItWorksTabRef.current) {
-      setTabIndicatorStyle({
-        left: `${howItWorksTabRef.current.offsetLeft}px`,
-        width: `${howItWorksTabRef.current.offsetWidth}px`,
-      });
-    }
+    const updateIndicator = () => {
+      if (activeTab === "assets" && assetsTabRef.current) {
+        setTabIndicatorStyle({
+          left: `${assetsTabRef.current.offsetLeft}px`,
+          width: `${assetsTabRef.current.offsetWidth}px`,
+        });
+      } else if (activeTab === "how_it_works" && howItWorksTabRef.current) {
+        setTabIndicatorStyle({
+          left: `${howItWorksTabRef.current.offsetLeft}px`,
+          width: `${howItWorksTabRef.current.offsetWidth}px`,
+        });
+      }
+    };
+
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+    return () => window.removeEventListener("resize", updateIndicator);
   }, [activeTab]);
 
   // How it works accordion
@@ -166,6 +172,16 @@ export default function ColdStoragePage() {
     symbol: string;
     usdValue: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (drawerOpen || showSuccessModal) {
+      const orig = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = orig;
+      };
+    }
+  }, [drawerOpen, showSuccessModal]);
 
   // Filtered asset catalog for "Select asset" drawer
   const availableAssets = useMemo(() => {
@@ -1143,7 +1159,10 @@ export default function ColdStoragePage() {
       {showSuccessModal && successDetails && (
         <div
           className="cold-storage-success-overlay"
-          onClick={() => setShowSuccessModal(false)}
+          onClick={() => {
+            setShowSuccessModal(false);
+            setSuccessDetails(null);
+          }}
         >
           <div
             className="cold-storage-success-card"
@@ -1151,29 +1170,38 @@ export default function ColdStoragePage() {
           >
             <button
               className="cold-storage-success-close"
-              onClick={() => setShowSuccessModal(false)}
+              onClick={() => {
+                setShowSuccessModal(false);
+                setSuccessDetails(null);
+              }}
+              aria-label="Close modal"
             >
-              <X size={18} />
+              <X size={16} />
             </button>
 
             {/* Illustration Icon */}
             <div
               style={{
-                width: "80px",
-                height: "80px",
+                width: "72px",
+                height: "72px",
                 borderRadius: "50%",
                 background: "rgba(255, 255, 255, 0.05)",
                 display: "grid",
                 placeContent: "center",
-                marginTop: "16px",
+                marginTop: "8px",
                 border: "1px solid rgba(255, 255, 255, 0.08)",
+                overflow: "hidden",
               }}
             >
               <img
-                src={`/cold_storage_files/${successDetails.symbol}.svg`}
+                src={selectedAsset?.icon || `/cold_storage_files/${successDetails.symbol}.svg`}
                 alt={successDetails.symbol}
-                width={36}
-                height={36}
+                width={38}
+                height={38}
+                style={{ borderRadius: "50%" }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/crypto_files/generic.svg";
+                }}
               />
             </div>
 
@@ -1202,7 +1230,10 @@ export default function ColdStoragePage() {
 
             <button
               className="cold-storage-success-btn"
-              onClick={() => setShowSuccessModal(false)}
+              onClick={() => {
+                setShowSuccessModal(false);
+                setSuccessDetails(null);
+              }}
             >
               Sounds good
             </button>

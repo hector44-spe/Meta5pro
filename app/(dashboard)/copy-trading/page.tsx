@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useDashboard } from "@/components/DashboardShell";
 import {
   Search,
@@ -234,7 +235,9 @@ export default function CopyTradingPage() {
     }
   };
 
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     fetchExperts();
   }, []);
 
@@ -519,134 +522,119 @@ export default function CopyTradingPage() {
       )}
 
       {/* ===================== EXPERT DETAIL DRAWER ===================== */}
-      {selectedExpertForView && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0, 0, 0, 0.75)",
-            backdropFilter: "blur(6px)",
-            zIndex: 9999,
-            display: "flex",
-            justifyContent: "flex-end",
-          }}
-          onClick={() => setSelectedExpertForView(null)}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "460px",
-              height: "100%",
-              background: "#14151a",
-              borderLeft: "1px solid rgba(255, 255, 255, 0.08)",
-              padding: "24px",
-              display: "flex",
-              flexDirection: "column",
-              overflowY: "auto",
-              boxSizing: "border-box",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-              <h2 style={{ fontSize: "17px", fontWeight: 700, color: "#ffffff", margin: 0 }}>
-                Expert Overview
-              </h2>
-              <button
-                type="button"
-                onClick={() => setSelectedExpertForView(null)}
-                style={{ background: "transparent", border: "none", color: "rgba(255, 255, 255, 0.5)", cursor: "pointer" }}
+      {mounted && typeof document !== "undefined" && selectedExpertForView
+        ? createPortal(
+            <div
+              className="expert_view_overlay"
+              onClick={() => setSelectedExpertForView(null)}
+            >
+              <div
+                className="expert_view_drawer"
+                onClick={(e) => e.stopPropagation()}
               >
-                <X size={20} />
-              </button>
-            </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
+                  <h2 style={{ fontSize: "17px", fontWeight: 700, color: "#ffffff", margin: 0 }}>
+                    Expert Overview
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedExpertForView(null)}
+                    style={{ background: "transparent", border: "none", color: "rgba(255, 255, 255, 0.5)", cursor: "pointer", padding: "4px" }}
+                    aria-label="Close"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
 
-            <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "20px" }}>
-              <img
-                src={selectedExpertForView.picture || "/assets/copy-trading/albania_support.png"}
-                alt={selectedExpertForView.name}
-                style={{ width: "56px", height: "56px", borderRadius: "10px", objectFit: "cover" }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
-                }}
-              />
-              <div>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff", margin: 0 }}>
-                    {selectedExpertForView.name}
-                  </h3>
-                  {selectedExpertForView.tickType === "gold" && (
-                    <img src="/assets/copy-trading/gold-tick.svg" alt="gold" style={{ width: "18px", height: "18px" }} />
-                  )}
-                  {selectedExpertForView.tickType === "blue" && (
-                    <img src="/assets/copy-trading/blue-tick.svg" alt="blue" style={{ width: "18px", height: "18px" }} />
+                <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: "20px" }}>
+                  <img
+                    src={selectedExpertForView.picture || "/assets/copy-trading/albania_support.png"}
+                    alt={selectedExpertForView.name}
+                    style={{ width: "56px", height: "56px", borderRadius: "10px", objectFit: "cover", flexShrink: 0 }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
+                    }}
+                  />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#ffffff", margin: 0 }}>
+                        {selectedExpertForView.name}
+                      </h3>
+                      {selectedExpertForView.tickType === "gold" && (
+                        <img src="/assets/copy-trading/gold-tick.svg" alt="gold" style={{ width: "18px", height: "18px" }} />
+                      )}
+                      {selectedExpertForView.tickType === "blue" && (
+                        <img src="/assets/copy-trading/blue-tick.svg" alt="blue" style={{ width: "18px", height: "18px" }} />
+                      )}
+                    </div>
+                    <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", margin: "4px 0 0" }}>
+                      {selectedExpertForView.username ? `@${selectedExpertForView.username}` : `@${selectedExpertForView.name.toLowerCase()}`}
+                    </p>
+                  </div>
+                </div>
+
+                <p style={{ fontSize: "13.5px", lineHeight: "20px", color: "rgba(255,255,255,0.7)", marginBottom: "24px" }}>
+                  {selectedExpertForView.bio || "I can give you a life you dreamed for"}
+                </p>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "24px" }}>
+                  <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Win Rate</span>
+                    <span style={{ fontSize: "18px", fontWeight: 700, color: "#00d68f", display: "block", marginTop: "4px" }}>
+                      {selectedExpertForView.winRate}%
+                    </span>
+                  </div>
+                  <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Profit Share</span>
+                    <span style={{ fontSize: "18px", fontWeight: 700, color: "#38bdf8", display: "block", marginTop: "4px" }}>
+                      {selectedExpertForView.profitShare}%
+                    </span>
+                  </div>
+                  <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Wins / Losses</span>
+                    <span style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff", display: "block", marginTop: "4px" }}>
+                      {selectedExpertForView.wins?.toLocaleString()} / {selectedExpertForView.losses?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Min. Startup</span>
+                    <span style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", display: "block", marginTop: "4px" }}>
+                      ${Number(selectedExpertForView.minimumStartUp || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "auto", paddingTop: "16px" }}>
+                  {Array.isArray(selectedExpertForView.subscriberList) &&
+                  selectedExpertForView.subscriberList.includes(userId) ? (
+                    <button
+                      className="btn_cancel"
+                      style={{ width: "100%", height: "46px" }}
+                      onClick={() => {
+                        handleToggleCopy(selectedExpertForView);
+                        setSelectedExpertForView(null);
+                      }}
+                    >
+                      <p>Cancel Copying</p>
+                    </button>
+                  ) : (
+                    <button
+                      className="btn_copy"
+                      style={{ width: "100%", height: "46px" }}
+                      onClick={() => {
+                        handleToggleCopy(selectedExpertForView);
+                        setSelectedExpertForView(null);
+                      }}
+                    >
+                      <p>Copy Expert (${Number(selectedExpertForView.minimumStartUp || 0).toLocaleString()} Min.)</p>
+                    </button>
                   )}
                 </div>
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.45)", margin: "4px 0 0" }}>
-                  {selectedExpertForView.username ? `@${selectedExpertForView.username}` : `@${selectedExpertForView.name.toLowerCase()}`}
-                </p>
               </div>
-            </div>
-
-            <p style={{ fontSize: "13.5px", lineHeight: "20px", color: "rgba(255,255,255,0.7)", marginBottom: "24px" }}>
-              {selectedExpertForView.bio || "I can give you a life you dreamed for"}
-            </p>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "24px" }}>
-              <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Win Rate</span>
-                <span style={{ fontSize: "18px", fontWeight: 700, color: "#00d68f", display: "block", marginTop: "4px" }}>
-                  {selectedExpertForView.winRate}%
-                </span>
-              </div>
-              <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Profit Share</span>
-                <span style={{ fontSize: "18px", fontWeight: 700, color: "#38bdf8", display: "block", marginTop: "4px" }}>
-                  {selectedExpertForView.profitShare}%
-                </span>
-              </div>
-              <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Wins / Losses</span>
-                <span style={{ fontSize: "15px", fontWeight: 600, color: "#ffffff", display: "block", marginTop: "4px" }}>
-                  {selectedExpertForView.wins?.toLocaleString()} / {selectedExpertForView.losses?.toLocaleString()}
-                </span>
-              </div>
-              <div style={{ padding: "14px", background: "rgba(255,255,255,0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
-                <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", display: "block" }}>Min. Startup</span>
-                <span style={{ fontSize: "18px", fontWeight: 700, color: "#ffffff", display: "block", marginTop: "4px" }}>
-                  ${Number(selectedExpertForView.minimumStartUp || 0).toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            <div style={{ marginTop: "auto" }}>
-              {Array.isArray(selectedExpertForView.subscriberList) &&
-              selectedExpertForView.subscriberList.includes(userId) ? (
-                <button
-                  className="btn_cancel"
-                  style={{ width: "100%", height: "44px" }}
-                  onClick={() => {
-                    handleToggleCopy(selectedExpertForView);
-                    setSelectedExpertForView(null);
-                  }}
-                >
-                  <p>Cancel Copying</p>
-                </button>
-              ) : (
-                <button
-                  className="btn_copy"
-                  style={{ width: "100%", height: "44px" }}
-                  onClick={() => {
-                    handleToggleCopy(selectedExpertForView);
-                    setSelectedExpertForView(null);
-                  }}
-                >
-                  <p>Copy Expert (${Number(selectedExpertForView.minimumStartUp || 0).toLocaleString()} Min.)</p>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+            </div>,
+            document.body
+          )
+        : null}
 
       {/* View Details Drawer */}
     </div>

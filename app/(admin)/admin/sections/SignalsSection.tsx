@@ -246,36 +246,36 @@ export default function SignalsSection({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ minWidth: "1020px" }}>
             <thead>
               <tr>
-                <th>User</th>
-                <th>Signal Purchased</th>
-                <th>Strength</th>
-                <th>Amount Paid</th>
-                <th>Reference</th>
-                <th>Purchase Date</th>
-                <th>Status</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "200px" }}>User</th>
+                <th style={{ minWidth: "140px" }}>Signal Purchased</th>
+                <th style={{ minWidth: "110px" }}>Strength</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Amount Paid</th>
+                <th style={{ minWidth: "100px" }}>Reference</th>
+                <th style={{ minWidth: "120px" }}>Purchase Date</th>
+                <th style={{ minWidth: "90px" }}>Status</th>
+                <th style={{ minWidth: "130px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td>
+                    <td style={{ minWidth: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 130 }} />
                         <div className={styles.skeletonCell} style={{ width: 90 }} />
                       </div>
                     </td>
-                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                    <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ minWidth: "130px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredPurchases.length === 0 ? (
@@ -368,23 +368,23 @@ export default function SignalsSection({
         </div>
 
         <div className={styles.tableWrap}>
-          <table className={styles.table}>
+          <table className={styles.table} style={{ minWidth: "680px" }}>
             <thead>
               <tr>
-                <th>Signal Name</th>
-                <th>Price</th>
-                <th>Accuracy / Strength</th>
-                <th style={{ textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "160px" }}>Signal Name</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Price</th>
+                <th style={{ minWidth: "140px" }}>Accuracy / Strength</th>
+                <th style={{ minWidth: "100px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
-                    <td><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "160px" }}><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
+                    <td style={{ minWidth: "100px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : signals.length === 0 ? (
@@ -396,7 +396,7 @@ export default function SignalsSection({
               ) : signals.map((sig) => (
                 <tr key={sig.id}>
                   <td style={{ fontWeight: 600 }}>{sig.title || sig.name}</td>
-                  <td className={styles.mono} style={{ fontWeight: 700, color: "#34d399" }}>
+                  <td className={`${styles.right} ${styles.mono}`} style={{ fontWeight: 700, color: "#34d399" }}>
                     {usd(sig.price)}
                   </td>
                   <td>

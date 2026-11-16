@@ -70,11 +70,14 @@ export async function POST(req: Request) {
         });
 
         // 3. Record trade transaction
+        const rawSym = symbol.toUpperCase().replace(/\/USDT$|\/USD$|USDT$|USD$/, "").trim();
         const tx = await insertTransaction(t, {
           userId: session.userId,
           type: `TRADE_${side}`,
           amount,
           currency: symbol,
+          assetSymbol: rawSym,
+          assetAmount: Number(filledQuantity),
           txHash: `ORD_${position.id.substring(0, 8).toUpperCase()}`,
           status: "APPROVED",
         });
