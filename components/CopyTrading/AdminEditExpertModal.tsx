@@ -216,16 +216,18 @@ export default function AdminEditExpertModal({
         className="meta-gold-modal-dialog"
         style={{
           width: "100%",
-          maxWidth: "460px",
+          maxWidth: "480px",
           backgroundColor: "#16181d",
           border: "1px solid rgba(255, 255, 255, 0.08)",
           borderRadius: "14px",
-          padding: "20px",
-          maxHeight: "90vh",
+          padding: "20px 20px 16px 20px",
+          maxHeight: "min(92vh, calc(100dvh - 24px))",
+          height: "auto",
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 24px 50px rgba(0, 0, 0, 0.8)",
           boxSizing: "border-box",
+          overflow: "hidden",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -236,6 +238,7 @@ export default function AdminEditExpertModal({
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "16px",
+            flexShrink: 0,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -284,7 +287,17 @@ export default function AdminEditExpertModal({
         </div>
 
         {/* Scrollable Body */}
-        <div style={{ overflowY: "auto", overflowX: "hidden", maxHeight: "70vh", paddingRight: "2px" }}>
+        <div
+          style={{
+            flex: "1 1 auto",
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            WebkitOverflowScrolling: "touch",
+            paddingRight: "4px",
+            paddingBottom: "8px",
+          }}
+        >
           {error && (
             <div
               style={{
@@ -923,12 +936,14 @@ export default function AdminEditExpertModal({
         {/* ===================== FOOTER ACTIONS ===================== */}
         <div
           style={{
-            marginTop: "20px",
-            paddingTop: "16px",
-            borderTop: "1px solid rgba(255, 255, 255, 0.06)",
+            flexShrink: 0,
+            marginTop: "auto",
+            paddingTop: "14px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             alignItems: "center",
             gap: "12px",
+            backgroundColor: "#16181d",
           }}
         >
           {step === 1 && (
@@ -1057,14 +1072,16 @@ export default function AdminEditExpertModal({
       <style jsx>{`
         @media screen and (max-width: 600px) {
           .meta-gold-modal-overlay {
-            padding: 0 !important;
-            align-items: flex-end !important;
+            padding: 12px 10px !important;
+            align-items: center !important;
+            justify-content: center !important;
           }
           .meta-gold-modal-dialog {
             max-width: 100% !important;
-            border-radius: 20px 20px 0 0 !important;
-            padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 16px)) !important;
-            border-bottom: none !important;
+            max-height: calc(100dvh - 24px) !important;
+            border-radius: 16px !important;
+            padding: 18px 16px calc(14px + env(safe-area-inset-bottom, 0px)) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
           }
         }
       `}</style>

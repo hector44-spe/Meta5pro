@@ -347,12 +347,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 14px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
+  position: relative;
+  z-index: 1;
 }
 .cardHead h2 {
   display: flex;
@@ -432,6 +434,8 @@
   -webkit-overflow-scrolling: touch;
   margin: 0 -4px;
   padding: 0 4px;
+  position: relative;
+  clear: both;
 }
 .table {
   width: 100%;

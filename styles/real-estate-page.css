@@ -368,15 +368,19 @@
   overflow: hidden !important;
 }
 
-/* Original Meta Gold 3-column metrics without horizontal divider line (Image 2 reference) */
+/* Original Meta Gold 3-column metrics with clean grid spacing (Image 2 reference) */
 .realestate_card .project_summary {
-  display: flex !important;
-  margin-top: 24px !important;
-  justify-content: space-between !important;
-  align-items: flex-start !important;
-  padding: 0 !important;
-  border-top: none !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  column-gap: 12px !important;
+  row-gap: 8px !important;
+  margin-top: 20px !important;
+  padding: 12px 14px !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 10px !important;
   width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .realestate_card .project_summary span.minimum,
@@ -384,6 +388,7 @@
 .realestate_card .project_summary span.strategy {
   display: flex !important;
   flex-direction: column !important;
+  min-width: 0 !important;
 }
 
 .realestate_card .project_summary span.minimum {
@@ -402,22 +407,44 @@
 }
 
 .realestate_card .project_summary span p:first-of-type {
-  font-size: 13px !important;
-  line-height: 16px !important;
+  font-size: 11.5px !important;
+  line-height: 15px !important;
   font-weight: 500 !important;
   color: rgba(255, 255, 255, 0.5) !important;
-  margin: 0 0 6px 0 !important;
+  margin: 0 0 4px 0 !important;
   display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .realestate_card .project_summary span p:last-of-type {
-  font-size: 18px !important;
-  line-height: 22px !important;
-  font-weight: 700 !important;
+  font-size: 13.5px !important;
+  line-height: 18px !important;
+  font-weight: 600 !important;
   color: #ffffff !important;
   margin: 0 !important;
   white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
   display: block !important;
+}
+
+.realestate_card .project_summary span.roi p:last-of-type {
+  color: #00e5a3 !important;
+}
+
+@media screen and (max-width: 480px) {
+  .realestate_card .project_summary {
+    padding: 10px 10px !important;
+    column-gap: 8px !important;
+  }
+  .realestate_card .project_summary span p:first-of-type {
+    font-size: 10.5px !important;
+  }
+  .realestate_card .project_summary span p:last-of-type {
+    font-size: 12.5px !important;
+  }
 }
 
 /* Action Buttons: Solid dark View project & Vibrant blue Invest now */

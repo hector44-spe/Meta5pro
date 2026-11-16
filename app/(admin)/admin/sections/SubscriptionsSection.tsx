@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import styles from "../page.module.css";
 import { AdminSubscriptionPlan } from "@/app/api/admin/subscriptions/route";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 
 const usd = (n: number) =>
   `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -49,6 +50,7 @@ export default function SubscriptionsSection({
   // Edit / Add plan modal
   const [editPlan, setEditPlan] = useState<Partial<AdminSubscriptionPlan> | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -118,20 +120,29 @@ export default function SubscriptionsSection({
     }
   };
 
-  const handleDeletePlan = async (planId: string, name: string) => {
-    if (!confirm(`Delete plan "${name}"?`)) return;
-    try {
-      const res = await fetch("/api/admin/subscriptions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deletePlan", planId }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      flash("ok", `Plan "${name}" deleted.`);
-      loadData();
-    } catch (e: any) {
-      flash("error", e.message || "Failed to delete plan");
-    }
+  const handleDeletePlan = (planId: string, name: string) => {
+    setConfirmState({
+      title: `Delete Subscription Plan "${name}"?`,
+      message: `Are you sure you want to delete this subscription plan?`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin/subscriptions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "deletePlan", planId }),
+          });
+          if (!res.ok) throw new Error("Delete failed");
+          flash("ok", `Plan "${name}" deleted.`);
+          loadData();
+        } catch (e: any) {
+          flash("error", e.message || "Failed to delete plan");
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   const filteredInvestments = useMemo(() => {
@@ -478,6 +489,11 @@ export default function SubscriptionsSection({
           </div>
         </div>
       )}
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

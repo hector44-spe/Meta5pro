@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
 import SignalDepositModal from "@/components/Signals/SignalDepositModal";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 import "@/styles/signal-page.css";
 import "@/styles/admin-edit-modals.css";
 
@@ -212,14 +213,10 @@ function getSignalColor(strength: number) {
 // ==========================================================================
 
 export default function SignalPage() {
-  const { currentBalance, hideBalance, setHideBalance, openModal, refreshBalance } = useDashboard();
+  const { hideBalance, setHideBalance, openModal } = useDashboard();
 
-  // Signal Balance (synced with real client balance from wallet)
-  const [signalBalance, setSignalBalance] = useState<number>(currentBalance || 0);
-
-  useEffect(() => {
-    setSignalBalance(currentBalance);
-  }, [currentBalance]);
+  // Signal Balance is independent from main wallet balance and only reflects purchased signals
+  const [signalBalance, setSignalBalance] = useState<number>(0);
 
   // Active Signal Name and Strength
   const [activeSignal, setActiveSignal] = useState<string | null>(null);
@@ -235,10 +232,18 @@ export default function SignalPage() {
       .then((d) => {
         if (d.history && Array.isArray(d.history)) {
           setHistoryList(d.history);
+          if (typeof d.signalBalance === "number") {
+            setSignalBalance(d.signalBalance);
+          } else {
+            const bal = d.history
+              .filter((h: any) => h.status !== "rejected" && h.status !== "cancelled")
+              .reduce((acc: number, h: any) => acc + (Number(h.price) || 0), 0);
+            setSignalBalance(bal);
+          }
           if (d.history.length > 0) {
-            const active = d.history[0];
+            const active = d.history.find((h: any) => h.status === "active" || h.status === "approved" || h.status === "completed") || d.history[0];
             if (active) {
-              setActiveSignal(active.signal);
+              setActiveSignal(active.signal || active.signalTitle || null);
               setActiveStrength(Number(active.strength) || 50);
             }
           }
@@ -282,6 +287,7 @@ export default function SignalPage() {
   const [signals, setSignals] = useState<SignalItem[]>(ORIGINAL_SIGNALS);
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingSignal, setEditingSignal] = useState<SignalItem | null>(null);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
   const [isCreatingSignal, setIsCreatingSignal] = useState(false);
   const [signalName, setSignalName] = useState("");
   const [signalPrice, setSignalPrice] = useState("");
@@ -356,29 +362,37 @@ export default function SignalPage() {
     }
   };
 
-  const handleDeleteSignal = async () => {
+  const handleDeleteSignal = () => {
     if (!editingSignal) return;
-    if (!confirm(`Are you sure you want to delete ${editingSignal.title}?`)) return;
-    setSavingSignal(true);
-    try {
-      const res = await fetch("/api/signals", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", signalId: editingSignal.id }),
-      });
-      const data = await res.json();
-      if (data.success && data.signals) {
-        setSignals(data.signals);
-        setEditingSignal(null);
-        setIsCreatingSignal(false);
-        setToastMessage("Signal deleted");
-        setTimeout(() => setToastMessage(null), 3000);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSavingSignal(false);
-    }
+    setConfirmState({
+      title: `Delete Signal Package "${editingSignal.title}"?`,
+      message: `Are you sure you want to delete this signal package?`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        setSavingSignal(true);
+        try {
+          const res = await fetch("/api/signals", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", signalId: editingSignal.id }),
+          });
+          const data = await res.json();
+          if (data.success && data.signals) {
+            setSignals(data.signals);
+            setEditingSignal(null);
+            setIsCreatingSignal(false);
+            setToastMessage("Signal deleted");
+            setTimeout(() => setToastMessage(null), 3000);
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setSavingSignal(false);
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   // Form Inputs & Error State per Card
@@ -996,6 +1010,11 @@ export default function SignalPage() {
           } else if (data.signal) {
             setHistoryList((prev) => [data.signal, ...prev]);
           }
+          if (typeof data.signalBalance === "number") {
+            setSignalBalance(data.signalBalance);
+          } else {
+            setSignalBalance((prev) => prev + (depositModalSignal?.amount || 0));
+          }
           if (depositModalSignal?.signal.id) {
             setInputs((prev) => ({ ...prev, [depositModalSignal.signal.id]: "" }));
           }
@@ -1003,6 +1022,11 @@ export default function SignalPage() {
           setTimeout(() => setToastMessage(null), 3500);
           setDepositModalSignal(null);
         }}
+      />
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
       />
     </div>
   );

@@ -293,9 +293,19 @@ iframe.goog-te-banner-frame,
   visibility: hidden !important;
 }
 
+html,
 body {
   top: 0px !important;
   position: static !important;
+}
+
+.skiptranslate:not(.goog-te-gadget):not(.goog-te-combo) {
+  display: none !important;
+}
+
+iframe.skiptranslate {
+  display: none !important;
+  visibility: hidden !important;
 }
 
 .goog-text-highlight {

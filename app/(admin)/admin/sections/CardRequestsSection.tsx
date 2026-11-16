@@ -13,6 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import styles from "../page.module.css";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 
 const usd = (n: number) =>
   `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -43,6 +44,7 @@ export default function CardRequestsSection({
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState<string>("ALL");
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   const loadCards = async () => {
     setLoading(true);
@@ -80,20 +82,29 @@ export default function CardRequestsSection({
     }
   };
 
-  const handleDeleteCard = async (userId: string, cardId: string) => {
-    if (!confirm("Delete this user card request?")) return;
-    try {
-      const res = await fetch("/api/admin/cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deleteCard", userId, cardId }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      flash("ok", "Card request deleted.");
-      loadCards();
-    } catch (e: any) {
-      flash("error", e.message || "Failed to delete");
-    }
+  const handleDeleteCard = (userId: string, cardId: string) => {
+    setConfirmState({
+      title: "Delete Card Request?",
+      message: "Are you sure you want to delete this user card request?",
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin/cards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "deleteCard", userId, cardId }),
+          });
+          if (!res.ok) throw new Error("Delete failed");
+          flash("ok", "Card request deleted.");
+          loadCards();
+        } catch (e: any) {
+          flash("error", e.message || "Failed to delete");
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   const filteredCards = useMemo(() => {
@@ -305,6 +316,11 @@ export default function CardRequestsSection({
           </table>
         </div>
       </section>
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

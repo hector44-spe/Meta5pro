@@ -372,26 +372,28 @@
   padding: 48px 0;
 }
 
-.cold-storage-mobile-wrapper .asset {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
-  background-color: transparent;
-  padding: 12px 10px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  border-radius: 8px;
-  align-items: center;
-  box-sizing: border-box;
-  border: 1px solid rgba(255, 255, 255, 0.03);
+.cold-storage-mobile-wrapper .asset,
+.cold-storage-asset-row {
+  display: flex !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  background-color: rgba(255, 255, 255, 0.02) !important;
+  padding: 12px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease-in-out !important;
+  border-radius: 10px !important;
+  align-items: center !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  margin-bottom: 8px !important;
 }
 
-.cold-storage-mobile-wrapper .asset:nth-of-type(odd) {
-  background-color: var(--color-control, hsla(0, 0%, 100%, 0.04));
-}
-
-.cold-storage-mobile-wrapper .asset:hover {
-  background-color: var(--color-control-hover, hsla(0, 0%, 100%, 0.08));
+.cold-storage-mobile-wrapper .asset:hover,
+.cold-storage-asset-row:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .cold-storage-mobile-wrapper .asset_left {
@@ -995,9 +997,14 @@
   align-items: center;
 }
 
+.review-transaction-box .summary-row .summary-label,
 .review-transaction-box .summary-row .label {
-  font-size: 12.5px;
-  color: var(--color-text-secondary, rgba(255, 255, 255, 0.5));
+  font-size: 13px !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
 }
 
 .review-transaction-box .summary-row .value {
@@ -1008,31 +1015,36 @@
 }
 
 .drawer-action-btn {
-  width: 100%;
-  margin-top: 48px;
-  background: var(--color-primary, #4763f0);
-  border: none;
-  border-radius: 8px;
-  padding: 12px;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100% !important;
+  flex: 0 0 auto !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  margin-top: 24px !important;
+  background: var(--color-primary, #4763f0) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 12px !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
 }
 
 .drawer-action-btn:hover:not(:disabled) {
-  background: var(--color-primary-hover, #3851d8);
+  background: var(--color-primary-hover, #3851d8) !important;
 }
 
 .drawer-action-btn:disabled,
 .drawer-action-btn.disabled {
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  color: rgba(255, 255, 255, 0.3) !important;
-  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  cursor: not-allowed !important;
 }
 
 /* ==========================================================================
@@ -1087,11 +1099,15 @@
 }
 
 .cold-storage-success-badge.deposit {
-  background: linear-gradient(-160deg, hsla(36, 100%, 65%, 0.1) 0%, hsla(36, 67%, 36%, 0.1) 100%);
+  background: rgba(1, 178, 139, 0.12);
+  border: 1px solid rgba(1, 178, 139, 0.3);
+  color: #01b28b;
 }
 
 .cold-storage-success-badge.withdraw {
-  background: linear-gradient(-160deg, hsla(0, 100%, 65%, 0.1) 0%, hsla(0, 67%, 36%, 0.1) 100%);
+  background: rgba(248, 73, 96, 0.12);
+  border: 1px solid rgba(248, 73, 96, 0.3);
+  color: #f84960;
 }
 
 .cold-storage-success-badge p {
@@ -1220,6 +1236,32 @@
 
   .how-it-works-questions .question_answer {
     padding-left: 0;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .cold-storage-drawer {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100% !important;
+    padding: max(16px, env(safe-area-inset-top)) 16px 24px 16px !important;
+    border-radius: 0 !important;
+  }
+  .cold-storage-drawer .drawer-content {
+    margin-top: 14px !important;
+    gap: 12px !important;
+  }
+  .amount-input-card {
+    padding: 12px 14px !important;
+  }
+  .review-transaction-box {
+    padding: 14px !important;
+  }
+  .drawer-action-btn {
+    margin-top: 18px !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
   }
 }
 

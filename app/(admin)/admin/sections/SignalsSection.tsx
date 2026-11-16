@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import styles from "../page.module.css";
 import { AdminSignalPurchase, AdminSignalItem } from "@/app/api/admin/signals/route";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 
 const usd = (n: number) =>
   `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -33,6 +34,7 @@ export default function SignalsSection({
   // Edit / Add Signal package modal
   const [editSignal, setEditSignal] = useState<Partial<AdminSignalItem> | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -71,20 +73,29 @@ export default function SignalsSection({
     }
   };
 
-  const handleDeletePurchase = async (userId: string, purchaseId: string) => {
-    if (!confirm("Delete this signal purchase record?")) return;
-    try {
-      const res = await fetch("/api/admin/signals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deletePurchase", userId, purchaseId }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      flash("ok", "Signal purchase deleted.");
-      loadData();
-    } catch (e: any) {
-      flash("error", e.message || "Failed to delete");
-    }
+  const handleDeletePurchase = (userId: string, purchaseId: string) => {
+    setConfirmState({
+      title: "Delete Signal Purchase?",
+      message: "Are you sure you want to delete this signal purchase record?",
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin/signals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "deletePurchase", userId, purchaseId }),
+          });
+          if (!res.ok) throw new Error("Delete failed");
+          flash("ok", "Signal purchase deleted.");
+          loadData();
+        } catch (e: any) {
+          flash("error", e.message || "Failed to delete");
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   const handleSaveSignal = async () => {
@@ -115,20 +126,29 @@ export default function SignalsSection({
     }
   };
 
-  const handleDeleteSignal = async (id: string, name: string) => {
-    if (!confirm(`Delete signal "${name}"?`)) return;
-    try {
-      const res = await fetch("/api/admin/signals", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deleteSignal", signalId: id }),
-      });
-      if (!res.ok) throw new Error("Failed to delete signal package");
-      flash("ok", `Signal package "${name}" deleted.`);
-      loadData();
-    } catch (e: any) {
-      flash("error", e.message || "Failed to delete");
-    }
+  const handleDeleteSignal = (id: string, name: string) => {
+    setConfirmState({
+      title: `Delete Signal Package "${name}"?`,
+      message: `Are you sure you want to delete this signal package?`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin/signals", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "deleteSignal", signalId: id }),
+          });
+          if (!res.ok) throw new Error("Failed to delete signal package");
+          flash("ok", `Signal package "${name}" deleted.`);
+          loadData();
+        } catch (e: any) {
+          flash("error", e.message || "Failed to delete");
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   const filteredPurchases = useMemo(() => {
@@ -422,6 +442,11 @@ export default function SignalsSection({
           </div>
         </div>
       )}
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

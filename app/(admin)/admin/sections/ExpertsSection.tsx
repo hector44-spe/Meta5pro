@@ -383,7 +383,14 @@ export default function ExpertsSection({
         <div className={styles.modalBackdrop} onClick={() => !submitting && setEditModal(null)}>
           <div
             className={styles.modal}
-            style={{ width: "100%", maxWidth: "520px", boxSizing: "border-box", padding: "20px" }}
+            style={{
+              width: "100%",
+              maxWidth: "520px",
+              maxHeight: "min(92vh, calc(100dvh - 24px))",
+              overflowY: "auto",
+              boxSizing: "border-box",
+              padding: "20px",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className={styles.modalHead}>

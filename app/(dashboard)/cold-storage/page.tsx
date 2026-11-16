@@ -567,23 +567,38 @@ export default function ColdStoragePage() {
                         return (
                           <div
                             key={asset.symbol}
-                            className="asset"
+                            className="asset cold-storage-asset-row"
                             onClick={() => handleRowClick(asset)}
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              width: "100%",
+                              maxWidth: "100%",
+                              minWidth: 0,
+                              boxSizing: "border-box",
+                              padding: "12px 14px",
+                              borderRadius: "10px",
+                              background: "rgba(255, 255, 255, 0.02)",
+                              border: "1px solid rgba(255, 255, 255, 0.05)",
+                              marginBottom: "8px",
+                              cursor: "pointer",
+                            }}
                           >
-                            <div className="asset_left">
-                              <img src={asset.icon} alt={asset.symbol} />
-                              <span>
-                                <p className="asset_name">{asset.name}</p>
-                                <div className="asset_value">
-                                  <p>{formatCryptoAmount(asset.amount, asset.symbol)}</p>
-                                  <p>•</p>
-                                  <p>{formatCurrency(totalVal)}</p>
+                            <div className="asset_left" style={{ display: "flex", alignItems: "center", gap: "12px", flex: "1 1 auto", minWidth: 0 }}>
+                              <img src={asset.icon} alt={asset.symbol} style={{ width: "32px", height: "32px", borderRadius: "50%", flexShrink: 0 }} />
+                              <span style={{ display: "flex", flexDirection: "column", gap: "3px", minWidth: 0 }}>
+                                <p className="asset_name" style={{ fontSize: "14px", fontWeight: 600, color: "#fff", margin: 0 }}>{asset.name}</p>
+                                <div className="asset_value" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", margin: 0 }}>
+                                  <p style={{ margin: 0 }}>{formatCryptoAmount(asset.amount, asset.symbol)}</p>
+                                  <p style={{ margin: 0 }}>•</p>
+                                  <p style={{ margin: 0 }}>{formatCurrency(totalVal)}</p>
                                 </div>
                               </span>
                             </div>
-                            <div className="asset_right">
-                              <span>
-                                <p className="current_price">
+                            <div className="asset_right" style={{ display: "flex", alignItems: "center", gap: "10px", flexShrink: 0 }}>
+                              <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" }}>
+                                <p className="current_price" style={{ fontSize: "12.5px", fontWeight: 500, color: "rgba(255, 255, 255, 0.7)", margin: 0 }}>
                                   $
                                   {asset.price.toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
@@ -592,7 +607,7 @@ export default function ColdStoragePage() {
                                   / {asset.symbol}
                                 </p>
                               </span>
-                              <div className="chevron_right_wrapper">
+                              <div className="chevron_right_wrapper" style={{ display: "flex", alignItems: "center", color: "#4763f0" }}>
                                 <ChevronRight size={16} />
                               </div>
                             </div>
@@ -934,13 +949,13 @@ export default function ColdStoragePage() {
 
                     <div className="bottom">
                       <div className="summary-row">
-                        <span className="label">Amount:</span>
+                        <span className="summary-label">Amount:</span>
                         <span className="value">
                           {formatCryptoAmount(parseFloat(amountInput), selectedAsset.symbol)}
                         </span>
                       </div>
                       <div className="summary-row">
-                        <span className="label">Price per unit:</span>
+                        <span className="summary-label">Price per unit:</span>
                         <span className="value">
                           $
                           {selectedAsset.price.toLocaleString("en-US", {
@@ -950,7 +965,7 @@ export default function ColdStoragePage() {
                         </span>
                       </div>
                       <div className="summary-row">
-                        <span className="label">Total:</span>
+                        <span className="summary-label">Total:</span>
                         <span className="value">
                           {formatCurrency(calculatedUsdValue)}
                         </span>
@@ -1082,13 +1097,13 @@ export default function ColdStoragePage() {
 
                     <div className="bottom">
                       <div className="summary-row">
-                        <span className="label">Amount:</span>
+                        <span className="summary-label">Amount:</span>
                         <span className="value">
                           {formatCryptoAmount(parseFloat(amountInput), selectedAsset.symbol)}
                         </span>
                       </div>
                       <div className="summary-row">
-                        <span className="label">Price per unit:</span>
+                        <span className="summary-label">Price per unit:</span>
                         <span className="value">
                           $
                           {selectedAsset.price.toLocaleString("en-US", {
@@ -1098,7 +1113,7 @@ export default function ColdStoragePage() {
                         </span>
                       </div>
                       <div className="summary-row">
-                        <span className="label">Total:</span>
+                        <span className="summary-label">Total:</span>
                         <span className="value">
                           {formatCurrency(calculatedUsdValue)}
                         </span>

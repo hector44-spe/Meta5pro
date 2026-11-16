@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { X, Loader2, Save, Trash2 } from "lucide-react";
 import "@/styles/deposit-addresses.css";
 import { FullAddressItem } from "@/app/api/admin/settings/addresses/route";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 
 export const COIN_OPTIONS = [
   { symbol: "BTC", name: "Bitcoin", defaultNetwork: "Default" },
@@ -154,6 +155,7 @@ export default function DepositAddressSection({
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
   const [uploadingQr, setUploadingQr] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -282,50 +284,67 @@ export default function DepositAddressSection({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!editId) return;
-    if (!confirm(`Delete this ${selectedCoin.name} address?`)) return;
-    setSaving(true);
-    try {
-      const res = await fetch("/api/admin/settings/addresses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "deleteAddress",
-          addressId: editId,
-          isSignal: isEditingSignal,
-        }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      flash("ok", "Address deleted.");
-      setModalOpen(false);
-      loadData();
-    } catch (e: any) {
-      flash("error", e.message || "Failed to delete");
-    } finally {
-      setSaving(false);
-    }
+    setConfirmState({
+      title: `Delete ${selectedCoin.name} Address?`,
+      message: `Are you sure you want to delete this deposit address? Users will no longer be able to deposit to it.`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        setSaving(true);
+        try {
+          const res = await fetch("/api/admin/settings/addresses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "deleteAddress",
+              addressId: editId,
+              isSignal: isEditingSignal,
+            }),
+          });
+          if (!res.ok) throw new Error("Delete failed");
+          flash("ok", "Address deleted.");
+          setModalOpen(false);
+          loadData();
+        } catch (e: any) {
+          flash("error", e.message || "Failed to delete");
+        } finally {
+          setSaving(false);
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
-  const handleDirectDelete = async (item: FullAddressItem, forSignal: boolean) => {
+  const handleDirectDelete = (item: FullAddressItem, forSignal: boolean) => {
     const label = item.token || item.symbol;
-    if (!window.confirm(`Are you sure you want to delete this ${label} address (${item.network})?`)) return;
-    try {
-      const res = await fetch("/api/admin/settings/addresses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "deleteAddress",
-          addressId: item.id,
-          isSignal: forSignal,
-        }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      flash("ok", `${label} address deleted.`);
-      loadData();
-    } catch (e: any) {
-      flash("error", e.message || "Failed to delete address");
-    }
+    setConfirmState({
+      title: `Delete ${label} Address?`,
+      message: `Are you sure you want to delete this ${label} address (${item.network})?`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin/settings/addresses", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "deleteAddress",
+              addressId: item.id,
+              isSignal: forSignal,
+            }),
+          });
+          if (!res.ok) throw new Error("Delete failed");
+          flash("ok", `${label} address deleted.`);
+          loadData();
+        } catch (e: any) {
+          flash("error", e.message || "Failed to delete address");
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   return (
@@ -607,6 +626,11 @@ export default function DepositAddressSection({
           </div>
         </div>
       )}
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

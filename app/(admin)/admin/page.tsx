@@ -37,6 +37,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import styles from "./page.module.css";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 import AdminSettingsDrawer from "@/components/AdminSettingsDrawer";
 import ExpertsSection from "./sections/ExpertsSection";
 import TradesSection from "./sections/TradesSection";
@@ -876,6 +877,7 @@ function UsersSection({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   const rows = users.filter((u) => {
     const s = q.trim().toLowerCase();
@@ -921,25 +923,33 @@ function UsersSection({
     }
   };
 
-  const toggleStatus = async (u: AdminUser) => {
+  const toggleStatus = (u: AdminUser) => {
     const next = u.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-    if (!window.confirm(`${next === "SUSPENDED" ? "Suspend" : "Reactivate"} ${u.email}?`)) return;
-    setStatusBusy(u.id);
-    try {
-      const res = await fetch(`/api/admin/users/${u.id}/status`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Update failed");
-      flash("ok", `${u.email} is now ${next.toLowerCase()}.`);
-      await onChanged();
-    } catch (err) {
-      flash("error", err instanceof Error ? err.message : "Update failed");
-    } finally {
-      setStatusBusy(null);
-    }
+    setConfirmState({
+      title: `${next === "SUSPENDED" ? "Suspend" : "Reactivate"} ${u.email}?`,
+      message: `Are you sure you want to ${next === "SUSPENDED" ? "suspend" : "reactivate"} this user account?`,
+      confirmText: next === "SUSPENDED" ? "Suspend" : "Reactivate",
+      danger: next === "SUSPENDED",
+      onConfirm: async () => {
+        setStatusBusy(u.id);
+        try {
+          const res = await fetch(`/api/admin/users/${u.id}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: next }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Update failed");
+          flash("ok", `${u.email} is now ${next.toLowerCase()}.`);
+          await onChanged();
+        } catch (err) {
+          flash("error", err instanceof Error ? err.message : "Update failed");
+        } finally {
+          setStatusBusy(null);
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   return (
@@ -1094,6 +1104,11 @@ function UsersSection({
           </form>
         </div>
       )}
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </>
   );
 }

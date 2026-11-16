@@ -21,6 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 import {
   OPEN_REAL_ESTATE_PROJECTS,
   CLOSED_REAL_ESTATE_PROJECTS,
@@ -181,11 +182,13 @@ export default function RealEstateDashboardPage() {
     const maxDurVal = parseInt(editMaxDuration, 10) || 1;
 
     if (isNaN(minVal) || minVal <= 0) {
-      alert("Please enter a valid minimum investment amount.");
+      setToastMessage("Please enter a valid minimum investment amount.");
+      setTimeout(() => setToastMessage(null), 4000);
       return;
     }
     if (isNaN(roiVal) || roiVal <= 0) {
-      alert("Please enter a valid ROI percentage.");
+      setToastMessage("Please enter a valid ROI percentage.");
+      setTimeout(() => setToastMessage(null), 4000);
       return;
     }
 
@@ -228,55 +231,63 @@ export default function RealEstateDashboardPage() {
       setTimeout(() => setToastMessage(null), 5000);
       setEditingProject(null);
     } catch (err: any) {
-      alert(err.message || "Failed to save project");
+      setToastMessage(err.message || "Failed to save project");
+      setTimeout(() => setToastMessage(null), 5000);
     } finally {
       setIsSavingProject(false);
     }
   };
 
-  const handleDeleteProject = async () => {
+  const handleDeleteProject = () => {
     if (!editingProject) return;
-    if (!confirm(`Are you sure you want to delete "${editingProject.title}"?`)) {
-      return;
-    }
+    setConfirmState({
+      title: `Delete Project "${editingProject.title}"?`,
+      message: `Are you sure you want to delete this real estate project? This action cannot be undone.`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        setIsDeletingProject(true);
+        try {
+          const res = await fetch("/api/real-estate/projects", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "delete",
+              projectId: editingProject.id,
+            }),
+          });
 
-    setIsDeletingProject(true);
-    try {
-      const res = await fetch("/api/real-estate/projects", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "delete",
-          projectId: editingProject.id,
-        }),
-      });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || "Failed to delete project");
+          }
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to delete project");
-      }
+          const data = await res.json();
+          if (data.projects) {
+            setOpenProjects(data.projects);
+          } else {
+            setOpenProjects((prev) =>
+              prev.filter((p) => p.id !== editingProject.id)
+            );
+          }
 
-      const data = await res.json();
-      if (data.projects) {
-        setOpenProjects(data.projects);
-      } else {
-        setOpenProjects((prev) =>
-          prev.filter((p) => p.id !== editingProject.id)
-        );
-      }
-
-      setToastMessage(`Project "${editingProject.title}" removed!`);
-      setTimeout(() => setToastMessage(null), 5000);
-      setEditingProject(null);
-    } catch (err: any) {
-      alert(err.message || "Failed to delete project");
-    } finally {
-      setIsDeletingProject(false);
-    }
+          setToastMessage(`Project "${editingProject.title}" removed!`);
+          setTimeout(() => setToastMessage(null), 5000);
+          setEditingProject(null);
+        } catch (err: any) {
+          setToastMessage(err.message || "Failed to delete project");
+          setTimeout(() => setToastMessage(null), 5000);
+        } finally {
+          setIsDeletingProject(false);
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   // Toast Banner
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   // FAQ open question accordion state
   const [openQuestionId, setOpenQuestionId] = useState<number | null>(1);
@@ -1293,6 +1304,11 @@ export default function RealEstateDashboardPage() {
           </div>
         </div>
       )}
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

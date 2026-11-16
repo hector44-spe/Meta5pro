@@ -49,8 +49,11 @@ import {
   ArrowUpRight,
   ArrowLeftRight,
   MoreHorizontal,
+  ArrowUpDown,
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
+import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/CustomNotificationBar";
 import "@/styles/dashboard.css";
 
 // Authentic Brand Icons matching Image 4
@@ -139,6 +142,7 @@ export default function DashboardPage() {
     accountType,
     currentBalance,
     realBalance,
+    demoBalance,
     refreshBalance,
     formatMoney,
     balanceLoaded,
@@ -149,6 +153,7 @@ export default function DashboardPage() {
     userId: string;
     symbol: string;
     type: "BUY" | "SELL";
+    side?: "BUY" | "SELL";
     amount: number;
     entryPrice: number;
     leverage: number;
@@ -206,29 +211,90 @@ export default function DashboardPage() {
     }
   };
 
-  const handleClosePosition = async (id: string) => {
-    setClosingPositionId(id);
+  // Convert state matching Image 2
+  const [convertFromSymbol, setConvertFromSymbol] = useState("USD");
+  const [convertToSymbol, setConvertToSymbol] = useState("BTC");
+  const [convertFromAmount, setConvertFromAmount] = useState("0.01");
+  const [isConvertFromDropdownOpen, setIsConvertFromDropdownOpen] = useState(false);
+  const [isConvertToDropdownOpen, setIsConvertToDropdownOpen] = useState(false);
+  const [convertSubmitting, setConvertSubmitting] = useState(false);
+
+  // Swaps state matching Image 3
+  const [swaps, setSwaps] = useState<
+    Array<{ id: string; createdAt: string; trade: string; from: string; to: string; status: string }>
+  >([]);
+  const [swapsLoading, setSwapsLoading] = useState(false);
+
+  // Auto trades state matching Image 4
+  const [autoOpenExpanded, setAutoOpenExpanded] = useState(true);
+  const [autoClosedExpanded, setAutoClosedExpanded] = useState(false);
+
+  // Custom UI Modals & Notifications (No native alert or confirm)
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
+  const [notification, setNotification] = useState<CustomNotificationState | null>(null);
+
+  const fetchSwaps = async () => {
     try {
-      const res = await fetch(`/api/trades/positions/${id}/close`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.error || "Failed to close position");
-      } else {
-        await fetchPositions();
-        refreshBalance();
+      setSwapsLoading(true);
+      const res = await fetch("/api/trades/convert");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.swaps)) {
+          setSwaps(data.swaps);
+        }
       }
-    } catch (err) {
-      console.error("Close position error:", err);
+    } catch (e) {
+      console.error("Failed to fetch swaps:", e);
     } finally {
-      setClosingPositionId(null);
+      setSwapsLoading(false);
     }
+  };
+
+  const handleClosePosition = (pos: { id: string; symbol: string; type: string }) => {
+    setConfirmState({
+      title: `Close Position on ${pos.symbol}?`,
+      message: `Are you sure you want to close this ${pos.type} position? Any unrealized profit or loss will be realized immediately.`,
+      confirmText: "Close Position",
+      cancelText: "Keep Position",
+      danger: true,
+      onConfirm: async () => {
+        setClosingPositionId(pos.id);
+        try {
+          const res = await fetch(`/api/trades/positions/${pos.id}/close`, {
+            method: "POST",
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            setNotification({
+              type: "error",
+              message: data.error || "Failed to close position.",
+            });
+          } else {
+            setNotification({
+              type: "success",
+              message: `Position on ${pos.symbol} closed successfully. Realized PnL: $${Number(data.position?.pnl || 0).toFixed(2)}`,
+            });
+            await fetchPositions();
+            refreshBalance();
+          }
+        } catch (err) {
+          console.error("Close position error:", err);
+          setNotification({
+            type: "error",
+            message: "Failed to close position.",
+          });
+        } finally {
+          setClosingPositionId(null);
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   useEffect(() => {
     setMounted(true);
     fetchPositions();
+    fetchSwaps();
   }, []);
 
   // Timer for countdown ticks
@@ -411,9 +477,98 @@ export default function DashboardPage() {
     return `https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=en#${encodeURIComponent(JSON.stringify(config))}`;
   }, [tvSymbol]);
 
+  // Convert calculations (matching Image 2)
+  const CONVERT_ASSETS = ["USD", "BTC", "ETH", "SOL", "USDT", "XRP", "BNB", "ADA"];
+
+  const convertRate = useMemo(() => {
+    const fromPrice = convertFromSymbol === "USD" ? 1 : (prices[convertFromSymbol] || 1);
+    const toPrice = convertToSymbol === "USD" ? 1 : (prices[convertToSymbol] || 1);
+    return toPrice > 0 ? fromPrice / toPrice : 0;
+  }, [convertFromSymbol, convertToSymbol, prices]);
+
+  const convertToCalculated = useMemo(() => {
+    const num = parseFloat(convertFromAmount);
+    if (isNaN(num) || num <= 0) return "0.00";
+    const val = num * convertRate;
+    return convertToSymbol === "USD" ? val.toFixed(2) : val.toFixed(6);
+  }, [convertFromAmount, convertRate, convertToSymbol]);
+
+  const convertFromUsdEquiv = useMemo(() => {
+    const num = parseFloat(convertFromAmount);
+    if (isNaN(num) || num <= 0) return "0.00";
+    const fromPrice = convertFromSymbol === "USD" ? 1 : (prices[convertFromSymbol] || 1);
+    return (num * fromPrice).toFixed(2);
+  }, [convertFromAmount, convertFromSymbol, prices]);
+
+  const handleSwapSymbols = () => {
+    const prevFrom = convertFromSymbol;
+    const prevTo = convertToSymbol;
+    const prevCalc = convertToCalculated;
+    setConvertFromSymbol(prevTo);
+    setConvertToSymbol(prevFrom);
+    if (parseFloat(prevCalc) > 0) {
+      setConvertFromAmount(prevCalc);
+    }
+  };
+
+  const handleExecuteConvert = async () => {
+    const num = parseFloat(convertFromAmount);
+    if (isNaN(num) || num <= 0) {
+      setNotification({
+        type: "error",
+        message: "Please enter a valid amount to convert.",
+      });
+      return;
+    }
+
+    if (convertFromSymbol === "USD") {
+      const curBal = Number(currentBalance || 0);
+      if (num > curBal) {
+        setNotification({
+          type: "error",
+          message: `Insufficient USD balance. You have $${curBal.toFixed(2)} available.`,
+        });
+        return;
+      }
+    }
+
+    setConvertSubmitting(true);
+    try {
+      const res = await fetch("/api/trades/convert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromSymbol: convertFromSymbol,
+          toSymbol: convertToSymbol,
+          fromAmount: num,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setNotification({
+          type: "error",
+          message: data.error || "Failed to complete asset conversion.",
+        });
+      } else {
+        setNotification({
+          type: "success",
+          message: data.message || `Successfully converted ${num} ${convertFromSymbol} to ${convertToCalculated} ${convertToSymbol}.`,
+        });
+        refreshBalance();
+        fetchSwaps();
+      }
+    } catch (err) {
+      setNotification({
+        type: "error",
+        message: "An unexpected error occurred while converting.",
+      });
+    } finally {
+      setConvertSubmitting(false);
+    }
+  };
+
   // AI assistant for TP/SL
   const handleSetWithAi = () => {
-    setUseTpSl(true);
     const base = activeAssetPrice || 100;
     if (orderTab === "sell") {
       setStopLoss((base * 1.025).toFixed(base < 10 ? 4 : 2));
@@ -422,13 +577,27 @@ export default function DashboardPage() {
       setStopLoss((base * 0.975).toFixed(base < 10 ? 4 : 2));
       setTakeProfit((base * 1.05).toFixed(base < 10 ? 4 : 2));
     }
+    setUseTpSl(true);
   };
 
   const handleTradeAction = async () => {
     setOrderFeedback(null);
-    const requiredMargin = (parseFloat(amount) || 100) / (leverage || 5);
+    const parsedAmount = parseFloat(amount) || 0;
+    if (parsedAmount <= 0) {
+      setNotification({
+        type: "error",
+        message: "Please enter a valid trade amount.",
+      });
+      return;
+    }
+
+    const requiredMargin = parsedAmount / (leverage || 5);
     if (accountType === "real" && realBalance < requiredMargin) {
       openModal("deposit");
+      setNotification({
+        type: "error",
+        message: "Insufficient real balance for this order. Please deposit.",
+      });
       return;
     }
 
@@ -438,23 +607,37 @@ export default function DashboardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          side: orderTab.toUpperCase(),
+          accountType,
+          side: orderTab === "sell" ? "SELL" : "BUY",
           symbol: currency || "BTC",
-          amount: parseFloat(amount) || 100,
+          amount: parsedAmount,
           leverage: leverage || 5,
           duration: duration || "2 minutes",
+          useTpSl,
+          stopLoss: useTpSl ? stopLoss : null,
+          takeProfit: useTpSl ? takeProfit : null,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Order execution failed");
+        setNotification({
+          type: "error",
+          message: data.error || "Order execution failed",
+        });
+      } else {
+        setNotification({
+          type: "success",
+          message: `${orderTab === "sell" ? "Sell" : "Buy"} order executed successfully! Position #${(data.position?.id || "OK").slice(0, 8)}`,
+        });
+        await fetchPositions();
+        refreshBalance();
+        setOpenTradesOpen(true);
       }
-      setOrderFeedback(data.message);
-      await fetchPositions();
-      refreshBalance();
-      setOpenTradesOpen(true);
     } catch (err: unknown) {
-      setOrderFeedback(err instanceof Error ? err.message : "Execution failed");
+      setNotification({
+        type: "error",
+        message: err instanceof Error ? err.message : "Execution failed",
+      });
     } finally {
       setOrderExecuting(false);
     }
@@ -1560,7 +1743,7 @@ export default function DashboardPage() {
               style={{
                 padding: "8px",
                 borderRadius: "8px",
-                backgroundColor: orderTab === "sell" ? "#ff3344" : "transparent",
+                backgroundColor: orderTab === "sell" ? "#f84960" : "transparent",
                 color: orderTab === "sell" ? "#fff" : "rgba(255, 255, 255, 0.6)",
                 border: orderTab === "sell" ? "none" : "1px solid rgba(255, 255, 255, 0.06)",
                 fontSize: "13px",
@@ -1576,7 +1759,7 @@ export default function DashboardPage() {
               style={{
                 padding: "8px",
                 borderRadius: "8px",
-                backgroundColor: orderTab === "convert" ? "rgba(255, 255, 255, 0.12)" : "transparent",
+                backgroundColor: orderTab === "convert" ? "#3b82f6" : "transparent",
                 color: orderTab === "convert" ? "#fff" : "rgba(255, 255, 255, 0.6)",
                 border: orderTab === "convert" ? "none" : "1px solid rgba(255, 255, 255, 0.06)",
                 fontSize: "13px",
@@ -1589,567 +1772,834 @@ export default function DashboardPage() {
             </button>
           </div>
 
-          {/* Trade Type Dropdown */}
-          <div style={{ position: "relative" }}>
-            <label
-              style={{
-                fontSize: "12px",
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                marginBottom: "4px",
-                display: "block",
-                fontWeight: 500,
-              }}
-            >
-              Trade type:
-            </label>
-            <div
-              onClick={() => {
-                setIsTradeTypeDropdownOpen(!isTradeTypeDropdownOpen);
-                setIsAssetDropdownOpen(false);
-                setIsDurationDropdownOpen(false);
-              }}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                color: "#fff",
-                fontSize: "13.5px",
-                fontWeight: 600,
-                boxSizing: "border-box",
-                cursor: "pointer",
-              }}
-            >
-              <span>{tradeType}</span>
-              <ChevronDown
-                size={15}
-                color="rgba(255, 255, 255, 0.5)"
-                style={{
-                  transform: isTradeTypeDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                  transition: "transform 0.15s",
-                }}
-              />
-            </div>
-            {isTradeTypeDropdownOpen && (
+          {/* ===================== CONVERT TAB CONTENT (Matching Image 2) ===================== */}
+          {orderTab === "convert" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+              {/* From Box */}
               <div
                 style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  left: 0,
-                  right: 0,
-                  backgroundColor: "#16181d",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  zIndex: 40,
-                  overflow: "hidden",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderRadius: "10px",
+                  padding: "14px 16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  position: "relative",
                 }}
               >
-                {["Crypto", "Forex", "Stocks", "Commodities"].map((t) => (
-                  <div
-                    key={t}
-                    onClick={() => {
-                      setTradeType(t);
-                      setIsTradeTypeDropdownOpen(false);
-                      const defaults: Record<string, string> = {
-                        Crypto: "BTC",
-                        Forex: "EURUSD",
-                        Stocks: "AAPL",
-                        Commodities: "GOLD",
-                      };
-                      if (defaults[t]) setCurrency(defaults[t]);
-                    }}
-                    style={{
-                      padding: "10px 14px",
-                      color: tradeType === t ? "#4763f0" : "#fff",
-                      fontSize: "13px",
-                      fontWeight: tradeType === t ? 700 : 500,
-                      cursor: "pointer",
-                      backgroundColor: tradeType === t ? "rgba(71, 99, 240, 0.12)" : "transparent",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (tradeType !== t) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (tradeType !== t) e.currentTarget.style.backgroundColor = "transparent";
-                    }}
-                  >
-                    {t}
+                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)", fontWeight: 500 }}>
+                  From
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                  <div style={{ flex: 1 }}>
+                    <input
+                      type="number"
+                      step="any"
+                      value={convertFromAmount}
+                      onChange={(e) => setConvertFromAmount(e.target.value)}
+                      placeholder="0.00"
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        outline: "none",
+                        color: "#ffffff",
+                        fontSize: "22px",
+                        fontWeight: 700,
+                        width: "100%",
+                      }}
+                    />
+                    <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.45)", marginTop: "2px" }}>
+                      ~${convertFromUsdEquiv}
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Amount with Currency selector */}
-          <div style={{ position: "relative" }}>
-            <label
-              style={{
-                fontSize: "12px",
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                marginBottom: "4px",
-                display: "block",
-                fontWeight: 500,
-              }}
-            >
-              Amount:
-            </label>
-            <div
-              style={{
-                width: "100%",
-                padding: "5px 6px 5px 12px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                boxSizing: "border-box",
-              }}
-            >
-              <input
-                type="text"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                  {/* From Asset Pill */}
+                  <div style={{ position: "relative" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsConvertFromDropdownOpen(!isConvertFromDropdownOpen);
+                        setIsConvertToDropdownOpen(false);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        padding: "6px 12px",
+                        borderRadius: "20px",
+                        backgroundColor: "rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        color: "#ffffff",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {convertFromSymbol === "USD" ? (
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            backgroundColor: "#2563eb",
+                            color: "#fff",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          $
+                        </span>
+                      ) : (
+                        <AssetBrandIcon symbol={convertFromSymbol} size={18} />
+                      )}
+                      <span>{convertFromSymbol}</span>
+                      <ChevronDown size={14} color="rgba(255, 255, 255, 0.6)" />
+                    </button>
+
+                    {isConvertFromDropdownOpen && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 4px)",
+                          right: 0,
+                          width: "140px",
+                          backgroundColor: "#16181d",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          borderRadius: "8px",
+                          zIndex: 60,
+                          maxHeight: "180px",
+                          overflowY: "auto",
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                        }}
+                      >
+                        {CONVERT_ASSETS.map((sym) => (
+                          <div
+                            key={sym}
+                            onClick={() => {
+                              setConvertFromSymbol(sym);
+                              setIsConvertFromDropdownOpen(false);
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              color: convertFromSymbol === sym ? "#3b82f6" : "#fff",
+                              fontSize: "12.5px",
+                              fontWeight: convertFromSymbol === sym ? 700 : 500,
+                              cursor: "pointer",
+                              backgroundColor: convertFromSymbol === sym ? "rgba(59, 130, 246, 0.12)" : "transparent",
+                            }}
+                          >
+                            <AssetBrandIcon symbol={sym} size={16} />
+                            <span>{sym}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize: "11.5px", color: "rgba(255, 255, 255, 0.55)" }}>
+                  {convertFromSymbol === "USD"
+                    ? `${Number(accountType === "real" ? realBalance : demoBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                    : `0 ${convertFromSymbol}`}
+                </div>
+              </div>
+
+              {/* Center Swap Button */}
+              <div style={{ display: "flex", justifyContent: "center", margin: "-4px 0", zIndex: 10 }}>
+                <button
+                  type="button"
+                  onClick={handleSwapSymbols}
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    backgroundColor: "#16181d",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#3b82f6",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    transition: "transform 0.15s ease",
+                  }}
+                  title="Swap currencies"
+                >
+                  <ArrowUpDown size={16} />
+                </button>
+              </div>
+
+              {/* To Box */}
+              <div
                 style={{
-                  background: "transparent",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  borderRadius: "10px",
+                  padding: "14px 16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  position: "relative",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.6)", fontWeight: 500 }}>
+                  To
+                </div>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: "22px", fontWeight: 700, color: "#ffffff" }}>
+                      {convertToCalculated}
+                    </div>
+                  </div>
+
+                  {/* To Asset Pill */}
+                  <div style={{ position: "relative" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsConvertToDropdownOpen(!isConvertToDropdownOpen);
+                        setIsConvertFromDropdownOpen(false);
+                      }}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        padding: "6px 12px",
+                        borderRadius: "20px",
+                        backgroundColor: "rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.1)",
+                        color: "#ffffff",
+                        fontSize: "13px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {convertToSymbol === "USD" ? (
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            backgroundColor: "#2563eb",
+                            color: "#fff",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                          }}
+                        >
+                          $
+                        </span>
+                      ) : (
+                        <AssetBrandIcon symbol={convertToSymbol} size={18} />
+                      )}
+                      <span>{convertToSymbol}</span>
+                      <ChevronDown size={14} color="rgba(255, 255, 255, 0.6)" />
+                    </button>
+
+                    {isConvertToDropdownOpen && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "calc(100% + 4px)",
+                          right: 0,
+                          width: "140px",
+                          backgroundColor: "#16181d",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          borderRadius: "8px",
+                          zIndex: 60,
+                          maxHeight: "180px",
+                          overflowY: "auto",
+                          boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                        }}
+                      >
+                        {CONVERT_ASSETS.map((sym) => (
+                          <div
+                            key={sym}
+                            onClick={() => {
+                              setConvertToSymbol(sym);
+                              setIsConvertToDropdownOpen(false);
+                            }}
+                            style={{
+                              padding: "8px 12px",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              color: convertToSymbol === sym ? "#3b82f6" : "#fff",
+                              fontSize: "12.5px",
+                              fontWeight: convertToSymbol === sym ? 700 : 500,
+                              cursor: "pointer",
+                              backgroundColor: convertToSymbol === sym ? "rgba(59, 130, 246, 0.12)" : "transparent",
+                            }}
+                          >
+                            <AssetBrandIcon symbol={sym} size={16} />
+                            <span>{sym}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "flex-end", fontSize: "11.5px", color: "rgba(255, 255, 255, 0.55)" }}>
+                  {convertToSymbol === "USD"
+                    ? `${Number(accountType === "real" ? realBalance : demoBalance).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                    : `0 ${convertToSymbol}`}
+                </div>
+              </div>
+
+              {/* Convert Button */}
+              <button
+                type="button"
+                onClick={handleExecuteConvert}
+                disabled={convertSubmitting || !parseFloat(convertFromAmount)}
+                style={{
+                  width: "100%",
+                  padding: "13px",
+                  borderRadius: "8px",
+                  backgroundColor: parseFloat(convertFromAmount) > 0 ? "#3b82f6" : "rgba(255, 255, 255, 0.12)",
+                  color: "#ffffff",
                   border: "none",
-                  outline: "none",
-                  color: "#fff",
                   fontSize: "14px",
                   fontWeight: 600,
-                  width: "100%",
-                }}
-              />
-              <div
-                onClick={() => {
-                  setIsAssetDropdownOpen(!isAssetDropdownOpen);
-                  setIsTradeTypeDropdownOpen(false);
-                  setIsDurationDropdownOpen(false);
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "5px 8px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(255, 255, 255, 0.06)",
-                  color: "#fff",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: parseFloat(convertFromAmount) > 0 ? "pointer" : "not-allowed",
+                  transition: "all 0.15s ease",
+                  marginTop: "6px",
                 }}
               >
-                <AssetBrandIcon symbol={currency} size={15} />
-                <span>{currency}</span>
-                <ChevronDown
-                  size={13}
-                  style={{
-                    transform: isAssetDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                    transition: "transform 0.15s",
-                  }}
-                />
-              </div>
+                {convertSubmitting ? "Converting..." : "Convert"}
+              </button>
             </div>
-
-            {/* Asset Selection Dropdown */}
-            {isAssetDropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  right: 0,
-                  width: "220px",
-                  maxHeight: "260px",
-                  overflowY: "auto",
-                  backgroundColor: "#16181d",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  zIndex: 40,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
-                }}
-              >
-                {(ASSETS_BY_TYPE[tradeType] || ASSETS_BY_TYPE.Crypto).map((asset) => (
-                  <div
-                    key={asset.symbol}
-                    onClick={() => {
-                      setCurrency(asset.symbol);
-                      setIsAssetDropdownOpen(false);
-                    }}
+          ) : (
+            /* ===================== BUY & SELL TAB CONTENT (Matching Image 1) ===================== */
+            <>
+              {/* Trade Type Dropdown */}
+              <div style={{ position: "relative" }}>
+                <label
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                    marginBottom: "4px",
+                    display: "block",
+                    fontWeight: 500,
+                  }}
+                >
+                  Trade type:
+                </label>
+                <div
+                  onClick={() => setIsTradeTypeDropdownOpen(!isTradeTypeDropdownOpen)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    color: "#fff",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    boxSizing: "border-box",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span>{tradeType}</span>
+                  <ChevronDown
+                    size={15}
+                    color="rgba(255, 255, 255, 0.5)"
                     style={{
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      color: currency === asset.symbol ? "#4763f0" : "#fff",
-                      fontSize: "12.5px",
-                      fontWeight: currency === asset.symbol ? 700 : 500,
-                      cursor: "pointer",
-                      backgroundColor: currency === asset.symbol ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                      transform: isTradeTypeDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.15s",
                     }}
-                    onMouseEnter={(e) => {
-                      if (currency !== asset.symbol) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (currency !== asset.symbol) e.currentTarget.style.backgroundColor = "transparent";
+                  />
+                </div>
+
+                {isTradeTypeDropdownOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 4px)",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "#16181d",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      zIndex: 40,
+                      overflow: "hidden",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <AssetBrandIcon symbol={asset.symbol} size={16} />
-                      <div>
-                        <div>{asset.symbol}</div>
-                        <div style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.45)" }}>{asset.name}</div>
+                    {["Crypto", "Stocks", "Forex", "Commodities"].map((t) => (
+                      <div
+                        key={t}
+                        onClick={() => {
+                          setTradeType(t);
+                          setIsTradeTypeDropdownOpen(false);
+                          const list = ASSETS_BY_TYPE[t] || [];
+                          if (list.length > 0) {
+                            setCurrency(list[0].symbol);
+                          }
+                        }}
+                        style={{
+                          padding: "9px 14px",
+                          color: tradeType === t ? "#4763f0" : "#fff",
+                          fontSize: "13px",
+                          fontWeight: tradeType === t ? 700 : 500,
+                          cursor: "pointer",
+                          backgroundColor: tradeType === t ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (tradeType !== t) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (tradeType !== t) e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        {t}
                       </div>
-                    </div>
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", fontFamily: "monospace" }}>
-                      ${asset.price.toLocaleString(undefined, { minimumFractionDigits: asset.price < 10 ? 3 : 2 })}
-                    </span>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
-          </div>
 
-          {/* USD Balance & Current BTC Price */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "11.5px",
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-              }}
-            >
-              <span>Current USD balance:</span>
-              <span style={{ fontWeight: 600, color: "#fff" }}>
-                {currentBalance} USD
-              </span>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                fontSize: "11.5px",
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-              }}
-            >
-              <span>Current {currency} price:</span>
-              <span style={{ fontWeight: 600, color: "#01b28b" }}>
-                ${activeAssetPrice ? activeAssetPrice.toLocaleString("en-US", { minimumFractionDigits: activeAssetPrice < 10 ? 3 : 2, maximumFractionDigits: activeAssetPrice < 10 ? 4 : 2 }) : "Loading…"}
-              </span>
-            </div>
-          </div>
+              {/* Amount with Currency selector */}
+              <div style={{ position: "relative" }}>
+                <label
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                    marginBottom: "4px",
+                    display: "block",
+                    fontWeight: 500,
+                  }}
+                >
+                  Amount:
+                </label>
+                <div
+                  style={{
+                    width: "100%",
+                    padding: "5px 6px 5px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      outline: "none",
+                      color: "#fff",
+                      fontSize: "14px",
+                      fontWeight: 600,
+                      width: "100%",
+                    }}
+                  />
+                  <div
+                    onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "5px 10px",
+                      borderRadius: "6px",
+                      backgroundColor: "rgba(255, 255, 255, 0.06)",
+                      color: "#fff",
+                      fontSize: "12px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <AssetBrandIcon symbol={currency} size={16} />
+                    <span>{currency}</span>
+                    <ChevronDown
+                      size={13}
+                      style={{
+                        transform: isAssetDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        transition: "transform 0.15s",
+                      }}
+                    />
+                  </div>
+                </div>
 
-          {/* Leverage Slider */}
-          <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "6px",
-              }}
-            >
-              <label
-                style={{
-                  fontSize: "12px",
-                  color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                  fontWeight: 500,
-                }}
-              >
-                Leverage:
-              </label>
-              <div
-                style={{
-                  padding: "3px 8px",
-                  borderRadius: "6px",
-                  backgroundColor: "rgba(255, 255, 255, 0.06)",
-                  color: "#fff",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                }}
-              >
-                {leverage}x
+                {isAssetDropdownOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 4px)",
+                      right: 0,
+                      width: "160px",
+                      backgroundColor: "#16181d",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      zIndex: 40,
+                      maxHeight: "220px",
+                      overflowY: "auto",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                    }}
+                  >
+                    {(ASSETS_BY_TYPE[tradeType] || []).map((a) => (
+                      <div
+                        key={a.symbol}
+                        onClick={() => {
+                          setCurrency(a.symbol);
+                          setIsAssetDropdownOpen(false);
+                        }}
+                        style={{
+                          padding: "8px 12px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          color: currency === a.symbol ? "#4763f0" : "#fff",
+                          fontSize: "12.5px",
+                          fontWeight: currency === a.symbol ? 700 : 500,
+                          cursor: "pointer",
+                          backgroundColor: currency === a.symbol ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currency !== a.symbol) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currency !== a.symbol) e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        <AssetBrandIcon symbol={a.symbol} size={16} />
+                        <span>{a.symbol}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
 
-            <div style={{ position: "relative", width: "100%", padding: "6px 0" }}>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={leverage}
-                onChange={(e) => setLeverage(Number(e.target.value))}
+              {/* Dynamic Balance & Current Asset Price (Matching Image 1) */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "11.5px",
+                    color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                  }}
+                >
+                  <span>{orderTab === "sell" ? `Current ${currency} balance:` : "Current USD balance:"}</span>
+                  <span style={{ fontWeight: 600, color: "#fff" }}>
+                    {orderTab === "sell"
+                      ? `0 ${currency}`
+                      : `$${currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`}
+                  </span>
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    fontSize: "11.5px",
+                    color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                  }}
+                >
+                  <span>Current {currency} price:</span>
+                  <span style={{ fontWeight: 600, color: "#00d592" }}>
+                    ${activeAssetPrice < 1
+                      ? activeAssetPrice.toFixed(4)
+                      : activeAssetPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 3 })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Leverage Slider */}
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: "6px",
+                  }}
+                >
+                  <label
+                    style={{
+                      fontSize: "12px",
+                      color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Leverage:
+                  </label>
+                  <div
+                    style={{
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      backgroundColor: "rgba(255, 255, 255, 0.06)",
+                      color: "#fff",
+                      fontSize: "13px",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {leverage}x
+                  </div>
+                </div>
+
+                <div style={{ position: "relative", width: "100%", padding: "6px 0" }}>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={leverage}
+                    onChange={(e) => setLeverage(Number(e.target.value))}
+                    style={{
+                      width: "100%",
+                      accentColor: "#4763f0",
+                      cursor: "pointer",
+                    }}
+                  />
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontSize: "10.5px",
+                      color: "rgba(255, 255, 255, 0.45)",
+                      marginTop: "4px",
+                    }}
+                  >
+                    <span>0x</span>
+                    <span>25x</span>
+                    <span>50x</span>
+                    <span>75x</span>
+                    <span>100x</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Use TP/SL Toggle + Set with AI button */}
+              <div>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <label
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "12.5px",
+                      fontWeight: 500,
+                      color: "#fff",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={useTpSl}
+                      onChange={(e) => setUseTpSl(e.target.checked)}
+                      style={{ accentColor: "#4763f0", cursor: "pointer" }}
+                    />
+                    <span>Use TP/SL</span>
+                  </label>
+                  <button
+                    onClick={handleSetWithAi}
+                    style={{
+                      padding: "3px 10px",
+                      borderRadius: "14px",
+                      background: "rgba(255, 255, 255, 0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "#fff",
+                      fontSize: "11.5px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <Sparkles size={11} color="#4763f0" />
+                    <span>Set with AI</span>
+                  </button>
+                </div>
+
+                {useTpSl && (
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: "8px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    <div>
+                      <label style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
+                        Stop loss:
+                      </label>
+                      <input
+                        type="text"
+                        value={stopLoss}
+                        onChange={(e) => setStopLoss(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px",
+                          borderRadius: "6px",
+                          backgroundColor: "rgba(255, 255, 255, 0.03)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          color: "#ff3344",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          boxSizing: "border-box",
+                          marginTop: "3px",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
+                        Take profit:
+                      </label>
+                      <input
+                        type="text"
+                        value={takeProfit}
+                        onChange={(e) => setTakeProfit(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px",
+                          borderRadius: "6px",
+                          backgroundColor: "rgba(255, 255, 255, 0.03)",
+                          border: "1px solid rgba(255, 255, 255, 0.06)",
+                          color: "#01b28b",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          boxSizing: "border-box",
+                          marginTop: "3px",
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Duration Selector */}
+              <div style={{ position: "relative" }}>
+                <label
+                  style={{
+                    fontSize: "12px",
+                    color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                    marginBottom: "4px",
+                    display: "block",
+                    fontWeight: 500,
+                  }}
+                >
+                  Duration:
+                </label>
+                <div
+                  onClick={() => setIsDurationDropdownOpen(!isDurationDropdownOpen)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "8px",
+                    backgroundColor: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    color: "#fff",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    boxSizing: "border-box",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span>{duration}</span>
+                  <ChevronDown
+                    size={15}
+                    color="rgba(255, 255, 255, 0.5)"
+                    style={{
+                      transform: isDurationDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.15s",
+                    }}
+                  />
+                </div>
+
+                {isDurationDropdownOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "calc(100% + 4px)",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "#16181d",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      zIndex: 40,
+                      maxHeight: "220px",
+                      overflowY: "auto",
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                    }}
+                  >
+                    {DURATION_OPTIONS.map((d) => (
+                      <div
+                        key={d}
+                        onClick={() => {
+                          setDuration(d);
+                          setIsDurationDropdownOpen(false);
+                        }}
+                        style={{
+                          padding: "9px 14px",
+                          color: duration === d ? "#4763f0" : "#fff",
+                          fontSize: "13px",
+                          fontWeight: duration === d ? 700 : 500,
+                          cursor: "pointer",
+                          backgroundColor: duration === d ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (duration !== d) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                        }}
+                        onMouseLeave={(e) => {
+                          if (duration !== d) e.currentTarget.style.backgroundColor = "transparent";
+                        }}
+                      >
+                        {d}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Button (Sell or Buy) */}
+              <button
+                onClick={handleTradeAction}
+                disabled={orderExecuting}
                 style={{
                   width: "100%",
-                  accentColor: "#4763f0",
+                  padding: "13px",
+                  borderRadius: "8px",
+                  backgroundColor: orderTab === "sell" ? "#f84960" : "#01b28b",
+                  color: "#ffffff",
+                  border: "none",
+                  fontSize: "14px",
+                  fontWeight: 600,
                   cursor: "pointer",
-                }}
-              />
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "10.5px",
-                  color: "rgba(255, 255, 255, 0.45)",
+                  transition: "all 0.15s ease",
+                  opacity: orderExecuting ? 0.7 : 1,
                   marginTop: "4px",
                 }}
               >
-                <span>0x</span>
-                <span>25x</span>
-                <span>50x</span>
-                <span>75x</span>
-                <span>100x</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Use TP/SL Toggle + Set with AI button */}
-          <div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "12.5px",
-                  fontWeight: 500,
-                  color: "#fff",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={useTpSl}
-                  onChange={(e) => setUseTpSl(e.target.checked)}
-                  style={{ accentColor: "#4763f0", cursor: "pointer" }}
-                />
-                <span>Use TP/SL</span>
-              </label>
-              <button
-                onClick={handleSetWithAi}
-                style={{
-                  padding: "3px 10px",
-                  borderRadius: "14px",
-                  background: "rgba(255, 255, 255, 0.06)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  color: "#fff",
-                  fontSize: "11.5px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <Sparkles size={11} color="#4763f0" />
-                <span>Set with AI</span>
+                {orderExecuting ? "Executing..." : orderTab === "sell" ? "Sell" : "Buy"}
               </button>
-            </div>
-
-            {useTpSl && (
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "8px",
-                  marginTop: "10px",
-                }}
-              >
-                <div>
-                  <label style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
-                    Stop loss:
-                  </label>
-                  <input
-                    type="text"
-                    value={stopLoss}
-                    onChange={(e) => setStopLoss(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "7px",
-                      borderRadius: "6px",
-                      backgroundColor: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                      color: "#ff3344",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      boxSizing: "border-box",
-                      marginTop: "3px",
-                    }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
-                    Take profit:
-                  </label>
-                  <input
-                    type="text"
-                    value={takeProfit}
-                    onChange={(e) => setTakeProfit(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "7px",
-                      borderRadius: "6px",
-                      backgroundColor: "rgba(255, 255, 255, 0.03)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                      color: "#01b28b",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      boxSizing: "border-box",
-                      marginTop: "3px",
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Duration */}
-          <div style={{ position: "relative" }}>
-            <label
-              style={{
-                fontSize: "12px",
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                marginBottom: "4px",
-                display: "block",
-                fontWeight: 500,
-              }}
-            >
-              Duration:
-            </label>
-            <div
-              onClick={() => {
-                setIsDurationDropdownOpen(!isDurationDropdownOpen);
-                setIsTradeTypeDropdownOpen(false);
-                setIsAssetDropdownOpen(false);
-              }}
-              style={{
-                width: "100%",
-                padding: "10px 12px",
-                borderRadius: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.03)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                color: "#fff",
-                fontSize: "13.5px",
-                fontWeight: 600,
-                boxSizing: "border-box",
-                cursor: "pointer",
-              }}
-            >
-              <span>{duration}</span>
-              <ChevronDown
-                size={15}
-                color="rgba(255, 255, 255, 0.5)"
-                style={{
-                  transform: isDurationDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
-                  transition: "transform 0.15s",
-                }}
-              />
-            </div>
-
-            {isDurationDropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  left: 0,
-                  right: 0,
-                  backgroundColor: "#16181d",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  zIndex: 40,
-                  maxHeight: "220px",
-                  overflowY: "auto",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
-                }}
-              >
-                {DURATION_OPTIONS.map((d) => (
-                  <div
-                    key={d}
-                    onClick={() => {
-                      setDuration(d);
-                      setIsDurationDropdownOpen(false);
-                    }}
-                    style={{
-                      padding: "9px 14px",
-                      color: duration === d ? "#4763f0" : "#fff",
-                      fontSize: "13px",
-                      fontWeight: duration === d ? 700 : 500,
-                      cursor: "pointer",
-                      backgroundColor: duration === d ? "rgba(71, 99, 240, 0.12)" : "transparent",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (duration !== d) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (duration !== d) e.currentTarget.style.backgroundColor = "transparent";
-                    }}
-                  >
-                    {d}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Buy / CTA Button */}
-          {orderFeedback && (
-            <div
-              style={{
-                padding: "8px 10px",
-                borderRadius: "6px",
-                fontSize: "12px",
-                backgroundColor: orderFeedback.includes("executed")
-                  ? "rgba(1, 178, 139, 0.15)"
-                  : "rgba(255, 51, 68, 0.15)",
-                color: orderFeedback.includes("executed")
-                  ? "var(--color-positive)"
-                  : "var(--color-negative)",
-                textAlign: "center",
-              }}
-            >
-              {orderFeedback}
-            </div>
+            </>
           )}
-          <button
-            onClick={handleTradeAction}
-            disabled={orderExecuting}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              backgroundColor:
-                orderTab === "buy"
-                  ? "#01b28b"
-                  : orderTab === "sell"
-                  ? "#ff3344"
-                  : "rgba(255, 255, 255, 0.15)",
-              color: "#ffffff",
-              border: "none",
-              fontSize: "14px",
-              fontWeight: 600,
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-              opacity: orderExecuting ? 0.7 : 1,
-            }}
-          >
-            {orderExecuting
-              ? "Executing..."
-              : `${orderTab === "buy" ? "Buy" : orderTab === "sell" ? "Sell" : "Convert"} ${currency} ${accountType === "real" ? "(real)" : "(demo)"}`}
-          </button>
         </div>
       </div>
 
@@ -2183,7 +2633,7 @@ export default function DashboardPage() {
               style={{
                 padding: "5px 14px",
                 borderRadius: "6px",
-                backgroundColor: myTradesTab === "all" ? "#4763f0" : "transparent",
+                backgroundColor: myTradesTab === "all" ? "#3b82f6" : "transparent",
                 color: myTradesTab === "all" ? "#fff" : "rgba(255, 255, 255, 0.6)",
                 border: "none",
                 fontSize: "12.5px",
@@ -2194,11 +2644,14 @@ export default function DashboardPage() {
               All
             </button>
             <button
-              onClick={() => setMyTradesTab("swaps")}
+              onClick={() => {
+                setMyTradesTab("swaps");
+                fetchSwaps();
+              }}
               style={{
                 padding: "5px 14px",
                 borderRadius: "6px",
-                backgroundColor: myTradesTab === "swaps" ? "#4763f0" : "transparent",
+                backgroundColor: myTradesTab === "swaps" ? "#3b82f6" : "transparent",
                 color: myTradesTab === "swaps" ? "#fff" : "rgba(255, 255, 255, 0.6)",
                 border: "none",
                 fontSize: "12.5px",
@@ -2213,7 +2666,7 @@ export default function DashboardPage() {
               style={{
                 padding: "5px 14px",
                 borderRadius: "6px",
-                backgroundColor: myTradesTab === "auto" ? "#4763f0" : "transparent",
+                backgroundColor: myTradesTab === "auto" ? "#3b82f6" : "transparent",
                 color: myTradesTab === "auto" ? "#fff" : "rgba(255, 255, 255, 0.6)",
                 border: "none",
                 fontSize: "12.5px",
@@ -2226,13 +2679,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Open Trades Accordion */}
-        {(() => {
+        {/* TAB 1: ALL (Standard Open & Closed Trades) */}
+        {myTradesTab === "all" && (() => {
           const openPositions = positions.filter((p) => p.status === "OPEN");
           const closedPositions = positions.filter((p) => p.status === "CLOSED");
 
           return (
             <>
+              {/* Open Trades Accordion */}
               <div
                 style={{
                   borderRadius: "8px",
@@ -2260,7 +2714,7 @@ export default function DashboardPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <Clock size={15} color="rgba(255, 255, 255, 0.6)" />
                     <span>Open</span>
-                    <strong style={{ color: openPositions.length > 0 ? "#4763f0" : "rgba(255, 255, 255, 0.5)" }}>
+                    <strong style={{ color: openPositions.length > 0 ? "#3b82f6" : "rgba(255, 255, 255, 0.5)" }}>
                       ({openPositions.length})
                     </strong>
                   </div>
@@ -2287,13 +2741,12 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", minWidth: "820px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                        <table style={{ width: "100%", minWidth: "750px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
                           <thead>
                             <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
                               <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Asset</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Side</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Size (Margin)</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Duration</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Entry price</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Mark price</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Unrealized PnL</th>
@@ -2301,111 +2754,70 @@ export default function DashboardPage() {
                             </tr>
                           </thead>
                           <tbody>
-                            {openPositions.map((p) => {
-                              const liveMark = livePrices[p.symbol] || p.entryPrice;
-                              const posAmount = Number(p.amount || 0);
-                              const posLeverage = Number(p.leverage || 1);
-                              const posMargin = Number(p.margin ?? (posAmount / (posLeverage || 1)));
-
-                              const curPnl =
-                                p.isCustomPnl && typeof p.customPnl === "number"
-                                  ? p.customPnl
-                                  : p.type === "BUY"
-                                  ? ((liveMark - p.entryPrice) / p.entryPrice) * posAmount
-                                  : ((p.entryPrice - liveMark) / p.entryPrice) * posAmount;
-                              const roe = posMargin > 0 ? (curPnl / posMargin) * 100 : 0;
-                              const isProfit = curPnl >= 0;
-
-                              let timeLeftStr = "";
-                              if (p.closeAt) {
-                                const diffSec = Math.max(0, Math.floor((new Date(p.closeAt).getTime() - now) / 1000));
-                                if (diffSec <= 0) {
-                                  timeLeftStr = "Expiring...";
-                                } else {
-                                  const m = Math.floor(diffSec / 60);
-                                  const s = diffSec % 60;
-                                  timeLeftStr = `${m}:${s < 10 ? "0" : ""}${s}`;
-                                }
-                              }
+                            {openPositions.map((pos) => {
+                              const side = pos.side || pos.type;
+                              const baseMark = prices[pos.symbol.toUpperCase()] || pos.entryPrice;
+                              let seed = 0;
+                              for (let i = 0; i < pos.id.length; i++) seed = (Math.imul(31, seed) + pos.id.charCodeAt(i)) | 0;
+                              seed = Math.abs(seed);
+                              const sec = Math.floor(now / 1000);
+                              const wave = Math.sin((sec + (seed % 50)) * 0.85) * 0.0016 + Math.cos((sec + ((seed >> 2) % 50)) * 1.35) * 0.001;
+                              const mark = baseMark * (1 + wave);
+                              const diff = side === "BUY" ? mark - pos.entryPrice : pos.entryPrice - mark;
+                              const estPnl = (diff / pos.entryPrice) * pos.amount * pos.leverage;
+                              const isProfitable = estPnl >= 0;
+                              const posMargin = Number(pos.margin ?? (pos.amount / (pos.leverage || 1)));
 
                               return (
-                                <tr key={p.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>
+                                <tr key={pos.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
+                                  <td style={{ padding: "12px 14px", fontWeight: 600, color: "#fff", whiteSpace: "nowrap" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                      <AssetBrandIcon symbol={p.symbol} size={20} />
-                                      <span>{p.symbol}</span>
+                                      <AssetBrandIcon symbol={pos.symbol} size={18} />
+                                      <span>{pos.symbol}</span>
                                     </div>
                                   </td>
                                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                                     <span
                                       style={{
-                                        padding: "2px 8px",
+                                        padding: "2px 6px",
                                         borderRadius: "4px",
                                         fontSize: "11px",
                                         fontWeight: 700,
-                                        backgroundColor: p.type === "BUY" ? "rgba(1, 178, 139, 0.15)" : "rgba(234, 57, 67, 0.15)",
-                                        color: p.type === "BUY" ? "#01b28b" : "#ea3943",
+                                        backgroundColor: side === "BUY" ? "rgba(1, 178, 139, 0.15)" : "rgba(248, 73, 96, 0.15)",
+                                        color: side === "BUY" ? "#01b28b" : "#f84960",
                                       }}
                                     >
-                                      {p.type} {posLeverage}x
+                                      {side} {pos.leverage}x
                                     </span>
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", whiteSpace: "nowrap" }}>
-                                    ${posAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px", display: "block" }}>
-                                      Margin: ${posMargin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </span>
+                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.85)", whiteSpace: "nowrap" }}>
+                                    ${pos.amount.toFixed(2)} (${posMargin.toFixed(2)})
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", whiteSpace: "nowrap" }}>
-                                    <div style={{ fontSize: "12px", fontWeight: 500 }}>{p.duration || "—"}</div>
-                                    {timeLeftStr && (
-                                      <span
-                                        style={{
-                                          display: "inline-flex",
-                                          alignItems: "center",
-                                          gap: "4px",
-                                          fontSize: "10.5px",
-                                          padding: "2px 6px",
-                                          borderRadius: "4px",
-                                          backgroundColor:
-                                            timeLeftStr === "Expiring..."
-                                              ? "rgba(239, 68, 68, 0.2)"
-                                              : "rgba(71, 99, 240, 0.15)",
-                                          color: timeLeftStr === "Expiring..." ? "#f87171" : "#7189ff",
-                                          fontWeight: 600,
-                                          marginTop: "3px",
-                                        }}
-                                      >
-                                        <Clock size={10} />
-                                        {timeLeftStr}
-                                      </span>
-                                    )}
+                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.85)", whiteSpace: "nowrap" }}>
+                                    ${pos.entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                                    ${Number(p.entryPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.85)", whiteSpace: "nowrap" }}>
+                                    ${mark.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                                    ${Number(liveMark).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                                  </td>
-                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600, whiteSpace: "nowrap" }}>
-                                    {isProfit ? "+" : ""}${curPnl.toFixed(2)} ({isProfit ? "+" : ""}{roe.toFixed(2)}%)
+                                  <td style={{ padding: "12px 14px", fontWeight: 600, color: isProfitable ? "#01b28b" : "#f84960", whiteSpace: "nowrap" }}>
+                                    {isProfitable ? "+" : ""}${estPnl.toFixed(2)}
                                   </td>
                                   <td style={{ padding: "12px 14px", textAlign: "right", whiteSpace: "nowrap" }}>
                                     <button
-                                      onClick={() => handleClosePosition(p.id)}
-                                      disabled={closingPositionId === p.id}
+                                      onClick={() => handleClosePosition(pos)}
+                                      disabled={closingPositionId === pos.id}
                                       style={{
-                                        padding: "5px 12px",
-                                        borderRadius: "6px",
-                                        backgroundColor: "rgba(234, 57, 67, 0.15)",
-                                        color: "#ea3943",
-                                        border: "1px solid rgba(234, 57, 67, 0.3)",
+                                        padding: "4px 12px",
+                                        borderRadius: "4px",
+                                        backgroundColor: "rgba(248, 73, 96, 0.15)",
+                                        border: "1px solid rgba(248, 73, 96, 0.3)",
+                                        color: "#f84960",
                                         fontSize: "11.5px",
                                         fontWeight: 600,
                                         cursor: "pointer",
                                       }}
                                     >
-                                      {closingPositionId === p.id ? "Closing..." : "Close"}
+                                      {closingPositionId === pos.id ? "Closing..." : "Close"}
                                     </button>
                                   </td>
                                 </tr>
@@ -2447,7 +2859,9 @@ export default function DashboardPage() {
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                     <Check size={15} color="rgba(255, 255, 255, 0.6)" />
                     <span>Closed</span>
-                    <strong style={{ color: "rgba(255, 255, 255, 0.5)" }}>({closedPositions.length})</strong>
+                    <strong style={{ color: "rgba(255, 255, 255, 0.5)" }}>
+                      ({closedPositions.length})
+                    </strong>
                   </div>
                   <ChevronDown
                     size={14}
@@ -2472,54 +2886,54 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", minWidth: "680px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                        <table style={{ width: "100%", minWidth: "700px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
                           <thead>
                             <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Asset</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Side</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Size</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Entry price</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Realized PnL</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right", whiteSpace: "nowrap" }}>Closed at</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Settled PnL</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Status</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {closedPositions.map((p) => {
-                              const realizedPnl = Number(p.pnl || 0);
-                              const isProfit = realizedPnl >= 0;
+                            {closedPositions.map((pos) => {
+                              const pnl = pos.pnl ?? 0;
+                              const isProfitable = pnl >= 0;
                               return (
-                                <tr key={p.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>
+                                <tr key={pos.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
+                                  <td style={{ padding: "12px 14px", fontWeight: 600, color: "#fff" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                      <AssetBrandIcon symbol={p.symbol} size={20} />
-                                      <span>{p.symbol}</span>
+                                      <AssetBrandIcon symbol={pos.symbol} size={18} />
+                                      <span>{pos.symbol}</span>
                                     </div>
                                   </td>
-                                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
+                                  <td style={{ padding: "12px 14px" }}>
                                     <span
                                       style={{
-                                        padding: "2px 8px",
+                                        padding: "2px 6px",
                                         borderRadius: "4px",
                                         fontSize: "11px",
                                         fontWeight: 700,
-                                        backgroundColor: "rgba(255, 255, 255, 0.06)",
-                                        color: p.type === "BUY" ? "#01b28b" : "#ea3943",
+                                        backgroundColor: (pos.side || pos.type) === "BUY" ? "rgba(1, 178, 139, 0.15)" : "rgba(248, 73, 96, 0.15)",
+                                        color: (pos.side || pos.type) === "BUY" ? "#01b28b" : "#f84960",
                                       }}
                                     >
-                                      {p.type} {p.leverage}x
+                                      {pos.side || pos.type}
                                     </span>
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", whiteSpace: "nowrap" }}>
-                                    ${Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.85)" }}>
+                                    ${pos.amount.toFixed(2)}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                                    ${Number(p.entryPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.85)" }}>
+                                    ${pos.entryPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
                                   </td>
-                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600, whiteSpace: "nowrap" }}>
-                                    {isProfit ? "+" : ""}${realizedPnl.toFixed(2)}
+                                  <td style={{ padding: "12px 14px", fontWeight: 600, color: isProfitable ? "#01b28b" : "#f84960" }}>
+                                    {isProfitable ? "+" : ""}${pnl.toFixed(2)}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.5)", fontSize: "11px", textAlign: "right", whiteSpace: "nowrap" }}>
-                                    {p.closedAt ? new Date(p.closedAt).toLocaleDateString() : "-"}
+                                  <td style={{ padding: "12px 14px", textAlign: "right", color: "rgba(255, 255, 255, 0.5)" }}>
+                                    CLOSED
                                   </td>
                                 </tr>
                               );
@@ -2534,7 +2948,177 @@ export default function DashboardPage() {
             </>
           );
         })()}
+
+        {/* TAB 2: SWAPS (Matching Image 3) */}
+        {myTradesTab === "swaps" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.85)" }}>
+              Swap ({swaps.length})
+            </div>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", minWidth: "600px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                <thead>
+                  <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
+                    <th style={{ padding: "10px 14px", fontWeight: 500 }}>Date</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 500 }}>Trade</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 500 }}>From</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 500 }}>To</th>
+                    <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {swaps.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ padding: "28px 14px", textAlign: "center", color: "rgba(255, 255, 255, 0.45)" }}>
+                        {swapsLoading ? "Loading swaps..." : "No swaps yet."}
+                      </td>
+                    </tr>
+                  ) : (
+                    swaps.map((s) => (
+                      <tr key={s.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
+                        <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.7)" }}>
+                          {new Date(s.createdAt).toLocaleDateString()} {new Date(s.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td style={{ padding: "12px 14px", fontWeight: 600, color: "#fff" }}>
+                          {s.trade}
+                        </td>
+                        <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.85)" }}>
+                          {s.from}
+                        </td>
+                        <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.85)" }}>
+                          {s.to}
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                          <span
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: "4px",
+                              fontSize: "11px",
+                              fontWeight: 700,
+                              backgroundColor: "rgba(1, 178, 139, 0.15)",
+                              color: "#01b28b",
+                            }}
+                          >
+                            {s.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: AUTO TRADES (Matching Image 4) */}
+        {myTradesTab === "auto" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            {/* Auto Open Accordion */}
+            <div
+              style={{
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.025)",
+                border: "1px solid rgba(255, 255, 255, 0.04)",
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => setAutoOpenExpanded(!autoOpenExpanded)}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "transparent",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Clock size={15} color="rgba(255, 255, 255, 0.6)" />
+                  <span>Open (0)</span>
+                </div>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    transform: autoOpenExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s",
+                  }}
+                />
+              </button>
+              {autoOpenExpanded && (
+                <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                  <div style={{ padding: "20px 14px", textAlign: "center", color: "rgba(255, 255, 255, 0.45)", fontSize: "12.5px" }}>
+                    No Open trades yet.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Auto Closed Accordion */}
+            <div
+              style={{
+                borderRadius: "8px",
+                backgroundColor: "rgba(255, 255, 255, 0.025)",
+                border: "1px solid rgba(255, 255, 255, 0.04)",
+                overflow: "hidden",
+              }}
+            >
+              <button
+                onClick={() => setAutoClosedExpanded(!autoClosedExpanded)}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "transparent",
+                  border: "none",
+                  color: "#fff",
+                  fontSize: "13.5px",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Check size={15} color="rgba(255, 255, 255, 0.6)" />
+                  <span>Closed (0)</span>
+                </div>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    transform: autoClosedExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s",
+                  }}
+                />
+              </button>
+              {autoClosedExpanded && (
+                <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                  <div style={{ padding: "20px 14px", textAlign: "center", color: "rgba(255, 255, 255, 0.45)", fontSize: "12.5px" }}>
+                    No Closed trades yet.
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Responsive Confirmation Dialog & Toast Bar (No native confirm/alert) */}
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+        loading={closingPositionId !== null}
+      />
+      <CustomNotificationBar
+        notification={notification}
+        onClose={() => setNotification(null)}
+      />
     </div>
   );
 }

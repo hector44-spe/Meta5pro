@@ -29,10 +29,14 @@ export async function GET() {
       date: r.createdAt.toISOString(),
     }));
 
-    return NextResponse.json({ success: true, history });
+    const signalBalance = rows
+      .filter((r) => r.status !== "rejected" && r.status !== "cancelled")
+      .reduce((sum, r) => sum + r.price.toNumber(), 0);
+
+    return NextResponse.json({ success: true, history, signalBalance });
   } catch (error) {
     console.error("Fetch signal history error:", error);
-    return NextResponse.json({ success: true, history: [] });
+    return NextResponse.json({ success: true, history: [], signalBalance: 0 });
   }
 }
 
@@ -103,6 +107,10 @@ export async function POST(req: Request) {
         date: r.createdAt.toISOString(),
       }));
 
+      const signalBalance = allPurchases
+        .filter((r) => r.status !== "rejected" && r.status !== "cancelled")
+        .reduce((sum, r) => sum + r.price.toNumber(), 0);
+
       return NextResponse.json({
         success: true,
         message: `Fresh deposit of $${signalPrice.toLocaleString()} submitted for ${signalTitle || "Signal"}. Your signal will activate upon deposit confirmation!`,
@@ -116,6 +124,7 @@ export async function POST(req: Request) {
           date: purchase.createdAt.toISOString(),
         },
         history,
+        signalBalance,
       });
     } catch (err: any) {
       console.error("Signal fresh deposit error:", err);

@@ -1,5 +1,6 @@
 "use client";
 import { logout } from "@/lib/logout";
+import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/CustomNotificationBar";
 
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -121,6 +122,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [accountType, setAccountType] = useState<"real" | "demo">("real");
   const [hideBalance, setHideBalance] = useState(false);
   const [activeModal, setActiveModal] = useState<ActiveModalType>(null);
+  const [toastNotification, setToastNotification] = useState<CustomNotificationState | null>(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [currentLangCode, setCurrentLangCode] = useState("en");
 
@@ -2576,7 +2578,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               </div>
               <button
                 onClick={() => {
-                  alert("Verification document upload initiated.");
+                  setToastNotification({
+                    type: "info",
+                    message: "Verification document upload initiated. Please prepare your government-issued ID.",
+                  });
                   setActiveModal(null);
                 }}
                 style={{
@@ -2703,6 +2708,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           </div>
         )}
       </div>
+
+      <CustomNotificationBar
+        notification={toastNotification}
+        onClose={() => setToastNotification(null)}
+      />
     </DashboardContext.Provider>
   );
 }

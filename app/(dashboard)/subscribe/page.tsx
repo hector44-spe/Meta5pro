@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 import "@/styles/subscribe-page.css";
 import "@/styles/admin-edit-modals.css";
 
@@ -200,8 +201,14 @@ export default function SubscribePage() {
         if (d.history && Array.isArray(d.history)) {
           setHistoryList(d.history);
           if (d.history.length > 0) {
-            const active = d.history.find((h: any) => h.status === "open");
-            if (active) setActivePlan(`${active.plan} plan`);
+            const active = d.history.find((h: any) => {
+              const s = (h.status || "").toLowerCase();
+              return s === "running" || s === "open" || s === "active";
+            });
+            if (active) {
+              const pName = active.plan || "Starter";
+              setActivePlan(pName.toLowerCase().includes("plan") ? pName : `${pName} plan`);
+            }
           }
         }
       })
@@ -243,6 +250,7 @@ export default function SubscribePage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>(ORIGINAL_PLANS);
   const [isAdmin, setIsAdmin] = useState(false);
   const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
   const [isCreatingPlan, setIsCreatingPlan] = useState(false);
   const [planName, setPlanName] = useState("");
   const [planMin, setPlanMin] = useState("");
@@ -326,29 +334,37 @@ export default function SubscribePage() {
     }
   };
 
-  const handleDeletePlan = async () => {
+  const handleDeletePlan = () => {
     if (!editingPlan) return;
-    if (!confirm(`Are you sure you want to delete ${editingPlan.title}?`)) return;
-    setSavingPlan(true);
-    try {
-      const res = await fetch("/api/subscriptions/plans", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "delete", planId: editingPlan.id }),
-      });
-      const data = await res.json();
-      if (data.success && data.plans) {
-        setPlans(data.plans);
-        setEditingPlan(null);
-        setIsCreatingPlan(false);
-        setToastMessage("Subscription plan deleted");
-        setTimeout(() => setToastMessage(null), 3000);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setSavingPlan(false);
-    }
+    setConfirmState({
+      title: `Delete Subscription Plan "${editingPlan.title}"?`,
+      message: `Are you sure you want to delete this subscription plan?`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        setSavingPlan(true);
+        try {
+          const res = await fetch("/api/subscriptions/plans", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", planId: editingPlan.id }),
+          });
+          const data = await res.json();
+          if (data.success && data.plans) {
+            setPlans(data.plans);
+            setEditingPlan(null);
+            setIsCreatingPlan(false);
+            setToastMessage("Subscription plan deleted");
+            setTimeout(() => setToastMessage(null), 3000);
+          }
+        } catch (e) {
+          console.error(e);
+        } finally {
+          setSavingPlan(false);
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   // Form Inputs & Error State per Card
@@ -506,12 +522,40 @@ export default function SubscribePage() {
           </div>
 
           {/* Current Subscription Indicator */}
-          <p className="subscription_current">
-            Your current subscription is:{" "}
-            <strong className={activePlan ? "active-plan-badge" : ""}>
-              {activePlan || "-"}
-            </strong>
-          </p>
+          <div className="subscription_current" style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
+            <span style={{ fontSize: "14px", color: "rgba(255, 255, 255, 0.7)", fontWeight: 500 }}>
+              Your current subscription is:
+            </span>
+            {activePlan ? (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "4px 12px",
+                  borderRadius: "20px",
+                  backgroundColor: "rgba(71, 99, 240, 0.15)",
+                  border: "1px solid rgba(71, 99, 240, 0.35)",
+                  color: "#7a94ff",
+                  fontSize: "13.5px",
+                  fontWeight: 600,
+                }}
+              >
+                <span
+                  style={{
+                    width: "7px",
+                    height: "7px",
+                    borderRadius: "50%",
+                    backgroundColor: "#01b28b",
+                    boxShadow: "0 0 8px #01b28b",
+                  }}
+                />
+                {activePlan}
+              </span>
+            ) : (
+              <strong style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "14px" }}>-</strong>
+            )}
+          </div>
         </div>
 
         {/* Bottom Section: Tabs & View */}
@@ -952,6 +996,11 @@ export default function SubscribePage() {
           </div>
         </div>
       )}
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

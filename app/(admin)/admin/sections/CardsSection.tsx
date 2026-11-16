@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import styles from "../page.module.css";
 import { CardOption } from "@/app/api/admin/cards/route";
+import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 
 const usd = (n: number) =>
   `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -32,6 +33,7 @@ export default function CardsSection({
   // Edit / Add modal
   const [editOption, setEditOption] = useState<Partial<CardOption> | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -86,20 +88,29 @@ export default function CardsSection({
     }
   };
 
-  const handleDeleteOption = async (optionId: string, name: string) => {
-    if (!confirm(`Delete card option "${name}"?`)) return;
-    try {
-      const res = await fetch("/api/admin/cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deleteCardOption", optionId }),
-      });
-      if (!res.ok) throw new Error("Delete failed");
-      flash("ok", `Card option "${name}" deleted.`);
-      loadData();
-    } catch (e: any) {
-      flash("error", e.message || "Failed to delete");
-    }
+  const handleDeleteOption = (optionId: string, name: string) => {
+    setConfirmState({
+      title: `Delete Card Option "${name}"?`,
+      message: `Are you sure you want to delete this card configuration?`,
+      confirmText: "Delete",
+      danger: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch("/api/admin/cards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "deleteCardOption", optionId }),
+          });
+          if (!res.ok) throw new Error("Delete failed");
+          flash("ok", `Card option "${name}" deleted.`);
+          loadData();
+        } catch (e: any) {
+          flash("error", e.message || "Failed to delete");
+        } finally {
+          setConfirmState(null);
+        }
+      },
+    });
   };
 
   return (
@@ -346,6 +357,11 @@ export default function CardsSection({
           </div>
         </div>
       )}
+
+      <CustomConfirmModal
+        state={confirmState}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }
