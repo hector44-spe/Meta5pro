@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { amount, signalTitle, strength } = body;
+    const { amount, signalTitle, strength, currency, network, txHash, receiptUrl, cryptoAddress } = body;
     const signalPrice = money(Number(amount));
 
     if (!signalPrice || signalPrice <= 0) {
@@ -54,37 +54,37 @@ export async function POST(req: Request) {
     const ref = `SIG-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
     try {
-      const { newBalance, purchase } = await atomic(async (tx) => {
-        const newBalance = await debitMain(tx, session.userId, signalPrice);
-
-        const purchase = await tx.signalPurchase.create({
-          data: {
-            userId: session.userId,
-            ref,
-            signalTitle: signalTitle || "Trading Signal",
-            price: signalPrice,
-            strength: Number(strength) || 50,
-            status: "active",
-          },
-        });
-
-        await insertTransaction(tx, {
+      // Signals must be a fresh deposit and NOT deducted from user balance
+      const purchase = await prisma.signalPurchase.create({
+        data: {
           userId: session.userId,
-          type: "TRADE_OPEN",
-          amount: signalPrice,
-          currency: "USD",
-          txHash: `SIG_${Date.now().toString(36).toUpperCase()}`,
-          status: "APPROVED",
-        });
+          ref,
+          signalTitle: signalTitle || "Trading Signal",
+          price: signalPrice,
+          strength: Number(strength) || 50,
+          status: "pending",
+        },
+      });
 
-        return { newBalance, purchase };
+      // Record a dedicated fresh deposit transaction for this signal purchase
+      await prisma.transaction.create({
+        data: {
+          userId: session.userId,
+          type: "DEPOSIT",
+          status: "PENDING",
+          amount: signalPrice,
+          currency: currency ? String(currency).toUpperCase() : "USDT",
+          txHash: txHash ? String(txHash).trim() : `SIG_${Date.now().toString(36).toUpperCase()}`,
+          receiptUrl: receiptUrl ? String(receiptUrl).trim() : undefined,
+          cryptoAddress: cryptoAddress ? String(cryptoAddress).trim() : undefined,
+        },
       });
 
       await notify(
         session.userId,
-        "trade",
-        "Signal Purchased",
-        `${fmtUsd(signalPrice)} spent for ${signalTitle || "Signal"} with ${strength || 50}% strength.`,
+        "deposit",
+        "Signal Deposit Submitted",
+        `Fresh deposit of ${fmtUsd(signalPrice)} submitted for ${signalTitle || "Signal"} (${strength || 50}% strength). Pending verification.`,
       );
 
       const allPurchases = await prisma.signalPurchase.findMany({
@@ -105,8 +105,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `Successfully purchased ${signalTitle || "Signal"} for $${signalPrice.toLocaleString()}!`,
-        newBalance,
+        message: `Fresh deposit of $${signalPrice.toLocaleString()} submitted for ${signalTitle || "Signal"}. Your signal will activate upon deposit confirmation!`,
         signal: {
           id: purchase.id,
           ref: purchase.ref,
@@ -118,11 +117,9 @@ export async function POST(req: Request) {
         },
         history,
       });
-    } catch (err) {
-      if (err instanceof InsufficientFundsError) {
-        return NextResponse.json({ error: "Insufficient wallet balance" }, { status: 400 });
-      }
-      throw err;
+    } catch (err: any) {
+      console.error("Signal fresh deposit error:", err);
+      return NextResponse.json({ error: err.message || "Failed to process signal deposit." }, { status: 400 });
     }
   } catch (error: any) {
     console.error("Purchase signal error:", error);

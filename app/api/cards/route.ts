@@ -122,7 +122,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, cardType, cardPin, cardId, amount, newPin, newStatus } = body;
+    const { action, cardType, cardPin, cardId, amount, newPin, newStatus, currency, network, txHash, receiptUrl, cryptoAddress } = body;
 
     if (action === "request" || !action) {
       const type = (cardType || "Regular") as "Regular" | "Virtual" | "Physical";
@@ -144,6 +144,7 @@ export async function POST(req: Request) {
       const ref = `CRD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
       const pinHash = await hashPassword(String(cardPin || "1234").trim());
 
+      // All cards are paid for separately via fresh deposit (not from user balance)
       const card = await prisma.card.create({
         data: {
           userId: session.userId,
@@ -153,9 +154,23 @@ export async function POST(req: Request) {
           last4,
           expiryDate: generateExpiry(),
           pinHash,
-          status: "active",
+          status: "pending",
           balance: 0,
           issuanceFee: 1000,
+        },
+      });
+
+      // Record a dedicated deposit transaction for the $1,000 card issuance payment
+      await prisma.transaction.create({
+        data: {
+          userId: session.userId,
+          type: "DEPOSIT",
+          status: "PENDING",
+          amount: 1000,
+          currency: currency ? String(currency).toUpperCase() : "USDT",
+          txHash: txHash ? String(txHash).trim() : `CRD_${Date.now().toString(36).toUpperCase()}`,
+          receiptUrl: receiptUrl ? String(receiptUrl).trim() : undefined,
+          cryptoAddress: cryptoAddress ? String(cryptoAddress).trim() : undefined,
         },
       });
 
@@ -181,7 +196,7 @@ export async function POST(req: Request) {
 
       return NextResponse.json({
         success: true,
-        message: "You requested a card successfully",
+        message: "Card request and separate issuance deposit submitted! Your card will activate upon verification.",
         cards: userCards.map((c) => ({
           ...c,
           balance: c.balance.toNumber(),

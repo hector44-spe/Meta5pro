@@ -12,6 +12,7 @@ import {
   Plus,
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
+import SignalDepositModal from "@/components/Signals/SignalDepositModal";
 import "@/styles/signal-page.css";
 import "@/styles/admin-edit-modals.css";
 
@@ -384,6 +385,10 @@ export default function SignalPage() {
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [purchasingSignalId, setPurchasingSignalId] = useState<string | null>(null);
+  const [depositModalSignal, setDepositModalSignal] = useState<{
+    signal: SignalItem;
+    amount: number;
+  } | null>(null);
 
   // Toast Feedback Banner
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -401,14 +406,11 @@ export default function SignalPage() {
     }).format(val);
   }, []);
 
-  // Validation function matching exact original messages
+  // Validation function: signals require a fresh deposit and are not constrained by wallet balance
   const validateAmount = (signal: SignalItem, rawVal: string): string | null => {
     if (!rawVal || rawVal.trim() === "") return null;
     const num = parseFloat(rawVal);
-    if (isNaN(num)) return "Please enter a valid amount";
-    if (num > signalBalance) {
-      return `Amount exceeds current balance of ${formatCurrency(signalBalance)}`;
-    }
+    if (isNaN(num) || num <= 0) return "Please enter a valid amount";
     if (Math.abs(num - signal.price) > 0.01) {
       return `Signal price is ${formatCurrency(signal.price)}`;
     }
@@ -422,9 +424,9 @@ export default function SignalPage() {
     setErrors((prev) => ({ ...prev, [signal.id]: err }));
   };
 
-  // Handle Signal Purchase
-  const handlePurchase = async (signal: SignalItem) => {
-    const val = inputs[signal.id];
+  // Handle Signal Purchase via Fresh Deposit Modal
+  const handlePurchase = (signal: SignalItem) => {
+    const val = inputs[signal.id] || String(signal.price);
     const err = validateAmount(signal, val);
 
     if (err) {
@@ -435,42 +437,11 @@ export default function SignalPage() {
     const num = parseFloat(val);
     if (isNaN(num) || num <= 0) return;
 
-    setPurchasingSignalId(signal.id);
-
-    try {
-      const res = await fetch("/api/signals/purchase", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          signalId: signal.id,
-          amount: num,
-          signalTitle: signal.title,
-          strength: signal.strength,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Signal purchase failed");
-      }
-
-      refreshBalance();
-      setActiveSignal(signal.name);
-      setActiveStrength(signal.strength);
-
-      if (data.history) {
-        setHistoryList(data.history);
-      } else if (data.signal) {
-        setHistoryList((prev) => [data.signal, ...prev]);
-      }
-      setInputs((prev) => ({ ...prev, [signal.id]: "" }));
-      setToastMessage(data.message || `You purchased ${signal.name} successfully`);
-      setTimeout(() => setToastMessage(null), 3500);
-    } catch (err: any) {
-      setErrors((prev) => ({ ...prev, [signal.id]: err.message || "Failed to purchase signal" }));
-    } finally {
-      setPurchasingSignalId(null);
-    }
+    // Open dedicated fresh deposit modal for this signal
+    setDepositModalSignal({
+      signal,
+      amount: num,
+    });
   };
 
   // Active signal colors for the top card (15 bars)
@@ -737,8 +708,8 @@ export default function SignalPage() {
                               <p className="signal-caption error">{errorMsg}</p>
                             )}
                             <span className="signal-caption">
-                              <p>Current balance</p>
-                              <p>{formatCurrency(signalBalance)}</p>
+                              <p>Payment method</p>
+                              <p style={{ color: "#34d399", fontWeight: 600 }}>Fresh Deposit</p>
                             </span>
                           </div>
                         </div>
@@ -1011,6 +982,28 @@ export default function SignalPage() {
           </div>
         </div>
       )}
+      {/* Signal Fresh Deposit Modal */}
+      <SignalDepositModal
+        isOpen={Boolean(depositModalSignal)}
+        onClose={() => setDepositModalSignal(null)}
+        signal={depositModalSignal?.signal || null}
+        amount={depositModalSignal?.amount || 0}
+        onSuccess={(data) => {
+          setActiveSignal(depositModalSignal?.signal.name || "");
+          setActiveStrength(depositModalSignal?.signal.strength || 50);
+          if (data.history) {
+            setHistoryList(data.history);
+          } else if (data.signal) {
+            setHistoryList((prev) => [data.signal, ...prev]);
+          }
+          if (depositModalSignal?.signal.id) {
+            setInputs((prev) => ({ ...prev, [depositModalSignal.signal.id]: "" }));
+          }
+          setToastMessage(data.message || "Signal deposit submitted successfully!");
+          setTimeout(() => setToastMessage(null), 3500);
+          setDepositModalSignal(null);
+        }}
+      />
     </div>
   );
 }

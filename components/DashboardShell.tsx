@@ -565,14 +565,16 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <CandlestickChart size={22} />
               <span>Markets</span>
             </Link>
-            <Link
-              href="/admin"
-              className={`dashboard-mobile-grid-item ${pathname.startsWith("/admin") ? "active" : ""}`}
-              onClick={() => setMobileSidebarOpen(false)}
-            >
-              <Wrench size={22} />
-              <span>Manage</span>
-            </Link>
+            {pathname.startsWith("/admin") && isAdmin && (
+              <Link
+                href="/admin"
+                className={`dashboard-mobile-grid-item ${pathname.startsWith("/admin") ? "active" : ""}`}
+                onClick={() => setMobileSidebarOpen(false)}
+              >
+                <Wrench size={22} />
+                <span>Manage</span>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -1097,37 +1099,39 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       <CandlestickChart size={15} strokeWidth={1.5} />
                       <span>Trade</span>
                     </Link>
-                    <Link
-                      href="/admin"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
-                        padding: "7px 10px",
-                        color: pathname.startsWith("/admin") ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
-                        backgroundColor: pathname.startsWith("/admin") ? "rgba(255, 255, 255, 0.08)" : "transparent",
-                        fontSize: "12.5px",
-                        textDecoration: "none",
-                        borderRadius: "6px",
-                        fontWeight: pathname.startsWith("/admin") ? 600 : 400,
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!pathname.startsWith("/admin")) {
-                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                          e.currentTarget.style.color = "#ffffff";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!pathname.startsWith("/admin")) {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                          e.currentTarget.style.color = "rgba(255, 255, 255, 0.65)";
-                        }
-                      }}
-                    >
-                      <Wrench size={15} strokeWidth={1.5} />
-                      <span>Manage</span>
-                    </Link>
+                    {pathname.startsWith("/admin") && isAdmin && (
+                      <Link
+                        href="/admin"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "10px",
+                          padding: "7px 10px",
+                          color: pathname.startsWith("/admin") ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
+                          backgroundColor: pathname.startsWith("/admin") ? "rgba(255, 255, 255, 0.08)" : "transparent",
+                          fontSize: "12.5px",
+                          textDecoration: "none",
+                          borderRadius: "6px",
+                          fontWeight: pathname.startsWith("/admin") ? 600 : 400,
+                          transition: "all 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!pathname.startsWith("/admin")) {
+                            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                            e.currentTarget.style.color = "#ffffff";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!pathname.startsWith("/admin")) {
+                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.color = "rgba(255, 255, 255, 0.65)";
+                          }
+                        }}
+                      >
+                        <Wrench size={15} strokeWidth={1.5} />
+                        <span>Manage</span>
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>
@@ -1217,13 +1221,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <div className="dashboard-header-wrapper">
               {/* Breadcrumb / Mobile trigger */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                {/* Mobile menu red '1' badge button: ONLY shown on mobile (hidden on wider screens) */}
+                {/* Mobile menu button: shown on mobile/tablet viewports */}
                 <button
                   type="button"
                   onClick={() => setMobileSidebarOpen(true)}
                   className="dashboard-mobile-menu-trigger"
                   style={{
-                    display: "none",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",

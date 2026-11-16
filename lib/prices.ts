@@ -127,9 +127,11 @@ export async function fetchStockOrCommodityPrice(symbol: string): Promise<number
 /** Tries to load previous verified market rates from PostgreSQL */
 async function loadPersistedCache(): Promise<PriceSnapshot | null> {
   try {
-    const setting = await prisma.appSetting.findUnique({
+    const dbPromise = prisma.appSetting.findUnique({
       where: { key: DB_CACHE_KEY },
     });
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
+    const setting = await Promise.race([dbPromise, timeoutPromise]);
     if (setting && setting.value && typeof setting.value === "object") {
       const data = setting.value as unknown as { prices: Record<string, number>; updatedAt: string };
       if (data.prices && Object.keys(data.prices).length > 0) {
