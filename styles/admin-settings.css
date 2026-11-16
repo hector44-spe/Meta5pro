@@ -298,3 +298,132 @@
 .as-panel .as-item {
   justify-content: flex-start !important;
 }
+
+/* Specific settings layout matching admin drawer design */
+.as-section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+.as-block-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+}
+.as-block-sub {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 10px 0;
+  line-height: 1.4;
+}
+.as-input-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.as-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+}
+.as-currency-input-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #25282e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0 16px;
+  height: 48px;
+  transition: border-color 0.15s ease;
+}
+.as-currency-input-box:focus-within {
+  border-color: #4763f0;
+}
+.as-currency-input-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  min-width: 0;
+}
+.as-currency-badge {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  padding-left: 10px;
+}
+.as-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #25282e;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.as-toggle-card-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.as-toggle-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+}
+.as-toggle-card-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.35;
+}
+.as-toggle-card-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.as-blue-link {
+  color: #4763f0;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.as-blue-link:hover {
+  text-decoration: underline;
+}
+.as-primary-btn {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100% !important;
+  height: 48px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: #4763f0 !important;
+  color: #ffffff !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  margin-top: 10px;
+}
+.as-primary-btn:hover {
+  background: #3b57e8 !important;
+}
+.as-primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

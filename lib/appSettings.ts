@@ -14,10 +14,42 @@ export const SETTING_GROUPS = {
     }),
     defaults: { lockVerification: false, allowRegularCard: false, allowVirtualCard: false },
   },
+  deposit: {
+    schema: z.object({
+      minDeposit: z.number().nonnegative(),
+      maxDeposit: z.number().positive(),
+    }),
+    defaults: { minDeposit: 100, maxDeposit: 100000 },
+  },
+  withdrawal: {
+    schema: z.object({
+      minWithdrawal: z.number().nonnegative(),
+      maxWithdrawal: z.number().positive(),
+      useWithdrawalCode: z.boolean(),
+      allowCrypto: z.boolean(),
+    }),
+    defaults: { minWithdrawal: 10, maxWithdrawal: 1000000, useWithdrawalCode: true, allowCrypto: true },
+  },
+  copyExperts: {
+    schema: z.object({
+      lockCopyExpertsPage: z.boolean(),
+    }),
+    defaults: { lockCopyExpertsPage: false },
+  },
+  mining: {
+    schema: z.object({
+      useMinerPictures: z.boolean(),
+    }),
+    defaults: { useMinerPictures: true },
+  },
 } as const;
 
 export type SettingGroup = keyof typeof SETTING_GROUPS;
 export type GeneralSettings = z.infer<(typeof SETTING_GROUPS)["general"]["schema"]>;
+export type DepositSettings = z.infer<(typeof SETTING_GROUPS)["deposit"]["schema"]>;
+export type WithdrawalSettings = z.infer<(typeof SETTING_GROUPS)["withdrawal"]["schema"]>;
+export type CopyExpertsSettings = z.infer<(typeof SETTING_GROUPS)["copyExperts"]["schema"]>;
+export type MiningSettings = z.infer<(typeof SETTING_GROUPS)["mining"]["schema"]>;
 
 export function isSettingGroup(g: string): g is SettingGroup {
   return Object.prototype.hasOwnProperty.call(SETTING_GROUPS, g);

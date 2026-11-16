@@ -56,7 +56,7 @@ function ExpertCardItem({
     <div className="expert_card">
       <div>
         {/* Top Header Row: Profile (Avatar + Texts) on Left, Edit on Right */}
-        <div className="expert_card_top_header">
+        <div className="expert_card_top_header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div className="expert_card_profile">
             <div className="expert_avatar_wrapper">
               <img
@@ -98,6 +98,33 @@ function ExpertCardItem({
               </div>
             </div>
           </div>
+
+          {isAdmin && onEdit && (
+            <button
+              type="button"
+              className="admin_edit_link"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(expert);
+              }}
+              style={{
+                marginLeft: "auto",
+                alignSelf: "flex-start",
+                padding: "4px 10px",
+                background: "rgba(79, 107, 255, 0.15)",
+                border: "1px solid rgba(79, 107, 255, 0.35)",
+                borderRadius: "6px",
+                color: "#7a94ff",
+                fontSize: "12px",
+                fontWeight: 600,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.15s ease",
+              }}
+            >
+              Edit
+            </button>
+          )}
         </div>
 
         {/* Bio */}

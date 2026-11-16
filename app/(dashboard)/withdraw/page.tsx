@@ -119,10 +119,35 @@ export default function WithdrawPage() {
         >
           <Clock size={20} color="#f59e0b" style={{ flexShrink: 0, marginTop: "2px" }} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: "14px", fontWeight: 600, color: "#fef3c7", marginBottom: "4px" }}>
-              Withdrawal Pending Confirmation ({pendingWithdrawals.length})
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+                flexWrap: "wrap",
+                marginBottom: "6px",
+              }}
+            >
+              <span style={{ fontSize: "14px", fontWeight: 600, color: "#fef3c7" }}>
+                Withdrawal Pending Confirmation ({pendingWithdrawals.length})
+              </span>
+              <span
+                style={{
+                  padding: "3px 9px",
+                  borderRadius: "999px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  backgroundColor: "rgba(245, 158, 11, 0.2)",
+                  color: "#fbbf24",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                Pending Confirmation
+              </span>
             </div>
-            <p style={{ margin: 0, fontSize: "12.5px", lineHeight: "1.5", color: "#fde68a" }}>
+            <p style={{ margin: 0, fontSize: "12.5px", lineHeight: "1.55", color: "#fde68a" }}>
               {pendingWithdrawals.length === 1 ? (
                 <>
                   Your withdrawal of <strong>{pendingWithdrawals[0].amount}</strong> ({pendingWithdrawals[0].totalUSD}) submitted on {pendingWithdrawals[0].date} is currently awaiting confirmation. Funds are held securely until approved.
@@ -134,20 +159,6 @@ export default function WithdrawPage() {
               )}
             </p>
           </div>
-          <span
-            style={{
-              padding: "4px 10px",
-              borderRadius: "999px",
-              fontSize: "11px",
-              fontWeight: 700,
-              backgroundColor: "rgba(245, 158, 11, 0.2)",
-              color: "#fbbf24",
-              whiteSpace: "nowrap",
-              flexShrink: 0,
-            }}
-          >
-            Pending Confirmation
-          </span>
         </div>
       )}
 

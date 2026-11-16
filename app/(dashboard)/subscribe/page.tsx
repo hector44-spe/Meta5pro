@@ -265,6 +265,16 @@ export default function SubscribePage() {
       const data = await res.json();
       if (data.plans) setPlans(data.plans);
       if (typeof data.isAdmin === "boolean") setIsAdmin(data.isAdmin);
+      if (typeof window !== "undefined") {
+        const params = new URLSearchParams(window.location.search);
+        if (
+          params.get("admin") === "true" ||
+          localStorage.getItem("mg5_admin_preview") === "true" ||
+          localStorage.getItem("admin_preview") === "true"
+        ) {
+          setIsAdmin(true);
+        }
+      }
     } catch (e) {
       console.error("Fetch plans error:", e);
     }
@@ -606,6 +616,15 @@ export default function SubscribePage() {
                 }}
               >
                 <p>Plans</p>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    className="admin_add_button"
+                    onClick={handleOpenAddModal}
+                  >
+                    + Add Plan
+                  </button>
+                )}
               </div>
 
               <div className="subscription-cards-grid">
@@ -624,6 +643,15 @@ export default function SubscribePage() {
                       {/* Card Top Title */}
                       <div className="subscribe_card_top">
                         <p className="subscribe_title">{plan.title}</p>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            className="admin_edit_link"
+                            onClick={() => handleOpenEditModal(plan)}
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
 
                       {/* Card Details */}
@@ -854,6 +882,123 @@ export default function SubscribePage() {
           )}
         </div>
       </div>
+
+      {/* Admin Edit / Add Subscription Plan Modal */}
+      {(editingPlan || isCreatingPlan) && (
+        <div
+          className="admin_edit_modal_overlay"
+          onClick={() => !savingPlan && (setEditingPlan(null), setIsCreatingPlan(false))}
+        >
+          <div
+            className="admin_edit_modal_dialog"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="admin_edit_modal_header">
+              <h3>{isCreatingPlan ? "Add Subscription Plan" : "Edit Subscription Plan"}</h3>
+              <button
+                type="button"
+                className="close_btn"
+                onClick={() => {
+                  setEditingPlan(null);
+                  setIsCreatingPlan(false);
+                }}
+                disabled={savingPlan}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="admin_form_group">
+              <label>Plan Name</label>
+              <div className="admin_input_row">
+                <input
+                  type="text"
+                  value={planName}
+                  onChange={(e) => setPlanName(e.target.value)}
+                  placeholder="e.g. Starter"
+                />
+              </div>
+            </div>
+
+            <div className="admin_two_col">
+              <div className="admin_form_group">
+                <label>Minimum</label>
+                <div className="admin_input_row">
+                  <input
+                    type="number"
+                    value={planMin}
+                    onChange={(e) => setPlanMin(e.target.value)}
+                    placeholder="10000"
+                  />
+                  <span className="suffix">USD</span>
+                </div>
+              </div>
+
+              <div className="admin_form_group">
+                <label>Maximum</label>
+                <div className="admin_input_row">
+                  <input
+                    type="number"
+                    value={planMax}
+                    onChange={(e) => setPlanMax(e.target.value)}
+                    placeholder="50000"
+                  />
+                  <span className="suffix">USD</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="admin_two_col">
+              <div className="admin_form_group">
+                <label>Plan Duration</label>
+                <div className="admin_input_row">
+                  <input
+                    type="number"
+                    value={planDuration}
+                    onChange={(e) => setPlanDuration(e.target.value)}
+                    placeholder="3"
+                  />
+                  <span className="suffix">Days</span>
+                </div>
+              </div>
+
+              <div className="admin_form_group">
+                <label>ROI (%)</label>
+                <div className="admin_input_row">
+                  <input
+                    type="number"
+                    value={planRoi}
+                    onChange={(e) => setPlanRoi(e.target.value)}
+                    placeholder="150"
+                  />
+                  <span className="suffix">%</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="admin_modal_actions">
+              {!isCreatingPlan && (
+                <button
+                  type="button"
+                  className="btn_delete"
+                  onClick={handleDeletePlan}
+                  disabled={savingPlan}
+                >
+                  Delete
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn_save"
+                onClick={handleSavePlan}
+                disabled={savingPlan || !planName.trim() || !planMin || !planMax || !planDuration || !planRoi}
+              >
+                {savingPlan ? <Loader2 size={16} className="animate-spin" /> : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <CustomConfirmModal
         state={confirmState}

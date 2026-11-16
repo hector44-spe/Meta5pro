@@ -147,7 +147,11 @@ export default function RealEstateDashboardPage() {
         }
         if (typeof window !== "undefined") {
           const params = new URLSearchParams(window.location.search);
-          if (params.get("admin") === "true" || localStorage.getItem("mg5_admin_preview") === "true") {
+          if (
+            params.get("admin") === "true" ||
+            localStorage.getItem("mg5_admin_preview") === "true" ||
+            localStorage.getItem("admin_preview") === "true"
+          ) {
             setIsAdmin(true);
           }
         }
@@ -549,6 +553,43 @@ export default function RealEstateDashboardPage() {
             <div>
               <div className="projects_header">
                 <p>Open projects</p>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newProj: RealEstateProject = {
+                        id: `re_${Date.now()}`,
+                        title: "New Estate Development",
+                        description: "Prime residential and commercial development with high projected yields.",
+                        thumbnail: "/assets/imgs/real-estate/20230118_Cam-01_Final_NEIGHBOURHOOD-1689090909077-1689090941800.png",
+                        minimum: 10000,
+                        roi: 75,
+                        strategy: "Fixed ROI",
+                        minDuration: 1,
+                        minDurationUnit: "MONTH",
+                        maxDuration: 12,
+                        maxDurationUnit: "MONTH",
+                        status: "OPEN",
+                      };
+                      handleOpenEditModal(newProj);
+                    }}
+                    style={{
+                      background: "#4F6BFF",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "8px 16px",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    + Add Project
+                  </button>
+                )}
               </div>
 
               <div className="realestate_grids">
@@ -562,6 +603,18 @@ export default function RealEstateDashboardPage() {
                         className="project_image"
                         loading="lazy"
                       />
+                      {isAdmin && (
+                        <button
+                          type="button"
+                          className="admin_edit_badge"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenEditModal(project);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
                     </div>
 
                     {/* Project Wrapper */}
@@ -611,6 +664,21 @@ export default function RealEstateDashboardPage() {
                         >
                           Invest now
                         </button>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            className="btn_view_project"
+                            style={{
+                              background: "rgba(79, 107, 255, 0.15)",
+                              border: "1px solid rgba(79, 107, 255, 0.4)",
+                              color: "#7a94ff",
+                              fontWeight: 600,
+                            }}
+                            onClick={() => handleOpenEditModal(project)}
+                          >
+                            Edit
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1309,6 +1377,128 @@ export default function RealEstateDashboardPage() {
                 <span>Invest</span>
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Edit Estate Project Modal */}
+      {editingProject && (
+        <div
+          className="re_admin_modal_overlay"
+          onClick={() => !isSavingProject && !isDeletingProject && handleCloseEditModal()}
+        >
+          <div
+            className="re_admin_modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="re_admin_modal_header">
+              <h3>{editingProject.title}</h3>
+              <button
+                type="button"
+                className="close_btn"
+                onClick={handleCloseEditModal}
+                disabled={isSavingProject || isDeletingProject}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="re_admin_form_group">
+              <label>Minimum</label>
+              <div className="re_admin_input_row">
+                <input
+                  type="number"
+                  value={editMin}
+                  onChange={(e) => setEditMin(e.target.value)}
+                  placeholder="12000"
+                />
+                <span className="suffix">USD</span>
+              </div>
+            </div>
+
+            <div className="re_admin_form_group">
+              <label>Roi</label>
+              <div className="re_admin_input_row">
+                <input
+                  type="number"
+                  value={editRoi}
+                  onChange={(e) => setEditRoi(e.target.value)}
+                  placeholder="85"
+                />
+                <span className="suffix">%</span>
+              </div>
+            </div>
+
+            <div className="re_admin_form_group">
+              <label>Minimum duration</label>
+              <div className="re_admin_duration_row">
+                <input
+                  type="number"
+                  min="1"
+                  value={editMinDuration}
+                  onChange={(e) => setEditMinDuration(e.target.value)}
+                />
+                <div className="re_admin_duration_unit_box">
+                  <select
+                    value={editMinDurationUnit}
+                    onChange={(e) => setEditMinDurationUnit(e.target.value as any)}
+                  >
+                    <option value="DAY">DAY</option>
+                    <option value="WEEK">WEEK</option>
+                    <option value="MONTH">MONTH</option>
+                    <option value="YEAR">YEAR</option>
+                  </select>
+                  <span className="unit_chevron">
+                    <ChevronDown size={14} />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="re_admin_form_group">
+              <label>Maximum duration</label>
+              <div className="re_admin_duration_row">
+                <input
+                  type="number"
+                  min="1"
+                  value={editMaxDuration}
+                  onChange={(e) => setEditMaxDuration(e.target.value)}
+                />
+                <div className="re_admin_duration_unit_box">
+                  <select
+                    value={editMaxDurationUnit}
+                    onChange={(e) => setEditMaxDurationUnit(e.target.value as any)}
+                  >
+                    <option value="DAY">DAY</option>
+                    <option value="WEEK">WEEK</option>
+                    <option value="MONTH">MONTH</option>
+                    <option value="YEAR">YEAR</option>
+                  </select>
+                  <span className="unit_chevron">
+                    <ChevronDown size={14} />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="re_admin_modal_actions">
+              <button
+                type="button"
+                className="btn_delete_project"
+                onClick={handleDeleteProject}
+                disabled={isDeletingProject || isSavingProject}
+              >
+                {isDeletingProject ? <Loader2 size={16} className="animate-spin" /> : "Delete"}
+              </button>
+              <button
+                type="button"
+                className="btn_save_project"
+                onClick={handleSaveProjectEdit}
+                disabled={isSavingProject || isDeletingProject}
+              >
+                {isSavingProject ? <Loader2 size={16} className="animate-spin" /> : "Save"}
+              </button>
+            </div>
           </div>
         </div>
       )}

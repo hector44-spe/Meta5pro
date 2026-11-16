@@ -1353,7 +1353,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 <div
                   className="dashboard-header-title-badge"
                   style={{
-                    display: "flex",
                     alignItems: "center",
                     gap: "8px",
                     color: "#ffffff",

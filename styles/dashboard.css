@@ -23453,6 +23453,10 @@
   display: none;
 }
 
+.dashboard-header-title-badge {
+  display: flex;
+}
+
 .dashboard-sidebar-wrapper {
   padding: 24px 16px;
   height: 100%;
@@ -23947,6 +23951,9 @@ body:has(.dashboard-page-container) {
   }
   .dashboard-mobile-menu-trigger {
     display: flex !important;
+  }
+  .dashboard-header-title-badge {
+    display: none !important;
   }
   .dashboard-page-container {
     display: flex !important;
