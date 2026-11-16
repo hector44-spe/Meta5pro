@@ -265,7 +265,7 @@ export default function CardsSection({
                           onClick={() => setEditOption({ ...opt })}
                           title="Edit Card Option"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={14} /> Edit
                         </button>
                         <button
                           type="button"

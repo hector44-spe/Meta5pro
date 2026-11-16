@@ -424,7 +424,7 @@ export default function ExpertsSection({
                         onClick={() => setEditModal({ ...exp })}
                         title="Edit Expert"
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={14} /> Edit
                       </button>
                       <button
                         type="button"

@@ -68,6 +68,8 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [minDeposit, setMinDeposit] = useState<number>(100);
+  const [maxDeposit, setMaxDeposit] = useState<number>(100000);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -102,18 +104,28 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch("/api/settings/addresses", {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-        },
-      });
-      if (res.ok) {
-        const data = await res.json();
+      const [addrRes, platRes] = await Promise.all([
+        fetch("/api/settings/addresses", {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        }),
+        fetch("/api/settings/platform", {
+          cache: "no-store",
+        }).catch(() => null),
+      ]);
+      if (addrRes.ok) {
+        const data = await addrRes.json();
         if (data.addresses) {
           setAddresses(data.addresses);
         }
+      }
+      if (platRes && platRes.ok) {
+        const platData = await platRes.json();
+        if (platData?.deposit?.minDeposit != null) setMinDeposit(platData.deposit.minDeposit);
+        if (platData?.deposit?.maxDeposit != null) setMaxDeposit(platData.deposit.maxDeposit);
       }
     } catch (e) {
       console.error("Error fetching deposit addresses:", e);
@@ -195,8 +207,8 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
     // The amount is entered in coins; the server values it at the live price.
     const livePrice = priceOf(selectedToken?.symbol);
     const usdAmount = livePrice != null ? Math.round(numAmount * livePrice * 100) / 100 : null;
-    if (usdAmount != null && (usdAmount < 100 || usdAmount > 100000)) {
-      setErrorMessage("Deposits must be between $100 and $100,000.");
+    if (usdAmount != null && (usdAmount < minDeposit || usdAmount > maxDeposit)) {
+      setErrorMessage(`Deposits must be between $${minDeposit.toLocaleString()} and $${maxDeposit.toLocaleString()}.`);
       return;
     }
 
@@ -292,12 +304,12 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
               <div className="dm-limit-row">
                 <span className="dm-limit-label">Minimum deposit</span>
                 <span className="dm-limit-dots"></span>
-                <span className="dm-limit-val">$100</span>
+                <span className="dm-limit-val">${minDeposit.toLocaleString()}</span>
               </div>
               <div className="dm-limit-row">
                 <span className="dm-limit-label">Maximum deposit</span>
                 <span className="dm-limit-dots"></span>
-                <span className="dm-limit-val">$100,000</span>
+                <span className="dm-limit-val">${maxDeposit.toLocaleString()}</span>
               </div>
             </div>
 
@@ -612,12 +624,12 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
               <div className="dm-limit-row">
                 <span className="dm-limit-label">Minimum deposit</span>
                 <span className="dm-limit-dots"></span>
-                <span className="dm-limit-val">$100.00</span>
+                <span className="dm-limit-val">${minDeposit.toLocaleString()}.00</span>
               </div>
               <div className="dm-limit-row">
                 <span className="dm-limit-label">Maximum deposit</span>
                 <span className="dm-limit-dots"></span>
-                <span className="dm-limit-val">$100,000.00</span>
+                <span className="dm-limit-val">${maxDeposit.toLocaleString()}.00</span>
               </div>
             </div>
 

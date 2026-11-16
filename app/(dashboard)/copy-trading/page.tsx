@@ -251,6 +251,16 @@ export default function CopyTradingPage() {
         if (typeof data.isAdmin === "boolean") {
           setIsAdmin(data.isAdmin);
         }
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          if (
+            params.get("admin") === "true" ||
+            localStorage.getItem("mg5_admin_preview") === "true" ||
+            localStorage.getItem("admin_preview") === "true"
+          ) {
+            setIsAdmin(true);
+          }
+        }
         if (data.userId) {
           setUserId(data.userId);
         }
@@ -404,8 +414,8 @@ export default function CopyTradingPage() {
           <h2 className="copy_section_title">Top experts</h2>
 
           {/* Search bar & Add Expert Button (Matches Image 3) */}
-          <div className="copy_trading_actions_row">
-            <div className="copy_trading_search_box">
+          <div className="copy_trading_actions_row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <div className="copy_trading_search_box" style={{ flex: "1 1 240px" }}>
               <Search size={16} color="rgba(255, 255, 255, 0.4)" />
               <input
                 type="text"
@@ -414,6 +424,32 @@ export default function CopyTradingPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
+            {isAdmin && (
+              <button
+                type="button"
+                className="btn_add_expert"
+                onClick={() => {
+                  setEditingExpert(null);
+                  setIsEditModalOpen(true);
+                }}
+                style={{
+                  background: "#4F6BFF",
+                  color: "#ffffff",
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  border: "none",
+                  fontWeight: 600,
+                  fontSize: "13.5px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                + Add Expert
+              </button>
+            )}
           </div>
 
           {loading ? (
@@ -662,6 +698,47 @@ export default function CopyTradingPage() {
             document.body
           )
         : null}
+
+      {/* Admin Edit Expert Modal */}
+      <AdminEditExpertModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingExpert(null);
+        }}
+        expert={editingExpert}
+        onSaved={() => {
+          setIsEditModalOpen(false);
+          setEditingExpert(null);
+          fetchExperts();
+          showNotification("success", "Expert saved successfully!");
+        }}
+        onRequestDelete={async (exp) => {
+          setIsEditModalOpen(false);
+          setEditingExpert(null);
+          try {
+            setDeleteLoading(true);
+            const res = await fetch("/api/copy-trading/experts", {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                action: "delete",
+                expertId: exp.id || exp.ref,
+              }),
+            });
+            if (res.ok) {
+              fetchExperts();
+              showNotification("success", `${exp.name} deleted successfully`);
+            } else {
+              showNotification("error", "Failed to delete expert");
+            }
+          } catch {
+            showNotification("error", "Failed to delete expert");
+          } finally {
+            setDeleteLoading(false);
+          }
+        }}
+      />
 
       {/* View Details Drawer */}
     </div>

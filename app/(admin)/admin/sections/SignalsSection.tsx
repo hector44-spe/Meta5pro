@@ -415,7 +415,7 @@ export default function SignalsSection({
                         onClick={() => setEditSignal({ ...sig })}
                         title="Edit Signal"
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={14} /> Edit
                       </button>
                       <button
                         type="button"

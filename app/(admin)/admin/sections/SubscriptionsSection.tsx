@@ -422,7 +422,7 @@ export default function SubscriptionsSection({
                         onClick={() => setEditPlan({ ...p })}
                         title="Edit Plan"
                       >
-                        <Edit2 size={14} />
+                        <Edit2 size={14} /> Edit
                       </button>
                       <button
                         type="button"

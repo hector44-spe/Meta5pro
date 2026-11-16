@@ -557,19 +557,19 @@ export default function RealEstateDashboardPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      const base = OPEN_REAL_ESTATE_PROJECTS[0] || {};
                       const newProj: RealEstateProject = {
+                        ...base,
                         id: `re_${Date.now()}`,
+                        ref: `re_${Date.now()}`,
                         title: "New Estate Development",
-                        description: "Prime residential and commercial development with high projected yields.",
-                        thumbnail: "/assets/imgs/real-estate/20230118_Cam-01_Final_NEIGHBOURHOOD-1689090909077-1689090941800.png",
                         minimum: 10000,
                         roi: 75,
-                        strategy: "Fixed ROI",
                         minDuration: 1,
                         minDurationUnit: "MONTH",
                         maxDuration: 12,
                         maxDurationUnit: "MONTH",
-                        status: "OPEN",
+                        status: "open",
                       };
                       handleOpenEditModal(newProj);
                     }}

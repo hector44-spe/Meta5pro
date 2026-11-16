@@ -509,7 +509,7 @@ export default function TradesSection({
                           onClick={() => setEditTrade({ ...t })}
                           title="Edit PnL & Status"
                         >
-                          <Edit2 size={14} />
+                          <Edit2 size={14} /> Edit
                         </button>
                         <button
                           type="button"

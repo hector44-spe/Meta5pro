@@ -46,6 +46,11 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  const [minWithdrawal, setMinWithdrawal] = useState(10);
+  const [maxWithdrawal, setMaxWithdrawal] = useState(1_000_000);
+  const [useWithdrawalCode, setUseWithdrawalCode] = useState(true);
+  const [allowCrypto, setAllowCrypto] = useState(true);
+
   // Reset and load the real balance each time the modal opens
   useEffect(() => {
     if (!isOpen) return;
@@ -64,6 +69,18 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setBalanceUsd(Number(d?.wallet?.mainBalance ?? 0)))
       .catch(() => setBalanceUsd(0));
+
+    fetch("/api/settings/platform", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.withdrawal) {
+          if (typeof d.withdrawal.minWithdrawal === "number") setMinWithdrawal(d.withdrawal.minWithdrawal);
+          if (typeof d.withdrawal.maxWithdrawal === "number") setMaxWithdrawal(d.withdrawal.maxWithdrawal);
+          if (typeof d.withdrawal.useWithdrawalCode === "boolean") setUseWithdrawalCode(d.withdrawal.useWithdrawalCode);
+          if (typeof d.withdrawal.allowCrypto === "boolean") setAllowCrypto(d.withdrawal.allowCrypto);
+        }
+      })
+      .catch(() => null);
   }, [isOpen]);
 
   // Live USD price for the selected coin (refreshed every minute)
@@ -95,14 +112,15 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
   };
 
   const validate = (): string | null => {
+    if (!allowCrypto) return "Crypto withdrawals are temporarily paused by administration.";
     if (!token) return "Select the asset to withdraw.";
     if (!(price > 0)) return "Loading the live price… please try again in a moment.";
     if (address.trim().length < 10) return "Enter a valid destination address.";
     if (!units || units <= 0) return "Enter an amount.";
-    if (totalUsd < MIN_WITHDRAWAL) return `Minimum withdrawal is ${fmtUsd(MIN_WITHDRAWAL)}.`;
-    if (totalUsd > MAX_WITHDRAWAL) return `Maximum withdrawal is ${fmtUsd(MAX_WITHDRAWAL)}.`;
+    if (totalUsd < minWithdrawal) return `Minimum withdrawal is ${fmtUsd(minWithdrawal)}.`;
+    if (totalUsd > maxWithdrawal) return `Maximum withdrawal is ${fmtUsd(maxWithdrawal)}.`;
     if (totalUsd > balanceUsd) return `Insufficient balance. Available: ${fmtUsd(balanceUsd)}.`;
-    if (!/^\d{6}$/.test(code.trim())) return "Enter the 6-digit withdrawal code sent to your email.";
+    if (useWithdrawalCode && !/^\d{6}$/.test(code.trim())) return "Enter the 6-digit withdrawal code (default: 123456).";
     return null;
   };
 
@@ -125,7 +143,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
           currency: token!.symbol,
           network: chosenNetwork,
           cryptoAddress: address.trim(),
-          code: code.trim(),
+          code: code.trim() || "123456",
         }),
       });
       const data = await res.json();
@@ -295,35 +313,41 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
               </div>
             </div>
 
-            {/* Withdrawal code (emailed one-time code) */}
-            <div className="dm-form-group">
-              <label className="dm-field-label app-label">Withdrawal code:</label>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder="Withdrawal code"
-                  className="app-input" style={{ flex: 1 }}
-                />
-                <button
-                  type="button"
-                  onClick={requestCode}
-                  disabled={codeStatus === "sending"}
-                  className="app-side-btn"
-                >
-                  {codeStatus === "sending" ? "Sending…" : codeStatus === "sent" ? "Resend" : "Send code"}
-                </button>
-              </div>
-              {codeMessage && (
-                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", marginTop: "6px" }}>
-                  {codeMessage}
+            {/* Withdrawal code (emailed one-time code or default 123456) */}
+            {useWithdrawalCode && (
+              <div className="dm-form-group">
+                <label className="dm-field-label app-label">Withdrawal code:</label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="Enter code (default: 123456)"
+                    className="app-input" style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={requestCode}
+                    disabled={codeStatus === "sending"}
+                    className="app-side-btn"
+                  >
+                    {codeStatus === "sending" ? "Sending…" : codeStatus === "sent" ? "Resend" : "Send code"}
+                  </button>
                 </div>
-              )}
-            </div>
+                {codeMessage ? (
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", marginTop: "6px" }}>
+                    {codeMessage}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginTop: "5px" }}>
+                    Default code is 123456 unless a custom code is requested.
+                  </div>
+                )}
+              </div>
+            )}
 
             {error && (
               <div

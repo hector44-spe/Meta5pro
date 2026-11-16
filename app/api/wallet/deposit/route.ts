@@ -7,6 +7,7 @@ import { money } from "@/lib/ledger";
 import { getPrice } from "@/lib/prices";
 import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
 import { notifyAdminDeposit, sendDepositReceivedEmail } from "@/lib/mail";
+import { getSettings } from "@/lib/appSettings";
 import { z } from "zod";
 
 const MIN_DEPOSIT_USD = 100;

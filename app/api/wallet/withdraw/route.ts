@@ -6,6 +6,7 @@ import { consumeWithdrawalCode } from "@/lib/withdrawalCode";
 import { getPrice } from "@/lib/prices";
 import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
 import { notifyAdminWithdrawal } from "@/lib/mail";
+import { getSettings } from "@/lib/appSettings";
 import { z } from "zod";
 
 const MIN_WITHDRAWAL = 10;
@@ -37,24 +38,33 @@ export async function POST(req: Request) {
 
     const { units, currency: symbol, network, cryptoAddress, code } = parsed.data;
 
+    const withdrawalSettings = await getSettings("withdrawal");
+    if (!withdrawalSettings.allowCrypto) {
+      return NextResponse.json({ error: "Cryptocurrency withdrawals are temporarily paused by administration." }, { status: 400 });
+    }
+
     // 1. Value the request at the live price and check limits before using the code
     const price = await getPrice(symbol);
     if (!price) {
       return NextResponse.json({ error: `Live price for ${symbol} is unavailable. Please try again shortly.` }, { status: 503 });
     }
     const amount = money(units * price);
-    if (amount < MIN_WITHDRAWAL) {
-      return NextResponse.json({ error: `Minimum withdrawal is ${fmtUsd(MIN_WITHDRAWAL)} (${fmtUnits(units, symbol)} ≈ ${fmtUsd(amount)}).` }, { status: 400 });
+    const minW = withdrawalSettings.minWithdrawal || MIN_WITHDRAWAL;
+    const maxW = withdrawalSettings.maxWithdrawal || MAX_WITHDRAWAL;
+
+    if (amount < minW) {
+      return NextResponse.json({ error: `Minimum withdrawal is ${fmtUsd(minW)} (${fmtUnits(units, symbol)} ≈ ${fmtUsd(amount)}).` }, { status: 400 });
     }
-    if (amount > MAX_WITHDRAWAL) {
-      return NextResponse.json({ error: `Maximum withdrawal is ${fmtUsd(MAX_WITHDRAWAL)}.` }, { status: 400 });
+    if (amount > maxW) {
+      return NextResponse.json({ error: `Maximum withdrawal is ${fmtUsd(maxW)}.` }, { status: 400 });
     }
 
-    // 2. Verify and consume the emailed code in its own transaction, so a wrong
-    //    attempt is always recorded (limits guessing) and a code works only once.
-    const codeError = await atomic((tx) => consumeWithdrawalCode(tx, session.userId, code));
-    if (codeError) {
-      return NextResponse.json({ error: codeError }, { status: 400 });
+    // 2. Verify and consume the withdrawal code if required
+    if (withdrawalSettings.useWithdrawalCode) {
+      const codeError = await atomic((tx) => consumeWithdrawalCode(tx, session.userId, code));
+      if (codeError) {
+        return NextResponse.json({ error: codeError }, { status: 400 });
+      }
     }
 
     const currencyLabel = network ? `${symbol} (${network})` : symbol;

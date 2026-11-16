@@ -48,8 +48,6 @@ type View =
   | "general"
   | "deposit"
   | "withdrawal"
-  | "add-crypto"
-  | "interface"
   | "copy-experts"
   | "mining"
   | "referrals"
@@ -61,8 +59,6 @@ const ADMIN_MENU: { id: Exclude<View, "menu" | "payments" | "verification" | "pe
   { id: "general", title: "General", subtitle: "Manage general admin settings", icon: <SettingsIcon size={18} /> },
   { id: "deposit", title: "Deposit", subtitle: "Manage deposit settings", icon: <CirclePlus size={18} /> },
   { id: "withdrawal", title: "Withdrawal", subtitle: "Manage withdrawal settings", icon: <CircleMinus size={18} /> },
-  { id: "add-crypto", title: "Add crypto", subtitle: "Add crypto to the platform", icon: <Coins size={18} /> },
-  { id: "interface", title: "Interface", subtitle: "Manage interface settings", icon: <Palette size={18} /> },
   { id: "copy-experts", title: "Copy Experts", subtitle: "Manage copy expert settings", icon: <Copy size={18} /> },
   { id: "mining", title: "Mining", subtitle: "Manage mining settings", icon: <Pickaxe size={18} /> },
   { id: "referrals", title: "Referrals", subtitle: "Manage referral settings", icon: <Users size={18} /> },
@@ -81,9 +77,7 @@ const TITLES: Record<View, string> = {
   general: "General Settings",
   deposit: "Deposit Settings",
   withdrawal: "Withdrawal Settings",
-  "add-crypto": "Add Crypto",
-  interface: "Interface Settings",
-  "copy-experts": "Copy Expert Settings",
+  "copy-experts": "Copy Experts Settings",
   mining: "Mining Settings",
   referrals: "Referral Settings",
   cards: "Card Settings",
@@ -344,30 +338,515 @@ export default function AdminSettingsDrawer({ onClose, onLogout }: { onClose: ()
           {/* Subview: General Admin Settings */}
           {view === "general" && <GeneralSettings />}
 
-          {/* Subview: Deposit Settings */}
-          {view === "deposit" && (
-            <div style={{ padding: "4px 0" }}>
-              <DepositAddressSection
-                flash={(k, t) => console.log(k, t)}
-                isDrawerMode={true}
-              />
-            </div>
-          )}
+          {/* Subview: Deposit Settings (Image 1) */}
+          {view === "deposit" && <DepositSettingsView />}
 
-          {/* Subview: Withdrawal Settings */}
-          {view === "withdrawal" && (
-            <ReviewLink
-              text="Review withdrawal requests. Funds stay on hold until you approve or reject them."
-              links={[{ label: "Open withdrawal reviews", href: "/admin?section=withdrawals" }]}
-            />
-          )}
+          {/* Subview: Withdrawal Settings (Image 2) */}
+          {view === "withdrawal" && <WithdrawalSettingsView />}
 
-          {!["menu", "payments", "verification", "personal", "security", "account", "general", "deposit", "withdrawal"].includes(view) && (
+          {/* Subview: Copy Experts Settings (Image 3) */}
+          {view === "copy-experts" && <CopyExpertsSettingsView />}
+
+          {/* Subview: Mining Settings (Image 5) */}
+          {view === "mining" && <MiningSettingsView />}
+
+          {!["menu", "payments", "verification", "personal", "security", "account", "general", "deposit", "withdrawal", "copy-experts", "mining"].includes(view) && (
             <div className="as-placeholder">
               <p>This section isn&apos;t set up yet.</p>
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+/** Deposit Settings (Image 1) */
+function DepositSettingsView() {
+  const [minDeposit, setMinDeposit] = useState(100);
+  const [maxDeposit, setMaxDeposit] = useState(100000);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings/deposit", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d?.settings || d?.value;
+        if (s) {
+          if (typeof s.minDeposit === "number") setMinDeposit(s.minDeposit);
+          if (typeof s.maxDeposit === "number") setMaxDeposit(s.maxDeposit);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/app-settings/deposit", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          minDeposit: Number(minDeposit) || 0,
+          maxDeposit: Number(maxDeposit) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save deposit settings");
+      setNotice({ kind: "ok", text: "Deposit settings saved successfully." });
+    } catch (e: any) {
+      setNotice({ kind: "error", text: e.message || "Failed to save deposit settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="as-placeholder">
+        <Loader2 size={18} className="spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <div className="as-section-block">
+        <h3 className="as-block-title">Deposit Limits</h3>
+        <p className="as-block-sub">Set minimum and maximum deposit amounts</p>
+
+        <div className="as-input-wrap">
+          <label className="as-label">Minimum Deposit:</label>
+          <div className="as-currency-input-box">
+            <input
+              type="number"
+              value={minDeposit}
+              onChange={(e) => setMinDeposit(Number(e.target.value))}
+            />
+            <span className="as-currency-badge">USD</span>
+          </div>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label">Maximum Deposit:</label>
+          <div className="as-currency-input-box">
+            <input
+              type="number"
+              value={maxDeposit}
+              onChange={(e) => setMaxDeposit(Number(e.target.value))}
+            />
+            <span className="as-currency-badge">USD</span>
+          </div>
+        </div>
+
+        {notice && (
+          <div className={`as-notice ${notice.kind}`} style={{ marginTop: "4px" }}>
+            {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            <span>{notice.text}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="as-primary-btn"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving && <Loader2 size={16} className="spin" />}
+          Save deposit settings
+        </button>
+      </div>
+
+      <div style={{ borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "16px" }}>
+        <DepositAddressSection
+          flash={(k, t) => console.log(k, t)}
+          isDrawerMode={true}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Withdrawal Settings (Image 2) */
+function WithdrawalSettingsView() {
+  const [minWithdrawal, setMinWithdrawal] = useState(10);
+  const [maxWithdrawal, setMaxWithdrawal] = useState(1000000);
+  const [useWithdrawalCode, setUseWithdrawalCode] = useState(true);
+  const [allowCrypto, setAllowCrypto] = useState(true);
+  const [showAssetsModal, setShowAssetsModal] = useState(false);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings/withdrawal", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d?.settings || d?.value;
+        if (s) {
+          if (typeof s.minWithdrawal === "number") setMinWithdrawal(s.minWithdrawal);
+          if (typeof s.maxWithdrawal === "number") setMaxWithdrawal(s.maxWithdrawal);
+          if (typeof s.useWithdrawalCode === "boolean") setUseWithdrawalCode(s.useWithdrawalCode);
+          if (typeof s.allowCrypto === "boolean") setAllowCrypto(s.allowCrypto);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/app-settings/withdrawal", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          minWithdrawal: Number(minWithdrawal) || 0,
+          maxWithdrawal: Number(maxWithdrawal) || 0,
+          useWithdrawalCode,
+          allowCrypto,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save withdrawal settings");
+      setNotice({ kind: "ok", text: "Withdrawal settings saved successfully." });
+    } catch (e: any) {
+      setNotice({ kind: "error", text: e.message || "Failed to save withdrawal settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="as-placeholder">
+        <Loader2 size={18} className="spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      {/* Withdrawal Limits */}
+      <div className="as-section-block">
+        <h3 className="as-block-title">Withdrawal Limits</h3>
+        <p className="as-block-sub">Set minimum and maximum withdrawal amounts</p>
+
+        <div className="as-input-wrap">
+          <label className="as-label">Minimum Withdrawal:</label>
+          <div className="as-currency-input-box">
+            <input
+              type="number"
+              value={minWithdrawal}
+              onChange={(e) => setMinWithdrawal(Number(e.target.value))}
+            />
+            <span className="as-currency-badge">USD</span>
+          </div>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label">Maximum Withdrawal:</label>
+          <div className="as-currency-input-box">
+            <input
+              type="number"
+              value={maxWithdrawal}
+              onChange={(e) => setMaxWithdrawal(Number(e.target.value))}
+            />
+            <span className="as-currency-badge">USD</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Withdrawal code */}
+      <div className="as-section-block">
+        <h3 className="as-block-title">Withdrawal code</h3>
+        <p className="as-block-sub">
+          The default withdrawal code is 123456. You can set a user&apos;s withdrawal code from your admin or manage tab.
+        </p>
+
+        <div className="as-toggle-card">
+          <span className="as-toggle-card-title">Use withdrawal code for withdrawals</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={useWithdrawalCode}
+            aria-label="Use withdrawal code for withdrawals"
+            className="app-switch"
+            data-on={useWithdrawalCode ? "true" : "false"}
+            onClick={() => setUseWithdrawalCode(!useWithdrawalCode)}
+          >
+            <span />
+          </button>
+        </div>
+      </div>
+
+      {/* Withdrawal methods */}
+      <div className="as-section-block" style={{ marginBottom: "10px" }}>
+        <h3 className="as-block-title">Withdrawal methods</h3>
+
+        <div className="as-toggle-card" style={{ marginTop: "10px" }}>
+          <div className="as-toggle-card-left">
+            <span className="as-toggle-card-title">Crypto</span>
+            <span className="as-toggle-card-sub">Allow users withdraw cryptocurrencies</span>
+          </div>
+          <div className="as-toggle-card-right">
+            <span
+              className="as-blue-link"
+              onClick={() => setShowAssetsModal(!showAssetsModal)}
+            >
+              {showAssetsModal ? "Hide assets" : "Show assets"}
+            </span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={allowCrypto}
+              aria-label="Allow users withdraw cryptocurrencies"
+              className="app-switch"
+              data-on={allowCrypto ? "true" : "false"}
+              onClick={() => setAllowCrypto(!allowCrypto)}
+            >
+              <span />
+            </button>
+          </div>
+        </div>
+
+        {showAssetsModal && (
+          <div
+            style={{
+              padding: "12px 14px",
+              background: "#1e2126",
+              borderRadius: "8px",
+              border: "1px solid rgba(255, 255, 255, 0.06)",
+              fontSize: "12.5px",
+              color: "rgba(255, 255, 255, 0.7)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+              marginBottom: "12px",
+            }}
+          >
+            <div style={{ fontWeight: 600, color: "#fff" }}>Supported Withdrawal Assets:</div>
+            <div>• BTC (Bitcoin)</div>
+            <div>• ETH (ERC-20)</div>
+            <div>• USDT (TRC-20, BEP-20, ERC-20)</div>
+            <div>• USDC (ERC-20, BEP-20, Solana)</div>
+            <div>• SOL (Solana)</div>
+            <div>• XRP (Ripple)</div>
+          </div>
+        )}
+      </div>
+
+      {notice && (
+        <div className={`as-notice ${notice.kind}`} style={{ marginTop: "-6px" }}>
+          {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+          <span>{notice.text}</span>
+        </div>
+      )}
+
+      {/* Save button underneath */}
+      <button
+        type="button"
+        className="as-primary-btn"
+        onClick={handleSave}
+        disabled={saving}
+      >
+        {saving && <Loader2 size={16} className="spin" />}
+        Save
+      </button>
+    </div>
+  );
+}
+
+/** Copy Experts Settings (Image 3) */
+function CopyExpertsSettingsView() {
+  const [lockCopyExpertsPage, setLockCopyExpertsPage] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings/copyExperts", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d?.settings || d?.value;
+        if (s && typeof s.lockCopyExpertsPage === "boolean") {
+          setLockCopyExpertsPage(s.lockCopyExpertsPage);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/app-settings/copyExperts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lockCopyExpertsPage }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save settings");
+      setNotice({ kind: "ok", text: "Copy expert settings saved." });
+    } catch (e: any) {
+      setNotice({ kind: "error", text: e.message || "Failed to save settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="as-placeholder">
+        <Loader2 size={18} className="spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <div className="as-section-block">
+        <h3 className="as-block-title">Copy expert settings</h3>
+        <p className="as-block-sub">Manage your copy expert settings, edit amount and address</p>
+
+        <div className="as-toggle-card">
+          <span className="as-toggle-card-title">Lock copy experts page</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={lockCopyExpertsPage}
+            aria-label="Lock copy experts page"
+            className="app-switch"
+            data-on={lockCopyExpertsPage ? "true" : "false"}
+            onClick={() => setLockCopyExpertsPage(!lockCopyExpertsPage)}
+          >
+            <span />
+          </button>
+        </div>
+
+        {notice && (
+          <div className={`as-notice ${notice.kind}`} style={{ marginTop: "4px" }}>
+            {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            <span>{notice.text}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="as-primary-btn"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving && <Loader2 size={16} className="spin" />}
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Mining Settings (Image 5) */
+function MiningSettingsView() {
+  const [useMinerPictures, setUseMinerPictures] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings/mining", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d?.settings || d?.value;
+        if (s && typeof s.useMinerPictures === "boolean") {
+          setUseMinerPictures(s.useMinerPictures);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/app-settings/mining", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ useMinerPictures }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save settings");
+      setNotice({ kind: "ok", text: "Mining settings saved." });
+    } catch (e: any) {
+      setNotice({ kind: "error", text: e.message || "Failed to save settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="as-placeholder">
+        <Loader2 size={18} className="spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <div className="as-section-block">
+        <h3 className="as-block-title">Mining settings</h3>
+        <p className="as-block-sub">Edit mining settings</p>
+
+        <div style={{ marginTop: "12px", marginBottom: "8px" }}>
+          <div style={{ fontSize: "14px", fontWeight: 700, color: "#ffffff", marginBottom: "4px" }}>
+            Use Miner Pictures
+          </div>
+          <div style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.55)", lineHeight: 1.4, marginBottom: "12px" }}>
+            (A random picture will be displayed for each miner if you haven&apos;t selected one yet)
+          </div>
+
+          <div className="as-toggle-card">
+            <span className="as-toggle-card-title">Use miner pictures</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={useMinerPictures}
+              aria-label="Use miner pictures"
+              className="app-switch"
+              data-on={useMinerPictures ? "true" : "false"}
+              onClick={() => setUseMinerPictures(!useMinerPictures)}
+            >
+              <span />
+            </button>
+          </div>
+        </div>
+
+        {notice && (
+          <div className={`as-notice ${notice.kind}`} style={{ marginTop: "4px" }}>
+            {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            <span>{notice.text}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="as-primary-btn"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving && <Loader2 size={16} className="spin" />}
+          Save
+        </button>
       </div>
     </div>
   );
