@@ -30,9 +30,22 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
+    const userSafe = {
+      ...user,
+      wallet: user.wallet
+        ? {
+            ...user.wallet,
+            mainBalance: Number(user.wallet.mainBalance),
+            interestBalance: Number(user.wallet.interestBalance),
+            totalDeposited: Number(user.wallet.totalDeposited),
+            totalWithdrawn: Number(user.wallet.totalWithdrawn),
+          }
+        : null,
+    };
+
     return NextResponse.json({
       authenticated: true,
-      user,
+      user: userSafe,
     });
   } catch (error) {
     console.error("Session check error:", error);

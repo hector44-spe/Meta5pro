@@ -92,6 +92,9 @@ interface DashboardContextType {
   balanceLoaded: boolean;
   isChatOpen: boolean;
   setIsChatOpen: (open: boolean) => void;
+  notifications: AppNotification[];
+  unreadCount: number;
+  refreshNotifications: () => void;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -365,6 +368,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     balanceLoaded,
     isChatOpen,
     setIsChatOpen,
+    notifications,
+    unreadCount,
+    refreshNotifications: fetchNotifications,
   };
 
   return (

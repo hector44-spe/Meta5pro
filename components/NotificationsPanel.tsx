@@ -30,6 +30,11 @@ const ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   account: { icon: <UserRound size={16} />, color: "#8fa2ff" },
   trade: { icon: <LineChart size={16} />, color: "#a78bfa" },
   investment: { icon: <Layers size={16} />, color: "#38bdf8" },
+  custom: { icon: <Bell size={16} />, color: "#4F6BFF" },
+  admin: { icon: <ShieldCheck size={16} />, color: "#f5a524" },
+  system: { icon: <Bell size={16} />, color: "#38bdf8" },
+  alert: { icon: <ShieldCheck size={16} />, color: "#ff7a87" },
+  general: { icon: <Bell size={16} />, color: "#10b981" },
 };
 
 function timeAgo(iso: string): string {

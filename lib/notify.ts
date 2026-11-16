@@ -1,6 +1,18 @@
 import { prisma, type Tx } from "./prisma";
 
-export type NotificationKind = "deposit" | "withdrawal" | "balance" | "security" | "account" | "trade" | "investment";
+export type NotificationKind =
+  | "deposit"
+  | "withdrawal"
+  | "balance"
+  | "security"
+  | "account"
+  | "trade"
+  | "investment"
+  | "custom"
+  | "admin"
+  | "alert"
+  | "system"
+  | "general";
 
 /**
  * Adds an in-app notification for a user. Never throws: a failed notification

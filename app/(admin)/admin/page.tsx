@@ -25,6 +25,7 @@ import {
   UserX,
   UserCheck,
   DollarSign,
+  Bell,
   ExternalLink,
   Loader2,
   RotateCcw,
@@ -879,6 +880,14 @@ function UsersSection({
   const [statusBusy, setStatusBusy] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
+  // Notify user modal state
+  const [notifyUser, setNotifyUser] = useState<AdminUser | null>(null);
+  const [notifyTitle, setNotifyTitle] = useState("");
+  const [notifyBody, setNotifyBody] = useState("");
+  const [notifyKind, setNotifyKind] = useState("custom");
+  const [notifyBusy, setNotifyBusy] = useState(false);
+  const [notifyError, setNotifyError] = useState("");
+
   const rows = users.filter((u) => {
     const s = q.trim().toLowerCase();
     return (
@@ -952,6 +961,42 @@ function UsersSection({
     });
   };
 
+  const openNotify = (u: AdminUser) => {
+    setNotifyUser(u);
+    setNotifyTitle("");
+    setNotifyBody("");
+    setNotifyKind("custom");
+    setNotifyError("");
+  };
+
+  const submitNotify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!notifyUser) return;
+    if (!notifyTitle.trim()) return setNotifyError("Enter a notification title.");
+    if (!notifyBody.trim()) return setNotifyError("Enter notification content.");
+    setNotifyBusy(true);
+    setNotifyError("");
+    try {
+      const res = await fetch(`/api/admin/users/${notifyUser.id}/notify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: notifyTitle.trim(),
+          body: notifyBody.trim(),
+          kind: notifyKind,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send notification");
+      flash("ok", `Notification delivered to ${notifyUser.email}.`);
+      setNotifyUser(null);
+    } catch (err) {
+      setNotifyError(err instanceof Error ? err.message : "Failed to send notification");
+    } finally {
+      setNotifyBusy(false);
+    }
+  };
+
   return (
     <>
       <section className={styles.card}>
@@ -996,6 +1041,9 @@ function UsersSection({
                     <td className={styles.muted}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
                     <td>
                       <div className={styles.rowActions}>
+                        <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
+                          <Bell size={14} /> Notify
+                        </button>
                         <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)}>
                           <DollarSign size={14} /> Balance
                         </button>
@@ -1035,6 +1083,9 @@ function UsersSection({
                   <span>Deposited {usd(u.totalDeposited)}</span>
                 </div>
                 <div className={styles.itemBottom}>
+                  <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
+                    <Bell size={14} /> Notify
+                  </button>
                   <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)}>
                     <DollarSign size={14} /> Balance
                   </button>
@@ -1099,6 +1150,70 @@ function UsersSection({
               <button type="submit" className={action === "credit" ? styles.btnSuccess : styles.btnDanger} disabled={busy}>
                 {busy && <Loader2 size={15} className={styles.spin} />}
                 {action === "credit" ? "Add funds" : "Remove funds"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {notifyUser && (
+        <div className={styles.modalBackdrop} onClick={() => !notifyBusy && setNotifyUser(null)}>
+          <form className={styles.modal} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} onSubmit={submitNotify}>
+            <div className={styles.modalHead}>
+              <h2>Send notification</h2>
+              <button type="button" className={styles.iconBtn} onClick={() => setNotifyUser(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <dl className={styles.detailList}>
+              <dt>Recipient</dt>
+              <dd>{notifyUser.fullName ? `${notifyUser.fullName} (${notifyUser.email})` : notifyUser.email}</dd>
+            </dl>
+            <label className={styles.field}>
+              <span>Notification Kind / Category</span>
+              <select className={styles.select} value={notifyKind} onChange={(e) => setNotifyKind(e.target.value)}>
+                <option value="custom">General / Custom Notice</option>
+                <option value="admin">Admin Message</option>
+                <option value="alert">Security / Urgent Alert</option>
+                <option value="system">System Notification</option>
+                <option value="deposit">Deposit Update</option>
+                <option value="trade">Trade / Market Update</option>
+              </select>
+            </label>
+            <label className={styles.field}>
+              <span>Title</span>
+              <input
+                className={styles.input}
+                value={notifyTitle}
+                onChange={(e) => setNotifyTitle(e.target.value)}
+                placeholder="e.g. Account Verification Approved"
+                autoFocus
+                maxLength={100}
+              />
+            </label>
+            <label className={styles.field}>
+              <span>Message</span>
+              <textarea
+                className={styles.input}
+                style={{ minHeight: "80px", resize: "vertical" }}
+                value={notifyBody}
+                onChange={(e) => setNotifyBody(e.target.value)}
+                placeholder="Enter notification details for the user..."
+                maxLength={500}
+              />
+            </label>
+            {notifyError && (
+              <div className={styles.errorText}>
+                <AlertCircle size={15} /> {notifyError}
+              </div>
+            )}
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.btnGhost} onClick={() => setNotifyUser(null)} disabled={notifyBusy}>
+                Cancel
+              </button>
+              <button type="submit" className={styles.btnSuccess} disabled={notifyBusy}>
+                {notifyBusy && <Loader2 size={15} className={styles.spin} />}
+                Send Notification
               </button>
             </div>
           </form>

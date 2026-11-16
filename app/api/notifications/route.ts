@@ -12,7 +12,7 @@ export async function GET() {
     prisma.notification.findMany({
       where: { userId: session.userId },
       orderBy: { createdAt: "desc" },
-      take: 30,
+      take: 100,
       select: { id: true, kind: true, title: true, body: true, read: true, createdAt: true },
     }),
     prisma.notification.count({ where: { userId: session.userId, read: false } }),

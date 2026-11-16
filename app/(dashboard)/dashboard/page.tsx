@@ -146,6 +146,8 @@ export default function DashboardPage() {
     refreshBalance,
     formatMoney,
     balanceLoaded,
+    notifications,
+    unreadCount,
   } = useDashboard();
 
   interface Position {
@@ -343,8 +345,23 @@ export default function DashboardPage() {
     email: string;
     fullName: string | null;
     role: string;
-    wallet?: { mainBalance: number; interestBalance: number };
+    status: string;
+    wallet?: {
+      mainBalance: number;
+      interestBalance: number;
+      totalDeposited: number;
+      totalWithdrawn: number;
+    };
   } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.user) setUserProfile(d.user);
+      })
+      .catch(console.error);
+  }, [currentBalance]);
 
   const [orderExecuting, setOrderExecuting] = useState(false);
   const [orderFeedback, setOrderFeedback] = useState<string | null>(null);
@@ -359,26 +376,97 @@ export default function DashboardPage() {
   const fmtUnitsValue = (n: number, sym: string) =>
     `${n === 0 ? "0.0000" : Number(n.toFixed(8)).toString()} ${sym}`;
 
-  // Held coins first (largest value first), then the usual defaults at zero
+  // Top assets purchased by the client first (reflecting real held/bought amounts), then defaults
   const assetsList = useMemo(() => {
     const catalog = assetCatalog as { name: string; symbol: string; icon: string }[];
     const info = (sym: string) => {
       const c = catalog.find((a) => a.symbol.toUpperCase() === sym);
       return { name: c?.name ?? sym, icon: c?.icon ?? `/dashboard_files/${sym}.svg` };
     };
-    const held = holdings
-      .filter((h) => h.units > 0 || h.pendingUnits > 0)
-      .map((h) => {
-        const usd = h.units * (prices[h.symbol] ?? h.price ?? 0);
-        return { symbol: h.symbol, ...info(h.symbol), usdNum: usd, usd: fmtUsdValue(usd), amount: fmtUnitsValue(h.units, h.symbol) };
-      })
+
+    const heldMap = new Map<string, { units: number; usd: number }>();
+
+    // 1. From wallet holdings (approved deposits, conversions)
+    for (const h of holdings) {
+      const u = h.units > 0 ? h.units : (h.pendingUnits || 0);
+      if (u > 0) {
+        const p = prices[h.symbol] ?? h.price ?? 0;
+        heldMap.set(h.symbol.toUpperCase(), { units: u, usd: u * p });
+      }
+    }
+
+    // 2. From client purchased open BUY positions (trades)
+    for (const pos of positions) {
+      if (pos.status === "OPEN" && pos.type === "BUY") {
+        const rawSym = pos.symbol.toUpperCase().replace(/\/USDT$|\/USD$|USDT$|USD$/, "").trim();
+        const entry = Number(pos.entryPrice) || 1;
+        const posUnits = Number(pos.amount) / entry;
+        const livePrice = prices[rawSym] ?? entry;
+        const currentVal = posUnits * livePrice + Number(pos.pnl || 0);
+        const existing = heldMap.get(rawSym);
+        if (existing) {
+          heldMap.set(rawSym, {
+            units: existing.units + posUnits,
+            usd: existing.usd + currentVal,
+          });
+        } else {
+          heldMap.set(rawSym, { units: posUnits, usd: currentVal });
+        }
+      }
+    }
+
+    const heldItems = Array.from(heldMap.entries())
+      .map(([sym, data]) => ({
+        symbol: sym,
+        ...info(sym),
+        usdNum: data.usd,
+        usd: fmtUsdValue(data.usd),
+        amount: fmtUnitsValue(data.units, sym),
+      }))
       .sort((a, b) => b.usdNum - a.usdNum);
+
     const defaults = ["BTC", "ETH", "SOL", "AAPL", "GOOGL"]
-      .filter((sym) => !held.some((h) => h.symbol === sym))
-      .map((sym) => ({ symbol: sym, ...info(sym), usdNum: 0, usd: fmtUsdValue(0), amount: fmtUnitsValue(0, sym) }));
-    return [...held, ...defaults];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [holdings, prices]);
+      .filter((sym) => !heldMap.has(sym))
+      .map((sym) => ({
+        symbol: sym,
+        ...info(sym),
+        usdNum: 0,
+        usd: fmtUsdValue(0),
+        amount: fmtUnitsValue(0, sym),
+      }));
+
+    return [...heldItems, ...defaults];
+  }, [holdings, positions, prices]);
+
+  const totalProfit = useMemo(() => {
+    const pnl = positions.reduce((acc, p) => acc + Number(p.pnl || 0), 0);
+    const interest = Number(userProfile?.wallet?.interestBalance ?? 0);
+    return Math.round((pnl + interest) * 100) / 100;
+  }, [positions, userProfile]);
+
+  const categoriesData = useMemo(() => {
+    const cryptoTotal = assetsList
+      .filter((a) => a.usdNum > 0 && !["AAPL", "GOOGL", "MSFT", "NVDA", "TSLA"].includes(a.symbol))
+      .reduce((acc, a) => acc + a.usdNum, 0);
+
+    const stocksTotal = assetsList
+      .filter((a) => a.usdNum > 0 && ["AAPL", "GOOGL", "MSFT", "NVDA", "TSLA"].includes(a.symbol))
+      .reduce((acc, a) => acc + a.usdNum, 0);
+
+    const cashBalance = Math.max(0, currentBalance || Number(userProfile?.wallet?.mainBalance ?? 0));
+    const activeMargin = positions
+      .filter((p) => p.status === "OPEN")
+      .reduce((acc, p) => acc + (Number(p.amount) / Number(p.leverage || 1)), 0);
+
+    const grandTotal = cryptoTotal + stocksTotal + cashBalance + activeMargin || 1;
+
+    return [
+      { name: "Crypto Assets", value: cryptoTotal, color: "#f7931a", pct: Math.round((cryptoTotal / grandTotal) * 100) },
+      { name: "Available Cash", value: cashBalance, color: "#01b28b", pct: Math.round((cashBalance / grandTotal) * 100) },
+      { name: "Trading Margin", value: activeMargin, color: "#4763f0", pct: Math.round((activeMargin / grandTotal) * 100) },
+      ...(stocksTotal > 0 ? [{ name: "Stocks & Equities", value: stocksTotal, color: "#a78bfa", pct: Math.round((stocksTotal / grandTotal) * 100) }] : []),
+    ];
+  }, [assetsList, currentBalance, userProfile, positions]);
 
   const ASSETS_BY_TYPE: Record<
     string,
@@ -645,6 +733,74 @@ export default function DashboardPage() {
 
   return (
     <div className="dashboard-content-grid">
+      {/* Prominent Custom/System Notification Banner */}
+      {unreadCount > 0 && notifications.length > 0 && (
+        <div
+          style={{
+            width: "100%",
+            backgroundColor: "rgba(71, 99, 240, 0.08)",
+            border: "1px solid rgba(71, 99, 240, 0.25)",
+            borderRadius: "10px",
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            marginBottom: "12px",
+            boxSizing: "border-box",
+            cursor: "pointer",
+          }}
+          onClick={() => openModal("notifications")}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", overflow: "hidden" }}>
+            <div
+              style={{
+                width: "28px",
+                height: "28px",
+                borderRadius: "50%",
+                backgroundColor: "rgba(71, 99, 240, 0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#7189ff",
+                flexShrink: 0,
+              }}
+            >
+              <Bell size={15} />
+            </div>
+            <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                {notifications[0].title}
+              </span>
+              <span
+                style={{
+                  fontSize: "12.5px",
+                  color: "rgba(255, 255, 255, 0.65)",
+                  marginLeft: "8px",
+                }}
+              >
+                {notifications[0].body}
+              </span>
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                backgroundColor: "#4763f0",
+                color: "#fff",
+                padding: "2px 8px",
+                borderRadius: "10px",
+              }}
+            >
+              {unreadCount} new
+            </span>
+            <ChevronRight size={14} color="rgba(255,255,255,0.4)" />
+          </div>
+        </div>
+      )}
+
       {/* ===================== UPPER SECTION (MainCard) ===================== */}
       <div
         className="dashboard-upper-grid dashboard-maincard-grid"
@@ -1042,31 +1198,74 @@ export default function DashboardPage() {
               fontSize: "14px",
               fontWeight: 600,
               color: "#ffffff",
-              marginBottom: "8px",
+              marginBottom: "12px",
             }}
           >
-            Categories
+            Portfolio Categories
           </div>
+
+          {/* Visual allocation bar */}
           <div
             style={{
-              fontSize: "12.5px",
-              fontWeight: 500,
-              color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-              lineHeight: "1.4",
+              display: "flex",
+              height: "8px",
+              borderRadius: "4px",
+              overflow: "hidden",
+              gap: "2px",
+              marginBottom: "14px",
+              backgroundColor: "rgba(255, 255, 255, 0.05)",
             }}
           >
-            No categories yet.{" "}
-            <strong
-              onClick={() => openModal("deposit")}
-              style={{
-                color: "var(--color-primary, #4763f0)",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Deposit now
-            </strong>{" "}
-            to see your portfolio breakdown.
+            {categoriesData.map((cat, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: `${Math.max(cat.pct, cat.value > 0 ? 6 : 0)}%`,
+                  backgroundColor: cat.color,
+                  transition: "width 0.3s ease",
+                }}
+                title={`${cat.name}: ${cat.pct}%`}
+              />
+            ))}
+          </div>
+
+          <div style={{ display: "grid", gap: "8px" }}>
+            {categoriesData.map((cat, idx) => (
+              <div
+                key={idx}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "8px 10px",
+                  backgroundColor: "rgba(255, 255, 255, 0.03)",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      backgroundColor: cat.color,
+                    }}
+                  />
+                  <span style={{ fontSize: "12.5px", fontWeight: 500, color: "#ffffff" }}>
+                    {cat.name}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#ffffff" }}>
+                    ${cat.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.45)", width: "32px", textAlign: "right" }}>
+                    {cat.pct}%
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -1318,7 +1517,7 @@ export default function DashboardPage() {
                 marginBottom: "16px",
               }}
             >
-              Overview
+              Account Overview
             </div>
             <div style={{ display: "grid", gap: "14px" }}>
               <div
@@ -1339,12 +1538,12 @@ export default function DashboardPage() {
                 </span>
                 <span
                   style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    color: "rgba(255, 255, 255, 0.5)",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    color: "#ffffff",
                   }}
                 >
-                  $0
+                  ${Number(userProfile?.wallet?.totalDeposited ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div
@@ -1365,12 +1564,12 @@ export default function DashboardPage() {
                 </span>
                 <span
                   style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    color: "rgba(255, 255, 255, 0.5)",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    color: "#ffffff",
                   }}
                 >
-                  $0
+                  ${Number(userProfile?.wallet?.totalWithdrawn ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               <div
@@ -1391,12 +1590,14 @@ export default function DashboardPage() {
                 </span>
                 <span
                   style={{
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    color: "rgba(255, 255, 255, 0.5)",
+                    fontSize: "13.5px",
+                    fontWeight: 600,
+                    color: totalProfit >= 0 ? "#01b28b" : "#ff3344",
                   }}
                 >
-                  $0
+                  {totalProfit >= 0
+                    ? `+$${totalProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : `-$${Math.abs(totalProfit).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                 </span>
               </div>
               <div
@@ -1417,12 +1618,15 @@ export default function DashboardPage() {
                 </span>
                 <span
                   style={{
-                    fontSize: "13px",
+                    fontSize: "12px",
                     fontWeight: 600,
-                    color: "#ff3344",
+                    color: userProfile?.status === "ACTIVE" ? "#01b28b" : "#ff3344",
+                    backgroundColor: userProfile?.status === "ACTIVE" ? "rgba(1, 178, 139, 0.15)" : "rgba(255, 51, 68, 0.15)",
+                    padding: "3px 10px",
+                    borderRadius: "20px",
                   }}
                 >
-                  Your account is not verified
+                  {userProfile?.status === "ACTIVE" ? "Verified" : "Unverified"}
                 </span>
               </div>
             </div>
@@ -1437,31 +1641,74 @@ export default function DashboardPage() {
                 fontSize: "13.5px",
                 fontWeight: 600,
                 color: "#ffffff",
-                marginBottom: "14px",
+                marginBottom: "12px",
               }}
             >
-              Categories
+              Portfolio Categories
             </div>
+
+            {/* Visual allocation bar */}
             <div
               style={{
-                fontSize: "12.5px",
-                fontWeight: 500,
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                lineHeight: "1.4",
+                display: "flex",
+                height: "8px",
+                borderRadius: "4px",
+                overflow: "hidden",
+                gap: "2px",
+                marginBottom: "16px",
+                backgroundColor: "rgba(255, 255, 255, 0.05)",
               }}
             >
-              No categories yet.{" "}
-              <strong
-                onClick={() => openModal("deposit")}
-                style={{
-                  color: "var(--color-primary, #4763f0)",
-                  cursor: "pointer",
-                  fontWeight: 600,
-                }}
-              >
-                Deposit now
-              </strong>{" "}
-              to see your portfolio breakdown.
+              {categoriesData.map((cat, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    width: `${Math.max(cat.pct, cat.value > 0 ? 6 : 0)}%`,
+                    backgroundColor: cat.color,
+                    transition: "width 0.3s ease",
+                  }}
+                  title={`${cat.name}: ${cat.pct}%`}
+                />
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gap: "10px" }}>
+              {categoriesData.map((cat, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "10px 12px",
+                    backgroundColor: "rgba(255, 255, 255, 0.03)",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255, 255, 255, 0.05)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div
+                      style={{
+                        width: "10px",
+                        height: "10px",
+                        borderRadius: "50%",
+                        backgroundColor: cat.color,
+                      }}
+                    />
+                    <span style={{ fontSize: "13px", fontWeight: 500, color: "#ffffff" }}>
+                      {cat.name}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#ffffff" }}>
+                      ${cat.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                    <span style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.45)", width: "34px", textAlign: "right" }}>
+                      {cat.pct}%
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
