@@ -1188,26 +1188,29 @@ function UsersSection({
         </div>
         {loading ? (
           <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-            <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
+            <table className={styles.table} style={{ minWidth: "960px" }}>
               <thead>
                 <tr>
-                  <th style={{ width: "200px" }}>User</th>
-                  <th style={{ width: "80px" }}>Role</th>
-                  <th style={{ width: "90px" }}>Status</th>
-                  <th className={styles.right} style={{ width: "120px" }}>Balance</th>
-                  <th className={styles.right} style={{ width: "120px" }}>Deposited</th>
-                  <th className={styles.right} style={{ width: "120px" }}>Withdrawn</th>
-                  <th style={{ width: "110px" }}>Joined</th>
-                  <th style={{ width: "180px", textAlign: "right" }}>Actions</th>
+                  <th style={{ minWidth: "190px" }}>User</th>
+                  <th style={{ minWidth: "85px" }}>Role</th>
+                  <th style={{ minWidth: "90px" }}>Status</th>
+                  <th className={styles.right} style={{ minWidth: "115px" }}>Balance</th>
+                  <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
+                  <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
+                  <th style={{ minWidth: "115px" }}>Joined</th>
+                  <th style={{ minWidth: "180px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
                     <td>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 140 }} />
-                        <div className={styles.skeletonCell} style={{ width: 100 }} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div className={styles.skeletonCell} style={{ width: 34, height: 34, borderRadius: "50%" }} />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div className={styles.skeletonCell} style={{ width: 120 }} />
+                          <div className={styles.skeletonCell} style={{ width: 80 }} />
+                        </div>
                       </div>
                     </td>
                     <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
@@ -1216,7 +1219,7 @@ function UsersSection({
                     <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                     <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 100, marginLeft: "auto" }} /></td>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 100, marginLeft: "auto" }} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -1226,17 +1229,17 @@ function UsersSection({
           <Empty icon={<Users size={28} />} text="No users match your search." />
         ) : (
           <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-            <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
+            <table className={styles.table} style={{ minWidth: "960px" }}>
               <thead>
                 <tr>
-                  <th style={{ width: "200px" }}>User</th>
-                  <th style={{ width: "80px" }}>Role</th>
-                  <th style={{ width: "90px" }}>Status</th>
-                  <th className={styles.right} style={{ width: "120px" }}>Balance</th>
-                  <th className={styles.right} style={{ width: "120px" }}>Deposited</th>
-                  <th className={styles.right} style={{ width: "120px" }}>Withdrawn</th>
-                  <th style={{ width: "110px" }}>Joined</th>
-                  <th style={{ width: "180px", textAlign: "right" }}>Actions</th>
+                  <th style={{ minWidth: "190px" }}>User</th>
+                  <th style={{ minWidth: "85px" }}>Role</th>
+                  <th style={{ minWidth: "90px" }}>Status</th>
+                  <th className={styles.right} style={{ minWidth: "115px" }}>Balance</th>
+                  <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
+                  <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
+                  <th style={{ minWidth: "115px" }}>Joined</th>
+                  <th style={{ minWidth: "180px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1244,8 +1247,11 @@ function UsersSection({
                   <tr key={u.id}>
                     <td>
                       <div className={styles.userCell}>
-                        <span>{u.fullName || u.username}</span>
-                        <small>{u.email}</small>
+                        <div className={styles.userAvatar}>{(u.email[0] || "U").toUpperCase()}</div>
+                        <div style={{ minWidth: 0, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.fullName || u.username}</div>
+                          <div className={styles.faint} style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</div>
+                        </div>
                       </div>
                     </td>
                     <td>{u.role === "ADMIN" ? <span className={`${styles.pill} ${styles.pillBlue}`}>Admin</span> : "Investor"}</td>
@@ -1254,7 +1260,7 @@ function UsersSection({
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalDeposited)}</td>
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalWithdrawn)}</td>
                     <td className={styles.muted}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                    <td>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                       <div className={styles.rowActions}>
                         <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
                           <Bell size={14} /> Notify
@@ -1287,22 +1293,41 @@ function UsersSection({
               <li key={u.id} className={styles.itemCard}>
                 <div className={styles.itemTop}>
                   <div className={styles.userCell}>
-                    <span>{u.fullName || u.username}</span>
-                    <small>{u.email}</small>
+                    <div className={styles.userAvatar}>{(u.email[0] || "U").toUpperCase()}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{u.fullName || u.username}</div>
+                      <div className={styles.faint} style={{ fontSize: "11.5px" }}>{u.email}</div>
+                    </div>
                   </div>
-                  <StatusPill status={u.status} />
+                  <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                    {u.role === "ADMIN" && <span className={`${styles.pill} ${styles.pillBlue}`}>Admin</span>}
+                    <StatusPill status={u.status} />
+                  </div>
                 </div>
-                <div className={styles.itemMeta}>
-                  <span>{u.role === "ADMIN" ? "Admin" : "Investor"}</span>
-                  <span>Balance <b className={styles.mono}>{usd(u.mainBalance)}</b></span>
-                  <span>Deposited {usd(u.totalDeposited)}</span>
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Main Balance</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(u.mainBalance)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Total Deposited</span>
+                    <span className={styles.itemMetaValue}>{usd(u.totalDeposited)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Total Withdrawn</span>
+                    <span className={styles.itemMetaValue}>{usd(u.totalWithdrawn)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Joined Date</span>
+                    <span className={styles.itemMetaValue}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+                  </div>
                 </div>
-                <div className={styles.itemBottom}>
-                  <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
-                    <Bell size={14} /> Notify
+                <div className={styles.itemBottom} style={{ flexWrap: "wrap", gap: "6px" }}>
+                  <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} style={{ height: "32px", fontSize: "12px" }}>
+                    <Bell size={13} /> Notify
                   </button>
-                  <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)}>
-                    <DollarSign size={14} /> Balance
+                  <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)} style={{ height: "32px", fontSize: "12px" }}>
+                    <DollarSign size={13} /> Balance
                   </button>
                   {u.role !== "ADMIN" && (
                     <button
@@ -1310,8 +1335,9 @@ function UsersSection({
                       className={u.status === "ACTIVE" ? styles.btnDangerSm : styles.btnSuccessSm}
                       onClick={() => toggleStatus(u)}
                       disabled={statusBusy === u.id}
+                      style={{ height: "32px", fontSize: "12px", marginLeft: "auto" }}
                     >
-                      {u.status === "ACTIVE" ? <UserX size={14} /> : <UserCheck size={14} />}
+                      {u.status === "ACTIVE" ? <UserX size={13} /> : <UserCheck size={13} />}
                       {u.status === "ACTIVE" ? "Suspend" : "Reactivate"}
                     </button>
                   )}

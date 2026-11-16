@@ -225,37 +225,41 @@ export default function CardRequestsSection({
           </div>
         </div>
 
+        {/* Desktop View (>= 768px) */}
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "960px" }}>
             <thead>
               <tr>
-                <th style={{ width: "200px" }}>User</th>
-                <th style={{ width: "100px" }}>Card Type</th>
-                <th style={{ width: "150px" }}>Card Number</th>
-                <th style={{ width: "130px" }}>Exp / CVV / PIN</th>
-                <th className={styles.right} style={{ width: "110px" }}>Fee Paid</th>
-                <th style={{ width: "130px" }}>Requested Date</th>
-                <th style={{ width: "95px" }}>Status</th>
-                <th style={{ width: "135px", textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "190px" }}>User</th>
+                <th style={{ minWidth: "105px" }}>Card Type</th>
+                <th style={{ minWidth: "140px" }}>Card Number</th>
+                <th style={{ minWidth: "140px" }}>Exp / CVV / PIN</th>
+                <th className={styles.right} style={{ minWidth: "100px" }}>Fee Paid</th>
+                <th style={{ minWidth: "125px" }}>Requested Date</th>
+                <th style={{ minWidth: "90px" }}>Status</th>
+                <th style={{ minWidth: "180px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ minWidth: "200px" }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 130 }} />
-                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div className={styles.skeletonCell} style={{ width: 34, height: 34, borderRadius: "50%" }} />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div className={styles.skeletonCell} style={{ width: 120 }} />
+                          <div className={styles.skeletonCell} style={{ width: 80 }} />
+                        </div>
                       </div>
                     </td>
-                    <td style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 110 }} /></td>
-                    <td style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
-                    <td className={styles.right} style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
-                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ minWidth: "140px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 110 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 80, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredCards.length === 0 ? (
@@ -273,9 +277,9 @@ export default function CardRequestsSection({
                     <td>
                       <div className={styles.userCell}>
                         <div className={styles.userAvatar}>{(c.userEmail[0] || "U").toUpperCase()}</div>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{c.userFullName}</div>
-                          <div className={styles.faint}>{c.userEmail}</div>
+                        <div style={{ minWidth: 0, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.userFullName}</div>
+                          <div className={styles.faint} style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.userEmail}</div>
                         </div>
                       </div>
                     </td>
@@ -298,7 +302,7 @@ export default function CardRequestsSection({
                     <td className={styles.mono} style={{ fontSize: "12px" }}>
                       {c.expiryDate} / CVV: {c.cvv} / PIN: {c.cardPin}
                     </td>
-                    <td className={styles.mono} style={{ color: "#34d399", fontWeight: 700 }}>
+                    <td className={`${styles.right} ${styles.mono}`} style={{ color: "#34d399", fontWeight: 700 }}>
                       {usd(c.issuanceFee || 1000)}
                     </td>
                     <td className={styles.faint} style={{ fontSize: "12px" }}>
@@ -317,7 +321,7 @@ export default function CardRequestsSection({
                         {c.status}
                       </span>
                     </td>
-                    <td style={{ textAlign: "right" }}>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         {c.status !== "active" ? (
                           <button
@@ -354,6 +358,109 @@ export default function CardRequestsSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.skeletonCell} style={{ width: 130 }} />
+                  <div className={styles.skeletonCell} style={{ width: 60 }} />
+                </div>
+                <div className={styles.skeletonCell} style={{ width: "100%", height: 50 }} />
+              </li>
+            ))
+          ) : filteredCards.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "36px 16px", color: "var(--a-muted)" }}>
+              <CreditCard size={24} style={{ opacity: 0.35, margin: "0 auto 8px" }} />
+              <div>No card requests found.</div>
+            </li>
+          ) : (
+            filteredCards.map((c) => (
+              <li key={c.id || c.ref} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.userCell}>
+                    <div className={styles.userAvatar}>{(c.userEmail[0] || "U").toUpperCase()}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{c.userFullName}</div>
+                      <div className={styles.faint} style={{ fontSize: "11.5px" }}>{c.userEmail}</div>
+                    </div>
+                  </div>
+                  <span
+                    className={`${styles.pill} ${
+                      c.status === "active"
+                        ? styles.pillGreen
+                        : c.status === "pending"
+                        ? styles.pillAmber
+                        : styles.pillRed
+                    }`}
+                  >
+                    {c.status}
+                  </span>
+                </div>
+
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Card Type</span>
+                    <span className={styles.itemMetaValue}>{c.type} Card</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Fee Paid</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(c.issuanceFee || 1000)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Card Number</span>
+                    <span className={styles.itemMetaValue} style={{ fontFamily: "monospace", letterSpacing: "1px" }}>
+                      {c.cardNumber ? `•••• ${c.cardNumber.slice(-4)}` : "Generating..."}
+                    </span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Exp / CVV / PIN</span>
+                    <span className={styles.itemMetaValue} style={{ fontFamily: "monospace" }}>
+                      {c.expiryDate} (CVV: {c.cvv})
+                    </span>
+                  </div>
+                </div>
+
+                <div className={styles.itemBottom} style={{ flexWrap: "wrap", gap: 8 }}>
+                  <span className={styles.faint} style={{ fontSize: "11.5px" }}>
+                    {new Date(c.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                    {c.status !== "active" ? (
+                      <button
+                        type="button"
+                        className={styles.btnSuccessSm}
+                        onClick={() => handleUpdateStatus(c.userId, c.id, "active")}
+                        style={{ height: "32px", fontSize: "12px" }}
+                      >
+                        <ShieldCheck size={13} /> Confirm & Activate
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className={styles.btnGhostSm}
+                        onClick={() => handleUpdateStatus(c.userId, c.id, "blocked")}
+                        style={{ height: "32px", fontSize: "12px" }}
+                      >
+                        <Ban size={13} /> Block
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.btnDangerSm}
+                      onClick={() => handleDeleteCard(c.userId, c.id)}
+                      style={{ height: "32px", width: "32px", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
 
       <CustomConfirmModal

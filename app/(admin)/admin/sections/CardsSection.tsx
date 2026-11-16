@@ -199,16 +199,17 @@ export default function CardsSection({
           </button>
         </div>
 
+        {/* Desktop View (>= 768px) */}
         <div className={styles.tableWrap} style={{ minHeight: "200px" }}>
-          <table className={styles.table} style={{ minWidth: "750px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "750px" }}>
             <thead>
               <tr>
-                <th style={{ width: "200px" }}>Tier Name</th>
-                <th className={styles.right} style={{ width: "130px" }}>Issuance Fee</th>
-                <th className={styles.right} style={{ width: "150px" }}>Deposit Minimum</th>
-                <th style={{ width: "140px" }}>KYC Verification</th>
-                <th style={{ width: "100px" }}>Status</th>
-                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "180px" }}>Tier Name</th>
+                <th className={styles.right} style={{ minWidth: "120px" }}>Issuance Fee</th>
+                <th className={styles.right} style={{ minWidth: "140px" }}>Deposit Minimum</th>
+                <th style={{ minWidth: "130px" }}>KYC Verification</th>
+                <th style={{ minWidth: "90px" }}>Status</th>
+                <th style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -225,7 +226,7 @@ export default function CardsSection({
                     <td className={styles.right} style={{ minWidth: "130px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
                     <td style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
                     <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td style={{ minWidth: "110px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : cardOptions.length === 0 ? (
@@ -244,10 +245,10 @@ export default function CardsSection({
                       <div style={{ fontWeight: 600 }}>{opt.title || opt.name}</div>
                       <div className={styles.faint}>{opt.name} Tier</div>
                     </td>
-                    <td className={styles.mono} style={{ color: "#34d399", fontWeight: 700 }}>
+                    <td className={`${styles.right} ${styles.mono}`} style={{ color: "#34d399", fontWeight: 700 }}>
                       {usd(opt.issuanceFee)}
                     </td>
-                    <td className={styles.mono}>
+                    <td className={`${styles.right} ${styles.mono}`}>
                       {opt.depositTotalMinimum ? usd(opt.depositTotalMinimum) : "No minimum"}
                     </td>
                     <td>
@@ -260,7 +261,7 @@ export default function CardsSection({
                         {opt.enabled ? "Active" : "Disabled"}
                       </span>
                     </td>
-                    <td style={{ textAlign: "right" }}>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         <button
                           type="button"
@@ -286,6 +287,76 @@ export default function CardsSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 2 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.skeletonCell} style={{ width: 140 }} />
+                <div className={styles.skeletonCell} style={{ width: 80 }} />
+              </li>
+            ))
+          ) : cardOptions.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "24px 16px", color: "var(--a-muted)" }}>
+              <div>No card options defined.</div>
+            </li>
+          ) : (
+            cardOptions.map((opt) => (
+              <li key={opt.id || opt.name} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: "14px" }}>{opt.title || opt.name}</div>
+                    <div className={styles.faint} style={{ fontSize: "11.5px" }}>{opt.name} Tier</div>
+                  </div>
+                  <span className={`${styles.pill} ${opt.enabled ? styles.pillGreen : styles.pillRed}`}>
+                    {opt.enabled ? "Active" : "Disabled"}
+                  </span>
+                </div>
+
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Issuance Fee</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(opt.issuanceFee)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Min. Deposit</span>
+                    <span className={styles.itemMetaValue}>{opt.depositTotalMinimum ? usd(opt.depositTotalMinimum) : "None"}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>KYC Rule</span>
+                    <span className={styles.itemMetaValue}>{opt.kycRequired ? "Required" : "Optional"}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Tier Status</span>
+                    <span className={styles.itemMetaValue}>{opt.enabled ? "Enabled" : "Disabled"}</span>
+                  </div>
+                </div>
+
+                <div className={styles.itemBottom}>
+                  <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className={styles.btnGhostSm}
+                      onClick={() => setEditOption({ ...opt })}
+                      style={{ height: "32px", fontSize: "12px" }}
+                    >
+                      <Edit2 size={13} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnDangerSm}
+                      onClick={() => handleDeleteOption(opt.id, opt.title || opt.name)}
+                      style={{ height: "32px", width: "32px", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
 
       {/* Edit / Add Modal */}

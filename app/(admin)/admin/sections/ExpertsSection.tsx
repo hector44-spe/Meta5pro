@@ -290,35 +290,36 @@ export default function ExpertsSection({
           </div>
         </div>
 
+        {/* Desktop View (>= 768px) */}
         <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
-          <table className={styles.table} style={{ minWidth: "780px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "850px" }}>
             <thead>
               <tr>
-                <th style={{ width: "180px" }}>User</th>
-                <th className={styles.right} style={{ width: "110px" }}>Main Balance</th>
-                <th style={{ width: "130px" }}>Copied Expert</th>
-                <th className={styles.right} style={{ width: "100px" }}>Min. Startup</th>
-                <th className={styles.right} style={{ width: "90px" }}>Profit Share</th>
-                <th style={{ width: "80px" }}>Status</th>
-                <th style={{ width: "90px", textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "180px" }}>User</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Main Balance</th>
+                <th style={{ minWidth: "140px" }}>Copied Expert</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Min. Startup</th>
+                <th className={styles.right} style={{ minWidth: "95px" }}>Profit Share</th>
+                <th style={{ minWidth: "90px" }}>Status</th>
+                <th style={{ minWidth: "110px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ width: "180px" }}>
+                    <td style={{ minWidth: "180px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 120 }} />
                         <div className={styles.skeletonCell} style={{ width: 80 }} />
                       </div>
                     </td>
-                    <td className={styles.right} style={{ width: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
-                    <td style={{ width: "130px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
-                    <td className={styles.right} style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 40, marginLeft: "auto" }} /></td>
-                    <td style={{ width: "80px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ width: "90px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 40, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ minWidth: "110px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredCopiers.length === 0 ? (
@@ -338,9 +339,9 @@ export default function ExpertsSection({
                         <div className={styles.userAvatar}>
                           {(copier.userEmail[0] || "U").toUpperCase()}
                         </div>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{copier.userFullName}</div>
-                          <div className={styles.faint}>{copier.userEmail}</div>
+                        <div style={{ minWidth: 0, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{copier.userFullName}</div>
+                          <div className={styles.faint} style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{copier.userEmail}</div>
                         </div>
                       </div>
                     </td>
@@ -363,7 +364,7 @@ export default function ExpertsSection({
                     <td>
                       <span className={`${styles.pill} ${styles.pillGreen}`}>Active Copy</span>
                     </td>
-                    <td style={{ textAlign: "right" }}>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                       <button
                         type="button"
                         className={styles.btnDangerSm}
@@ -379,6 +380,71 @@ export default function ExpertsSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.skeletonCell} style={{ width: 130 }} />
+                  <div className={styles.skeletonCell} style={{ width: 60 }} />
+                </div>
+                <div className={styles.skeletonCell} style={{ width: "100%", height: 50 }} />
+              </li>
+            ))
+          ) : filteredCopiers.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "36px 16px", color: "var(--a-muted)" }}>
+              <Users size={24} style={{ opacity: 0.35, margin: "0 auto 8px" }} />
+              <div>No users currently copying any experts.</div>
+            </li>
+          ) : (
+            filteredCopiers.map((copier) => (
+              <li key={copier.id} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.userCell}>
+                    <div className={styles.userAvatar}>{(copier.userEmail[0] || "U").toUpperCase()}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{copier.userFullName}</div>
+                      <div className={styles.faint} style={{ fontSize: "11.5px" }}>{copier.userEmail}</div>
+                    </div>
+                  </div>
+                  <span className={`${styles.pill} ${styles.pillGreen}`}>Active</span>
+                </div>
+
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Copied Expert</span>
+                    <span className={styles.itemMetaValue}>{copier.expertName}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>User Balance</span>
+                    <span className={styles.itemMetaValue}>{usd(copier.userBalance)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Min. Startup</span>
+                    <span className={styles.itemMetaValue}>{usd(copier.minimumStartUp)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Profit Share</span>
+                    <span className={styles.itemMetaValue}>{copier.profitShare}%</span>
+                  </div>
+                </div>
+
+                <div className={styles.itemBottom}>
+                  <button
+                    type="button"
+                    className={styles.btnDangerSm}
+                    onClick={() => handleRemoveCopier(copier.expertId, copier.userId, copier.userEmail)}
+                    style={{ marginLeft: "auto", height: "32px", padding: "0 12px" }}
+                  >
+                    <UserX size={13} /> Remove Copier
+                  </button>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
       )}
 
@@ -386,48 +452,52 @@ export default function ExpertsSection({
       {activeTab === "catalog" && (
       <section className={styles.card}>
         <div className={styles.cardHead}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <h2>Experts Catalog</h2>
-            <span className={styles.countChip}>{experts.length}</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px", width: "100%", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <h2>Experts Catalog</h2>
+              <span className={styles.countChip}>{experts.length}</span>
+            </div>
+            <button
+              type="button"
+              className={styles.btnPrimarySm}
+              style={{ height: "38px" }}
+              onClick={() =>
+                setEditModal({
+                  name: "",
+                  username: "",
+                  bio: "",
+                  winRate: 85,
+                  profitShare: 15,
+                  minimumStartUp: 1000,
+                  followers: 1000,
+                  tickType: "gold",
+                })
+              }
+            >
+              <Plus size={15} /> Add Expert
+            </button>
           </div>
-          <button
-            type="button"
-            className={styles.btnPrimarySm}
-            onClick={() =>
-              setEditModal({
-                name: "",
-                username: "",
-                bio: "",
-                winRate: 85,
-                profitShare: 15,
-                minimumStartUp: 1000,
-                followers: 1000,
-                tickType: "gold",
-              })
-            }
-          >
-            <Plus size={15} /> Add Expert
-          </button>
         </div>
 
+        {/* Desktop View (>= 768px) */}
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "720px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "820px" }}>
             <thead>
               <tr>
-                <th style={{ width: "180px" }}>Expert</th>
-                <th style={{ width: "80px" }}>Win Rate</th>
-                <th style={{ width: "90px" }}>Profit Share</th>
-                <th className={styles.right} style={{ width: "100px" }}>Min. Startup</th>
-                <th style={{ width: "85px" }}>Followers</th>
-                <th style={{ width: "75px" }}>Badge</th>
-                <th style={{ width: "110px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "180px" }}>Expert</th>
+                <th style={{ minWidth: "90px" }}>Win Rate</th>
+                <th style={{ minWidth: "95px" }}>Profit Share</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Min. Startup</th>
+                <th style={{ minWidth: "95px" }}>Followers</th>
+                <th style={{ minWidth: "80px" }}>Badge</th>
+                <th style={{ minWidth: "130px", width: "130px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ width: "180px" }}>
+                    <td style={{ minWidth: "180px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div className={styles.skeletonCell} style={{ width: 32, height: 32, borderRadius: "50%" }} />
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -436,12 +506,12 @@ export default function ExpertsSection({
                         </div>
                       </div>
                     </td>
-                    <td style={{ width: "80px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
-                    <td style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
-                    <td className={styles.right} style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
-                    <td style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td style={{ width: "75px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td style={{ width: "110px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
+                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
+                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td style={{ minWidth: "80px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : experts.length === 0 ? (
@@ -473,7 +543,7 @@ export default function ExpertsSection({
                     {exp.winRate}%
                   </td>
                   <td className={styles.mono}>{exp.profitShare}%</td>
-                  <td className={styles.mono}>{usd(exp.minimumStartUp)}</td>
+                  <td className={`${styles.right} ${styles.mono}`}>{usd(exp.minimumStartUp)}</td>
                   <td>{Number(exp.followers || 0).toLocaleString()}</td>
                   <td>
                     <span className={`${styles.pill} ${exp.tickType === "gold" ? styles.pillAmber : styles.pillBlue}`}>
@@ -505,6 +575,88 @@ export default function ExpertsSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.skeletonCell} style={{ width: 140 }} />
+                  <div className={styles.skeletonCell} style={{ width: 50 }} />
+                </div>
+                <div className={styles.skeletonCell} style={{ width: "100%", height: 50 }} />
+              </li>
+            ))
+          ) : experts.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "36px 16px", color: "var(--a-muted)" }}>
+              <Award size={24} style={{ opacity: 0.35, margin: "0 auto 8px" }} />
+              <div>No experts in catalog. Click Add Expert to create one.</div>
+            </li>
+          ) : (
+            experts.map((exp) => (
+              <li key={exp.id || exp.ref} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={exp.picture || "/assets/copy-trading/albania_support.png"}
+                      alt={exp.name}
+                      style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }}
+                    />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{exp.name}</div>
+                      <div className={styles.faint} style={{ fontSize: "11.5px" }}>@{exp.username || "expert"}</div>
+                    </div>
+                  </div>
+                  <span className={`${styles.pill} ${exp.tickType === "gold" ? styles.pillAmber : styles.pillBlue}`}>
+                    {exp.tickType || "none"}
+                  </span>
+                </div>
+
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Win Rate</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{exp.winRate}%</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Profit Share</span>
+                    <span className={styles.itemMetaValue}>{exp.profitShare}%</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Min. Startup</span>
+                    <span className={styles.itemMetaValue}>{usd(exp.minimumStartUp)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Followers</span>
+                    <span className={styles.itemMetaValue}>{Number(exp.followers || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div className={styles.itemBottom}>
+                  <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className={styles.btnGhostSm}
+                      onClick={() => setEditModal({ ...exp })}
+                      style={{ height: "32px", padding: "0 12px", fontSize: "12px" }}
+                    >
+                      <Edit2 size={13} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnDangerSm}
+                      onClick={() => handleDeleteExpert(exp.id, exp.name)}
+                      style={{ height: "32px", width: "32px", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
       )}
 

@@ -259,37 +259,41 @@ export default function SubscriptionsSection({
           </div>
         </div>
 
+        {/* Desktop View (>= 768px) */}
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "980px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "980px" }}>
             <thead>
               <tr>
-                <th style={{ width: "200px" }}>User</th>
-                <th style={{ width: "150px" }}>Subscribed Plan</th>
-                <th className={styles.right} style={{ width: "135px" }}>Amount Subscribed</th>
-                <th className={styles.right} style={{ width: "120px" }}>Accrued Profit</th>
-                <th className={styles.right} style={{ width: "110px" }}>Days Left</th>
-                <th style={{ width: "95px" }}>Status</th>
-                <th style={{ width: "120px" }}>Date</th>
-                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "190px" }}>User</th>
+                <th style={{ minWidth: "140px" }}>Subscribed Plan</th>
+                <th className={styles.right} style={{ minWidth: "125px" }}>Amount Subscribed</th>
+                <th className={styles.right} style={{ minWidth: "115px" }}>Accrued Profit</th>
+                <th className={styles.right} style={{ minWidth: "105px" }}>Days Left</th>
+                <th style={{ minWidth: "90px" }}>Status</th>
+                <th style={{ minWidth: "125px" }}>Date</th>
+                <th style={{ minWidth: "140px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ minWidth: "200px" }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 130 }} />
-                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div className={styles.skeletonCell} style={{ width: 34, height: 34, borderRadius: "50%" }} />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div className={styles.skeletonCell} style={{ width: 120 }} />
+                          <div className={styles.skeletonCell} style={{ width: 80 }} />
+                        </div>
                       </div>
                     </td>
-                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 95 }} /></td>
-                    <td className={styles.right} style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "115px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td style={{ minWidth: "120px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 95 }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredInvestments.length === 0 ? (
@@ -307,9 +311,9 @@ export default function SubscriptionsSection({
                     <td>
                       <div className={styles.userCell}>
                         <div className={styles.userAvatar}>{(inv.userEmail[0] || "U").toUpperCase()}</div>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{inv.userFullName}</div>
-                          <div className={styles.faint}>{inv.userEmail}</div>
+                        <div style={{ minWidth: 0, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{inv.userFullName}</div>
+                          <div className={styles.faint} style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{inv.userEmail}</div>
                         </div>
                       </div>
                     </td>
@@ -334,7 +338,7 @@ export default function SubscriptionsSection({
                     <td className={styles.faint} style={{ fontSize: "12px" }}>
                       {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td style={{ textAlign: "right" }}>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         <button
                           type="button"
@@ -352,6 +356,78 @@ export default function SubscriptionsSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.skeletonCell} style={{ width: 130 }} />
+                  <div className={styles.skeletonCell} style={{ width: 60 }} />
+                </div>
+                <div className={styles.skeletonCell} style={{ width: "100%", height: 50 }} />
+              </li>
+            ))
+          ) : filteredInvestments.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "36px 16px", color: "var(--a-muted)" }}>
+              <Sparkles size={24} style={{ opacity: 0.35, margin: "0 auto 8px" }} />
+              <div>No subscriptions found matching criteria.</div>
+            </li>
+          ) : (
+            filteredInvestments.map((inv) => (
+              <li key={inv.id} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.userCell}>
+                    <div className={styles.userAvatar}>{(inv.userEmail[0] || "U").toUpperCase()}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{inv.userFullName}</div>
+                      <div className={styles.faint} style={{ fontSize: "11.5px" }}>{inv.userEmail}</div>
+                    </div>
+                  </div>
+                  <span className={`${styles.pill} ${inv.status === "RUNNING" ? styles.pillGreen : styles.pillAmber}`}>
+                    {inv.status}
+                  </span>
+                </div>
+
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Plan</span>
+                    <span className={styles.itemMetaValue}>{inv.planName}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Invested</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(inv.amount)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Accrued Profit</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>+{usd(inv.accruedProfit)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Days Remaining</span>
+                    <span className={styles.itemMetaValue}>{inv.daysRemaining} days</span>
+                  </div>
+                </div>
+
+                <div className={styles.itemBottom}>
+                  <span className={styles.faint} style={{ fontSize: "11.5px" }}>
+                    {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <div style={{ marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className={styles.btnGhostSm}
+                      onClick={() => handleUpdateStatus(inv.id, inv.status === "RUNNING" ? "COMPLETED" : "RUNNING")}
+                      style={{ height: "32px", fontSize: "12px" }}
+                    >
+                      {inv.status === "RUNNING" ? "Mark Complete" : "Resume"}
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
 
       {/* Available Plans */}

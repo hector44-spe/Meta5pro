@@ -245,18 +245,19 @@ export default function SignalsSection({
           </div>
         </div>
 
+        {/* Desktop View (>= 768px) */}
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "980px" }}>
             <thead>
               <tr>
-                <th style={{ width: "220px" }}>User</th>
-                <th style={{ width: "150px" }}>Signal Purchased</th>
-                <th style={{ width: "110px" }}>Strength</th>
-                <th className={styles.right} style={{ width: "120px" }}>Amount Paid</th>
-                <th style={{ width: "110px" }}>Reference</th>
-                <th style={{ width: "130px" }}>Purchase Date</th>
-                <th style={{ width: "95px" }}>Status</th>
-                <th style={{ width: "125px", textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "190px" }}>User</th>
+                <th style={{ minWidth: "140px" }}>Signal Purchased</th>
+                <th style={{ minWidth: "110px" }}>Strength</th>
+                <th className={styles.right} style={{ minWidth: "115px" }}>Amount Paid</th>
+                <th style={{ minWidth: "110px" }}>Reference</th>
+                <th style={{ minWidth: "125px" }}>Purchase Date</th>
+                <th style={{ minWidth: "90px" }}>Status</th>
+                <th style={{ minWidth: "150px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -264,9 +265,12 @@ export default function SignalsSection({
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
                     <td>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 130 }} />
-                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div className={styles.skeletonCell} style={{ width: 34, height: 34, borderRadius: "50%" }} />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div className={styles.skeletonCell} style={{ width: 110 }} />
+                          <div className={styles.skeletonCell} style={{ width: 80 }} />
+                        </div>
                       </div>
                     </td>
                     <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
@@ -275,7 +279,7 @@ export default function SignalsSection({
                     <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredPurchases.length === 0 ? (
@@ -293,9 +297,9 @@ export default function SignalsSection({
                     <td>
                       <div className={styles.userCell}>
                         <div className={styles.userAvatar}>{(p.userEmail[0] || "U").toUpperCase()}</div>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{p.userFullName}</div>
-                          <div className={styles.faint}>{p.userEmail}</div>
+                        <div style={{ minWidth: 0, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.userFullName}</div>
+                          <div className={styles.faint} style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.userEmail}</div>
                         </div>
                       </div>
                     </td>
@@ -308,7 +312,7 @@ export default function SignalsSection({
                         <span className={styles.mono} style={{ fontSize: "12px" }}>{p.strength}%</span>
                       </div>
                     </td>
-                    <td className={styles.mono} style={{ fontWeight: 700, color: "#34d399" }}>
+                    <td className={`${styles.right} ${styles.mono}`} style={{ fontWeight: 700, color: "#34d399" }}>
                       {usd(p.amount)}
                     </td>
                     <td className={styles.mono} style={{ fontSize: "12px" }}>{p.ref}</td>
@@ -320,7 +324,7 @@ export default function SignalsSection({
                         {p.status}
                       </span>
                     </td>
-                    <td style={{ textAlign: "right" }}>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         <button
                           type="button"
@@ -346,6 +350,86 @@ export default function SignalsSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.skeletonCell} style={{ width: 140 }} />
+                  <div className={styles.skeletonCell} style={{ width: 60 }} />
+                </div>
+                <div className={styles.skeletonCell} style={{ width: "100%", height: 50 }} />
+              </li>
+            ))
+          ) : filteredPurchases.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "36px 16px", color: "var(--a-muted)" }}>
+              <Radio size={24} style={{ opacity: 0.35, margin: "0 auto 8px" }} />
+              <div>No signal purchases recorded yet.</div>
+            </li>
+          ) : (
+            filteredPurchases.map((p) => (
+              <li key={p.id} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.userCell}>
+                    <div className={styles.userAvatar}>{(p.userEmail[0] || "U").toUpperCase()}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{p.userFullName}</div>
+                      <div className={styles.faint} style={{ fontSize: "11.5px" }}>{p.userEmail}</div>
+                    </div>
+                  </div>
+                  <span className={`${styles.pill} ${p.status === "active" ? styles.pillGreen : styles.pillAmber}`}>
+                    {p.status}
+                  </span>
+                </div>
+
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Signal Tier</span>
+                    <span className={styles.itemMetaValue}>{p.signalTitle}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Amount Paid</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(p.amount)}</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Confidence</span>
+                    <span className={styles.itemMetaValue}>{p.strength}% Strength</span>
+                  </div>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Reference</span>
+                    <span className={styles.itemMetaValue} style={{ fontFamily: "monospace" }}>{p.ref}</span>
+                  </div>
+                </div>
+
+                <div className={styles.itemBottom}>
+                  <span className={styles.faint} style={{ fontSize: "11.5px" }}>
+                    {new Date(p.date).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className={styles.btnGhostSm}
+                      onClick={() => handleUpdateStatus(p.userId, p.ref, p.status === "active" ? "completed" : "active")}
+                      style={{ height: "32px", fontSize: "12px" }}
+                    >
+                      {p.status === "active" ? "Complete" : "Activate"}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnDangerSm}
+                      onClick={() => handleDeletePurchase(p.userId, p.ref)}
+                      style={{ height: "32px", width: "32px", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
 
       {/* Available Signal Packages */}
@@ -371,13 +455,13 @@ export default function SignalsSection({
         </div>
 
         <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
-          <table className={styles.table} style={{ minWidth: "680px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "640px" }}>
             <thead>
               <tr>
-                <th style={{ width: "220px" }}>Signal Name</th>
-                <th className={styles.right} style={{ width: "130px" }}>Price</th>
-                <th style={{ width: "180px" }}>Accuracy / Strength</th>
-                <th style={{ width: "120px", textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "180px" }}>Signal Name</th>
+                <th className={styles.right} style={{ minWidth: "110px" }}>Price</th>
+                <th style={{ minWidth: "160px" }}>Accuracy / Strength</th>
+                <th style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -386,8 +470,8 @@ export default function SignalsSection({
                   <tr key={i}>
                     <td style={{ minWidth: "160px" }}><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
                     <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
-                    <td style={{ minWidth: "100px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "160px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
+                    <td style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : signals.length === 0 ? (
@@ -413,7 +497,7 @@ export default function SignalsSection({
                       <span className={styles.mono}>{sig.strength}%</span>
                     </div>
                   </td>
-                  <td style={{ textAlign: "right" }}>
+                  <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                     <div style={{ display: "inline-flex", gap: "6px" }}>
                       <button
                         type="button"
@@ -438,6 +522,60 @@ export default function SignalsSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 2 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.skeletonCell} style={{ width: 140 }} />
+                <div className={styles.skeletonCell} style={{ width: 80 }} />
+              </li>
+            ))
+          ) : signals.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "24px 16px", color: "var(--a-muted)" }}>
+              <div>No signal packages configured.</div>
+            </li>
+          ) : (
+            signals.map((sig) => (
+              <li key={sig.id} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <span style={{ fontWeight: 700, fontSize: "14px" }}>{sig.title || sig.name}</span>
+                  <span style={{ fontWeight: 700, color: "#34d399", fontSize: "14px" }} className={styles.mono}>
+                    {usd(sig.price)}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(0,0,0,0.2)", padding: "8px 12px", borderRadius: 8 }}>
+                  <span style={{ fontSize: "12px", color: "var(--a-muted)" }}>Accuracy / Strength:</span>
+                  <div style={{ flex: 1, height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
+                    <div style={{ width: `${sig.strength}%`, height: "100%", background: "#4763f0" }} />
+                  </div>
+                  <span className={styles.mono} style={{ fontSize: "12px", fontWeight: 600 }}>{sig.strength}%</span>
+                </div>
+                <div className={styles.itemBottom}>
+                  <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className={styles.btnGhostSm}
+                      onClick={() => setEditSignal({ ...sig })}
+                      style={{ height: "32px", fontSize: "12px" }}
+                    >
+                      <Edit2 size={13} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnDangerSm}
+                      onClick={() => handleDeleteSignal(sig.id, sig.title || sig.name)}
+                      style={{ height: "32px", width: "32px", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
 
       {/* Edit / Add Signal Package Modal */}

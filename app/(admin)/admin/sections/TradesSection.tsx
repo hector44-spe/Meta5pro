@@ -323,33 +323,15 @@ export default function TradesSection({
       {/* Trades Table */}
       <section className={styles.card}>
         <div className={styles.cardHead}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <h2>Trades & Orders</h2>
-            <span className={styles.countChip}>{trades.length}</span>
-          </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
-            <div className={styles.searchBox} style={{ width: "220px", maxWidth: "260px" }}>
-              <Search size={15} />
-              <input
-                type="search"
-                placeholder="Filter user or symbol..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", width: "100%", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <h2>Trades & Orders</h2>
+              <span className={styles.countChip}>{trades.length}</span>
             </div>
-            <select
-              className={styles.select}
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value as any)}
-            >
-              <option value="ALL">All Status</option>
-              <option value="OPEN">Open Only</option>
-              <option value="CLOSED">Closed Only</option>
-            </select>
             <button
               type="button"
               className={styles.btnPrimarySm}
-              style={{ height: "40px" }}
+              style={{ height: "38px" }}
               onClick={() =>
                 setEditTrade({
                   userId: users[0]?.id || "",
@@ -366,43 +348,68 @@ export default function TradesSection({
               <Plus size={15} /> Add Trade
             </button>
           </div>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", width: "100%" }}>
+            <div className={styles.searchBox} style={{ flex: "1 1 200px" }}>
+              <Search size={15} />
+              <input
+                type="search"
+                placeholder="Filter user or symbol..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <select
+              className={styles.select}
+              style={{ flex: "0 0 auto", minWidth: "140px" }}
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as any)}
+            >
+              <option value="ALL">All Status</option>
+              <option value="OPEN">Open Only</option>
+              <option value="CLOSED">Closed Only</option>
+            </select>
+          </div>
         </div>
 
+        {/* Desktop / Tablet Table View (>= 768px) */}
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "870px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "1050px" }}>
             <thead>
               <tr>
-                <th style={{ width: "140px" }}>User</th>
-                <th style={{ width: "85px" }}>Symbol</th>
-                <th style={{ width: "65px" }}>Type</th>
-                <th className={styles.right} style={{ width: "95px" }}>Invested Amount</th>
-                <th className={styles.right} style={{ width: "90px" }}>Entry Price</th>
-                <th className={styles.right} style={{ width: "50px" }}>Lev.</th>
-                <th className={styles.right} style={{ width: "85px" }}>PnL</th>
-                <th style={{ width: "75px" }}>Status</th>
-                <th style={{ width: "90px" }}>Date</th>
-                <th style={{ width: "95px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ width: "170px", minWidth: "170px" }}>User</th>
+                <th style={{ width: "100px", minWidth: "100px" }}>Symbol</th>
+                <th style={{ width: "75px", minWidth: "75px" }}>Type</th>
+                <th className={styles.right} style={{ width: "125px", minWidth: "125px" }}>Invested Amount</th>
+                <th className={styles.right} style={{ width: "110px", minWidth: "110px" }}>Entry Price</th>
+                <th className={styles.right} style={{ width: "65px", minWidth: "65px" }}>Lev.</th>
+                <th className={styles.right} style={{ width: "110px", minWidth: "110px" }}>PnL</th>
+                <th style={{ width: "85px", minWidth: "85px" }}>Status</th>
+                <th style={{ width: "130px", minWidth: "130px" }}>Date</th>
+                <th style={{ width: "165px", minWidth: "165px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ width: "140px" }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 100 }} />
-                        <div className={styles.skeletonCell} style={{ width: 70 }} />
+                    <td style={{ width: "170px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <div className={styles.skeletonCell} style={{ width: 34, height: 34, borderRadius: "50%" }} />
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          <div className={styles.skeletonCell} style={{ width: 90 }} />
+                          <div className={styles.skeletonCell} style={{ width: 60 }} />
+                        </div>
                       </div>
                     </td>
-                    <td style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td style={{ width: "65px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
-                    <td className={styles.right} style={{ width: "95px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ width: "50px" }}><div className={styles.skeletonCell} style={{ width: 30, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 50, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
                     <td style={{ width: "75px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ width: "95px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "125px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "65px" }}><div className={styles.skeletonCell} style={{ width: 35, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "110px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td style={{ width: "130px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td style={{ width: "165px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 85, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredTrades.length === 0 ? (
@@ -420,9 +427,13 @@ export default function TradesSection({
                     <td>
                       <div className={styles.userCell}>
                         <div className={styles.userAvatar}>{(t.userEmail?.[0] || "U").toUpperCase()}</div>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{t.userFullName || t.username || "Investor"}</div>
-                          <div className={styles.faint}>{t.userEmail}</div>
+                        <div style={{ minWidth: 0, overflow: "hidden" }}>
+                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {t.userFullName || t.username || "Investor"}
+                          </div>
+                          <div className={styles.faint} style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {t.userEmail}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -521,6 +532,134 @@ export default function TradesSection({
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Phone Card List (< 768px) */}
+        <ul className={styles.cardList}>
+          {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <li key={i} className={styles.itemCard}>
+                <div className={styles.itemTop}>
+                  <div className={styles.skeletonCell} style={{ width: 140 }} />
+                  <div className={styles.skeletonCell} style={{ width: 60 }} />
+                </div>
+                <div className={styles.skeletonCell} style={{ width: "100%", height: 60 }} />
+                <div className={styles.itemBottom}>
+                  <div className={styles.skeletonCell} style={{ width: 80 }} />
+                  <div className={styles.skeletonCell} style={{ width: 100 }} />
+                </div>
+              </li>
+            ))
+          ) : filteredTrades.length === 0 ? (
+            <li className={styles.itemCard} style={{ textAlign: "center", padding: "36px 16px", color: "var(--a-muted)" }}>
+              <TrendingUp size={24} style={{ opacity: 0.35, margin: "0 auto 8px" }} />
+              <div>No trades found matching criteria.</div>
+            </li>
+          ) : (
+            filteredTrades.map((t) => (
+              <li key={t.id} className={styles.itemCard}>
+                {/* Card Top: User and Status */}
+                <div className={styles.itemTop}>
+                  <div className={styles.userCell}>
+                    <div className={styles.userAvatar}>{(t.userEmail?.[0] || "U").toUpperCase()}</div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{t.userFullName || t.username || "Investor"}</div>
+                      <div className={styles.faint} style={{ fontSize: "11.5px" }}>{t.userEmail}</div>
+                    </div>
+                  </div>
+                  <span className={`${styles.pill} ${t.status === "OPEN" ? styles.pillGreen : styles.pillAmber}`}>
+                    {t.status}
+                  </span>
+                </div>
+
+                {/* Card Body: 2x2 Financial Metrics */}
+                <div className={styles.itemMetaGrid}>
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Symbol / Type</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                      <b style={{ fontSize: "13px" }}>{t.symbol}</b>
+                      <span className={`${styles.pill} ${t.type === "BUY" ? styles.pillGreen : styles.pillRed}`} style={{ fontSize: "10px", padding: "1px 6px" }}>
+                        {t.type}
+                      </span>
+                      {t.duration && (
+                        <span style={{ fontSize: "10px", color: "var(--a-muted)", padding: "1px 4px", borderRadius: 4, background: "rgba(255,255,255,0.06)" }}>
+                          {t.duration}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Invested (Lev)</span>
+                    <span className={styles.itemMetaValue}>
+                      {usd(t.amount)} <small style={{ color: "var(--a-muted)", fontWeight: 500 }}>({t.leverage}x)</small>
+                    </span>
+                  </div>
+
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Entry Price</span>
+                    <span className={styles.itemMetaValue}>{usd(t.entryPrice)}</span>
+                  </div>
+
+                  <div className={styles.itemMetaCol}>
+                    <span className={styles.itemMetaLabel}>Profit / Loss</span>
+                    <span className={styles.itemMetaValue} style={{ color: t.pnl >= 0 ? "#34d399" : "#ff7a87" }}>
+                      {t.pnl >= 0 ? `+${usd(t.pnl)}` : `-${usd(Math.abs(t.pnl))}`}
+                      {t.isCustomPnl && (
+                        <span style={{ display: "inline-block", marginLeft: 4, fontSize: "9px", color: "#c4b5fd", verticalAlign: "middle" }}>
+                          (custom)
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Card Bottom: Date and Action Buttons */}
+                <div className={styles.itemBottom} style={{ flexWrap: "wrap", gap: 8 }}>
+                  <span className={styles.faint} style={{ fontSize: "11.5px" }}>
+                    {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <div style={{ display: "flex", gap: "6px", alignItems: "center", marginLeft: "auto" }}>
+                    {t.status === "OPEN" && (
+                      <button
+                        type="button"
+                        onClick={() => handleDirectClose(t)}
+                        disabled={submitting}
+                        style={{
+                          padding: "6px 10px",
+                          fontSize: "12px",
+                          fontWeight: 600,
+                          background: "rgba(239, 68, 68, 0.15)",
+                          color: "#f87171",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Close
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.btnGhostSm}
+                      onClick={() => setEditTrade({ ...t })}
+                      style={{ height: "32px", padding: "0 10px", fontSize: "12px" }}
+                    >
+                      <Edit2 size={13} /> Edit
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.btnDangerSm}
+                      onClick={() => handleDeleteTrade(t.id)}
+                      style={{ height: "32px", width: "32px", padding: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))
+          )}
+        </ul>
       </section>
 
       {/* Edit / Add Trade Modal */}
