@@ -2015,7 +2015,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Duration */}
-          <div>
+          <div style={{ position: "relative" }}>
             <label
               style={{
                 fontSize: "12px",
@@ -2028,6 +2028,11 @@ export default function DashboardPage() {
               Duration:
             </label>
             <div
+              onClick={() => {
+                setIsDurationDropdownOpen(!isDurationDropdownOpen);
+                setIsTradeTypeDropdownOpen(false);
+                setIsAssetDropdownOpen(false);
+              }}
               style={{
                 width: "100%",
                 padding: "10px 12px",
@@ -2041,11 +2046,63 @@ export default function DashboardPage() {
                 fontSize: "13.5px",
                 fontWeight: 600,
                 boxSizing: "border-box",
+                cursor: "pointer",
               }}
             >
               <span>{duration}</span>
-              <ChevronDown size={15} color="rgba(255, 255, 255, 0.5)" />
+              <ChevronDown
+                size={15}
+                color="rgba(255, 255, 255, 0.5)"
+                style={{
+                  transform: isDurationDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.15s",
+                }}
+              />
             </div>
+
+            {isDurationDropdownOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 4px)",
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#16181d",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "8px",
+                  zIndex: 40,
+                  maxHeight: "220px",
+                  overflowY: "auto",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                }}
+              >
+                {DURATION_OPTIONS.map((d) => (
+                  <div
+                    key={d}
+                    onClick={() => {
+                      setDuration(d);
+                      setIsDurationDropdownOpen(false);
+                    }}
+                    style={{
+                      padding: "9px 14px",
+                      color: duration === d ? "#4763f0" : "#fff",
+                      fontSize: "13px",
+                      fontWeight: duration === d ? 700 : 500,
+                      cursor: "pointer",
+                      backgroundColor: duration === d ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (duration !== d) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (duration !== d) e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    {d}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Buy / CTA Button */}
@@ -2236,6 +2293,7 @@ export default function DashboardPage() {
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size (Margin)</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Duration</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry price</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Mark price</th>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Unrealized PnL</th>
@@ -2245,11 +2303,26 @@ export default function DashboardPage() {
                           <tbody>
                             {openPositions.map((p) => {
                               const liveMark = livePrices[p.symbol] || p.entryPrice;
-                              const curPnl = p.type === "BUY"
-                                ? ((liveMark - p.entryPrice) / p.entryPrice) * p.amount
-                                : ((p.entryPrice - liveMark) / p.entryPrice) * p.amount;
+                              const curPnl =
+                                p.isCustomPnl && typeof p.customPnl === "number"
+                                  ? p.customPnl
+                                  : p.type === "BUY"
+                                  ? ((liveMark - p.entryPrice) / p.entryPrice) * p.amount
+                                  : ((p.entryPrice - liveMark) / p.entryPrice) * p.amount;
                               const roe = p.margin > 0 ? (curPnl / p.margin) * 100 : 0;
                               const isProfit = curPnl >= 0;
+
+                              let timeLeftStr = "";
+                              if (p.closeAt) {
+                                const diffSec = Math.max(0, Math.floor((new Date(p.closeAt).getTime() - now) / 1000));
+                                if (diffSec <= 0) {
+                                  timeLeftStr = "Expiring...";
+                                } else {
+                                  const m = Math.floor(diffSec / 60);
+                                  const s = diffSec % 60;
+                                  timeLeftStr = `${m}:${s < 10 ? "0" : ""}${s}`;
+                                }
+                              }
 
                               return (
                                 <tr key={p.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
@@ -2279,6 +2352,31 @@ export default function DashboardPage() {
                                       Margin: ${Number(p.margin).toFixed(2)}
                                     </span>
                                   </td>
+                                  <td style={{ padding: "12px 14px", color: "#fff" }}>
+                                    <div style={{ fontSize: "12px", fontWeight: 500 }}>{p.duration || "—"}</div>
+                                    {timeLeftStr && (
+                                      <span
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          fontSize: "10.5px",
+                                          padding: "2px 6px",
+                                          borderRadius: "4px",
+                                          backgroundColor:
+                                            timeLeftStr === "Expiring..."
+                                              ? "rgba(239, 68, 68, 0.2)"
+                                              : "rgba(71, 99, 240, 0.15)",
+                                          color: timeLeftStr === "Expiring..." ? "#f87171" : "#7189ff",
+                                          fontWeight: 600,
+                                          marginTop: "3px",
+                                        }}
+                                      >
+                                        <Clock size={10} />
+                                        {timeLeftStr}
+                                      </span>
+                                    )}
+                                  </td>
                                   <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace" }}>
                                     ${Number(p.entryPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                   </td>
@@ -2287,6 +2385,18 @@ export default function DashboardPage() {
                                   </td>
                                   <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600 }}>
                                     {isProfit ? "+" : ""}${curPnl.toFixed(2)} ({isProfit ? "+" : ""}{roe.toFixed(2)}%)
+                                    {p.isCustomPnl && (
+                                      <span
+                                        style={{
+                                          display: "block",
+                                          fontSize: "9.5px",
+                                          color: "#c4b5fd",
+                                          fontWeight: 500,
+                                        }}
+                                      >
+                                        (admin adjusted)
+                                      </span>
+                                    )}
                                   </td>
                                   <td style={{ padding: "12px 14px", textAlign: "right" }}>
                                     <button

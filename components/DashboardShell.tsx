@@ -550,8 +550,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <span>Referrals</span>
             </button>
             <Link
-              href="/crypto"
-              className="dashboard-mobile-grid-item"
+              href="/trade"
+              className={`dashboard-mobile-grid-item ${pathname.startsWith("/trade") ? "active" : ""}`}
               onClick={() => setMobileSidebarOpen(false)}
             >
               <TrendingUp size={22} />
@@ -559,7 +559,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             </Link>
             <Link
               href="/markets"
-              className="dashboard-mobile-grid-item"
+              className={`dashboard-mobile-grid-item ${pathname.startsWith("/markets") ? "active" : ""}`}
               onClick={() => setMobileSidebarOpen(false)}
             >
               <CandlestickChart size={22} />
@@ -1112,29 +1112,33 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         alignItems: "center",
                         gap: "10px",
                         padding: "7px 10px",
-                        color: "rgba(255, 255, 255, 0.65)",
+                        color: pathname.startsWith("/markets") ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
+                        backgroundColor: pathname.startsWith("/markets") ? "rgba(255, 255, 255, 0.08)" : "transparent",
                         fontSize: "12.5px",
                         textDecoration: "none",
                         borderRadius: "6px",
+                        fontWeight: pathname.startsWith("/markets") ? 600 : 400,
                       }}
                     >
-                      <History size={15} strokeWidth={1.5} />
+                      <History size={15} strokeWidth={1.5} color={pathname.startsWith("/markets") ? "#4763f0" : "currentColor"} />
                       <span>Markets</span>
                     </Link>
                     <Link
-                      href="/crypto"
+                      href="/trade"
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: "10px",
                         padding: "7px 10px",
-                        color: "rgba(255, 255, 255, 0.65)",
+                        color: pathname.startsWith("/trade") ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
+                        backgroundColor: pathname.startsWith("/trade") ? "rgba(255, 255, 255, 0.08)" : "transparent",
                         fontSize: "12.5px",
                         textDecoration: "none",
                         borderRadius: "6px",
+                        fontWeight: pathname.startsWith("/trade") ? 600 : 400,
                       }}
                     >
-                      <CandlestickChart size={15} strokeWidth={1.5} />
+                      <CandlestickChart size={15} strokeWidth={1.5} color={pathname.startsWith("/trade") ? "#4763f0" : "currentColor"} />
                       <span>Trade</span>
                     </Link>
                   </div>
@@ -1313,7 +1317,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       <span>Stake</span>
                     </>
                   )}
-                  {pathname.startsWith("/crypto") && (
+                  {(pathname.startsWith("/trade") || pathname.startsWith("/crypto")) && (
                     <>
                       <TrendingUp size={16} strokeWidth={2} />
                       <span>Trade</span>

@@ -39,6 +39,7 @@ const CALIBRATED_BASELINES: Record<string, number> = {
   BNB: 640,
   XRP: 1.55,
   ADA: 0.85,
+  AAVE: 165.0,
   DOGE: 0.28,
   USDT: 1.0,
   USDC: 1.0,
@@ -50,6 +51,10 @@ const CALIBRATED_BASELINES: Record<string, number> = {
   LTC: 95.0,
   // Stocks & Equities
   AAPL: 228.0,
+  ABT: 108.51,
+  ADBE: 243.03,
+  ADI: 397.76,
+  AEMD: 5.23,
   TSLA: 340.0,
   NVDA: 145.0,
   MSFT: 420.0,
