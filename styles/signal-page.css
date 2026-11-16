@@ -45,7 +45,14 @@
   }
 }
 
-/* Page Section Top Title */
+/* Page Wrapper & Section Top Title */
+.signal-page-wrapper {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
 .signal-section-top {
   display: flex;
   align-items: center;
@@ -73,8 +80,60 @@
 }
 
 @media screen and (max-width: 768px) {
+  .signal-page-wrapper {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
   .signal-content-card {
-    padding-bottom: 200px;
+    padding: 12px 10px 140px 10px !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .signal_top {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .signal-balance-card {
+    padding: 16px 14px 20px 14px !important;
+    min-height: auto !important;
+  }
+  .signal-info-card {
+    padding: 16px 14px !important;
+    min-height: auto !important;
+    gap: 16px !important;
+  }
+  .signal_bottom {
+    margin-top: 24px !important;
+    gap: 18px !important;
+  }
+  .signals-switcher {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    max-width: 100% !important;
+    scrollbar-width: none !important;
+    padding-bottom: 2px !important;
+  }
+  .signals-switcher::-webkit-scrollbar {
+    display: none !important;
+  }
+  .signals-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    margin-top: 16px !important;
+  }
+  .signal_card {
+    padding: 16px 14px !important;
+  }
+  .signal_card_details {
+    margin-top: 24px !important;
+  }
+  .signal_card_amount {
+    margin-top: 20px !important;
+  }
+  .signal_card_footer {
+    margin-top: 20px !important;
   }
 }
 
