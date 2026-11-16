@@ -2287,29 +2287,33 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                        <table style={{ width: "100%", minWidth: "820px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
                           <thead>
                             <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size (Margin)</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Duration</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry price</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Mark price</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Unrealized PnL</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Action</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Asset</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Side</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Size (Margin)</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Duration</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Entry price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Mark price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Unrealized PnL</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right", whiteSpace: "nowrap" }}>Action</th>
                             </tr>
                           </thead>
                           <tbody>
                             {openPositions.map((p) => {
                               const liveMark = livePrices[p.symbol] || p.entryPrice;
+                              const posAmount = Number(p.amount || 0);
+                              const posLeverage = Number(p.leverage || 1);
+                              const posMargin = Number(p.margin ?? (posAmount / (posLeverage || 1)));
+
                               const curPnl =
                                 p.isCustomPnl && typeof p.customPnl === "number"
                                   ? p.customPnl
                                   : p.type === "BUY"
-                                  ? ((liveMark - p.entryPrice) / p.entryPrice) * p.amount
-                                  : ((p.entryPrice - liveMark) / p.entryPrice) * p.amount;
-                              const roe = p.margin > 0 ? (curPnl / p.margin) * 100 : 0;
+                                  ? ((liveMark - p.entryPrice) / p.entryPrice) * posAmount
+                                  : ((p.entryPrice - liveMark) / p.entryPrice) * posAmount;
+                              const roe = posMargin > 0 ? (curPnl / posMargin) * 100 : 0;
                               const isProfit = curPnl >= 0;
 
                               let timeLeftStr = "";
@@ -2326,13 +2330,13 @@ export default function DashboardPage() {
 
                               return (
                                 <tr key={p.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600 }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                       <AssetBrandIcon symbol={p.symbol} size={20} />
                                       <span>{p.symbol}</span>
                                     </div>
                                   </td>
-                                  <td style={{ padding: "12px 14px" }}>
+                                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                                     <span
                                       style={{
                                         padding: "2px 8px",
@@ -2343,16 +2347,16 @@ export default function DashboardPage() {
                                         color: p.type === "BUY" ? "#01b28b" : "#ea3943",
                                       }}
                                     >
-                                      {p.type} {p.leverage}x
+                                      {p.type} {posLeverage}x
                                     </span>
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff" }}>
-                                    ${Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                  <td style={{ padding: "12px 14px", color: "#fff", whiteSpace: "nowrap" }}>
+                                    ${posAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     <span style={{ color: "rgba(255, 255, 255, 0.4)", fontSize: "11px", display: "block" }}>
-                                      Margin: ${Number(p.margin).toFixed(2)}
+                                      Margin: ${posMargin.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                     </span>
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff" }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", whiteSpace: "nowrap" }}>
                                     <div style={{ fontSize: "12px", fontWeight: 500 }}>{p.duration || "—"}</div>
                                     {timeLeftStr && (
                                       <span
@@ -2377,28 +2381,16 @@ export default function DashboardPage() {
                                       </span>
                                     )}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace" }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace", whiteSpace: "nowrap" }}>
                                     ${Number(p.entryPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace" }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace", whiteSpace: "nowrap" }}>
                                     ${Number(liveMark).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                   </td>
-                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600 }}>
+                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600, whiteSpace: "nowrap" }}>
                                     {isProfit ? "+" : ""}${curPnl.toFixed(2)} ({isProfit ? "+" : ""}{roe.toFixed(2)}%)
-                                    {p.isCustomPnl && (
-                                      <span
-                                        style={{
-                                          display: "block",
-                                          fontSize: "9.5px",
-                                          color: "#c4b5fd",
-                                          fontWeight: 500,
-                                        }}
-                                      >
-                                        (admin adjusted)
-                                      </span>
-                                    )}
                                   </td>
-                                  <td style={{ padding: "12px 14px", textAlign: "right" }}>
+                                  <td style={{ padding: "12px 14px", textAlign: "right", whiteSpace: "nowrap" }}>
                                     <button
                                       onClick={() => handleClosePosition(p.id)}
                                       disabled={closingPositionId === p.id}
@@ -2480,15 +2472,15 @@ export default function DashboardPage() {
                       </div>
                     ) : (
                       <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                        <table style={{ width: "100%", minWidth: "680px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
                           <thead>
                             <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Side</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Size</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Entry price</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500 }}>Realized PnL</th>
-                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right" }}>Closed at</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Asset</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Side</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Size</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Entry price</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Realized PnL</th>
+                              <th style={{ padding: "10px 14px", fontWeight: 500, textAlign: "right", whiteSpace: "nowrap" }}>Closed at</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2497,13 +2489,13 @@ export default function DashboardPage() {
                               const isProfit = realizedPnl >= 0;
                               return (
                                 <tr key={p.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.03)" }}>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600 }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontWeight: 600, whiteSpace: "nowrap" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                       <AssetBrandIcon symbol={p.symbol} size={20} />
                                       <span>{p.symbol}</span>
                                     </div>
                                   </td>
-                                  <td style={{ padding: "12px 14px" }}>
+                                  <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
                                     <span
                                       style={{
                                         padding: "2px 8px",
@@ -2517,16 +2509,16 @@ export default function DashboardPage() {
                                       {p.type} {p.leverage}x
                                     </span>
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff" }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", whiteSpace: "nowrap" }}>
                                     ${Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace" }}>
+                                  <td style={{ padding: "12px 14px", color: "#fff", fontFamily: "monospace", whiteSpace: "nowrap" }}>
                                     ${Number(p.entryPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                   </td>
-                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600 }}>
+                                  <td style={{ padding: "12px 14px", fontFamily: "monospace", color: isProfit ? "#01b28b" : "#ea3943", fontWeight: 600, whiteSpace: "nowrap" }}>
                                     {isProfit ? "+" : ""}${realizedPnl.toFixed(2)}
                                   </td>
-                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.5)", fontSize: "11px", textAlign: "right" }}>
+                                  <td style={{ padding: "12px 14px", color: "rgba(255, 255, 255, 0.5)", fontSize: "11px", textAlign: "right", whiteSpace: "nowrap" }}>
                                     {p.closedAt ? new Date(p.closedAt).toLocaleDateString() : "-"}
                                   </td>
                                 </tr>

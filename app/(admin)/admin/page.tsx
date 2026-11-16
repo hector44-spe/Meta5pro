@@ -297,18 +297,18 @@ export default function AdminPage() {
   ];
 
   const titles: Record<Section, [string, string]> = {
-    overview: ["Overview", "What needs your attention right now."],
-    deposits: ["Deposits", "Check each payment on the blockchain or in the proof, then approve or reject it."],
-    withdrawals: ["Withdrawals", "Funds are on hold until you approve (send the crypto) or reject (refund the balance)."],
-    users: ["Users", "Find an account, adjust its balance, or suspend access."],
-    experts: ["Experts", "Users who paid/subscribed to copy trading experts."],
-    trades: ["Trades", "Live and closed trades placed by platform users."],
-    signals: ["Signals", "Users who purchased trading signals and available signal packages."],
-    "card-requests": ["Card Requests", "Users who requested and paid issuance fees for crypto cards."],
-    cards: ["Cards", "Manage card types, issuance fees, and eligibility requirements."],
-    subscriptions: ["Subscription", "Users subscribed to investment plans and plan settings."],
-    addresses: ["Deposit addresses", "The wallets investors pay into. Each one saves on its own."],
-    transactions: ["All transactions", "Every deposit, withdrawal, subscription and trade, newest first."],
+    overview: ["Overview", "Platform activity overview"],
+    deposits: ["Deposits", "Review and manage user deposits"],
+    withdrawals: ["Withdrawals", "Review and manage user withdrawals"],
+    users: ["Users", "Manage accounts and balances"],
+    experts: ["Experts", "Copy trading experts and copiers"],
+    trades: ["Trades", "User trades and positions"],
+    signals: ["Signals", "Signal packages and purchases"],
+    "card-requests": ["Card Requests", "User card requests"],
+    cards: ["Cards", "Manage card products and settings"],
+    subscriptions: ["Subscriptions", "Investment plans and subscribers"],
+    addresses: ["Deposit Addresses", "Manage deposit wallet addresses"],
+    transactions: ["Transactions", "Platform transaction logs"],
   };
 
   return (

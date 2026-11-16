@@ -131,10 +131,6 @@ export default function RequestCardModal({ isOpen, onClose, onSuccess }: Request
 
   const handleProceedToPayment = () => {
     if (!selectedCard) return;
-    if (cardPin.trim().length > 0 && cardPin.trim().length < 4) {
-      setError("PIN must be at least 4 digits");
-      return;
-    }
     setError(null);
     setStep("PAYMENT");
   };
@@ -254,20 +250,20 @@ export default function RequestCardModal({ isOpen, onClose, onSuccess }: Request
               style={{
                 display: "flex",
                 alignItems: "flex-start",
-                gap: "8px",
+                gap: "10px",
                 backgroundColor: "rgba(79, 107, 255, 0.08)",
-                border: "1px solid rgba(79, 107, 255, 0.2)",
+                border: "1px solid rgba(79, 107, 255, 0.25)",
                 borderRadius: "8px",
                 padding: "10px 12px",
                 marginBottom: "14px",
-                fontSize: "12px",
-                color: "#e0e7ff",
+                boxSizing: "border-box",
+                width: "100%",
               }}
             >
-              <ShieldCheck size={16} color="#4F6BFF" style={{ flexShrink: 0, marginTop: "2px" }} />
-              <span>
-                All cards must be <strong>paid for separately</strong> via a direct fresh deposit ($1,000 issuance fee). No funds are deducted from your balance.
-              </span>
+              <ShieldCheck size={18} color="#4F6BFF" style={{ flexShrink: 0, marginTop: "1px" }} />
+              <p style={{ margin: 0, fontSize: "12px", lineHeight: "1.45", color: "#e0e7ff" }}>
+                All cards require an issuance fee ($1,000) paid via fresh deposit. Card PIN is configured once your card is approved and active.
+              </p>
             </div>
 
             {/* Cards Label */}
@@ -325,23 +321,6 @@ export default function RequestCardModal({ isOpen, onClose, onSuccess }: Request
                 );
               })}
             </div>
-
-            {/* Dynamic Card Pin Input */}
-            {selectedCard && (
-              <div className="request-card-pin-box">
-                <label htmlFor="card-pin-input">Card pin:</label>
-                <input
-                  id="card-pin-input"
-                  type="password"
-                  inputMode="numeric"
-                  maxLength={4}
-                  value={cardPin}
-                  onChange={(e) => setCardPin(e.target.value.replace(/\D/g, ""))}
-                  placeholder="••••"
-                  className="request-card-pin-input"
-                />
-              </div>
-            )}
 
             {/* Error message */}
             {error && (

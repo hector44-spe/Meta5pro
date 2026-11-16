@@ -192,8 +192,7 @@ export default function SubscriptionsSection({
       <section className={styles.card}>
         <div className={styles.cardHead}>
           <div>
-            <h2>Users with Active Subscriptions</h2>
-            <p>Users who paid and subscribed to investment plans.</p>
+            <h2>User Subscriptions</h2>
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <div className={styles.searchBox}>
@@ -309,8 +308,7 @@ export default function SubscriptionsSection({
       <section className={styles.card}>
         <div className={styles.cardHead}>
           <div>
-            <h2>Investment Subscription Plans</h2>
-            <p>Investment tiers available for users to subscribe to.</p>
+            <h2>Investment Plans</h2>
           </div>
           <button
             type="button"

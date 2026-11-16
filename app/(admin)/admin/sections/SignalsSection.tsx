@@ -185,8 +185,7 @@ export default function SignalsSection({
       <section className={styles.card}>
         <div className={styles.cardHead}>
           <div>
-            <h2>Users Who Purchased Signals</h2>
-            <p>Every trading signal purchased and paid for by platform users.</p>
+            <h2>Signal Purchases</h2>
           </div>
           <div className={styles.searchBox}>
             <Search size={15} />
@@ -292,8 +291,7 @@ export default function SignalsSection({
       <section className={styles.card}>
         <div className={styles.cardHead}>
           <div>
-            <h2>Trading Signal Packages</h2>
-            <p>Packages listed on the user dashboard signals store.</p>
+            <h2>Signal Packages</h2>
           </div>
           <button
             type="button"

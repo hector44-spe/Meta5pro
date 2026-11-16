@@ -154,8 +154,7 @@ export default function CardRequestsSection({
       <section className={styles.card}>
         <div className={styles.cardHead}>
           <div>
-            <h2>User Card Requests</h2>
-            <p>Users who submitted requests and paid issuance fees for crypto cards.</p>
+            <h2>Card Requests</h2>
           </div>
           <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", width: "100%", maxWidth: "560px" }}>
             <div className={styles.searchBox} style={{ flex: "1 1 200px" }}>

@@ -39,8 +39,13 @@ export async function GET() {
           }
         }
 
+        const amountNum = Number(p.amount);
+        const leverageNum = Number(p.leverage) || 1;
+        const margin = amountNum / leverageNum;
+
         return {
           ...p,
+          margin: Number(margin.toFixed(2)),
           duration: config?.duration || null,
           closeAt: config?.closeAt || null,
           customPnl: config?.customPnl ?? null,

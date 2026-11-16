@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, ChevronDown, Star } from "lucide-react";
 import rawAssetsData from "@/data/assetsData.json";
 import { usePrices } from "@/lib/usePrices";
 import { useHoldings } from "@/lib/useHoldings";
+import "@/styles/markets-page.css";
 
 interface MarketAsset {
   id: number;
@@ -27,6 +28,19 @@ export default function DashboardMarketsPage() {
   const [selectedType, setSelectedType] = useState<string>("All assets");
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsTypeDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const toggleFavorite = (symbol: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -83,114 +97,44 @@ export default function DashboardMarketsPage() {
   };
 
   return (
-    <div
-      style={{
-        width: "100%",
-        maxWidth: "1400px",
-        margin: "0 auto",
-        padding: "24px 20px 48px",
-        boxSizing: "border-box",
-        minHeight: "100vh",
-      }}
-    >
+    <div className="markets-page-container">
       {/* Top Header Bar */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexWrap: "wrap",
-          gap: "16px",
-          marginBottom: "24px",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "20px",
-            fontWeight: 700,
-            color: "#ffffff",
-            margin: 0,
-            letterSpacing: "-0.01em",
-          }}
-        >
-          Markets
-        </h1>
+      <div className="markets-header-row">
+        <h1 className="markets-title">Markets</h1>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+        <div className="markets-controls-wrapper">
           {/* Search Box */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "8px",
-              padding: "8px 14px",
-              width: "280px",
-            }}
-          >
-            <Search size={16} color="rgba(255, 255, 255, 0.4)" />
+          <div className="markets-search-box">
+            <Search size={16} color="rgba(255, 255, 255, 0.4)" style={{ flexShrink: 0 }} />
             <input
               type="text"
               placeholder="Search for assets"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                background: "transparent",
-                border: "none",
-                outline: "none",
-                color: "#ffffff",
-                fontSize: "13.5px",
-                width: "100%",
-              }}
+              className="markets-search-input"
             />
           </div>
 
           {/* Type Dropdown Filter */}
-          <div style={{ position: "relative" }}>
+          <div ref={dropdownRef} style={{ position: "relative" }}>
             <button
               onClick={() => setIsTypeDropdownOpen(!isTypeDropdownOpen)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                backgroundColor: "rgba(255, 255, 255, 0.04)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                borderRadius: "8px",
-                padding: "8px 14px",
-                color: "#ffffff",
-                fontSize: "13.5px",
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
+              className="markets-filter-btn"
             >
               <span>{selectedType}</span>
               <ChevronDown
-                size={15}
+                size={14}
                 color="rgba(255, 255, 255, 0.5)"
                 style={{
                   transform: isTypeDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
                   transition: "transform 0.15s ease",
+                  flexShrink: 0,
                 }}
               />
             </button>
 
             {isTypeDropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  right: 0,
-                  backgroundColor: "#16181d",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "8px",
-                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.5)",
-                  zIndex: 50,
-                  minWidth: "140px",
-                  overflow: "hidden",
-                }}
-              >
+              <div className="markets-dropdown-menu">
                 {["All assets", "Crypto", "Stocks", "Commodities"].map((cat) => (
                   <div
                     key={cat}
@@ -205,6 +149,7 @@ export default function DashboardMarketsPage() {
                       fontWeight: selectedType === cat ? 600 : 400,
                       cursor: "pointer",
                       backgroundColor: selectedType === cat ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                      transition: "background-color 0.1s ease",
                     }}
                     onMouseEnter={(e) => {
                       if (selectedType !== cat) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
@@ -223,176 +168,142 @@ export default function DashboardMarketsPage() {
       </div>
 
       {/* Assets Table (Image 3) */}
-      <div
-        style={{
-          backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
-          borderRadius: "12px",
-          border: "1px solid rgba(255, 255, 255, 0.04)",
-          overflowX: "auto",
-        }}
-      >
-        <table
-          style={{
-            width: "100%",
-            borderCollapse: "collapse",
-            textAlign: "left",
-            fontSize: "13.5px",
-          }}
-        >
-          <thead>
-            <tr
-              style={{
-                borderBottom: "1px solid rgba(255, 255, 255, 0.06)",
-                color: "rgba(255, 255, 255, 0.45)",
-                fontSize: "12.5px",
-                fontWeight: 500,
-              }}
-            >
-              <th style={{ padding: "14px 20px" }}>★ Asset</th>
-              <th style={{ padding: "14px 20px" }}>Type</th>
-              <th style={{ padding: "14px 20px" }}>Current price (USD)</th>
-              <th style={{ padding: "14px 20px" }}>In your wallet</th>
-              <th style={{ padding: "14px 20px", textAlign: "right" }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredAssets.length === 0 ? (
+      <div className="markets-card">
+        <div className="markets-table-scroll">
+          <table className="markets-table">
+            <thead>
               <tr>
-                <td
-                  colSpan={5}
-                  style={{
-                    padding: "36px 20px",
-                    textAlign: "center",
-                    color: "rgba(255, 255, 255, 0.4)",
-                    fontSize: "13px",
-                  }}
-                >
-                  No assets found matching &ldquo;{searchQuery}&rdquo;.
-                </td>
+                <th>★ Asset</th>
+                <th className="markets-col-type">Type</th>
+                <th>Current price (USD)</th>
+                <th className="markets-col-wallet">In your wallet</th>
+                <th style={{ textAlign: "right" }}>Action</th>
               </tr>
-            ) : (
-              filteredAssets.slice(0, 100).map((asset) => {
-                const isFav = !!favorites[asset.symbol];
-                return (
-                  <tr
-                    key={asset.id}
+            </thead>
+            <tbody>
+              {filteredAssets.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
                     style={{
-                      borderBottom: "1px solid rgba(255, 255, 255, 0.03)",
-                      transition: "background-color 0.15s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.025)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "transparent";
+                      padding: "36px 16px",
+                      textAlign: "center",
+                      color: "rgba(255, 255, 255, 0.4)",
+                      fontSize: "13px",
                     }}
                   >
-                    {/* ★ Asset */}
-                    <td style={{ padding: "14px 20px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                        <button
-                          onClick={(e) => toggleFavorite(asset.symbol, e)}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            padding: 0,
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            color: isFav ? "#eab308" : "rgba(255, 255, 255, 0.35)",
-                          }}
-                        >
-                          <Star
-                            size={16}
-                            fill={isFav ? "#eab308" : "none"}
-                            strokeWidth={1.5}
-                          />
-                        </button>
-
+                    No assets found matching &ldquo;{searchQuery}&rdquo;.
+                  </td>
+                </tr>
+              ) : (
+                filteredAssets.slice(0, 100).map((asset) => {
+                  const isFav = !!favorites[asset.symbol];
+                  return (
+                    <tr
+                      key={asset.id}
+                      style={{
+                        transition: "background-color 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.025)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
+                    >
+                      {/* ★ Asset */}
+                      <td>
                         <div
-                          style={{
-                            width: "32px",
-                            height: "32px",
-                            borderRadius: "50%",
-                            backgroundColor: "rgba(255, 255, 255, 0.06)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            overflow: "hidden",
-                            flexShrink: 0,
-                          }}
+                          className="markets-asset-meta"
+                          style={{ display: "flex", alignItems: "center", gap: "12px" }}
                         >
-                          {asset.icon ? (
-                            <img
-                              src={asset.icon}
-                              alt={asset.symbol}
-                              style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                              onError={(e) => {
-                                // fallback to monogram
-                                (e.currentTarget as HTMLElement).style.display = "none";
-                              }}
+                          <button
+                            onClick={(e) => toggleFavorite(asset.symbol, e)}
+                            style={{
+                              background: "transparent",
+                              border: "none",
+                              padding: 0,
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              color: isFav ? "#eab308" : "rgba(255, 255, 255, 0.35)",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <Star
+                              size={15}
+                              fill={isFav ? "#eab308" : "none"}
+                              strokeWidth={1.5}
                             />
-                          ) : (
-                            <span style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff" }}>
-                              {asset.symbol.slice(0, 3)}
-                            </span>
-                          )}
+                          </button>
+
+                          <div
+                            className="markets-asset-icon"
+                            style={{
+                              width: "30px",
+                              height: "30px",
+                              borderRadius: "50%",
+                              backgroundColor: "rgba(255, 255, 255, 0.06)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              overflow: "hidden",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {asset.icon ? (
+                              <img
+                                src={asset.icon}
+                                alt={asset.symbol}
+                                style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                                onError={(e) => {
+                                  (e.currentTarget as HTMLElement).style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <span style={{ fontSize: "11px", fontWeight: 700, color: "#ffffff" }}>
+                                {asset.symbol.slice(0, 3)}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="markets-asset-symbol" style={{ fontWeight: 600, color: "#ffffff" }}>
+                            {asset.symbol}
+                          </span>
                         </div>
+                      </td>
 
-                        <span style={{ fontWeight: 600, color: "#ffffff" }}>
-                          {asset.symbol}
-                        </span>
-                      </div>
-                    </td>
+                      {/* Type */}
+                      <td className="markets-col-type" style={{ color: "rgba(255, 255, 255, 0.65)" }}>
+                        {asset.type}
+                      </td>
 
-                    {/* Type */}
-                    <td style={{ padding: "14px 20px", color: "rgba(255, 255, 255, 0.65)" }}>
-                      {asset.type}
-                    </td>
+                      {/* Current price (USD) */}
+                      <td className="markets-price-cell" style={{ color: "rgba(255, 255, 255, 0.9)", fontWeight: 500 }}>
+                        {getLivePriceDisplay(asset)}
+                      </td>
 
-                    {/* Current price (USD) */}
-                    <td style={{ padding: "14px 20px", color: "rgba(255, 255, 255, 0.85)", fontWeight: 500 }}>
-                      {getLivePriceDisplay(asset)}
-                    </td>
+                      {/* In your wallet */}
+                      <td className="markets-col-wallet" style={{ color: "rgba(255, 255, 255, 0.65)" }}>
+                        {getWalletAmountDisplay(asset)}
+                      </td>
 
-                    {/* In your wallet */}
-                    <td style={{ padding: "14px 20px", color: "rgba(255, 255, 255, 0.65)" }}>
-                      {getWalletAmountDisplay(asset)}
-                    </td>
-
-                    {/* Action: Trade Button */}
-                    <td style={{ padding: "14px 20px", textAlign: "right" }}>
-                      <button
-                        onClick={() => handleTrade(asset)}
-                        style={{
-                          padding: "6px 16px",
-                          borderRadius: "6px",
-                          backgroundColor: "rgba(255, 255, 255, 0.04)",
-                          border: "1px solid rgba(255, 255, 255, 0.12)",
-                          color: "#ffffff",
-                          fontSize: "13px",
-                          fontWeight: 500,
-                          cursor: "pointer",
-                          transition: "all 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.1)";
-                          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.25)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.04)";
-                          e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.12)";
-                        }}
-                      >
-                        Trade
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      {/* Action: Trade Button */}
+                      <td style={{ textAlign: "right" }}>
+                        <button
+                          onClick={() => handleTrade(asset)}
+                          className="markets-trade-btn"
+                        >
+                          Trade
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ const PROTECTED_USER_PATHS: string[] = [
   "/cards",
   "/copy-trading",
   "/trade",
+  "/trades",
   "/markets",
 ];
 
@@ -89,6 +90,7 @@ export const config = {
     "/cards/:path*",
     "/copy-trading/:path*",
     "/trade/:path*",
+    "/trades/:path*",
     "/markets/:path*",
     "/admin/:path*",
     "/login",

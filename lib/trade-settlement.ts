@@ -77,13 +77,15 @@ export async function closePositionAndSettle({
     throw new Error("Position is already closed");
   }
 
-  const closeMethod = closedByAdmin ? "Closed by Administrator" : "Position closed";
-  await notify(
-    pos.userId,
-    "trade",
-    closeMethod,
-    `${pos.symbol} ${pos.type.toLowerCase()} closed. Realized P&L: ${finalPnl >= 0 ? "+" : "-"}${fmtUsd(Math.abs(finalPnl))}; ${fmtUsd(returnCapital)} returned to your balance.`,
-  );
+  // Do not notify the investor on any admin changes/closures on the trades
+  if (!closedByAdmin) {
+    await notify(
+      pos.userId,
+      "trade",
+      "Position closed",
+      `${pos.symbol} ${pos.type.toLowerCase()} closed. Realized P&L: ${finalPnl >= 0 ? "+" : "-"}${fmtUsd(Math.abs(finalPnl))}; ${fmtUsd(returnCapital)} returned to your balance.`,
+    );
+  }
 
   return {
     success: true,

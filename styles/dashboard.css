@@ -24311,3 +24311,72 @@ body:has(.dashboard-page-container) {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
+
+/* ==========================================================================
+   GLOBAL RESPONSIVE FIDELITY & ANTI-DISTORTION GUARDS
+   ========================================================================== */
+
+/* Ensure smooth, undistorted page-level rendering */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+img, svg, video {
+  max-width: 100%;
+}
+
+/* Midsection grid & Trading chart responsiveness */
+@media screen and (max-width: 1024px) {
+  .dashboard-midsection-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .dashboard-midsection-grid > div:first-child {
+    min-height: 360px !important;
+    height: 400px !important;
+  }
+  .dashboard-content-grid {
+    gap: 12px !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .dashboard-midsection-grid > div:first-child {
+    min-height: 310px !important;
+    height: 340px !important;
+  }
+  .dashboard-page-content {
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    padding-bottom: 110px !important;
+  }
+}
+
+/* Table scroll wrapper anti-distortion */
+.table-responsive-container,
+.table-wrap,
+.cold-storage-table-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* Modals mobile anti-distortion */
+@media screen and (max-width: 540px) {
+  .meta-gold-modal-dialog,
+  .modal {
+    width: 100% !important;
+    max-width: calc(100vw - 20px) !important;
+    margin: 10px auto !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+  }
+}
+

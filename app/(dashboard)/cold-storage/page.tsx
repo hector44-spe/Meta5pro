@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Eye,
   EyeOff,
@@ -133,7 +134,9 @@ export default function ColdStoragePage() {
     }
   };
 
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     fetchColdAssets();
   }, []);
 
@@ -658,11 +661,14 @@ export default function ColdStoragePage() {
         </div>
       </div>
 
-      {/* ===================== SLIDE-IN DRAWER OVERLAY ===================== */}
-      <div
-        className={`cold-storage-overlay ${drawerOpen ? "open" : ""}`}
-        onClick={handleCloseDrawer}
-      />
+      {/* ===================== SLIDE-IN DRAWER & OVERLAY (PORTALED) ===================== */}
+      {mounted && typeof document !== "undefined"
+        ? createPortal(
+            <>
+              <div
+                className={`cold-storage-overlay ${drawerOpen ? "open" : ""}`}
+                onClick={handleCloseDrawer}
+              />
 
       {/* ===================== SLIDE-IN DRAWER CONTAINER ===================== */}
       <div className={`cold-storage-drawer ${drawerOpen ? "open" : ""}`}>
@@ -1188,6 +1194,10 @@ export default function ColdStoragePage() {
           </div>
         </div>
       )}
+            </>,
+            document.body
+          )
+        : null}
     </div>
   );
 }

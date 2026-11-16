@@ -147,10 +147,21 @@
   background: #3e59ea;
 }
 
+@media screen and (max-width: 520px) {
+  .copy_trading_actions_row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .btn_add_expert {
+    width: 100%;
+  }
+}
+
 /* Grids */
 .copy_trading_grids {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
   width: 100%;
 }
