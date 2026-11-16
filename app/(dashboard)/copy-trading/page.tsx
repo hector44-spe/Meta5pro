@@ -97,9 +97,6 @@ function ExpertCardItem({
               </div>
             </div>
           </div>
-
-          {/* Followers row */}
-          </div>
         </div>
 
         {/* Bio */}
