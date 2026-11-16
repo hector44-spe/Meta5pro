@@ -235,41 +235,44 @@ export default function ExpertsSection({
           </div>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "960px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
+          <table className={styles.table} style={{ minWidth: "960px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "200px" }}>User</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Main Balance</th>
-                <th style={{ minWidth: "140px" }}>Copied Expert</th>
-                <th className={styles.right} style={{ minWidth: "100px" }}>Min. Startup</th>
-                <th className={styles.right} style={{ minWidth: "90px" }}>Profit Share</th>
-                <th style={{ minWidth: "95px" }}>Status</th>
-                <th style={{ minWidth: "100px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "230px" }}>User</th>
+                <th className={styles.right} style={{ width: "130px" }}>Main Balance</th>
+                <th style={{ width: "160px" }}>Copied Expert</th>
+                <th className={styles.right} style={{ width: "120px" }}>Min. Startup</th>
+                <th className={styles.right} style={{ width: "110px" }}>Profit Share</th>
+                <th style={{ width: "100px" }}>Status</th>
+                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ minWidth: "200px" }}>
+                    <td>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 130 }} />
                         <div className={styles.skeletonCell} style={{ width: 90 }} />
                       </div>
                     </td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "140px" }}><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
-                    <td className={styles.right} style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td style={{ minWidth: "100px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 45, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredCopiers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
-                    No users currently copying any experts.
+                  <td colSpan={7} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <Users size={26} style={{ opacity: 0.35 }} />
+                      <span>No users currently copying any experts.</span>
+                    </div>
                   </td>
                 </tr>
               ) : (

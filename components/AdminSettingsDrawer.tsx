@@ -1007,3 +1007,510 @@ function GeneralSettings() {
     </div>
   );
 }
+
+/* ------------------------------------------------------------------ */
+
+/** Referrals Settings (Image 1) */
+function ReferralsSettingsView() {
+  const [usePercentage, setUsePercentage] = useState(true);
+  const [percentage, setPercentage] = useState(40);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings/referrals", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d?.settings || d?.value;
+        if (s) {
+          if (typeof s.usePercentage === "boolean") setUsePercentage(s.usePercentage);
+          if (typeof s.percentage === "number") setPercentage(s.percentage);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/app-settings/referrals", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          usePercentage,
+          percentage: Number(percentage) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save referral settings");
+      setNotice({ kind: "ok", text: "Referral settings saved successfully." });
+    } catch (e: any) {
+      setNotice({ kind: "error", text: e.message || "Failed to save referral settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="as-placeholder">
+        <Loader2 size={18} className="spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <div className="as-section-block">
+        <h3 className="as-block-title">Referral settings</h3>
+        <p className="as-block-sub">
+          Users will earn {percentage}% of each deposit made by their referrals
+        </p>
+
+        <div className="as-toggle-card">
+          <span className="as-toggle-card-title">Use percentage</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={usePercentage}
+            aria-label="Use percentage"
+            className="app-switch"
+            data-on={usePercentage ? "true" : "false"}
+            onClick={() => setUsePercentage(!usePercentage)}
+          >
+            <span />
+          </button>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label">Percentage</label>
+          <div className="as-currency-input-box">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={percentage}
+              onChange={(e) => setPercentage(Number(e.target.value))}
+            />
+            <span className="as-currency-badge">%</span>
+          </div>
+        </div>
+
+        {notice && (
+          <div className={`as-notice ${notice.kind}`} style={{ marginTop: "4px" }}>
+            {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            <span>{notice.text}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="as-primary-btn"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving && <Loader2 size={16} className="spin" />}
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Cards Settings (Image 2) */
+function CardsSettingsView() {
+  const [kycRequired, setKycRequired] = useState(true);
+  const [issuanceFee, setIssuanceFee] = useState(1000);
+  const [minDepositTotal, setMinDepositTotal] = useState(50000);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings/cards", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d?.settings || d?.value;
+        if (s) {
+          if (typeof s.kycRequired === "boolean") setKycRequired(s.kycRequired);
+          if (typeof s.issuanceFee === "number") setIssuanceFee(s.issuanceFee);
+          if (typeof s.minDepositTotal === "number") setMinDepositTotal(s.minDepositTotal);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/app-settings/cards", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kycRequired,
+          issuanceFee: Number(issuanceFee) || 0,
+          minDepositTotal: Number(minDepositTotal) || 0,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save card settings");
+      setNotice({ kind: "ok", text: "Card settings saved successfully." });
+    } catch (e: any) {
+      setNotice({ kind: "error", text: e.message || "Failed to save card settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="as-placeholder">
+        <Loader2 size={18} className="spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <div className="as-section-block">
+        <div className="as-toggle-card">
+          <span className="as-toggle-card-title">KYC Required</span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={kycRequired}
+            aria-label="KYC Required"
+            className="app-switch"
+            data-on={kycRequired ? "true" : "false"}
+            onClick={() => setKycRequired(!kycRequired)}
+          >
+            <span />
+          </button>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label">Issuance Fee (USD)</label>
+          <div className="as-currency-input-box">
+            <input
+              type="number"
+              value={issuanceFee}
+              onChange={(e) => setIssuanceFee(Number(e.target.value))}
+            />
+            <span className="as-currency-badge">USD</span>
+          </div>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label">Minimum Deposit Total (USD)</label>
+          <div className="as-currency-input-box">
+            <input
+              type="number"
+              value={minDepositTotal}
+              onChange={(e) => setMinDepositTotal(Number(e.target.value))}
+            />
+            <span className="as-currency-badge">USD</span>
+          </div>
+        </div>
+
+        {notice && (
+          <div className={`as-notice ${notice.kind}`} style={{ marginTop: "4px" }}>
+            {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+            <span>{notice.text}</span>
+          </div>
+        )}
+
+        <button
+          type="button"
+          className="as-primary-btn"
+          onClick={handleSave}
+          disabled={saving}
+        >
+          {saving && <Loader2 size={16} className="spin" />}
+          Save
+        </button>
+      </div>
+    </div>
+  );
+}
+
+interface LevelItem {
+  id: string;
+  name: string;
+  minBalance: string;
+  profitLimit: string;
+  iconType: string;
+  color: string;
+}
+
+function DiamondIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff">
+      <path d="M12 2L2 12l10 10 10-10L12 2z" />
+    </svg>
+  );
+}
+
+function RenderLevelIcon({ type }: { type: string }) {
+  if (type === "gem") return <Gem size={22} color="#ffffff" />;
+  if (type === "sparkle") return <Sparkles size={22} color="#ffffff" fill="#ffffff" />;
+  if (type === "star") return <Star size={22} color="#ffffff" fill="#ffffff" />;
+  return <DiamondIcon />;
+}
+
+/** Levels Settings (Images 3 & 4) */
+function LevelsSettingsView() {
+  const [levels, setLevels] = useState<LevelItem[]>([
+    { id: "bronze", name: "Bronze", minBalance: "$300,000", profitLimit: "No Limit", iconType: "diamond", color: "#d97706" },
+    { id: "starter", name: "Starter", minBalance: "$15,000", profitLimit: "$15,000", iconType: "diamond", color: "#94a3b8" },
+    { id: "vip", name: "VIP", minBalance: "Unlimited", profitLimit: "No Limit", iconType: "gem", color: "#9333ea" },
+    { id: "silver", name: "Silver", minBalance: "$500,000", profitLimit: "No Limit", iconType: "sparkle", color: "#cbd5e1" },
+    { id: "gold", name: "Gold", minBalance: "$1,000,000", profitLimit: "No Limit", iconType: "star", color: "#eab308" },
+  ]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editingLevel, setEditingLevel] = useState<LevelItem | null>(null);
+  const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/app-settings/levels", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        const s = d?.settings || d?.value;
+        if (s && Array.isArray(s.levels) && s.levels.length > 0) {
+          setLevels(s.levels);
+        }
+      })
+      .catch(() => null)
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSaveLevel = async (updated: LevelItem) => {
+    const nextLevels = levels.map((l) => (l.id === updated.id ? updated : l));
+    setLevels(nextLevels);
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/app-settings/levels", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ levels: nextLevels }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to save level settings");
+      setNotice({ kind: "ok", text: `${updated.name} level updated successfully.` });
+      setEditingLevel(null);
+    } catch (e: any) {
+      setNotice({ kind: "error", text: e.message || "Failed to save level settings" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="as-placeholder">
+        <Loader2 size={18} className="spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px", paddingTop: "8px" }}>
+      <div className="as-section-block" style={{ marginBottom: "8px" }}>
+        <h3 className="as-block-title">Account Levels</h3>
+        <p className="as-block-sub">Manage account levels and their benefits</p>
+      </div>
+
+      {notice && (
+        <div className={`as-notice ${notice.kind}`} style={{ marginBottom: "8px" }}>
+          {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+          <span>{notice.text}</span>
+        </div>
+      )}
+
+      {/* Level Cards List (Images 3 & 4) */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {levels.map((lvl) => (
+          <div key={lvl.id} className="as-level-card">
+            <div className="as-level-card-header">
+              <div className="as-level-profile">
+                <div className="as-level-icon-box" style={{ backgroundColor: lvl.color }}>
+                  <RenderLevelIcon type={lvl.iconType} />
+                </div>
+                <span className="as-level-name">{lvl.name}</span>
+              </div>
+              <button
+                type="button"
+                className="as-level-edit-btn"
+                onClick={() => setEditingLevel({ ...lvl })}
+                title={`Edit ${lvl.name} level`}
+              >
+                <SquarePen size={17} />
+              </button>
+            </div>
+
+            <div className="as-level-details">
+              <div className="as-level-row">
+                <span className="as-level-row-label">Min Balance:</span>
+                <span className="as-level-row-val">{lvl.minBalance}</span>
+              </div>
+              <div className="as-level-row">
+                <span className="as-level-row-label">Profit Limit:</span>
+                <span className="as-level-row-val">{lvl.profitLimit}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Edit Level Modal */}
+      {editingLevel && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100000,
+            background: "rgba(0, 0, 0, 0.75)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+          onClick={() => setEditingLevel(null)}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "400px",
+              background: "#1c1f24",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: "14px",
+              padding: "20px",
+              boxShadow: "0 20px 40px rgba(0, 0, 0, 0.7)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "16px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "8px",
+                    backgroundColor: editingLevel.color,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <RenderLevelIcon type={editingLevel.iconType} />
+                </div>
+                <h4 style={{ margin: 0, fontSize: "16px", fontWeight: 700, color: "#fff" }}>
+                  Edit {editingLevel.name} Level
+                </h4>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingLevel(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "rgba(255,255,255,0.6)",
+                  cursor: "pointer",
+                  padding: 4,
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div className="as-input-wrap" style={{ margin: 0 }}>
+                <label className="as-label">Min Balance:</label>
+                <div className="as-currency-input-box">
+                  <input
+                    type="text"
+                    value={editingLevel.minBalance}
+                    onChange={(e) =>
+                      setEditingLevel({ ...editingLevel, minBalance: e.target.value })
+                    }
+                    placeholder="e.g. $300,000 or Unlimited"
+                  />
+                </div>
+              </div>
+
+              <div className="as-input-wrap" style={{ margin: 0 }}>
+                <label className="as-label">Profit Limit:</label>
+                <div className="as-currency-input-box">
+                  <input
+                    type="text"
+                    value={editingLevel.profitLimit}
+                    onChange={(e) =>
+                      setEditingLevel({ ...editingLevel, profitLimit: e.target.value })
+                    }
+                    placeholder="e.g. No Limit or $15,000"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingLevel(null)}
+                  style={{
+                    flex: 1,
+                    height: "44px",
+                    borderRadius: "8px",
+                    background: "rgba(255,255,255,0.08)",
+                    border: "none",
+                    color: "#fff",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveLevel(editingLevel)}
+                  disabled={saving}
+                  style={{
+                    flex: 1,
+                    height: "44px",
+                    borderRadius: "8px",
+                    background: "#4763f0",
+                    border: "none",
+                    color: "#fff",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  {saving && <Loader2 size={16} className="spin" />}
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
