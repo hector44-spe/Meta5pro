@@ -321,9 +321,9 @@ export default function CardRequestsSection({
                             type="button"
                             className={styles.btnSuccessSm}
                             onClick={() => handleUpdateStatus(c.userId, c.id, "active")}
-                            title="Activate / Approve Card"
+                            title="Confirm Payment & Activate Card"
                           >
-                            <ShieldCheck size={14} /> Activate
+                            <ShieldCheck size={14} /> Confirm & Activate
                           </button>
                         ) : (
                           <button
