@@ -2,10 +2,24 @@
    Signal Page Styles - Exact MetaGold 5 Replica
    ========================================================================== */
 
-.signal-page-wrapper {
+.signal-deposit-modal-dialog {
   width: 100%;
-  height: 100%;
-  padding-bottom: 32px;
+  max-width: 480px;
+  background-color: #0f1216;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  padding: 24px;
+  max-height: 92vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+  .signal-deposit-modal-dialog {
+    padding: 16px 14px !important;
+    border-radius: 12px !important;
+  }
 }
 
 /* Page Section Top Title */
