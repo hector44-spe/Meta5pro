@@ -273,7 +273,7 @@ export default function TradesSection({
   const totalPnL = useMemo(() => trades.reduce((a, t) => a + (t.pnl || 0), 0), [trades]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       {/* Stats Cards */}
       <div className={styles.stats}>
         <div className={styles.statCard}>

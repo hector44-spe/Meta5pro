@@ -352,17 +352,17 @@ export default function ExpertsSection({
           </button>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "860px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
+          <table className={styles.table} style={{ minWidth: "860px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "180px" }}>Expert</th>
-                <th style={{ minWidth: "90px" }}>Win Rate</th>
-                <th style={{ minWidth: "90px" }}>Profit Share</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Min. Startup</th>
-                <th style={{ minWidth: "95px" }}>Followers</th>
-                <th style={{ minWidth: "85px" }}>Badge</th>
-                <th style={{ minWidth: "110px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "220px" }}>Expert</th>
+                <th style={{ width: "100px" }}>Win Rate</th>
+                <th style={{ width: "110px" }}>Profit Share</th>
+                <th className={styles.right} style={{ width: "120px" }}>Min. Startup</th>
+                <th style={{ width: "110px" }}>Followers</th>
+                <th style={{ width: "85px" }}>Badge</th>
+                <th style={{ width: "115px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -388,8 +388,11 @@ export default function ExpertsSection({
                 ))
               ) : experts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
-                    No experts in catalog. Click Add Expert to create one.
+                  <td colSpan={7} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <Award size={26} style={{ opacity: 0.35 }} />
+                      <span>No experts in catalog. Click Add Expert to create one.</span>
+                    </div>
                   </td>
                 </tr>
               ) : experts.map((exp) => (
