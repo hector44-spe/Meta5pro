@@ -531,6 +531,9 @@
   .assets-select-wrapper {
     flex-shrink: 0;
   }
+  .cell-asset {
+    min-width: 0 !important;
+  }
   .col-price,
   .cell-price {
     display: none;

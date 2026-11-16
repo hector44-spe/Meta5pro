@@ -12,6 +12,7 @@ import {
   Zap,
   ShieldCheck,
 } from "lucide-react";
+import { compressScreenshot } from "@/lib/image-compress";
 
 export interface DepositAddressItem {
   id: string;
@@ -157,8 +158,9 @@ export default function SignalDepositModal({
     try {
       let receiptUrl = "";
       if (proofFile) {
+        const fileToUpload = await compressScreenshot(proofFile);
         const formData = new FormData();
-        formData.append("file", proofFile);
+        formData.append("file", fileToUpload);
         const uploadRes = await fetch("/api/upload", {
           method: "POST",
           body: formData,

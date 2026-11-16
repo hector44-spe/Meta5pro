@@ -25,10 +25,10 @@ export default function DepositPage() {
   const [deposits, setDeposits] = useState<DepositItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchDeposits = async () => {
+  const fetchDeposits = async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/wallet");
+      if (showLoading) setLoading(true);
+      const res = await fetch("/api/wallet", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const txs = (data.transactions || [])
@@ -52,12 +52,48 @@ export default function DepositPage() {
     } catch (e) {
       console.error("Failed to load deposits:", e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDeposits();
+    fetchDeposits(true);
+
+    const handleDepositSubmitted = (e: any) => {
+      // Optimistically insert the newly submitted deposit immediately
+      if (e?.detail?.transaction) {
+        const t = e.detail.transaction;
+        const optimisticDeposit: DepositItem = {
+          id: t.id || `dep_${Date.now()}`,
+          date: new Date(t.createdAt || Date.now()).toLocaleDateString("en-US", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }),
+          reference: t.txHash ? t.txHash.substring(0, 16) + "..." : (t.id ? t.id.substring(0, 12) : "SUBMITTED"),
+          method: t.currency || "Crypto",
+          type: "Regular",
+          amount: `${t.amount} ${t.currency?.split(" ")[0] || "USD"}`,
+          totalUSD: `$${Number(t.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          status: "pending",
+        };
+        setDeposits((prev) => [optimisticDeposit, ...prev.filter((d) => d.id !== optimisticDeposit.id)]);
+      }
+      // Re-fetch from server to synchronize
+      fetchDeposits(false);
+    };
+
+    window.addEventListener("deposit-submitted", handleDepositSubmitted);
+    window.addEventListener("focus", () => fetchDeposits(false));
+
+    // Poll periodically to catch admin approvals immediately
+    const timer = setInterval(() => fetchDeposits(false), 10_000);
+
+    return () => {
+      window.removeEventListener("deposit-submitted", handleDepositSubmitted);
+      window.removeEventListener("focus", () => fetchDeposits(false));
+      clearInterval(timer);
+    };
   }, []);
 
   const filteredDeposits = deposits.filter((dep) => {

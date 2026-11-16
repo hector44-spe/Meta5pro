@@ -606,16 +606,6 @@ export default function SubscribePage() {
                 }}
               >
                 <p>Plans</p>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    className="admin_add_button"
-                    onClick={handleOpenAddModal}
-                  >
-                    <Plus size={16} />
-                    <span>Add plan</span>
-                  </button>
-                )}
               </div>
 
               <div className="subscription-cards-grid">
@@ -631,18 +621,9 @@ export default function SubscribePage() {
 
                   return (
                     <div key={plan.id} className="subscribe_card">
-                      {/* Card Top Title & Admin Edit */}
+                      {/* Card Top Title */}
                       <div className="subscribe_card_top">
                         <p className="subscribe_title">{plan.title}</p>
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            className="admin_edit_link"
-                            onClick={() => handleOpenEditModal(plan)}
-                          >
-                            Edit
-                          </button>
-                        )}
                       </div>
 
                       {/* Card Details */}
@@ -873,129 +854,6 @@ export default function SubscribePage() {
           )}
         </div>
       </div>
-
-      {/* ===================== ADMIN EDIT SUBSCRIPTION PLAN MODAL (Matches Image 4) ===================== */}
-      {(editingPlan || isCreatingPlan) && (
-        <div
-          className="admin_edit_modal_overlay"
-          onClick={() => {
-            setEditingPlan(null);
-            setIsCreatingPlan(false);
-          }}
-        >
-          <div
-            className="admin_edit_modal_dialog"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="admin_edit_modal_header">
-              <h3>{isCreatingPlan ? "Add subscription plan" : "Edit subscription plan"}</h3>
-              <button
-                type="button"
-                className="close_btn"
-                onClick={() => {
-                  setEditingPlan(null);
-                  setIsCreatingPlan(false);
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Plan Name */}
-            <div className="admin_form_group">
-              <label>Plan Name:</label>
-              <div className="admin_input_row">
-                <input
-                  type="text"
-                  value={planName}
-                  onChange={(e) => setPlanName(e.target.value)}
-                  placeholder="Plan Name"
-                />
-              </div>
-            </div>
-
-            {/* Minimum & Maximum in 2 columns */}
-            <div className="admin_two_col">
-              <div className="admin_form_group">
-                <label>Minimum:</label>
-                <div className="admin_input_row">
-                  <input
-                    type="number"
-                    value={planMin}
-                    onChange={(e) => setPlanMin(e.target.value)}
-                  />
-                  <span className="suffix">USD</span>
-                </div>
-              </div>
-
-              <div className="admin_form_group">
-                <label>Maximum:</label>
-                <div className="admin_input_row">
-                  <input
-                    type="number"
-                    value={planMax}
-                    onChange={(e) => setPlanMax(e.target.value)}
-                  />
-                  <span className="suffix">USD</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Duration */}
-            <div className="admin_form_group">
-              <label>Duration:</label>
-              <div className="admin_input_row">
-                <input
-                  type="number"
-                  value={planDuration}
-                  onChange={(e) => setPlanDuration(e.target.value)}
-                />
-                <span className="suffix">days</span>
-              </div>
-            </div>
-
-            {/* ROI */}
-            <div className="admin_form_group">
-              <label>ROI:</label>
-              <div className="admin_input_row">
-                <input
-                  type="number"
-                  value={planRoi}
-                  onChange={(e) => setPlanRoi(e.target.value)}
-                />
-                <span className="suffix">%</span>
-              </div>
-            </div>
-
-            {/* Calculated Profit Note (Matches Image 4) */}
-            <div className="admin_profit_note">
-              A user will earn ${((Number(planRoi || 0) / 100) * Number(planMin || 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })} if they subscribe ${Number(planMin || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })}. To calculate the profits, use ROI divided by 100 times the amount
-            </div>
-
-            {/* Modal Actions */}
-            <div className="admin_modal_actions">
-              {!isCreatingPlan && (
-                <button
-                  type="button"
-                  className="btn_delete"
-                  disabled={savingPlan}
-                  onClick={handleDeletePlan}
-                >
-                  Delete plan
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn_save"
-                disabled={savingPlan}
-                onClick={handleSavePlan}
-              >
-                {savingPlan ? <Loader2 size={16} className="animate-spin" /> : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <CustomConfirmModal
         state={confirmState}

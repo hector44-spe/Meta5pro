@@ -498,11 +498,11 @@ function TradingContent() {
         width: "100%",
         maxWidth: "1400px",
         margin: "0 auto",
-        padding: "20px 20px 48px",
+        padding: "8px 12px 24px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
-        gap: "20px",
+        gap: "10px",
       }}
     >
       {/* ===================== MID SECTION (TradingView Chart + Order Form - Image 1) ===================== */}
@@ -511,7 +511,7 @@ function TradingContent() {
         style={{
           display: "grid",
           gridTemplateColumns: chartHidden ? "1fr" : "1fr 380px",
-          gap: "16px",
+          gap: "10px",
           width: "100%",
           boxSizing: "border-box",
         }}
@@ -523,11 +523,11 @@ function TradingContent() {
             style={{
               backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
               borderRadius: "12px",
-              padding: "16px",
+              padding: "10px 12px",
               display: "flex",
               flexDirection: "column",
-              minHeight: "540px",
-              height: "580px",
+              minHeight: "460px",
+              height: "500px",
               boxSizing: "border-box",
             }}
           >
@@ -537,7 +537,7 @@ function TradingContent() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                marginBottom: "12px",
+                marginBottom: "8px",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -633,10 +633,10 @@ function TradingContent() {
           style={{
             backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
             borderRadius: "12px",
-            padding: "20px",
+            padding: "12px 14px",
             display: "flex",
             flexDirection: "column",
-            gap: "16px",
+            gap: "9px",
             boxSizing: "border-box",
           }}
         >
@@ -725,10 +725,10 @@ function TradingContent() {
                   backgroundColor: "rgba(255, 255, 255, 0.03)",
                   border: "1px solid rgba(255, 255, 255, 0.06)",
                   borderRadius: "10px",
-                  padding: "14px 16px",
+                  padding: "10px 12px",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "8px",
+                  gap: "4px",
                   position: "relative",
                 }}
               >
@@ -885,10 +885,10 @@ function TradingContent() {
                   backgroundColor: "rgba(255, 255, 255, 0.03)",
                   border: "1px solid rgba(255, 255, 255, 0.06)",
                   borderRadius: "10px",
-                  padding: "14px 16px",
+                  padding: "10px 12px",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "8px",
+                  gap: "4px",
                   position: "relative",
                 }}
               >
@@ -1041,7 +1041,7 @@ function TradingContent() {
                   onClick={() => setIsTradeTypeDropdownOpen(!isTradeTypeDropdownOpen)}
                   style={{
                     width: "100%",
-                    padding: "10px 12px",
+                    padding: "8px 10px",
                     borderRadius: "8px",
                     backgroundColor: "rgba(255, 255, 255, 0.03)",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -1130,7 +1130,7 @@ function TradingContent() {
                 <div
                   style={{
                     width: "100%",
-                    padding: "5px 6px 5px 12px",
+                    padding: "4px 6px 4px 10px",
                     borderRadius: "8px",
                     backgroundColor: "rgba(255, 255, 255, 0.03)",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -1297,7 +1297,7 @@ function TradingContent() {
                   </div>
                 </div>
 
-                <div style={{ position: "relative", width: "100%", padding: "6px 0" }}>
+                <div style={{ position: "relative", width: "100%", padding: "2px 0" }}>
                   <input
                     type="range"
                     min="0"
@@ -1316,7 +1316,7 @@ function TradingContent() {
                       justifyContent: "space-between",
                       fontSize: "10.5px",
                       color: "rgba(255, 255, 255, 0.45)",
-                      marginTop: "4px",
+                      marginTop: "3px",
                     }}
                   >
                     <span>0x</span>
@@ -1451,7 +1451,7 @@ function TradingContent() {
                   onClick={() => setIsDurationDropdownOpen(!isDurationDropdownOpen)}
                   style={{
                     width: "100%",
-                    padding: "10px 12px",
+                    padding: "8px 10px",
                     borderRadius: "8px",
                     backgroundColor: "rgba(255, 255, 255, 0.03)",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -1527,7 +1527,7 @@ function TradingContent() {
                 disabled={orderExecuting}
                 style={{
                   width: "100%",
-                  padding: "13px",
+                  padding: "10px",
                   borderRadius: "8px",
                   backgroundColor: orderTab === "sell" ? "#f84960" : "#01b28b",
                   color: "#ffffff",
@@ -1537,7 +1537,7 @@ function TradingContent() {
                   cursor: "pointer",
                   transition: "all 0.15s ease",
                   opacity: orderExecuting ? 0.7 : 1,
-                  marginTop: "4px",
+                  marginTop: "2px",
                 }}
               >
                 {orderExecuting ? "Executing..." : orderTab === "sell" ? "Sell" : "Buy"}
@@ -1552,10 +1552,10 @@ function TradingContent() {
         style={{
           backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
           borderRadius: "12px",
-          padding: "18px 20px",
+          padding: "10px 14px",
           display: "flex",
           flexDirection: "column",
-          gap: "14px",
+          gap: "8px",
           boxSizing: "border-box",
         }}
       >
@@ -1643,7 +1643,7 @@ function TradingContent() {
                   onClick={() => setOpenTradesOpen(!openTradesOpen)}
                   style={{
                     width: "100%",
-                    padding: "12px 14px",
+                    padding: "8px 12px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -1788,7 +1788,7 @@ function TradingContent() {
                   onClick={() => setClosedTradesOpen(!closedTradesOpen)}
                   style={{
                     width: "100%",
-                    padding: "12px 14px",
+                    padding: "8px 12px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
@@ -1971,7 +1971,7 @@ function TradingContent() {
                 onClick={() => setAutoOpenExpanded(!autoOpenExpanded)}
                 style={{
                   width: "100%",
-                  padding: "12px 14px",
+                  padding: "8px 12px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -2017,7 +2017,7 @@ function TradingContent() {
                 onClick={() => setAutoClosedExpanded(!autoClosedExpanded)}
                 style={{
                   width: "100%",
-                  padding: "12px 14px",
+                  padding: "8px 12px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",

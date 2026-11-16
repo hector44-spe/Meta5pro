@@ -617,16 +617,6 @@ export default function SignalPage() {
                 }}
               >
                 <p>Signals</p>
-                {isAdmin && (
-                  <button
-                    type="button"
-                    className="admin_add_button"
-                    onClick={handleOpenAddModal}
-                  >
-                    <Plus size={16} />
-                    <span>Add signal</span>
-                  </button>
-                )}
               </div>
 
               <div className="signals-cards-grid">
@@ -645,18 +635,9 @@ export default function SignalPage() {
 
                   return (
                     <div key={signal.id} className="signal_card">
-                      {/* Card Top Title & Admin Edit */}
+                      {/* Card Top Title */}
                       <div className="signal_card_top">
                         <p className="signal_title">{signal.title}</p>
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            className="admin_edit_link"
-                            onClick={() => handleOpenEditModal(signal)}
-                          >
-                            Edit
-                          </button>
-                        )}
                       </div>
 
                       {/* Card Details */}
@@ -906,96 +887,6 @@ export default function SignalPage() {
         </div>
       </div>
 
-      {/* ===================== ADMIN EDIT SIGNAL MODAL (Matches Image 6) ===================== */}
-      {(editingSignal || isCreatingSignal) && (
-        <div
-          className="admin_edit_modal_overlay"
-          onClick={() => {
-            setEditingSignal(null);
-            setIsCreatingSignal(false);
-          }}
-        >
-          <div
-            className="admin_edit_modal_dialog"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="admin_edit_modal_header">
-              <h3>{isCreatingSignal ? "Add signal" : "Edit signal"}</h3>
-              <button
-                type="button"
-                className="close_btn"
-                onClick={() => {
-                  setEditingSignal(null);
-                  setIsCreatingSignal(false);
-                }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* Signal name */}
-            <div className="admin_form_group">
-              <label>Signal name:</label>
-              <div className="admin_input_row">
-                <input
-                  type="text"
-                  value={signalName}
-                  onChange={(e) => setSignalName(e.target.value)}
-                  placeholder="Signal name"
-                />
-              </div>
-            </div>
-
-            {/* Signal price */}
-            <div className="admin_form_group">
-              <label>Signal price:</label>
-              <div className="admin_input_row">
-                <input
-                  type="number"
-                  value={signalPrice}
-                  onChange={(e) => setSignalPrice(e.target.value)}
-                />
-                <span className="suffix">USD</span>
-              </div>
-            </div>
-
-            {/* Signal strength */}
-            <div className="admin_form_group">
-              <label>Signal strength:</label>
-              <div className="admin_input_row">
-                <input
-                  type="number"
-                  value={signalStrength}
-                  onChange={(e) => setSignalStrength(e.target.value)}
-                />
-                <span className="suffix">%</span>
-              </div>
-            </div>
-
-            {/* Modal Actions (Matches Image 6) */}
-            <div className="admin_modal_actions">
-              {!isCreatingSignal && (
-                <button
-                  type="button"
-                  className="btn_delete"
-                  disabled={savingSignal}
-                  onClick={handleDeleteSignal}
-                >
-                  Delete signal
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn_save"
-                disabled={savingSignal}
-                onClick={handleSaveSignal}
-              >
-                {savingSignal ? <Loader2 size={16} className="animate-spin" /> : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Signal Fresh Deposit Modal */}
       <SignalDepositModal
         isOpen={Boolean(depositModalSignal)}

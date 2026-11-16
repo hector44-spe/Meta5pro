@@ -25,10 +25,10 @@ export default function WithdrawPage() {
   const [withdrawals, setWithdrawals] = useState<WithdrawalItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchWithdrawals = async () => {
+  const fetchWithdrawals = async (showLoading = true) => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/wallet");
+      if (showLoading) setLoading(true);
+      const res = await fetch("/api/wallet", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         const txs = (data.transactions || [])
@@ -52,12 +52,24 @@ export default function WithdrawPage() {
     } catch (e) {
       console.error("Failed to load withdrawals:", e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchWithdrawals();
+    fetchWithdrawals(true);
+
+    const handleRefresh = () => fetchWithdrawals(false);
+    window.addEventListener("balance-changed", handleRefresh);
+    window.addEventListener("focus", handleRefresh);
+
+    const timer = setInterval(() => fetchWithdrawals(false), 10_000);
+
+    return () => {
+      window.removeEventListener("balance-changed", handleRefresh);
+      window.removeEventListener("focus", handleRefresh);
+      clearInterval(timer);
+    };
   }, []);
 
   const filteredWithdrawals = withdrawals.filter((wd) => {

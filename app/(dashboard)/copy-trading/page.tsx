@@ -98,20 +98,8 @@ function ExpertCardItem({
             </div>
           </div>
 
-          {/* Edit button in top right of header row */}
-          {isAdmin && onEdit && (
-            <button
-              type="button"
-              className="expert_edit_link"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(expert);
-              }}
-              title="Edit this expert"
-            >
-              Edit
-            </button>
-          )}
+          {/* Followers row */}
+          </div>
         </div>
 
         {/* Bio */}
@@ -399,19 +387,6 @@ export default function CopyTradingPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-
-            {isAdmin && (
-              <button
-                className="btn_add_expert"
-                onClick={() => {
-                  setEditingExpert(null);
-                  setIsEditModalOpen(true);
-                }}
-              >
-                <Plus size={15} />
-                <span>Add expert</span>
-              </button>
-            )}
           </div>
 
           {loading ? (
@@ -676,32 +651,7 @@ export default function CopyTradingPage() {
         </div>
       )}
 
-      {/* Admin Edit Modal */}
-      {isEditModalOpen && (
-        <AdminEditExpertModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          expert={editingExpert}
-          onSaved={() => {
-            showNotification("success", "Expert saved successfully!");
-            fetchExperts();
-          }}
-          onRequestDelete={(expert) => {
-            setDeletingExpert(expert);
-          }}
-        />
-      )}
-
-      {/* Custom Delete Confirmation Modal (Replaces Browser Confirm: Matches Image 4) */}
-      {deletingExpert && (
-        <CustomDeleteConfirmModal
-          isOpen={Boolean(deletingExpert)}
-          expertName={deletingExpert.name}
-          loading={deleteLoading}
-          onConfirm={handleConfirmDelete}
-          onCancel={() => setDeletingExpert(null)}
-        />
-      )}
+      {/* View Details Drawer */}
     </div>
   );
 }

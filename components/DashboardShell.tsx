@@ -283,18 +283,23 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   // Keep balance and notifications fresh (e.g. after an admin approves a deposit)
   useEffect(() => {
     fetchNotifications();
-    const t = setInterval(() => {
-      fetchBalance();
-      fetchNotifications();
-    }, 60_000);
-    const onFocus = () => {
+    const handleRefresh = () => {
       fetchBalance();
       fetchNotifications();
     };
-    window.addEventListener("focus", onFocus);
+
+    const t = setInterval(handleRefresh, 12_000);
+    window.addEventListener("focus", handleRefresh);
+    window.addEventListener("deposit-submitted", handleRefresh);
+    window.addEventListener("balance-changed", handleRefresh);
+    window.addEventListener("notifications-updated", handleRefresh);
+
     return () => {
       clearInterval(t);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", handleRefresh);
+      window.removeEventListener("deposit-submitted", handleRefresh);
+      window.removeEventListener("balance-changed", handleRefresh);
+      window.removeEventListener("notifications-updated", handleRefresh);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -1844,7 +1849,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         <DepositModal
           isOpen={activeModal === "deposit"}
           onClose={() => setActiveModal(null)}
-          onSuccess={() => setActiveModal(null)}
+          onSuccess={() => {
+            setActiveModal(null);
+            fetchBalance();
+            fetchNotifications();
+          }}
         />
 
         {/* Stake & Yield Modal */}

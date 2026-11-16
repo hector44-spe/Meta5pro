@@ -1262,6 +1262,7 @@
     height: 44px !important;
     min-height: 44px !important;
     max-height: 44px !important;
+    flex: 0 0 auto !important;
   }
 }
 

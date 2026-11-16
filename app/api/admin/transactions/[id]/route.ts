@@ -78,7 +78,9 @@ export async function PATCH(
 
       const owner = await prisma.user.findUnique({ where: { id: tx.userId }, select: { email: true } });
       if (owner) {
-        await sendTransactionStatusEmail(owner.email, { type: tx.type, status, amount, currency: tx.currency });
+        void sendTransactionStatusEmail(owner.email, { type: tx.type, status, amount, currency: tx.currency }).catch((err) =>
+          console.error("Async email status error:", err)
+        );
       }
     }
 

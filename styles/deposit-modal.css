@@ -569,3 +569,25 @@
   font-size: 16px;
   font-weight: 700;
 }
+
+@media (max-width: 480px) {
+  .dm-backdrop {
+    padding: 8px !important;
+  }
+  .dm-card {
+    padding: 16px 14px !important;
+    border-radius: 12px !important;
+    max-height: 92vh !important;
+    overflow-y: auto !important;
+  }
+  .dm-title {
+    font-size: 16px !important;
+  }
+  .dm-input-row {
+    padding: 8px 10px !important;
+  }
+  .dm-qr-box {
+    width: 140px !important;
+    height: 140px !important;
+  }
+}

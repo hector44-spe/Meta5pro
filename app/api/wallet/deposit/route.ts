@@ -125,13 +125,16 @@ export async function POST(req: Request) {
       });
 
       const reference = transaction.id.slice(0, 8).toUpperCase();
-      await Promise.all([
-        notify(
-          session.userId,
-          "deposit",
-          "Deposit received",
-          `We received your deposit of ${fmtUnits(units, symbol)} (≈ ${fmtUsd(usdAmount)}). Reference ${reference}. It will be credited once confirmed.`,
-        ),
+      // Record internal in-app notification immediately in the database
+      await notify(
+        session.userId,
+        "deposit",
+        "Deposit received",
+        `We received your deposit of ${fmtUnits(units, symbol)} (≈ ${fmtUsd(usdAmount)}). Reference ${reference}. It will be credited once confirmed.`,
+      );
+
+      // Send emails asynchronously in the background so the user's submission finishes immediately without waiting for SMTP handshakes
+      void Promise.allSettled([
         sendDepositReceivedEmail(session.email, {
           reference,
           units,
@@ -148,7 +151,7 @@ export async function POST(req: Request) {
           hasReceipt: Boolean(receiptUrl),
           transactionId: transaction.id,
         }),
-      ]);
+      ]).catch((err) => console.error("Async deposit notification error:", err));
 
       return NextResponse.json({
         success: true,

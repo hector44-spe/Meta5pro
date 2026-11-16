@@ -267,9 +267,14 @@ export default function DashboardMarketsPage() {
                             )}
                           </div>
 
-                          <span className="markets-asset-symbol" style={{ fontWeight: 600, color: "#ffffff" }}>
-                            {asset.symbol}
-                          </span>
+                          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                            <span className="markets-asset-symbol" style={{ fontWeight: 600, color: "#ffffff" }}>
+                              {asset.symbol}
+                            </span>
+                            <span className="markets-mobile-subinfo">
+                              {asset.type}
+                            </span>
+                          </div>
                         </div>
                       </td>
 
@@ -280,7 +285,10 @@ export default function DashboardMarketsPage() {
 
                       {/* Current price (USD) */}
                       <td className="markets-price-cell" style={{ color: "rgba(255, 255, 255, 0.9)", fontWeight: 500 }}>
-                        {getLivePriceDisplay(asset)}
+                        <div className="markets-price-value">{getLivePriceDisplay(asset)}</div>
+                        <div className="markets-mobile-wallet">
+                          In wallet: {getWalletAmountDisplay(asset)}
+                        </div>
                       </td>
 
                       {/* In your wallet */}

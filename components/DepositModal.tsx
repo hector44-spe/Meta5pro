@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import "@/styles/deposit-modal.css";
 import { usePrices } from "@/lib/usePrices";
+import { compressScreenshot } from "@/lib/image-compress";
 
 export interface DepositAddressItem {
   id: string;
@@ -196,9 +197,10 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
     try {
       setIsSubmitting(true);
 
-      // 1. Upload screenshot
+      // 1. Compress screenshot client-side (if large) for instant upload
+      const fileToUpload = await compressScreenshot(proofFile);
       const formData = new FormData();
-      formData.append("file", proofFile);
+      formData.append("file", fileToUpload);
 
       const uploadRes = await fetch("/api/upload", {
         method: "POST",
@@ -228,6 +230,13 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
       const depositData = await depositRes.json();
       if (!depositRes.ok) {
         throw new Error(depositData.error || "Deposit recording failed");
+      }
+
+      // Immediately notify global dashboard listeners so history & badges update with zero delay
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("deposit-submitted", { detail: depositData }));
+        window.dispatchEvent(new Event("balance-changed"));
+        window.dispatchEvent(new Event("notifications-updated"));
       }
 
       setReceipt({
