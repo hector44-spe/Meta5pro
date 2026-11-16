@@ -89,7 +89,7 @@ export default function LanguagePicker() {
         position: "fixed",
         bottom: "20px",
         left: "20px",
-        zIndex: 9990,
+        zIndex: 1000002,
         fontFamily: "Arial, sans-serif",
       }}
     >
@@ -337,10 +337,10 @@ export default function LanguagePicker() {
                 height: "8px",
                 borderLeft: "2px solid #555",
                 borderBottom: "2px solid #555",
-                transform: open ? "rotate(135deg)" : "rotate(-45deg)",
+                transform: open ? "rotate(-45deg)" : "rotate(135deg)",
                 transition: "transform 0.2s",
                 marginLeft: "4px",
-                marginBottom: open ? "-2px" : "3px",
+                marginBottom: open ? "3px" : "-2px",
               }}
             />
           </div>

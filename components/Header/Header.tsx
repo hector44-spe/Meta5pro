@@ -116,12 +116,23 @@ export default function Header() {
           renderIcon: () => (
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill="currentColor"
+              fill="none"
               viewBox="0 0 24 24"
               width="18"
               height="18"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <path d="M8.5 7a1 1 0 0 0 0 2zm2 2a1 1 0 1 0 0-2zm-2 2a1 1 0 1 0 0 2zm2 2a1 1 0 1 0 0-2zm-2 2a1 1 0 1 0 0 2zm2 2a1 1 0 1 0 0-2zM3 19a1 1 0 1 0 0 2zm18 2a1 1 0 1 0 0-2zM5 20h1V5H4v15zM6 4v1h7V3H6zm8 1h-1v15h2V5zm0 5v1h4V9h-4zm5 1h-1v9h2v-9zM8.5 8v1h2V7h-2zm0 4v1h2v-2h-2zm0 4v1h2v-2h-2zM3 20v1h18v-2H3zm15-10v1h2a2 2 0 0 0-2-2zm-5-6v1h2a2 2 0 0 0-2-2zM5 5h1V3a2 2 0 0 0-2 2z" />
+              <path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16" />
+              <path d="M14 10h4a2 2 0 0 1 2 2v9" />
+              <path d="M2 21h20" />
+              <path d="M8 7h2" />
+              <path d="M8 11h2" />
+              <path d="M8 15h2" />
+              <path d="M17 14h1" />
+              <path d="M17 17h1" />
             </svg>
           ),
         },
@@ -183,14 +194,14 @@ export default function Header() {
               viewBox="0 0 24 24"
               width="18"
               height="18"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="1.5"
             >
-              <path
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                d="M12 17h.002m-2.627-6.875a2.625 2.625 0 1 1 3.601 2.438c-.512.345-.974.782-.974 1.437v1"
-              />
+              <circle cx="12" cy="12" r="9" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <path d="M12 17h.01" />
             </svg>
           ),
         },
@@ -275,15 +286,21 @@ export default function Header() {
         right: 0,
         width: "100%",
         zIndex: 9999,
-        backgroundColor: scrolled
+        backgroundColor: mobileOpen
+          ? "#000000"
+          : scrolled
           ? "rgba(5, 8, 11, 0.92)"
           : "rgba(5, 8, 11, 0.72)",
-        backdropFilter: "blur(16px)",
-        WebkitBackdropFilter: "blur(16px)",
-        borderBottom: scrolled
+        backdropFilter: mobileOpen ? "none" : "blur(16px)",
+        WebkitBackdropFilter: mobileOpen ? "none" : "blur(16px)",
+        borderBottom: mobileOpen
+          ? "none"
+          : scrolled
           ? "1px solid rgba(255, 255, 255, 0.1)"
           : "1px solid rgba(255, 255, 255, 0.05)",
-        boxShadow: scrolled
+        boxShadow: mobileOpen
+          ? "none"
+          : scrolled
           ? "0 10px 30px -10px rgba(0, 0, 0, 0.6)"
           : "none",
         transition: "background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
@@ -572,67 +589,79 @@ export default function Header() {
               </Link>
             </div>
           )}
-          {!mobileOpen && (
-            <Link
-              href="/login"
-              className="button-module__Q_cxDG__buttonContainer"
-              style={{
-                display: "inline-flex",
-                backgroundColor: "rgba(255, 255, 255, 0.08)",
-                color: "#fff",
-                padding: "8px 18px",
-                borderRadius: "9999px",
-                fontWeight: 500,
-                fontSize: "14px",
-                textDecoration: "none",
-                alignItems: "center",
-                justifyContent: "center",
-                border: "1px solid var(--color-outline)",
-              }}
-            >
-              Log in
-            </Link>
-          )}
 
-          {/* Mobile hamburger button */}
+          <Link
+            href="/login"
+            className="button-module__Q_cxDG__buttonContainer"
+            style={{
+              display: "inline-flex",
+              backgroundColor: "rgba(255, 255, 255, 0.08)",
+              color: "#fff",
+              padding: "7px 16px",
+              borderRadius: "9999px",
+              fontWeight: 500,
+              fontSize: "14px",
+              textDecoration: "none",
+              alignItems: "center",
+              justifyContent: "center",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            Log in
+          </Link>
+
+          {/* Mobile hamburger / close button */}
           <button
             type="button"
             className="mobile-menu-btn"
             onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle navigation"
+            aria-label={mobileOpen ? "Close navigation" : "Open navigation"}
             style={{
+              display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              background: mobileOpen
-                ? "rgba(255, 255, 255, 0.08)"
-                : "transparent",
+              width: "38px",
+              height: "38px",
+              minWidth: "38px",
+              borderRadius: "10px",
+              background: "rgba(255, 255, 255, 0.08)",
               border: "none",
               color: "#ffffff",
               cursor: "pointer",
+              padding: 0,
             }}
           >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              {mobileOpen ? (
-                <path d="M18 6L6 18M6 6l12 12" />
-              ) : (
+            {mobileOpen ? (
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M1 1L13 13M1 13L13 1" />
+              </svg>
+            ) : (
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+              >
                 <path d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
+              </svg>
+            )}
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer (exact replica of Meta Gold Image 6, no buttons) */}
+      {/* Mobile Drawer (exact replica of target screenshot) */}
       {mobileOpen && (
         <div
           style={{
@@ -641,152 +670,456 @@ export default function Header() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: "#050508",
-            padding: "16px 20px 48px",
-            zIndex: 1000000,
+            backgroundColor: "#000000",
+            padding: "16px 24px 96px 24px",
+            zIndex: 99998,
             overflowY: "auto",
+            WebkitOverflowScrolling: "touch",
           }}
         >
-          {navCategories.map((cat, idx) => (
-            <div
-              key={cat.title}
-              style={{ marginTop: idx === 0 ? "8px" : "24px" }}
+          {/* Explore Section */}
+          <div style={{ marginTop: "12px" }}>
+            <h3
+              style={{
+                color: "#ffffff",
+                fontSize: "20px",
+                fontWeight: 700,
+                fontFamily: "var(--font-inter), sans-serif",
+                letterSpacing: "-0.01em",
+                margin: "0 0 18px 0",
+              }}
             >
-              <h3
-                style={{
-                  color: "#ffffff",
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  fontFamily: "var(--font-mori), var(--font-inter), sans-serif",
-                  letterSpacing: "-0.01em",
-                  marginBottom: "14px",
-                }}
-              >
-                {cat.title}
-              </h3>
-              <div
+              Explore
+            </h3>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "18px",
+              }}
+            >
+              {/* Staking */}
+              <Link
+                href="/staking"
+                onClick={() => setMobileOpen(false)}
                 style={{
                   display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
+                  alignItems: "center",
+                  gap: "14px",
+                  textDecoration: "none",
+                  color: "inherit",
+                  background: "transparent",
+                  padding: "4px 0",
                 }}
               >
-                {cat.links.map((link) => {
-                  const isActive = pathname === link.href;
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setMobileOpen(false)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "14px",
-                        padding: "14px 16px",
-                        borderRadius: "14px",
-                        background: isActive
-                          ? "rgba(45, 40, 80, 0.65)"
-                          : "rgba(255, 255, 255, 0.035)",
-                        border: isActive
-                          ? "1px solid rgba(168, 153, 255, 0.35)"
-                          : "1px solid rgba(255, 255, 255, 0.05)",
-                        color: "#fff",
-                        textDecoration: "none",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "42px",
-                          height: "42px",
-                          minWidth: "42px",
-                          borderRadius: "10px",
-                          background: "rgba(255, 255, 255, 0.06)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#ffffff",
-                        }}
-                      >
-                        {link.renderIcon()}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: "15px",
-                            fontWeight: 600,
-                            color: "#ffffff",
-                            lineHeight: "1.25",
-                          }}
-                        >
-                          {link.title}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            color: "var(--color-text-secondary)",
-                            lineHeight: "1.35",
-                            marginTop: "2px",
-                          }}
-                        >
-                          {link.description}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    minWidth: "40px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "rgba(255, 255, 255, 0.85)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <ellipse cx="12" cy="7" rx="8" ry="3" />
+                    <path d="M4 7v5c0 1.66 3.58 3 8 3s8-1.34 8-3V7" />
+                    <path d="M4 12v5c0 1.66 3.58 3 8 3s8-1.34 8-3v-5" />
+                  </svg>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      lineHeight: "1.25",
+                    }}
+                  >
+                    Staking
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#8e8e93",
+                      lineHeight: "1.3",
+                      marginTop: "3px",
+                    }}
+                  >
+                    Stake your tokens and earn
+                  </div>
+                </div>
+              </Link>
 
-          {/* Mobile Drawer CTA Buttons */}
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-              marginTop: "32px",
-              paddingTop: "24px",
-              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-            }}
-          >
-            <Link
-              href="/register"
-              onClick={() => setMobileOpen(false)}
+              {/* Markets */}
+              <Link
+                href="/markets"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  textDecoration: "none",
+                  color: "inherit",
+                  background: "transparent",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    minWidth: "40px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "rgba(255, 255, 255, 0.85)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5H7" />
+                  </svg>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      lineHeight: "1.25",
+                    }}
+                  >
+                    Markets
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#8e8e93",
+                      lineHeight: "1.3",
+                      marginTop: "3px",
+                    }}
+                  >
+                    Explore the markets
+                  </div>
+                </div>
+              </Link>
+
+              {/* Real Estate */}
+              <Link
+                href="/real-estate"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  textDecoration: "none",
+                  color: "inherit",
+                  background: "transparent",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    minWidth: "40px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "rgba(255, 255, 255, 0.85)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16" />
+                    <path d="M14 10h4a2 2 0 0 1 2 2v9" />
+                    <path d="M2 21h20" />
+                    <path d="M8 7h2" />
+                    <path d="M8 11h2" />
+                    <path d="M8 15h2" />
+                    <path d="M17 14h1" />
+                    <path d="M17 17h1" />
+                  </svg>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      lineHeight: "1.25",
+                    }}
+                  >
+                    Real Estate
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#8e8e93",
+                      lineHeight: "1.3",
+                      marginTop: "3px",
+                    }}
+                  >
+                    Invest in real estate
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
+
+          {/* Company Section */}
+          <div style={{ marginTop: "32px" }}>
+            <h3
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "var(--color-accent)",
-                color: "#000",
-                padding: "14px 24px",
-                borderRadius: "9999px",
-                fontWeight: 600,
-                fontSize: "15px",
-                textDecoration: "none",
+                color: "#ffffff",
+                fontSize: "20px",
+                fontWeight: 700,
+                fontFamily: "var(--font-inter), sans-serif",
+                letterSpacing: "-0.01em",
+                margin: "0 0 18px 0",
               }}
             >
-              Get started
-            </Link>
-            <Link
-              href="/login"
-              onClick={() => setMobileOpen(false)}
+              Company
+            </h3>
+            <div
               style={{
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                backgroundColor: "rgba(255, 255, 255, 0.08)",
-                color: "#fff",
-                padding: "14px 24px",
-                borderRadius: "9999px",
-                fontWeight: 500,
-                fontSize: "15px",
-                textDecoration: "none",
-                border: "1px solid var(--color-outline)",
+                flexDirection: "column",
+                gap: "18px",
               }}
             >
-              Log in
-            </Link>
+              {/* About us */}
+              <Link
+                href="/about"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  textDecoration: "none",
+                  color: "inherit",
+                  background: "transparent",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    minWidth: "40px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "rgba(255, 255, 255, 0.85)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 8h.01" />
+                    <path d="M12 12v4" />
+                  </svg>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      lineHeight: "1.25",
+                    }}
+                  >
+                    About us
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#8e8e93",
+                      lineHeight: "1.3",
+                      marginTop: "3px",
+                    }}
+                  >
+                    About Meta Gold 5
+                  </div>
+                </div>
+              </Link>
+
+              {/* Contact */}
+              <Link
+                href="/contact"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  textDecoration: "none",
+                  color: "inherit",
+                  background: "transparent",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    minWidth: "40px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "rgba(255, 255, 255, 0.85)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  </svg>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      lineHeight: "1.25",
+                    }}
+                  >
+                    Contact
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#8e8e93",
+                      lineHeight: "1.3",
+                      marginTop: "3px",
+                    }}
+                  >
+                    Send us a message
+                  </div>
+                </div>
+              </Link>
+
+              {/* Help center */}
+              <Link
+                href="/help-center"
+                onClick={() => setMobileOpen(false)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  textDecoration: "none",
+                  color: "inherit",
+                  background: "transparent",
+                  padding: "4px 0",
+                }}
+              >
+                <div
+                  style={{
+                    width: "40px",
+                    height: "40px",
+                    minWidth: "40px",
+                    borderRadius: "10px",
+                    backgroundColor: "rgba(255, 255, 255, 0.08)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "rgba(255, 255, 255, 0.85)",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                    <path d="M12 17h.01" />
+                  </svg>
+                </div>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      color: "#ffffff",
+                      lineHeight: "1.25",
+                    }}
+                  >
+                    Help center
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      color: "#8e8e93",
+                      lineHeight: "1.3",
+                      marginTop: "3px",
+                    }}
+                  >
+                    Frequently asked questions
+                  </div>
+                </div>
+              </Link>
+            </div>
           </div>
         </div>
       )}

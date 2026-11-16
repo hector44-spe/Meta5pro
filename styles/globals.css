@@ -236,9 +236,7 @@ a {
 }
 
 @media screen and (max-width: 480px) {
-  .header-module__BjIITG__buttonsWrapper a:nth-of-type(2) {
-    display: none !important;
-  }
+  /* Keep buttons visible as per mobile navbar design */
 }
 
 /* Hide marketing hamburger menu on wider screens / desktop */
