@@ -46,8 +46,8 @@ export default function CardRequestsSection({
   const [filterType, setFilterType] = useState<string>("ALL");
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
-  const loadCards = async () => {
-    setLoading(true);
+  const loadCards = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/cards", {
         cache: "no-store",
@@ -60,10 +60,10 @@ export default function CardRequestsSection({
         const data = await res.json();
         setCards(data.cards || []);
       } else {
-        flash("error", "Failed to load card requests.");
+        if (!silent) flash("error", "Failed to load card requests.");
       }
     } catch {
-      flash("error", "Network error while loading card requests.");
+      if (!silent) flash("error", "Network error while loading card requests.");
     } finally {
       setLoading(false);
     }
@@ -73,7 +73,7 @@ export default function CardRequestsSection({
     loadCards();
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
-        loadCards();
+        loadCards(true);
       }
     };
     window.addEventListener("focus", handleFocus);

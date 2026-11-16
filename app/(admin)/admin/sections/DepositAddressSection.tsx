@@ -159,8 +159,8 @@ export default function DepositAddressSection({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/settings/addresses", {
         cache: "no-store",
@@ -175,10 +175,10 @@ export default function DepositAddressSection({
         setSignalAddresses(data.signalAddresses || []);
         setUseSameAddress(!!data.useSameAddressForSignals);
       } else {
-        flash("error", "Failed to load deposit addresses.");
+        if (!silent) flash("error", "Failed to load deposit addresses.");
       }
     } catch {
-      flash("error", "Network error while loading addresses.");
+      if (!silent) flash("error", "Network error while loading addresses.");
     } finally {
       setLoading(false);
     }
@@ -188,7 +188,7 @@ export default function DepositAddressSection({
     loadData();
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
-        loadData();
+        loadData(true);
       }
     };
     window.addEventListener("focus", handleFocus);

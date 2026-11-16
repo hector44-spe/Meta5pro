@@ -106,8 +106,10 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
   padding: 0 14px;
-  height: 44px;
-  flex: 1;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  flex: 1 1 auto;
   box-sizing: border-box;
 }
 
@@ -149,12 +151,23 @@
 
 @media screen and (max-width: 520px) {
   .copy_trading_actions_row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    height: auto !important;
+  }
+  .copy_trading_search_box {
+    width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    flex: none !important;
   }
   .btn_add_expert {
-    width: 100%;
+    width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
   }
 }
 

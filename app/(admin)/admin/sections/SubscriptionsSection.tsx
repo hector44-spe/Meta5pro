@@ -52,8 +52,8 @@ export default function SubscriptionsSection({
   const [submitting, setSubmitting] = useState(false);
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/subscriptions", {
         cache: "no-store",
@@ -67,10 +67,10 @@ export default function SubscriptionsSection({
         setInvestments(data.investments || []);
         setPlans(data.plans || []);
       } else {
-        flash("error", "Failed to load subscription data.");
+        if (!silent) flash("error", "Failed to load subscription data.");
       }
     } catch {
-      flash("error", "Network error while loading subscriptions.");
+      if (!silent) flash("error", "Network error while loading subscriptions.");
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function SubscriptionsSection({
     loadData();
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
-        loadData();
+        loadData(true);
       }
     };
     window.addEventListener("focus", handleFocus);

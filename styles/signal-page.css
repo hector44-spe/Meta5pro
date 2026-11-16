@@ -81,15 +81,21 @@
 
 @media screen and (max-width: 768px) {
   .signal-page-wrapper {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: auto !important;
+    padding-bottom: max(160px, env(safe-area-inset-bottom, 32px)) !important;
   }
   .signal-content-card {
-    padding: 12px 10px 140px 10px !important;
+    padding: 12px 10px 40px 10px !important;
     border-radius: 10px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+    overflow: visible !important;
+    overflow-y: visible !important;
+    height: auto !important;
+    min-height: unset !important;
   }
   .signal_top {
     grid-template-columns: 1fr !important;

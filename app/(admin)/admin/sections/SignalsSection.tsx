@@ -36,8 +36,8 @@ export default function SignalsSection({
   const [submitting, setSubmitting] = useState(false);
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/signals", {
         cache: "no-store",
@@ -51,10 +51,10 @@ export default function SignalsSection({
         setPurchases(data.purchases || []);
         setSignals(data.signals || []);
       } else {
-        flash("error", "Failed to load signals data.");
+        if (!silent) flash("error", "Failed to load signals data.");
       }
     } catch {
-      flash("error", "Network error while loading signals.");
+      if (!silent) flash("error", "Network error while loading signals.");
     } finally {
       setLoading(false);
     }
@@ -64,7 +64,7 @@ export default function SignalsSection({
     loadData();
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
-        loadData();
+        loadData(true);
       }
     };
     window.addEventListener("focus", handleFocus);

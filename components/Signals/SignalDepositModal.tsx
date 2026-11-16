@@ -638,20 +638,22 @@ export default function SignalDepositModal({
                 </div>
               )}
 
-              <button
-                type="submit"
-                className="dm-primary-btn"
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 size={16} className="animate-spin" />
-                    <span>Submitting proof...</span>
-                  </>
-                ) : (
-                  "I have made this deposit"
-                )}
-              </button>
+              <div className="dm-action-footer">
+                <button
+                  type="submit"
+                  className="dm-primary-btn"
+                  disabled={submitting}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>Submitting proof...</span>
+                    </>
+                  ) : (
+                    "I have made this deposit"
+                  )}
+                </button>
+              </div>
             </form>
           </div>
         )}

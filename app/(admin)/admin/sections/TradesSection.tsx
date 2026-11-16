@@ -63,8 +63,8 @@ export default function TradesSection({
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
   const [notification, setNotification] = useState<CustomNotificationState | null>(null);
 
-  const loadTrades = async () => {
-    setLoading(true);
+  const loadTrades = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/trades", {
         cache: "no-store",
@@ -77,10 +77,10 @@ export default function TradesSection({
         const data = await res.json();
         setTrades(data.positions || []);
       } else {
-        flash("error", "Failed to load trades.");
+        if (!silent) flash("error", "Failed to load trades.");
       }
     } catch {
-      flash("error", "Network error while loading trades.");
+      if (!silent) flash("error", "Network error while loading trades.");
     } finally {
       setLoading(false);
     }
@@ -90,7 +90,7 @@ export default function TradesSection({
     loadTrades();
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
-        loadTrades();
+        loadTrades(true);
       }
     };
     window.addEventListener("focus", handleFocus);
@@ -378,40 +378,40 @@ export default function TradesSection({
         </div>
 
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "1060px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "920px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "200px" }}>User</th>
-                <th style={{ width: "110px" }}>Symbol</th>
-                <th style={{ width: "75px" }}>Type</th>
-                <th className={styles.right} style={{ width: "120px" }}>Invested Amount</th>
-                <th className={styles.right} style={{ width: "110px" }}>Entry Price</th>
-                <th className={styles.right} style={{ width: "65px" }}>Lev.</th>
-                <th className={styles.right} style={{ width: "110px" }}>PnL</th>
-                <th style={{ width: "85px" }}>Status</th>
-                <th style={{ width: "125px" }}>Date</th>
-                <th style={{ width: "140px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "160px" }}>User</th>
+                <th style={{ width: "90px" }}>Symbol</th>
+                <th style={{ width: "65px" }}>Type</th>
+                <th className={styles.right} style={{ width: "100px" }}>Invested Amount</th>
+                <th className={styles.right} style={{ width: "90px" }}>Entry Price</th>
+                <th className={styles.right} style={{ width: "50px" }}>Lev.</th>
+                <th className={styles.right} style={{ width: "90px" }}>PnL</th>
+                <th style={{ width: "75px" }}>Status</th>
+                <th style={{ width: "100px" }}>Date</th>
+                <th style={{ width: "100px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ minWidth: "200px" }}>
+                    <td style={{ width: "160px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 130 }} />
-                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                        <div className={styles.skeletonCell} style={{ width: 110 }} />
+                        <div className={styles.skeletonCell} style={{ width: 75 }} />
                       </div>
                     </td>
-                    <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td style={{ minWidth: "75px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td className={styles.right} style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "65px" }}><div className={styles.skeletonCell} style={{ width: 35, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "85px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td style={{ minWidth: "140px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 80, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td style={{ width: "65px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
+                    <td className={styles.right} style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "50px" }}><div className={styles.skeletonCell} style={{ width: 30, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "75px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                    <td style={{ width: "100px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredTrades.length === 0 ? (

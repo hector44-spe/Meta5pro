@@ -175,6 +175,8 @@ function AdminContent() {
     if (urlSection && validSections.includes(urlSection)) return urlSection;
     if (typeof window !== "undefined") {
       try {
+        const u = new URLSearchParams(window.location.search).get("section") as Section;
+        if (u && validSections.includes(u)) return u;
         const saved = localStorage.getItem("admin_active_section") as Section;
         if (saved && validSections.includes(saved)) return saved;
       } catch {}
@@ -225,8 +227,8 @@ function AdminContent() {
     window.setTimeout(() => setToast(null), 3500);
   }, []);
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
+  const loadAll = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const fetchOpts: RequestInit = {
         cache: "no-store",
@@ -246,18 +248,21 @@ function AdminContent() {
       if (addrRes.ok) setAddresses((await addrRes.json()).addresses || []);
       if (meRes.ok) setAdminEmail((await meRes.json()).user?.email || "");
     } catch {
-      flash("error", "Could not load data. Check your connection and refresh.");
+      if (!silent) flash("error", "Could not load data. Check your connection and refresh.");
     } finally {
       setLoading(false);
     }
   }, [flash]);
 
-  // Re-fetch whenever section changes or window gets focus so data is ALWAYS fresh immediately on entry
+  // Re-fetch whenever section changes or window gets focus (silent so no UI flash occurs)
   useEffect(() => {
-    loadAll();
+    // Only show full skeleton loader on very first load before transactions/users are loaded
+    const isFirstLoad = transactions.length === 0 && users.length === 0;
+    loadAll(!isFirstLoad);
+
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
-        loadAll();
+        loadAll(true);
       }
     };
     window.addEventListener("focus", handleFocus);
@@ -405,7 +410,7 @@ function AdminContent() {
             <ArrowLeft size={15} />
             <span className={styles.hideSm}>Back to Panel</span>
           </Link>
-          <button type="button" className={styles.btnGhost} onClick={loadAll} disabled={loading}>
+          <button type="button" className={styles.btnGhost} onClick={() => loadAll(false)} disabled={loading}>
             <RefreshCw size={15} className={loading ? styles.spin : ""} />
             <span className={styles.hideSm}>Refresh</span>
           </button>
@@ -459,7 +464,7 @@ function AdminContent() {
             <UsersSection
               loading={loading}
               users={users}
-              onChanged={loadAll}
+              onChanged={() => loadAll(false)}
               flash={flash}
             />
           )}

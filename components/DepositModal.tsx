@@ -541,14 +541,16 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
               </div>
             </div>
 
-            <button
-              type="button"
-              className="dm-primary-btn"
-              disabled={!selectedToken || !selectedNetwork || !activeAddress}
-              onClick={() => setStep("CONFIRMATION")}
-            >
-              Continue
-            </button>
+            <div className="dm-action-footer">
+              <button
+                type="button"
+                className="dm-primary-btn"
+                disabled={!selectedToken || !selectedNetwork || !activeAddress}
+                onClick={() => setStep("CONFIRMATION")}
+              >
+                Continue
+              </button>
+            </div>
           </div>
         )}
 
@@ -677,21 +679,23 @@ export default function DepositModal({ isOpen, onClose, onSuccess }: DepositModa
               <span className="dm-total-amount">{calculateUSDValue()}</span>
             </div>
 
-            <button
-              type="submit"
-              className="dm-primary-btn"
-              disabled={isSubmitting || !proofFile}
-              style={{ backgroundColor: isSubmitting ? "#2563eb" : "#4b5563" }}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Submitting proof...</span>
-                </>
-              ) : (
-                "I have made this deposit"
-              )}
-            </button>
+            <div className="dm-action-footer">
+              <button
+                type="submit"
+                className="dm-primary-btn"
+                disabled={isSubmitting || !proofFile}
+                style={{ backgroundColor: isSubmitting ? "#2563eb" : "#4b5563" }}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Submitting proof...</span>
+                  </>
+                ) : (
+                  "I have made this deposit"
+                )}
+              </button>
+            </div>
           </form>
         )}
 

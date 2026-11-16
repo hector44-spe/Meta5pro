@@ -500,6 +500,22 @@
   position: relative;
   clear: both;
   min-height: 160px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) rgba(255, 255, 255, 0.02);
+}
+.tableWrap::-webkit-scrollbar {
+  height: 6px;
+}
+.tableWrap::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+.tableWrap::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+}
+.tableWrap::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 .table {
   width: 100%;

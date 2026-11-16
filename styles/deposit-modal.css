@@ -573,18 +573,31 @@
   font-weight: 700;
 }
 
+.dm-action-footer {
+  margin-top: 16px;
+  position: -webkit-sticky;
+  position: sticky;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(20, 23, 29, 0) 0%, rgba(20, 23, 29, 0.95) 20%, #14171d 100%);
+  padding-top: 10px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom, 12px));
+  z-index: 10;
+}
+
 @media (max-width: 480px) {
   .dm-backdrop {
-    padding: 10px 8px !important;
+    padding: 8px 6px !important;
     align-items: flex-start !important;
+    overscroll-behavior-y: contain !important;
   }
   .dm-card {
-    padding: 16px 14px 22px !important;
+    padding: 16px 14px max(24px, env(safe-area-inset-bottom, 20px) + 16px) !important;
     border-radius: 14px !important;
-    max-height: calc(100dvh - 20px) !important;
+    max-height: min(90dvh, calc(100dvh - 32px)) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    margin: auto 0 !important;
+    overscroll-behavior-y: contain !important;
+    margin: 8px auto !important;
     box-sizing: border-box !important;
   }
   .dm-title {
@@ -619,5 +632,12 @@
   .dm-qr-box {
     width: 130px !important;
     height: 130px !important;
+  }
+  .dm-action-footer {
+    position: -webkit-sticky !important;
+    position: sticky !important;
+    bottom: -10px !important;
+    margin-top: 12px !important;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 12px)) !important;
   }
 }

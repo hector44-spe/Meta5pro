@@ -43,8 +43,8 @@ export default function ExpertsSection({
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
   const [notification, setNotification] = useState<CustomNotificationState | null>(null);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch("/api/admin/experts", {
         cache: "no-store",
@@ -58,10 +58,10 @@ export default function ExpertsSection({
         setCopiers(data.copiers || []);
         setExperts(data.experts || []);
       } else {
-        flash("error", "Failed to load experts data.");
+        if (!silent) flash("error", "Failed to load experts data.");
       }
     } catch {
-      flash("error", "Network error while loading experts.");
+      if (!silent) flash("error", "Network error while loading experts.");
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ export default function ExpertsSection({
     loadData();
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
-        loadData();
+        loadData(true);
       }
     };
     window.addEventListener("focus", handleFocus);
@@ -236,34 +236,34 @@ export default function ExpertsSection({
         </div>
 
         <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
-          <table className={styles.table} style={{ minWidth: "960px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "780px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "230px" }}>User</th>
-                <th className={styles.right} style={{ width: "130px" }}>Main Balance</th>
-                <th style={{ width: "160px" }}>Copied Expert</th>
-                <th className={styles.right} style={{ width: "120px" }}>Min. Startup</th>
-                <th className={styles.right} style={{ width: "110px" }}>Profit Share</th>
-                <th style={{ width: "100px" }}>Status</th>
-                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "180px" }}>User</th>
+                <th className={styles.right} style={{ width: "110px" }}>Main Balance</th>
+                <th style={{ width: "130px" }}>Copied Expert</th>
+                <th className={styles.right} style={{ width: "100px" }}>Min. Startup</th>
+                <th className={styles.right} style={{ width: "90px" }}>Profit Share</th>
+                <th style={{ width: "80px" }}>Status</th>
+                <th style={{ width: "90px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <tr key={i}>
-                    <td>
+                    <td style={{ width: "180px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 130 }} />
-                        <div className={styles.skeletonCell} style={{ width: 90 }} />
+                        <div className={styles.skeletonCell} style={{ width: 120 }} />
+                        <div className={styles.skeletonCell} style={{ width: 80 }} />
                       </div>
                     </td>
-                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 100 }} /></td>
-                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
-                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 45, marginLeft: "auto" }} /></td>
-                    <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "130px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
+                    <td className={styles.right} style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 40, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "80px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ width: "90px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredCopiers.length === 0 ? (
@@ -353,37 +353,37 @@ export default function ExpertsSection({
         </div>
 
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "860px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "720px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "220px" }}>Expert</th>
-                <th style={{ width: "100px" }}>Win Rate</th>
-                <th style={{ width: "110px" }}>Profit Share</th>
-                <th className={styles.right} style={{ width: "120px" }}>Min. Startup</th>
-                <th style={{ width: "110px" }}>Followers</th>
-                <th style={{ width: "85px" }}>Badge</th>
-                <th style={{ width: "115px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "180px" }}>Expert</th>
+                <th style={{ width: "80px" }}>Win Rate</th>
+                <th style={{ width: "90px" }}>Profit Share</th>
+                <th className={styles.right} style={{ width: "100px" }}>Min. Startup</th>
+                <th style={{ width: "85px" }}>Followers</th>
+                <th style={{ width: "75px" }}>Badge</th>
+                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ minWidth: "180px" }}>
+                    <td style={{ width: "180px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                         <div className={styles.skeletonCell} style={{ width: 32, height: 32, borderRadius: "50%" }} />
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          <div className={styles.skeletonCell} style={{ width: 110 }} />
-                          <div className={styles.skeletonCell} style={{ width: 70 }} />
+                          <div className={styles.skeletonCell} style={{ width: 90 }} />
+                          <div className={styles.skeletonCell} style={{ width: 60 }} />
                         </div>
                       </div>
                     </td>
-                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td style={{ minWidth: "85px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
-                    <td style={{ minWidth: "110px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "80px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
+                    <td style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
+                    <td className={styles.right} style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
+                    <td style={{ width: "75px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                    <td style={{ width: "110px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : experts.length === 0 ? (

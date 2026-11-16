@@ -414,8 +414,8 @@ export default function CopyTradingPage() {
           <h2 className="copy_section_title">Top experts</h2>
 
           {/* Search bar & Add Expert Button (Matches Image 3) */}
-          <div className="copy_trading_actions_row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-            <div className="copy_trading_search_box" style={{ flex: "1 1 240px" }}>
+          <div className="copy_trading_actions_row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", width: "100%" }}>
+            <div className="copy_trading_search_box" style={{ height: "44px", minHeight: "44px", maxHeight: "44px", width: "100%", flex: "1 1 240px", boxSizing: "border-box" }}>
               <Search size={16} color="rgba(255, 255, 255, 0.4)" />
               <input
                 type="text"
