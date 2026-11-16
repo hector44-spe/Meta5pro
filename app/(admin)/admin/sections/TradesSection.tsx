@@ -323,31 +323,22 @@ export default function TradesSection({
       {/* Trades Table */}
       <section className={styles.card}>
         <div className={styles.cardHead}>
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <h2>Trades & Orders</h2>
+            <span className={styles.countChip}>{trades.length}</span>
           </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", width: "100%", maxWidth: "560px" }}>
-            <div className={styles.searchBox} style={{ flex: "1 1 200px" }}>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            <div className={styles.searchBox} style={{ width: "220px", maxWidth: "260px" }}>
               <Search size={15} />
               <input
                 type="search"
-                placeholder="Filter by user or symbol..."
+                placeholder="Filter user or symbol..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
             <select
-              style={{
-                height: "40px",
-                padding: "0 12px",
-                borderRadius: 8,
-                border: "1px solid var(--a-border)",
-                background: "var(--a-raised)",
-                color: "#fff",
-                fontSize: "13px",
-                flex: "0 1 auto",
-                boxSizing: "border-box",
-              }}
+              className={styles.select}
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as any)}
             >
@@ -358,7 +349,7 @@ export default function TradesSection({
             <button
               type="button"
               className={styles.btnPrimarySm}
-              style={{ height: "40px", flexShrink: 0 }}
+              style={{ height: "40px" }}
               onClick={() =>
                 setEditTrade({
                   userId: users[0]?.id || "",
@@ -378,40 +369,40 @@ export default function TradesSection({
         </div>
 
         <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
-          <table className={styles.table} style={{ minWidth: "920px", tableLayout: "fixed" }}>
+          <table className={styles.table} style={{ minWidth: "870px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ width: "160px" }}>User</th>
-                <th style={{ width: "90px" }}>Symbol</th>
+                <th style={{ width: "140px" }}>User</th>
+                <th style={{ width: "85px" }}>Symbol</th>
                 <th style={{ width: "65px" }}>Type</th>
-                <th className={styles.right} style={{ width: "100px" }}>Invested Amount</th>
+                <th className={styles.right} style={{ width: "95px" }}>Invested Amount</th>
                 <th className={styles.right} style={{ width: "90px" }}>Entry Price</th>
                 <th className={styles.right} style={{ width: "50px" }}>Lev.</th>
-                <th className={styles.right} style={{ width: "90px" }}>PnL</th>
+                <th className={styles.right} style={{ width: "85px" }}>PnL</th>
                 <th style={{ width: "75px" }}>Status</th>
-                <th style={{ width: "100px" }}>Date</th>
-                <th style={{ width: "100px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "90px" }}>Date</th>
+                <th style={{ width: "95px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ width: "160px" }}>
+                    <td style={{ width: "140px" }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div className={styles.skeletonCell} style={{ width: 110 }} />
-                        <div className={styles.skeletonCell} style={{ width: 75 }} />
+                        <div className={styles.skeletonCell} style={{ width: 100 }} />
+                        <div className={styles.skeletonCell} style={{ width: 70 }} />
                       </div>
                     </td>
-                    <td style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
                     <td style={{ width: "65px" }}><div className={styles.skeletonCell} style={{ width: 40 }} /></td>
-                    <td className={styles.right} style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ width: "50px" }}><div className={styles.skeletonCell} style={{ width: 30, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "95px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
                     <td className={styles.right} style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "50px" }}><div className={styles.skeletonCell} style={{ width: 30, marginLeft: "auto" }} /></td>
+                    <td className={styles.right} style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 50, marginLeft: "auto" }} /></td>
                     <td style={{ width: "75px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
-                    <td style={{ width: "100px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td style={{ width: "95px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredTrades.length === 0 ? (
@@ -484,7 +475,7 @@ export default function TradesSection({
                     <td className={styles.faint} style={{ fontSize: "12px" }}>
                       {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td style={{ textAlign: "right" }}>
+                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                       <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
                         {t.status === "OPEN" && (
                           <button

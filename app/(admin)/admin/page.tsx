@@ -900,7 +900,7 @@ function TxTable({
             <th style={{ width: "90px" }}>Asset</th>
             <th style={{ width: "85px" }}>Proof</th>
             <th style={{ width: "125px" }}>Date</th>
-            <th style={{ width: "140px" }}>{onReview ? "Action" : "Status"}</th>
+            <th style={{ width: "140px" }} className={onReview ? styles.stickyActionTh : ""}>{onReview ? "Action" : "Status"}</th>
           </tr>
         </thead>
         <tbody>
@@ -919,7 +919,7 @@ function TxTable({
                 <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
                 <td style={{ minWidth: "85px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
                 <td style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
-                <td style={{ minWidth: "135px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                <td style={{ minWidth: "135px" }} className={onReview ? styles.stickyActionTd : ""}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
               </tr>
             ))
           ) : (
@@ -958,7 +958,7 @@ function TxTable({
                 )}
               </td>
               <td className={styles.muted}>{when(t.createdAt)}</td>
-              <td>
+              <td className={onReview ? styles.stickyActionTd : ""}>
                 {onReview && t.status === "PENDING" ? (
                   <div className={styles.rowActions}>
                     <button type="button" className={styles.btnSuccessSm} onClick={() => onReview(t, "approve")}>

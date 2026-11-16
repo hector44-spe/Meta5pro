@@ -34,6 +34,7 @@ export default function ExpertsSection({
   const [experts, setExperts] = useState<CopyExpertData[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"catalog" | "copiers">("catalog");
   const [submitting, setSubmitting] = useState(false);
 
   // Edit / Add modal
@@ -218,7 +219,61 @@ export default function ExpertsSection({
         </div>
       </div>
 
+      {/* Sub-Tabs Switcher */}
+      <div style={{ display: "flex", gap: "8px", alignItems: "center", borderBottom: "1px solid var(--a-border)", paddingBottom: "12px", width: "100%", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          onClick={() => setActiveTab("catalog")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "13.5px",
+            fontWeight: 600,
+            cursor: "pointer",
+            border: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            backgroundColor: activeTab === "catalog" ? "var(--a-accent)" : "var(--a-raised)",
+            color: activeTab === "catalog" ? "#ffffff" : "var(--a-muted)",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Award size={16} />
+          <span>Experts Catalog</span>
+          <span style={{ fontSize: "11.5px", padding: "1px 6px", borderRadius: "10px", background: activeTab === "catalog" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)" }}>
+            {experts.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("copiers")}
+          style={{
+            padding: "8px 16px",
+            borderRadius: "8px",
+            fontSize: "13.5px",
+            fontWeight: 600,
+            cursor: "pointer",
+            border: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            backgroundColor: activeTab === "copiers" ? "var(--a-accent)" : "var(--a-raised)",
+            color: activeTab === "copiers" ? "#ffffff" : "var(--a-muted)",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <Users size={16} />
+          <span>Active Copiers</span>
+          <span style={{ fontSize: "11.5px", padding: "1px 6px", borderRadius: "10px", background: activeTab === "copiers" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.06)" }}>
+            {copiers.length}
+          </span>
+        </button>
+      </div>
+
       {/* Copiers / Payments Table */}
+      {activeTab === "copiers" && (
       <section className={styles.card}>
         <div className={styles.cardHead}>
           <div>
@@ -325,12 +380,15 @@ export default function ExpertsSection({
           </table>
         </div>
       </section>
+      )}
 
-      {/* Available Experts Management */}
+      {/* Available Experts Management (Catalog) */}
+      {activeTab === "catalog" && (
       <section className={styles.card}>
         <div className={styles.cardHead}>
-          <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <h2>Experts Catalog</h2>
+            <span className={styles.countChip}>{experts.length}</span>
           </div>
           <button
             type="button"
@@ -362,7 +420,7 @@ export default function ExpertsSection({
                 <th className={styles.right} style={{ width: "100px" }}>Min. Startup</th>
                 <th style={{ width: "85px" }}>Followers</th>
                 <th style={{ width: "75px" }}>Badge</th>
-                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "110px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -383,7 +441,7 @@ export default function ExpertsSection({
                     <td className={styles.right} style={{ width: "100px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
                     <td style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
                     <td style={{ width: "75px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td style={{ width: "110px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "110px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : experts.length === 0 ? (
@@ -422,7 +480,7 @@ export default function ExpertsSection({
                       {exp.tickType || "none"}
                     </span>
                   </td>
-                  <td style={{ textAlign: "right" }}>
+                  <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
                     <div style={{ display: "inline-flex", gap: "6px" }}>
                       <button
                         type="button"
@@ -448,6 +506,7 @@ export default function ExpertsSection({
           </table>
         </div>
       </section>
+      )}
 
       {/* Edit / Add Modal */}
       {editModal && (

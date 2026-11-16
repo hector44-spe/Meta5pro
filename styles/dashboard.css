@@ -3530,7 +3530,7 @@
     transform: translateY(-50%);
   }
 
-  select {
+  .select_wrapper select {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
