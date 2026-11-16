@@ -71,10 +71,14 @@ export async function POST(req: Request) {
     if (!price) {
       return NextResponse.json({ error: `Live price for ${symbol} is unavailable. Please try again shortly.` }, { status: 503 });
     }
+    const depositSettings = await getSettings("deposit");
+    const minD = depositSettings.minDeposit || MIN_DEPOSIT_USD;
+    const maxD = depositSettings.maxDeposit || MAX_DEPOSIT_USD;
+
     const usdAmount = money(units * price);
-    if (usdAmount < MIN_DEPOSIT_USD || usdAmount > MAX_DEPOSIT_USD) {
+    if (usdAmount < minD || usdAmount > maxD) {
       return NextResponse.json(
-        { error: `Deposits must be between ${fmtUsd(MIN_DEPOSIT_USD)} and ${fmtUsd(MAX_DEPOSIT_USD)}. ${fmtUnits(units, symbol)} is about ${fmtUsd(usdAmount)}.` },
+        { error: `Deposits must be between ${fmtUsd(minD)} and ${fmtUsd(maxD)}. ${fmtUnits(units, symbol)} is about ${fmtUsd(usdAmount)}.` },
         { status: 400 },
       );
     }
