@@ -104,10 +104,29 @@ function AssetBrandIcon({ symbol, size = 28 }: { symbol: string; size?: number }
       </svg>
     );
   }
+  if (symbol === "GOLD" || symbol === "XAUUSD") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ borderRadius: "50%", flexShrink: 0 }}>
+        <circle cx="12" cy="12" r="12" fill="#EAB308" />
+        <path d="M7 16h10l-2-8H9L7 16z" fill="#713F12" />
+        <path d="M9 8l1.5-3h3L15 8H9z" fill="#FDE047" />
+      </svg>
+    );
+  }
+  if (symbol === "EURUSD" || symbol === "GBPUSD" || symbol === "USDJPY" || symbol === "AUDUSD") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ borderRadius: "50%", flexShrink: 0 }}>
+        <circle cx="12" cy="12" r="12" fill="#2563EB" />
+        <text x="12" y="15" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="800">FX</text>
+      </svg>
+    );
+  }
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" style={{ borderRadius: "50%", flexShrink: 0 }}>
-      <circle cx="12" cy="12" r="12" fill="#2d3748" />
-      <text x="12" y="16" textAnchor="middle" fill="#ffffff" fontSize="11" fontWeight="700">G</text>
+      <circle cx="12" cy="12" r="12" fill="#334155" />
+      <text x="12" y="15.5" textAnchor="middle" fill="#ffffff" fontSize="9" fontWeight="700">
+        {(symbol || "A").slice(0, 3).toUpperCase()}
+      </text>
     </svg>
   );
 }
@@ -138,6 +157,10 @@ export default function DashboardPage() {
     status: "OPEN" | "CLOSED";
     createdAt: string;
     closedAt: string | null;
+    duration?: string;
+    closeAt?: string | null;
+    customPnl?: number | null;
+    isCustomPnl?: boolean;
   }
 
   const livePrices: Record<string, number> = {
@@ -145,11 +168,24 @@ export default function DashboardPage() {
     ETH: 2710.0,
     SOL: 188.0,
     XRP: 1.48,
-    USDT: 1.0,
-    USDC: 1.0,
+    DOGE: 0.38,
+    BNB: 640.0,
+    ADA: 0.72,
+    EURUSD: 1.054,
+    GBPUSD: 1.261,
+    USDJPY: 154.2,
+    AUDUSD: 0.651,
     AAPL: 228.0,
     NVDA: 135.0,
     TSLA: 320.0,
+    MSFT: 425.0,
+    GOOGL: 175.0,
+    GOLD: 2680.0,
+    XAUUSD: 2680.0,
+    SILVER: 31.2,
+    OIL: 68.5,
+    USDT: 1.0,
+    USDC: 1.0,
   };
 
   const [mounted, setMounted] = useState(false);
@@ -195,18 +231,41 @@ export default function DashboardPage() {
     fetchPositions();
   }, []);
 
+  // Timer for countdown ticks
+  const [now, setNow] = useState<number>(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Poll positions every 4s if there are open positions to capture admin changes & auto-settlement
+  useEffect(() => {
+    const hasOpen = positions.some((p) => p.status === "OPEN");
+    if (!hasOpen) return;
+    const interval = setInterval(() => {
+      fetchPositions();
+      refreshBalance();
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [positions]);
+
   // Tabs & Controls state
   const [activeMobileTab, setActiveMobileTab] = useState<"assets" | "overview" | "categories">("assets");
   const [moveMoneyOpen, setMoveMoneyOpen] = useState(false);
   const [orderTab, setOrderTab] = useState<"buy" | "sell" | "convert">("buy");
   const [tradeType, setTradeType] = useState("Crypto");
+  const [isTradeTypeDropdownOpen, setIsTradeTypeDropdownOpen] = useState(false);
   const [amount, setAmount] = useState("100");
   const [currency, setCurrency] = useState("BTC");
+  const [isAssetDropdownOpen, setIsAssetDropdownOpen] = useState(false);
   const [leverage, setLeverage] = useState(5);
   const [useTpSl, setUseTpSl] = useState(false);
   const [stopLoss, setStopLoss] = useState("73913.647");
   const [takeProfit, setTakeProfit] = useState("73916.647");
   const [duration, setDuration] = useState("2 minutes");
+  const [isDurationDropdownOpen, setIsDurationDropdownOpen] = useState(false);
   const [myTradesTab, setMyTradesTab] = useState<"all" | "swaps" | "auto">("all");
   const [openTradesOpen, setOpenTradesOpen] = useState(false);
   const [closedTradesOpen, setClosedTradesOpen] = useState(false);
@@ -255,14 +314,81 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [holdings, prices]);
 
+  const ASSETS_BY_TYPE: Record<
+    string,
+    Array<{ symbol: string; name: string; price: number; icon?: string }>
+  > = {
+    Crypto: [
+      { symbol: "BTC", name: "Bitcoin", price: 86900.0, icon: "/dashboard_files/BTC.svg" },
+      { symbol: "ETH", name: "Ethereum", price: 2710.0, icon: "/dashboard_files/ETH.svg" },
+      { symbol: "SOL", name: "Solana", price: 188.0, icon: "/dashboard_files/SOL.svg" },
+      { symbol: "XRP", name: "Ripple", price: 1.48, icon: "/dashboard_files/XRP.svg" },
+      { symbol: "DOGE", name: "Dogecoin", price: 0.38 },
+      { symbol: "BNB", name: "Binance Coin", price: 640.0 },
+      { symbol: "ADA", name: "Cardano", price: 0.72 },
+    ],
+    Forex: [
+      { symbol: "EURUSD", name: "EUR / USD", price: 1.054 },
+      { symbol: "GBPUSD", name: "GBP / USD", price: 1.261 },
+      { symbol: "USDJPY", name: "USD / JPY", price: 154.2 },
+      { symbol: "AUDUSD", name: "AUD / USD", price: 0.651 },
+    ],
+    Stocks: [
+      { symbol: "AAPL", name: "Apple Inc.", price: 228.0 },
+      { symbol: "NVDA", name: "NVIDIA Corp.", price: 135.0 },
+      { symbol: "TSLA", name: "Tesla Inc.", price: 320.0 },
+      { symbol: "MSFT", name: "Microsoft Corp.", price: 425.0 },
+      { symbol: "GOOGL", name: "Alphabet Inc.", price: 175.0 },
+    ],
+    Commodities: [
+      { symbol: "GOLD", name: "Gold (XAU/USD)", price: 2680.0 },
+      { symbol: "SILVER", name: "Silver (XAG/USD)", price: 31.2 },
+      { symbol: "OIL", name: "Crude Oil (WTI)", price: 68.5 },
+    ],
+  };
+
+  const DURATION_OPTIONS = [
+    "1 minute",
+    "2 minutes",
+    "5 minutes",
+    "15 minutes",
+    "30 minutes",
+    "1 hour",
+    "4 hours",
+    "24 hours",
+  ];
+
+  const activeAssetPrice = useMemo(() => {
+    const sym = (currency || "BTC").toUpperCase();
+    if (prices[sym]) return prices[sym];
+    return livePrices[sym] ?? 100.0;
+  }, [prices, currency, livePrices]);
+
   // TradingView chart (official embed iframe, loaded lazily by the browser)
   // Live TradingView symbol for the asset selected in the trade panel.
-  // CRYPTO:<coin>USD is TradingView's aggregated index, available in every region.
-  const tvSymbol = (() => {
+  const tvSymbol = useMemo(() => {
     const c = (currency || "BTC").toUpperCase();
-    const stocks: Record<string, string> = { AAPL: "NASDAQ:AAPL", GOOGL: "NASDAQ:GOOGL", TSLA: "NASDAQ:TSLA", MSFT: "NASDAQ:MSFT" };
-    return stocks[c] ?? `CRYPTO:${c}USD`;
-  })();
+    const stocks: Record<string, string> = {
+      AAPL: "NASDAQ:AAPL",
+      GOOGL: "NASDAQ:GOOGL",
+      TSLA: "NASDAQ:TSLA",
+      MSFT: "NASDAQ:MSFT",
+      NVDA: "NASDAQ:NVDA",
+    };
+    const forex: Record<string, string> = {
+      EURUSD: "FX:EURUSD",
+      GBPUSD: "FX:GBPUSD",
+      USDJPY: "FX:USDJPY",
+      AUDUSD: "FX:AUDUSD",
+    };
+    const commodities: Record<string, string> = {
+      GOLD: "OANDA:XAUUSD",
+      XAUUSD: "OANDA:XAUUSD",
+      SILVER: "OANDA:XAGUSD",
+      OIL: "TVC:USOIL",
+    };
+    return stocks[c] ?? forex[c] ?? commodities[c] ?? `CRYPTO:${c}USD`;
+  }, [currency]);
 
   const tvChartUrl = useMemo(() => {
     const config = {
@@ -288,10 +414,14 @@ export default function DashboardPage() {
   // AI assistant for TP/SL
   const handleSetWithAi = () => {
     setUseTpSl(true);
-    const sl = (btcPrice * 0.985).toFixed(3);
-    const tp = (btcPrice * 1.035).toFixed(3);
-    setStopLoss(sl);
-    setTakeProfit(tp);
+    const base = activeAssetPrice || 100;
+    if (orderTab === "sell") {
+      setStopLoss((base * 1.025).toFixed(base < 10 ? 4 : 2));
+      setTakeProfit((base * 0.95).toFixed(base < 10 ? 4 : 2));
+    } else {
+      setStopLoss((base * 0.975).toFixed(base < 10 ? 4 : 2));
+      setTakeProfit((base * 1.05).toFixed(base < 10 ? 4 : 2));
+    }
   };
 
   const handleTradeAction = async () => {
@@ -312,6 +442,7 @@ export default function DashboardPage() {
           symbol: currency || "BTC",
           amount: parseFloat(amount) || 100,
           leverage: leverage || 5,
+          duration: duration || "2 minutes",
         }),
       });
       const data = await res.json();
@@ -1459,7 +1590,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Trade Type Dropdown */}
-          <div>
+          <div style={{ position: "relative" }}>
             <label
               style={{
                 fontSize: "12px",
@@ -1472,6 +1603,11 @@ export default function DashboardPage() {
               Trade type:
             </label>
             <div
+              onClick={() => {
+                setIsTradeTypeDropdownOpen(!isTradeTypeDropdownOpen);
+                setIsAssetDropdownOpen(false);
+                setIsDurationDropdownOpen(false);
+              }}
               style={{
                 width: "100%",
                 padding: "10px 12px",
@@ -1485,15 +1621,72 @@ export default function DashboardPage() {
                 fontSize: "13.5px",
                 fontWeight: 600,
                 boxSizing: "border-box",
+                cursor: "pointer",
               }}
             >
               <span>{tradeType}</span>
-              <ChevronDown size={15} color="rgba(255, 255, 255, 0.5)" />
+              <ChevronDown
+                size={15}
+                color="rgba(255, 255, 255, 0.5)"
+                style={{
+                  transform: isTradeTypeDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.15s",
+                }}
+              />
             </div>
+            {isTradeTypeDropdownOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 4px)",
+                  left: 0,
+                  right: 0,
+                  backgroundColor: "#16181d",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "8px",
+                  zIndex: 40,
+                  overflow: "hidden",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                }}
+              >
+                {["Crypto", "Forex", "Stocks", "Commodities"].map((t) => (
+                  <div
+                    key={t}
+                    onClick={() => {
+                      setTradeType(t);
+                      setIsTradeTypeDropdownOpen(false);
+                      const defaults: Record<string, string> = {
+                        Crypto: "BTC",
+                        Forex: "EURUSD",
+                        Stocks: "AAPL",
+                        Commodities: "GOLD",
+                      };
+                      if (defaults[t]) setCurrency(defaults[t]);
+                    }}
+                    style={{
+                      padding: "10px 14px",
+                      color: tradeType === t ? "#4763f0" : "#fff",
+                      fontSize: "13px",
+                      fontWeight: tradeType === t ? 700 : 500,
+                      cursor: "pointer",
+                      backgroundColor: tradeType === t ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (tradeType !== t) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (tradeType !== t) e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    {t}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Amount with Currency selector */}
-          <div>
+          <div style={{ position: "relative" }}>
             <label
               style={{
                 fontSize: "12px",
@@ -1533,6 +1726,11 @@ export default function DashboardPage() {
                 }}
               />
               <div
+                onClick={() => {
+                  setIsAssetDropdownOpen(!isAssetDropdownOpen);
+                  setIsTradeTypeDropdownOpen(false);
+                  setIsDurationDropdownOpen(false);
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -1546,15 +1744,74 @@ export default function DashboardPage() {
                   cursor: "pointer",
                 }}
               >
-                <img
-                  src="/dashboard_files/BTC.svg"
-                  alt="BTC"
-                  style={{ width: "15px", height: "15px" }}
-                />
+                <AssetBrandIcon symbol={currency} size={15} />
                 <span>{currency}</span>
-                <ChevronDown size={13} />
+                <ChevronDown
+                  size={13}
+                  style={{
+                    transform: isAssetDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.15s",
+                  }}
+                />
               </div>
             </div>
+
+            {/* Asset Selection Dropdown */}
+            {isAssetDropdownOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 4px)",
+                  right: 0,
+                  width: "220px",
+                  maxHeight: "260px",
+                  overflowY: "auto",
+                  backgroundColor: "#16181d",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "8px",
+                  zIndex: 40,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+                }}
+              >
+                {(ASSETS_BY_TYPE[tradeType] || ASSETS_BY_TYPE.Crypto).map((asset) => (
+                  <div
+                    key={asset.symbol}
+                    onClick={() => {
+                      setCurrency(asset.symbol);
+                      setIsAssetDropdownOpen(false);
+                    }}
+                    style={{
+                      padding: "8px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      color: currency === asset.symbol ? "#4763f0" : "#fff",
+                      fontSize: "12.5px",
+                      fontWeight: currency === asset.symbol ? 700 : 500,
+                      cursor: "pointer",
+                      backgroundColor: currency === asset.symbol ? "rgba(71, 99, 240, 0.12)" : "transparent",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currency !== asset.symbol) e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currency !== asset.symbol) e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <AssetBrandIcon symbol={asset.symbol} size={16} />
+                      <div>
+                        <div>{asset.symbol}</div>
+                        <div style={{ fontSize: "10.5px", color: "rgba(255,255,255,0.45)" }}>{asset.name}</div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.6)", fontFamily: "monospace" }}>
+                      ${asset.price.toLocaleString(undefined, { minimumFractionDigits: asset.price < 10 ? 3 : 2 })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* USD Balance & Current BTC Price */}
@@ -1582,7 +1839,7 @@ export default function DashboardPage() {
             >
               <span>Current {currency} price:</span>
               <span style={{ fontWeight: 600, color: "#01b28b" }}>
-                {btcPrice ? `$${btcPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "Loading…"}
+                ${activeAssetPrice ? activeAssetPrice.toLocaleString("en-US", { minimumFractionDigits: activeAssetPrice < 10 ? 3 : 2, maximumFractionDigits: activeAssetPrice < 10 ? 4 : 2 }) : "Loading…"}
               </span>
             </div>
           </div>

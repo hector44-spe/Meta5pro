@@ -24005,15 +24005,44 @@ body:has(.dashboard-page-container) {
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
-    margin-top: 6px !important;
+    margin-top: 4px !important;
+    padding-top: 10px !important;
     padding-bottom: 140px !important;
     box-sizing: border-box !important;
   }
 }
 
+.dashboard-header-left-titles {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  min-width: 0 !important;
+}
+
 @media screen and (max-width: 640px) {
   .dashboard-header-left-titles {
-    display: none !important;
+    display: flex !important;
+    font-size: 13px !important;
+    max-width: 130px !important;
+  }
+  .dashboard-header-left-titles span {
+    max-width: 95px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
+  }
+}
+
+@media screen and (max-width: 380px) {
+  .dashboard-header-left-titles span {
+    max-width: 75px !important;
   }
 }
 

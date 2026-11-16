@@ -565,13 +565,13 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <CandlestickChart size={22} />
               <span>Markets</span>
             </Link>
-            {pathname.startsWith("/admin") && isAdmin && (
+            {isAdmin && (
               <Link
                 href="/admin"
                 className={`dashboard-mobile-grid-item ${pathname.startsWith("/admin") ? "active" : ""}`}
                 onClick={() => setMobileSidebarOpen(false)}
               >
-                <Wrench size={22} />
+                <Wrench size={22} color={pathname.startsWith("/admin") ? "#4763f0" : "currentColor"} />
                 <span>Manage</span>
               </Link>
             )}
@@ -759,6 +759,44 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   />
                   <span>Settings</span>
                 </button>
+
+                {/* Admin Control Panel Manage Button (Admins Only) */}
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "9px 12px",
+                      borderRadius: "8px",
+                      backgroundColor:
+                        pathname.startsWith("/admin")
+                          ? "var(--color-control-active, rgba(255, 255, 255, 0.075))"
+                          : "transparent",
+                      boxShadow:
+                        pathname.startsWith("/admin")
+                          ? "inset 0 0 0 1px rgba(255, 255, 255, 0.05)"
+                          : "none",
+                      color:
+                        pathname.startsWith("/admin")
+                          ? "#ffffff"
+                          : "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
+                      fontSize: "13.5px",
+                      fontWeight: pathname.startsWith("/admin") ? 600 : 500,
+                      textDecoration: "none",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <Wrench
+                      size={17}
+                      strokeWidth={1.5}
+                      color={pathname.startsWith("/admin") ? "#4763f0" : "currentColor"}
+                    />
+                    <span>Manage</span>
+                  </Link>
+                )}
               </div>
 
               {/* Collapsible: Services */}
@@ -1099,39 +1137,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       <CandlestickChart size={15} strokeWidth={1.5} />
                       <span>Trade</span>
                     </Link>
-                    {pathname.startsWith("/admin") && isAdmin && (
-                      <Link
-                        href="/admin"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "10px",
-                          padding: "7px 10px",
-                          color: pathname.startsWith("/admin") ? "#ffffff" : "rgba(255, 255, 255, 0.65)",
-                          backgroundColor: pathname.startsWith("/admin") ? "rgba(255, 255, 255, 0.08)" : "transparent",
-                          fontSize: "12.5px",
-                          textDecoration: "none",
-                          borderRadius: "6px",
-                          fontWeight: pathname.startsWith("/admin") ? 600 : 400,
-                          transition: "all 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          if (!pathname.startsWith("/admin")) {
-                            e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
-                            e.currentTarget.style.color = "#ffffff";
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!pathname.startsWith("/admin")) {
-                            e.currentTarget.style.backgroundColor = "transparent";
-                            e.currentTarget.style.color = "rgba(255, 255, 255, 0.65)";
-                          }
-                        }}
-                      >
-                        <Wrench size={15} strokeWidth={1.5} />
-                        <span>Manage</span>
-                      </Link>
-                    )}
                   </div>
                 )}
               </div>
@@ -1269,22 +1274,61 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: "8px",
+                    gap: "6px",
                     color: "#ffffff",
-                    fontSize: "14.5px",
+                    fontSize: "14px",
                     fontWeight: 600,
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
+                  {pathname === "/dashboard" && (
+                    <>
+                      <House size={16} strokeWidth={2} />
+                      <span>Dashboard</span>
+                    </>
+                  )}
                   {pathname.startsWith("/real-estate") && (
                     <>
                       <Building size={16} strokeWidth={2} />
                       <span>Real Estate</span>
                     </>
                   )}
-                  {pathname === "/dashboard" && (
+                  {pathname.startsWith("/copy-trading") && (
                     <>
-                      <House size={16} strokeWidth={2} />
-                      <span>Dashboard</span>
+                      <Users size={16} strokeWidth={2} />
+                      <span>Copy Trading</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/mining") && (
+                    <>
+                      <Cpu size={16} strokeWidth={2} />
+                      <span>Mining</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/staking") && (
+                    <>
+                      <PieChart size={16} strokeWidth={2} />
+                      <span>Stake</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/crypto") && (
+                    <>
+                      <TrendingUp size={16} strokeWidth={2} />
+                      <span>Trade</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/markets") && (
+                    <>
+                      <CandlestickChart size={16} strokeWidth={2} />
+                      <span>Markets</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/cards") && (
+                    <>
+                      <CreditCard size={16} strokeWidth={2} />
+                      <span>Cards</span>
                     </>
                   )}
                   {pathname.startsWith("/cold-storage") && (
@@ -1317,16 +1361,22 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       <span>Assets</span>
                     </>
                   )}
-                  {pathname.startsWith("/deposit") && (
+                  {(pathname.startsWith("/deposit") || pathname.startsWith("/deposits")) && (
                     <>
                       <CirclePlus size={16} strokeWidth={2} />
                       <span>Deposit</span>
                     </>
                   )}
-                  {pathname.startsWith("/withdraw") && (
+                  {(pathname.startsWith("/withdraw") || pathname.startsWith("/withdrawals")) && (
                     <>
                       <CircleMinus size={16} strokeWidth={2} />
                       <span>Withdraw</span>
+                    </>
+                  )}
+                  {pathname.startsWith("/admin") && (
+                    <>
+                      <Wrench size={16} strokeWidth={2} />
+                      <span>Control Panel</span>
                     </>
                   )}
                 </div>

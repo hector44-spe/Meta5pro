@@ -19,6 +19,8 @@ const PROTECTED_USER_PATHS: string[] = [
   "/real-estate",
   "/cards",
   "/copy-trading",
+  "/trade",
+  "/markets",
 ];
 
 const PROTECTED_ADMIN_PATHS = ["/admin"];
@@ -86,6 +88,8 @@ export const config = {
     "/real-estate/:path*",
     "/cards/:path*",
     "/copy-trading/:path*",
+    "/trade/:path*",
+    "/markets/:path*",
     "/admin/:path*",
     "/login",
     "/register",

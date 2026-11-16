@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { closePositionAndSettle } from "@/lib/trade-settlement";
+import { getTradeConfig, setTradeConfig, deleteTradeConfig } from "@/lib/trade-config";
 
 export async function GET() {
   try {
@@ -25,24 +27,35 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
+    const enriched = await Promise.all(
+      positions.map(async (p) => {
+        const config = await getTradeConfig(p.id);
+        return {
+          id: p.id,
+          userId: p.userId,
+          userEmail: p.user?.email || null,
+          userFullName: p.user?.fullName || null,
+          username: p.user?.username || null,
+          symbol: p.symbol,
+          type: p.type,
+          amount: Number(p.amount),
+          entryPrice: Number(p.entryPrice),
+          leverage: p.leverage,
+          status: p.status,
+          pnl: Number(p.pnl),
+          duration: config?.duration || null,
+          closeAt: config?.closeAt || null,
+          customPnl: config?.customPnl ?? null,
+          isCustomPnl: Boolean(config?.isCustomPnl),
+          closedAt: p.closedAt?.toISOString() || null,
+          createdAt: p.createdAt.toISOString(),
+        };
+      })
+    );
+
     return NextResponse.json({
       success: true,
-      positions: positions.map((p) => ({
-        id: p.id,
-        userId: p.userId,
-        userEmail: p.user?.email || null,
-        userFullName: p.user?.fullName || null,
-        username: p.user?.username || null,
-        symbol: p.symbol,
-        type: p.type,
-        amount: Number(p.amount),
-        entryPrice: Number(p.entryPrice),
-        leverage: p.leverage,
-        status: p.status,
-        pnl: Number(p.pnl),
-        closedAt: p.closedAt?.toISOString() || null,
-        createdAt: p.createdAt.toISOString(),
-      })),
+      positions: enriched,
     });
   } catch (error) {
     console.error("Fetch admin trades error:", error);
@@ -60,13 +73,53 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { action, positionId, pnl, status, userId, symbol, type, amount, entryPrice, leverage } = body;
 
+    // Explicit Close action by Admin
+    if (action === "close") {
+      if (!positionId) {
+        return NextResponse.json({ error: "Missing positionId" }, { status: 400 });
+      }
+      const overridePnlVal = typeof pnl === "number" && !isNaN(pnl) ? pnl : undefined;
+      const res = await closePositionAndSettle({
+        positionId,
+        overridePnl: overridePnlVal,
+        closedByAdmin: true,
+      });
+      return NextResponse.json(res);
+    }
+
     if (action === "update") {
+      if (!positionId) {
+        return NextResponse.json({ error: "Missing positionId" }, { status: 400 });
+      }
+
+      // If status requested is CLOSED, execute full financial settlement
+      if (status === "CLOSED") {
+        const overridePnlVal = typeof pnl === "number" && !isNaN(pnl) ? pnl : undefined;
+        const res = await closePositionAndSettle({
+          positionId,
+          overridePnl: overridePnlVal,
+          closedByAdmin: true,
+        });
+        return NextResponse.json(res);
+      }
+
+      // If trade remains OPEN, save custom profit/PnL so investor sees it and it settles with this PnL
+      if (typeof pnl === "number" && !isNaN(pnl)) {
+        await setTradeConfig(positionId, {
+          isCustomPnl: true,
+          customPnl: pnl,
+        });
+        const updated = await prisma.position.update({
+          where: { id: positionId },
+          data: { pnl },
+        });
+        return NextResponse.json({ success: true, position: updated, message: `Profit updated to $${pnl.toFixed(2)}` });
+      }
+
       const updated = await prisma.position.update({
         where: { id: positionId },
         data: {
-          ...(typeof pnl === "number" ? { pnl } : {}),
           ...(status ? { status } : {}),
-          ...(status === "CLOSED" ? { closedAt: new Date() } : {}),
         },
       });
       return NextResponse.json({ success: true, position: updated });
@@ -92,6 +145,7 @@ export async function POST(req: Request) {
     }
 
     if (action === "delete") {
+      await deleteTradeConfig(positionId);
       await prisma.position.delete({
         where: { id: positionId },
       });

@@ -35,6 +35,10 @@ interface AdminTrade {
   pnl: number;
   closedAt: string | null;
   createdAt: string;
+  duration?: string;
+  closeAt?: string | null;
+  customPnl?: number | null;
+  isCustomPnl?: boolean;
 }
 
 export default function TradesSection({
@@ -119,6 +123,71 @@ export default function TradesSection({
       loadTrades();
     } catch (e: any) {
       flash("error", e.message || "Failed to save trade");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDirectClose = async (trade: AdminTrade) => {
+    if (
+      !confirm(
+        `Close position on ${trade.symbol} for ${trade.userEmail || "user"} now?\nLocked margin + PnL of ${usd(
+          trade.pnl
+        )} will be settled directly to user's wallet.`
+      )
+    )
+      return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/trades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "close",
+          positionId: trade.id,
+          pnl: trade.pnl,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to close trade");
+      flash("ok", "Trade closed successfully & funds returned to user wallet.");
+      loadTrades();
+    } catch (e: any) {
+      flash("error", e.message || "Failed to close trade");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCloseFromModal = async () => {
+    if (!editTrade || !editTrade.id) return;
+    const finalProfit = Number(editTrade.pnl || 0);
+    if (
+      !confirm(
+        `Immediately close trade #${editTrade.id.slice(0, 8)} with profit/loss of ${usd(
+          finalProfit
+        )}?\nThis will return the invested margin plus ${usd(finalProfit)} to the investor's balance.`
+      )
+    )
+      return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/trades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "close",
+          positionId: editTrade.id,
+          pnl: finalProfit,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to close trade");
+      flash("ok", "Trade closed and settled to user wallet.");
+      setEditTrade(null);
+      loadTrades();
+    } catch (e: any) {
+      flash("error", e.message || "Failed to close trade");
     } finally {
       setSubmitting(false);
     }
@@ -296,7 +365,24 @@ export default function TradesSection({
                         </div>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 700 }}>{t.symbol}</td>
+                    <td style={{ fontWeight: 700 }}>
+                      {t.symbol}
+                      {t.duration && (
+                        <span
+                          style={{
+                            fontSize: "10.5px",
+                            fontWeight: 500,
+                            color: "var(--a-muted)",
+                            marginLeft: "6px",
+                            padding: "1px 5px",
+                            borderRadius: "4px",
+                            backgroundColor: "rgba(255,255,255,0.06)",
+                          }}
+                        >
+                          {t.duration}
+                        </span>
+                      )}
+                    </td>
                     <td>
                       <span className={`${styles.pill} ${t.type === "BUY" ? styles.pillGreen : styles.pillRed}`}>
                         {t.type}
@@ -307,6 +393,18 @@ export default function TradesSection({
                     <td className={styles.mono}>{t.leverage}x</td>
                     <td className={styles.mono} style={{ color: t.pnl >= 0 ? "#34d399" : "#ff7a87", fontWeight: 700 }}>
                       {t.pnl >= 0 ? `+${usd(t.pnl)}` : `-${usd(Math.abs(t.pnl))}`}
+                      {t.isCustomPnl && (
+                        <span
+                          style={{
+                            display: "block",
+                            fontSize: "9.5px",
+                            color: "#c4b5fd",
+                            fontWeight: 500,
+                          }}
+                        >
+                          custom set
+                        </span>
+                      )}
                     </td>
                     <td>
                       <span className={`${styles.pill} ${t.status === "OPEN" ? styles.pillGreen : styles.pillAmber}`}>
@@ -317,7 +415,27 @@ export default function TradesSection({
                       {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      <div style={{ display: "inline-flex", gap: "6px" }}>
+                      <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
+                        {t.status === "OPEN" && (
+                          <button
+                            type="button"
+                            onClick={() => handleDirectClose(t)}
+                            disabled={submitting}
+                            style={{
+                              padding: "4px 8px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                              background: "rgba(239, 68, 68, 0.15)",
+                              color: "#f87171",
+                              border: "1px solid rgba(239, 68, 68, 0.3)",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                            }}
+                            title="Close Trade & Settle User Funds"
+                          >
+                            Close
+                          </button>
+                        )}
                         <button
                           type="button"
                           className={styles.btnGhostSm}
@@ -418,7 +536,7 @@ export default function TradesSection({
                 </div>
                 <div>
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
-                    PnL ($)
+                    PnL ($ Profit / Loss)
                   </label>
                   <input
                     type="number"
@@ -427,8 +545,69 @@ export default function TradesSection({
                     onChange={(e) => setEditTrade({ ...editTrade, pnl: Number(e.target.value) })}
                     placeholder="e.g. 250 or -50"
                   />
+                  {/* Preset quick buttons */}
+                  <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {[50, 100, 250, 500, 1000].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setEditTrade({ ...editTrade, pnl: v })}
+                        style={{
+                          padding: "3px 8px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          borderRadius: "4px",
+                          border: "1px solid rgba(52, 211, 153, 0.3)",
+                          background: "rgba(52, 211, 153, 0.12)",
+                          color: "#34d399",
+                          cursor: "pointer",
+                        }}
+                      >
+                        +${v}
+                      </button>
+                    ))}
+                    {[-50, -100, -250, -500].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setEditTrade({ ...editTrade, pnl: v })}
+                        style={{
+                          padding: "3px 8px",
+                          fontSize: "11px",
+                          fontWeight: 600,
+                          borderRadius: "4px",
+                          border: "1px solid rgba(248, 113, 113, 0.3)",
+                          background: "rgba(248, 113, 113, 0.12)",
+                          color: "#f87171",
+                          cursor: "pointer",
+                        }}
+                      >
+                        ${v}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {editTrade.duration && (
+                <div
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: 6,
+                    background: "rgba(71, 99, 240, 0.08)",
+                    border: "1px solid rgba(71, 99, 240, 0.2)",
+                    fontSize: "12px",
+                    color: "rgba(255, 255, 255, 0.8)",
+                  }}
+                >
+                  <strong>Duration:</strong> {editTrade.duration}{" "}
+                  {editTrade.closeAt && (
+                    <span style={{ color: "var(--a-muted)", marginLeft: 6 }}>
+                      (Auto-closes at: {new Date(editTrade.closeAt).toLocaleTimeString()})
+                    </span>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
@@ -445,14 +624,39 @@ export default function TradesSection({
               </div>
             </div>
 
-            <div className={styles.modalActions} style={{ marginTop: "18px" }}>
+            <div className={styles.modalActions} style={{ marginTop: "18px", display: "flex", justifyContent: "space-between", gap: 10 }}>
               <button type="button" className={styles.btnGhost} onClick={() => setEditTrade(null)} disabled={submitting}>
                 Cancel
               </button>
-              <button type="button" className={styles.btnSuccess} onClick={handleSaveTrade} disabled={submitting}>
-                {submitting ? <Loader2 size={15} className={styles.spin} /> : <Save size={15} />}
-                Save Trade
-              </button>
+              <div style={{ display: "flex", gap: 8 }}>
+                {editTrade.id && editTrade.status === "OPEN" && (
+                  <button
+                    type="button"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "8px 14px",
+                      borderRadius: 6,
+                      border: "1px solid rgba(239, 68, 68, 0.4)",
+                      background: "rgba(239, 68, 68, 0.2)",
+                      color: "#f87171",
+                      fontSize: "13px",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                    onClick={handleCloseFromModal}
+                    disabled={submitting}
+                  >
+                    {submitting ? <Loader2 size={15} className={styles.spin} /> : <XCircle size={15} />}
+                    Close Trade Now
+                  </button>
+                )}
+                <button type="button" className={styles.btnSuccess} onClick={handleSaveTrade} disabled={submitting}>
+                  {submitting ? <Loader2 size={15} className={styles.spin} /> : <Save size={15} />}
+                  {editTrade.id ? "Save Profit (Keep Open)" : "Create Trade"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

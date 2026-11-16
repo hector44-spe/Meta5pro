@@ -4,13 +4,28 @@ import { getSession } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { getPrice } from "@/lib/prices";
 import { notify, fmtUsd } from "@/lib/notify";
+import { setTradeConfig } from "@/lib/trade-config";
 import { z } from "zod";
+
+function parseDurationMs(durationStr: string): number {
+  const lower = durationStr.toLowerCase().trim();
+  if (lower.includes("1 min")) return 60 * 1000;
+  if (lower.includes("2 min")) return 2 * 60 * 1000;
+  if (lower.includes("5 min")) return 5 * 60 * 1000;
+  if (lower.includes("15 min")) return 15 * 60 * 1000;
+  if (lower.includes("30 min")) return 30 * 60 * 1000;
+  if (lower.includes("1 hour") || lower.includes("1 hr")) return 60 * 60 * 1000;
+  if (lower.includes("4 hour") || lower.includes("4 hr")) return 4 * 60 * 60 * 1000;
+  if (lower.includes("24 hour") || lower.includes("1 day")) return 24 * 60 * 60 * 1000;
+  return 2 * 60 * 1000;
+}
 
 const orderSchema = z.object({
   side: z.enum(["BUY", "SELL", "CONVERT"]),
   symbol: z.string().default("BTC"),
   amount: z.number().positive("Trade amount must be positive"),
   leverage: z.number().int().min(1).max(100).default(5),
+  duration: z.string().optional().default("2 minutes"),
   stopLoss: z.string().optional(),
   takeProfit: z.string().optional(),
 });
@@ -30,7 +45,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const { side, symbol, amount, leverage } = parsed.data;
+    const { side, symbol, amount, leverage, duration } = parsed.data;
+    const durationMs = parseDurationMs(duration);
+    const closeAt = new Date(Date.now() + durationMs).toISOString();
 
     // Required margin for position
     const requiredMargin = money(amount / leverage);
@@ -64,11 +81,17 @@ export async function POST(req: Request) {
         return { position, tx, newBalance };
       });
 
+      // Save duration & closing schedule
+      await setTradeConfig(position.id, {
+        duration,
+        closeAt,
+      });
+
       await notify(
         session.userId,
         "trade",
         `${side === "BUY" ? "Buy" : side === "SELL" ? "Sell" : "Convert"} order filled`,
-        `${fmtUsd(amount)} of ${symbol} at ${fmtUsd(fillPrice)} with ${leverage}x leverage. Margin held: ${fmtUsd(requiredMargin)}.`,
+        `${fmtUsd(amount)} of ${symbol} at ${fmtUsd(fillPrice)} with ${leverage}x leverage. Margin held: ${fmtUsd(requiredMargin)}. Duration: ${duration}.`,
       );
 
       return NextResponse.json({
@@ -82,6 +105,8 @@ export async function POST(req: Request) {
           requiredMargin,
           fillPrice,
           filledQuantity,
+          duration,
+          closeAt,
           timestamp: position.createdAt.toISOString(),
           transactionId: tx.id,
         },
