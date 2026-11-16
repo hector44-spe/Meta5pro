@@ -83,9 +83,9 @@ const TITLES: Record<View, string> = {
   withdrawal: "Withdrawal Settings",
   "copy-experts": "Copy Experts Settings",
   mining: "Mining Settings",
-  referrals: "Referral Settings",
-  cards: "Card Settings",
-  levels: "Levels",
+  referrals: "Referrals Settings",
+  cards: "Cards Settings",
+  levels: "Levels Settings",
   developer: "Developer Settings",
 };
 
@@ -354,7 +354,16 @@ export default function AdminSettingsDrawer({ onClose, onLogout }: { onClose: ()
           {/* Subview: Mining Settings (Image 5) */}
           {view === "mining" && <MiningSettingsView />}
 
-          {!["menu", "payments", "verification", "personal", "security", "account", "general", "deposit", "withdrawal", "copy-experts", "mining"].includes(view) && (
+          {/* Subview: Referrals Settings (Image 1) */}
+          {view === "referrals" && <ReferralsSettingsView />}
+
+          {/* Subview: Cards Settings (Image 2) */}
+          {view === "cards" && <CardsSettingsView />}
+
+          {/* Subview: Levels Settings (Images 3 & 4) */}
+          {view === "levels" && <LevelsSettingsView />}
+
+          {!["menu", "payments", "verification", "personal", "security", "account", "general", "deposit", "withdrawal", "copy-experts", "mining", "referrals", "cards", "levels"].includes(view) && (
             <div className="as-placeholder">
               <p>This section isn&apos;t set up yet.</p>
             </div>

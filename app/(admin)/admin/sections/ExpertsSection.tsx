@@ -169,7 +169,7 @@ export default function ExpertsSection({
   }, [copiers, query]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       {/* Stats Cards */}
       <div className={styles.stats}>
         <div className={styles.statCard}>
