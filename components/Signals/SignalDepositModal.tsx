@@ -218,16 +218,9 @@ export default function SignalDepositModal({
       onClick={onClose}
     >
       <div
+        className="signal-deposit-modal-dialog"
         style={{
-          width: "100%",
-          maxWidth: "480px",
-          backgroundColor: "#0f1216",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: "16px",
-          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.5)",
-          padding: "24px",
-          maxHeight: "92vh",
-          overflowY: "auto",
+          boxSizing: "border-box",
         }}
         onClick={(e) => e.stopPropagation()}
       >
