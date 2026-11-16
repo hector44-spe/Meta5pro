@@ -370,14 +370,14 @@ export default function SignalsSection({
           </button>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "680px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
+          <table className={styles.table} style={{ minWidth: "680px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "160px" }}>Signal Name</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Price</th>
-                <th style={{ minWidth: "140px" }}>Accuracy / Strength</th>
-                <th style={{ minWidth: "100px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "220px" }}>Signal Name</th>
+                <th className={styles.right} style={{ width: "130px" }}>Price</th>
+                <th style={{ width: "180px" }}>Accuracy / Strength</th>
+                <th style={{ width: "120px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -392,8 +392,11 @@ export default function SignalsSection({
                 ))
               ) : signals.length === 0 ? (
                 <tr>
-                  <td colSpan={4} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    No signal packages configured. Click Add Signal Tier to create one.
+                  <td colSpan={4} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <Radio size={26} style={{ opacity: 0.35 }} />
+                      <span>No signal packages configured. Click Add Signal Tier to create one.</span>
+                    </div>
                   </td>
                 </tr>
               ) : signals.map((sig) => (

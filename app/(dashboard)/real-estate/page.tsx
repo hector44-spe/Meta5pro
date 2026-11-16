@@ -664,21 +664,6 @@ export default function RealEstateDashboardPage() {
                         >
                           Invest now
                         </button>
-                        {isAdmin && (
-                          <button
-                            type="button"
-                            className="btn_view_project"
-                            style={{
-                              background: "rgba(79, 107, 255, 0.15)",
-                              border: "1px solid rgba(79, 107, 255, 0.4)",
-                              color: "#7a94ff",
-                              fontWeight: 600,
-                            }}
-                            onClick={() => handleOpenEditModal(project)}
-                          >
-                            Edit
-                          </button>
-                        )}
                       </div>
                     </div>
                   </div>

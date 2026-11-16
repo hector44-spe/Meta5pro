@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -148,36 +149,12 @@ function StatusPill({ status }: { status: string }) {
 /* Page                                                                */
 /* ------------------------------------------------------------------ */
 
-export default function AdminPage() {
-  const [section, setSection] = useState<Section>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const urlParam = new URLSearchParams(window.location.search).get("section");
-        const saved = localStorage.getItem("admin_active_section");
-        const validSections: Section[] = [
-          "overview",
-          "deposits",
-          "withdrawals",
-          "users",
-          "experts",
-          "trades",
-          "signals",
-          "card-requests",
-          "cards",
-          "subscriptions",
-          "addresses",
-          "transactions",
-        ];
-        if (urlParam && validSections.includes(urlParam as Section)) return urlParam as Section;
-        if (saved && validSections.includes(saved as Section)) return saved as Section;
-      } catch {}
-    }
-    return "overview";
-  });
+function AdminContent() {
+  const searchParams = useSearchParams();
+  const urlSection = searchParams?.get("section") as Section | null;
 
-  // Keep section synced across refresh, deep links, and browser back/forward
-  useEffect(() => {
-    const validSections: Section[] = [
+  const validSections: Section[] = useMemo(
+    () => [
       "overview",
       "deposits",
       "withdrawals",
@@ -190,22 +167,29 @@ export default function AdminPage() {
       "subscriptions",
       "addresses",
       "transactions",
-    ];
+    ],
+    []
+  );
 
-    try {
-      const urlParam = new URLSearchParams(window.location.search).get("section");
-      const saved = localStorage.getItem("admin_active_section");
-      const target = (urlParam || saved) as Section;
-      if (target && validSections.includes(target)) {
-        setSection(target);
-        if (!urlParam) {
-          const u = new URL(window.location.href);
-          u.searchParams.set("section", target);
-          window.history.replaceState(null, "", u.toString());
-        }
-      }
-    } catch {}
+  const [section, setSection] = useState<Section>(() => {
+    if (urlSection && validSections.includes(urlSection)) return urlSection;
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("admin_active_section") as Section;
+        if (saved && validSections.includes(saved)) return saved;
+      } catch {}
+    }
+    return "overview";
+  });
 
+  // Keep section synced across refresh, deep links, and browser back/forward
+  useEffect(() => {
+    if (urlSection && validSections.includes(urlSection) && urlSection !== section) {
+      setSection(urlSection);
+    }
+  }, [urlSection, validSections, section]);
+
+  useEffect(() => {
     const onPop = () => {
       try {
         const s = new URLSearchParams(window.location.search).get("section") as Section;
@@ -216,7 +200,7 @@ export default function AdminPage() {
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, []);
+  }, [validSections]);
   const [navOpen, setNavOpen] = useState(false);
   const [manageDrawerOpen, setManageDrawerOpen] = useState(false);
 
@@ -288,7 +272,7 @@ export default function AdminPage() {
   const go = (s: Section) => {
     setSection(s);
     setNavOpen(false);
-    window.scrollTo({ top: 0 });
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     try {
       localStorage.setItem("admin_active_section", s);
       const u = new URL(window.location.href);
@@ -414,8 +398,8 @@ export default function AdminPage() {
             <Menu size={20} />
           </button>
           <div className={styles.pageTitles}>
-            <h1>{titles[section][0]}</h1>
-            <p>{titles[section][1]}</p>
+            <h1>{titles[section]?.[0] || "Admin"}</h1>
+            <p>{titles[section]?.[1] || "Control panel"}</p>
           </div>
           <Link href="/dashboard" className={styles.topbarBackBtn} title="Return to Client Dashboard">
             <ArrowLeft size={15} />
@@ -427,71 +411,73 @@ export default function AdminPage() {
           </button>
         </header>
 
-        {section === "overview" && (
-          <Overview
-            loading={loading}
-            transactions={transactions}
-            users={users}
-            pendingDeposits={pendingDeposits}
-            pendingWithdrawals={pendingWithdrawals}
-            onReview={(tx, action) => setConfirmTx({ tx, action })}
-            onGo={go}
-            onPreview={setPreviewProofUrl}
-          />
-        )}
+        <div key={section} className={styles.sectionWrap}>
+          {section === "overview" && (
+            <Overview
+              loading={loading}
+              transactions={transactions}
+              users={users}
+              pendingDeposits={pendingDeposits}
+              pendingWithdrawals={pendingWithdrawals}
+              onReview={(tx, action) => setConfirmTx({ tx, action })}
+              onGo={go}
+              onPreview={setPreviewProofUrl}
+            />
+          )}
 
-        {section === "deposits" && (
-          <TxSection
-            loading={loading}
-            pending={pendingDeposits}
-            history={transactions.filter((t) => t.type === "DEPOSIT" && t.status !== "PENDING")}
-            kind="deposit"
-            onReview={(tx, action) => setConfirmTx({ tx, action })}
-            onPreview={setPreviewProofUrl}
-          />
-        )}
+          {section === "deposits" && (
+            <TxSection
+              loading={loading}
+              pending={pendingDeposits}
+              history={transactions.filter((t) => t.type === "DEPOSIT" && t.status !== "PENDING")}
+              kind="deposit"
+              onReview={(tx, action) => setConfirmTx({ tx, action })}
+              onPreview={setPreviewProofUrl}
+            />
+          )}
 
-        {section === "withdrawals" && (
-          <TxSection
-            loading={loading}
-            pending={pendingWithdrawals}
-            history={transactions.filter((t) => t.type === "WITHDRAWAL" && t.status !== "PENDING")}
-            kind="withdrawal"
-            onReview={(tx, action) => setConfirmTx({ tx, action })}
-            onPreview={setPreviewProofUrl}
-          />
-        )}
+          {section === "withdrawals" && (
+            <TxSection
+              loading={loading}
+              pending={pendingWithdrawals}
+              history={transactions.filter((t) => t.type === "WITHDRAWAL" && t.status !== "PENDING")}
+              kind="withdrawal"
+              onReview={(tx, action) => setConfirmTx({ tx, action })}
+              onPreview={setPreviewProofUrl}
+            />
+          )}
 
-        {section === "transactions" && (
-          <AllTransactions
-            loading={loading}
-            transactions={transactions}
-            onPreview={setPreviewProofUrl}
-          />
-        )}
+          {section === "transactions" && (
+            <AllTransactions
+              loading={loading}
+              transactions={transactions}
+              onPreview={setPreviewProofUrl}
+            />
+          )}
 
-        {section === "users" && (
-          <UsersSection
-            loading={loading}
-            users={users}
-            onChanged={loadAll}
-            flash={flash}
-          />
-        )}
+          {section === "users" && (
+            <UsersSection
+              loading={loading}
+              users={users}
+              onChanged={loadAll}
+              flash={flash}
+            />
+          )}
 
-        {section === "experts" && <ExpertsSection flash={flash} />}
+          {section === "experts" && <ExpertsSection flash={flash} />}
 
-        {section === "trades" && <TradesSection users={users} flash={flash} />}
+          {section === "trades" && <TradesSection users={users} flash={flash} />}
 
-        {section === "signals" && <SignalsSection flash={flash} />}
+          {section === "signals" && <SignalsSection flash={flash} />}
 
-        {section === "card-requests" && <CardRequestsSection flash={flash} />}
+          {section === "card-requests" && <CardRequestsSection flash={flash} />}
 
-        {section === "cards" && <CardsSection flash={flash} />}
+          {section === "cards" && <CardsSection flash={flash} />}
 
-        {section === "subscriptions" && <SubscriptionsSection flash={flash} />}
+          {section === "subscriptions" && <SubscriptionsSection flash={flash} />}
 
-        {section === "addresses" && <DepositAddressSection flash={flash} />}
+          {section === "addresses" && <DepositAddressSection flash={flash} />}
+        </div>
       </main>
 
       {/* ---------------- Approve / reject confirmation ---------------- */}
@@ -602,6 +588,56 @@ export default function AdminPage() {
         />
       )}
     </div>
+  );
+}
+
+function AdminLoadingFallback() {
+  return (
+    <div className={styles.shell}>
+      <aside className={styles.sidebar}>
+        <div className={styles.brand}>
+          <ShieldCheck size={22} />
+          <div>
+            <div className={styles.brandTitle}>Admin</div>
+            <div className={styles.brandSub}>Control panel</div>
+          </div>
+        </div>
+      </aside>
+      <main className={styles.main}>
+        <header className={styles.topbar}>
+          <div className={styles.pageTitles}>
+            <div className={styles.skeletonCell} style={{ width: 140, height: 24, marginBottom: 6 }} />
+            <div className={styles.skeletonCell} style={{ width: 220, height: 14 }} />
+          </div>
+        </header>
+        <div className={styles.stats}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className={styles.statCard}>
+              <span className={styles.skeletonStatVal} />
+              <span className={styles.skeletonStatSub} />
+            </div>
+          ))}
+        </div>
+        <section className={styles.card}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+            <div className={styles.skeletonCell} style={{ width: 160, height: 20 }} />
+          </div>
+          <div className={styles.tableWrap} style={{ minHeight: 200 }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className={styles.skeletonCell} style={{ width: "100%", height: 38, marginBottom: 8 }} />
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense fallback={<AdminLoadingFallback />}>
+      <AdminContent />
+    </Suspense>
   );
 }
 
@@ -848,18 +884,18 @@ function TxTable({
 }) {
   return (
     <>
-      <div className={styles.tableWrap}>
-      <table className={styles.table} style={{ minWidth: showType ? "980px" : "860px" }}>
+      <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
+      <table className={styles.table} style={{ minWidth: showType ? "980px" : "860px", tableLayout: "fixed" }}>
         <thead>
           <tr>
-            <th style={{ minWidth: "100px" }}>Reference</th>
-            <th style={{ minWidth: "200px" }}>User</th>
-            {showType && <th style={{ minWidth: "110px" }}>Type</th>}
-            <th className={styles.right} style={{ minWidth: "110px" }}>Amount</th>
-            <th style={{ minWidth: "90px" }}>Asset</th>
-            <th style={{ minWidth: "85px" }}>Proof</th>
-            <th style={{ minWidth: "125px" }}>Date</th>
-            <th style={{ minWidth: "135px" }}>{onReview ? "Action" : "Status"}</th>
+            <th style={{ width: "110px" }}>Reference</th>
+            <th style={{ width: "200px" }}>User</th>
+            {showType && <th style={{ width: "120px" }}>Type</th>}
+            <th className={styles.right} style={{ width: "130px" }}>Amount</th>
+            <th style={{ width: "90px" }}>Asset</th>
+            <th style={{ width: "85px" }}>Proof</th>
+            <th style={{ width: "125px" }}>Date</th>
+            <th style={{ width: "140px" }}>{onReview ? "Action" : "Status"}</th>
           </tr>
         </thead>
         <tbody>
@@ -1146,36 +1182,36 @@ function UsersSection({
           <span className={styles.muted}>{rows.length} of {users.length}</span>
         </div>
         {loading ? (
-          <div className={styles.tableWrap}>
-            <table className={styles.table} style={{ minWidth: "1020px" }}>
+          <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
+            <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
               <thead>
                 <tr>
-                  <th style={{ minWidth: "200px" }}>User</th>
-                  <th style={{ minWidth: "80px" }}>Role</th>
-                  <th style={{ minWidth: "90px" }}>Status</th>
-                  <th className={styles.right} style={{ minWidth: "110px" }}>Balance</th>
-                  <th className={styles.right} style={{ minWidth: "110px" }}>Deposited</th>
-                  <th className={styles.right} style={{ minWidth: "110px" }}>Withdrawn</th>
-                  <th style={{ minWidth: "110px" }}>Joined</th>
-                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
+                  <th style={{ width: "200px" }}>User</th>
+                  <th style={{ width: "80px" }}>Role</th>
+                  <th style={{ width: "90px" }}>Status</th>
+                  <th className={styles.right} style={{ width: "120px" }}>Balance</th>
+                  <th className={styles.right} style={{ width: "120px" }}>Deposited</th>
+                  <th className={styles.right} style={{ width: "120px" }}>Withdrawn</th>
+                  <th style={{ width: "110px" }}>Joined</th>
+                  <th style={{ width: "180px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
-                    <td style={{ minWidth: "200px" }}>
+                    <td>
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className={styles.skeletonCell} style={{ width: 140 }} />
                         <div className={styles.skeletonCell} style={{ width: 100 }} />
                       </div>
                     </td>
-                    <td style={{ minWidth: "80px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
-                    <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td style={{ minWidth: "180px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 100, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 100, marginLeft: "auto" }} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -1184,18 +1220,18 @@ function UsersSection({
         ) : rows.length === 0 ? (
           <Empty icon={<Users size={28} />} text="No users match your search." />
         ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table} style={{ minWidth: "1020px" }}>
+          <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
+            <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
               <thead>
                 <tr>
-                  <th style={{ minWidth: "200px" }}>User</th>
-                  <th style={{ minWidth: "80px" }}>Role</th>
-                  <th style={{ minWidth: "90px" }}>Status</th>
-                  <th className={styles.right} style={{ minWidth: "110px" }}>Balance</th>
-                  <th className={styles.right} style={{ minWidth: "110px" }}>Deposited</th>
-                  <th className={styles.right} style={{ minWidth: "110px" }}>Withdrawn</th>
-                  <th style={{ minWidth: "110px" }}>Joined</th>
-                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
+                  <th style={{ width: "200px" }}>User</th>
+                  <th style={{ width: "80px" }}>Role</th>
+                  <th style={{ width: "90px" }}>Status</th>
+                  <th className={styles.right} style={{ width: "120px" }}>Balance</th>
+                  <th className={styles.right} style={{ width: "120px" }}>Deposited</th>
+                  <th className={styles.right} style={{ width: "120px" }}>Withdrawn</th>
+                  <th style={{ width: "110px" }}>Joined</th>
+                  <th style={{ width: "180px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>

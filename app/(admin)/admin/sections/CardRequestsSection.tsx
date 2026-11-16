@@ -145,7 +145,7 @@ export default function CardRequestsSection({
   const totalFees = useMemo(() => cards.reduce((a, c) => a + (c.issuanceFee || 1000), 0), [cards]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       {/* Stats Cards */}
       <div className={styles.stats}>
         <div className={styles.statCard}>
@@ -225,18 +225,18 @@ export default function CardRequestsSection({
           </div>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "1020px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
+          <table className={styles.table} style={{ minWidth: "1020px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "200px" }}>User</th>
-                <th style={{ minWidth: "100px" }}>Card Type</th>
-                <th style={{ minWidth: "140px" }}>Card Number</th>
-                <th style={{ minWidth: "120px" }}>Exp / CVV / PIN</th>
-                <th className={styles.right} style={{ minWidth: "100px" }}>Fee Paid</th>
-                <th style={{ minWidth: "120px" }}>Requested Date</th>
-                <th style={{ minWidth: "90px" }}>Status</th>
-                <th style={{ minWidth: "140px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "200px" }}>User</th>
+                <th style={{ width: "100px" }}>Card Type</th>
+                <th style={{ width: "150px" }}>Card Number</th>
+                <th style={{ width: "130px" }}>Exp / CVV / PIN</th>
+                <th className={styles.right} style={{ width: "110px" }}>Fee Paid</th>
+                <th style={{ width: "130px" }}>Requested Date</th>
+                <th style={{ width: "95px" }}>Status</th>
+                <th style={{ width: "135px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -260,8 +260,11 @@ export default function CardRequestsSection({
                 ))
               ) : filteredCards.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
-                    No card requests found.
+                  <td colSpan={8} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <CreditCard size={26} style={{ opacity: 0.35 }} />
+                      <span>No card requests found.</span>
+                    </div>
                   </td>
                 </tr>
               ) : (

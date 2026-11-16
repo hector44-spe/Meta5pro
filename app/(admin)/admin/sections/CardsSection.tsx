@@ -131,7 +131,7 @@ export default function CardsSection({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       {/* Stats Cards */}
       <div className={styles.stats}>
         <div className={styles.statCard}>
@@ -199,16 +199,16 @@ export default function CardsSection({
           </button>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "750px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "200px" }}>
+          <table className={styles.table} style={{ minWidth: "750px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "160px" }}>Tier Name</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Issuance Fee</th>
-                <th className={styles.right} style={{ minWidth: "130px" }}>Deposit Minimum</th>
-                <th style={{ minWidth: "120px" }}>KYC Verification</th>
-                <th style={{ minWidth: "90px" }}>Status</th>
-                <th style={{ minWidth: "110px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "200px" }}>Tier Name</th>
+                <th className={styles.right} style={{ width: "130px" }}>Issuance Fee</th>
+                <th className={styles.right} style={{ width: "150px" }}>Deposit Minimum</th>
+                <th style={{ width: "140px" }}>KYC Verification</th>
+                <th style={{ width: "100px" }}>Status</th>
+                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -230,8 +230,11 @@ export default function CardsSection({
                 ))
               ) : cardOptions.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
-                    No card options defined.
+                  <td colSpan={6} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <CreditCard size={26} style={{ opacity: 0.35 }} />
+                      <span>No card options defined. Click Add Card Tier to create one.</span>
+                    </div>
                   </td>
                 </tr>
               ) : (

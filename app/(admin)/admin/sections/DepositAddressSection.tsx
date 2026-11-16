@@ -365,7 +365,7 @@ export default function DepositAddressSection({
   };
 
   return (
-    <div className="dep_container">
+    <div className="dep_container" style={{ width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       {/* Regular Deposit Addresses (Image 1) */}
       <div>
         {!isDrawerMode && (

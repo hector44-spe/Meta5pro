@@ -498,11 +498,11 @@ function TradingContent() {
         width: "100%",
         maxWidth: "1400px",
         margin: "0 auto",
-        padding: "8px 12px 24px",
+        padding: "16px 16px 32px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
-        gap: "10px",
+        gap: "24px",
       }}
     >
       {/* ===================== MID SECTION (TradingView Chart + Order Form - Image 1) ===================== */}
@@ -511,7 +511,7 @@ function TradingContent() {
         style={{
           display: "grid",
           gridTemplateColumns: chartHidden ? "1fr" : "1fr 380px",
-          gap: "10px",
+          gap: "20px",
           width: "100%",
           boxSizing: "border-box",
         }}
@@ -523,7 +523,7 @@ function TradingContent() {
             style={{
               backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
               borderRadius: "12px",
-              padding: "10px 12px",
+              padding: "14px 16px",
               display: "flex",
               flexDirection: "column",
               minHeight: "460px",
@@ -633,10 +633,10 @@ function TradingContent() {
           style={{
             backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
             borderRadius: "12px",
-            padding: "12px 14px",
+            padding: "18px 20px",
             display: "flex",
             flexDirection: "column",
-            gap: "9px",
+            gap: "16px",
             boxSizing: "border-box",
           }}
         >
@@ -645,7 +645,7 @@ function TradingContent() {
               onClick={() => setChartHidden(false)}
               style={{
                 alignSelf: "flex-start",
-                padding: "5px 10px",
+                padding: "6px 12px",
                 borderRadius: "6px",
                 backgroundColor: "rgba(255, 255, 255, 0.04)",
                 border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -663,13 +663,13 @@ function TradingContent() {
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr 1fr",
-              gap: "6px",
+              gap: "8px",
             }}
           >
             <button
               onClick={() => setOrderTab("buy")}
               style={{
-                padding: "8px",
+                padding: "9px",
                 borderRadius: "8px",
                 backgroundColor: orderTab === "buy" ? "#01b28b" : "transparent",
                 color: orderTab === "buy" ? "#fff" : "rgba(255, 255, 255, 0.6)",
@@ -685,7 +685,7 @@ function TradingContent() {
             <button
               onClick={() => setOrderTab("sell")}
               style={{
-                padding: "8px",
+                padding: "9px",
                 borderRadius: "8px",
                 backgroundColor: orderTab === "sell" ? "#f84960" : "transparent",
                 color: orderTab === "sell" ? "#fff" : "rgba(255, 255, 255, 0.6)",
@@ -701,7 +701,7 @@ function TradingContent() {
             <button
               onClick={() => setOrderTab("convert")}
               style={{
-                padding: "8px",
+                padding: "9px",
                 borderRadius: "8px",
                 backgroundColor: orderTab === "convert" ? "#3b82f6" : "transparent",
                 color: orderTab === "convert" ? "#fff" : "rgba(255, 255, 255, 0.6)",
@@ -1030,7 +1030,7 @@ function TradingContent() {
                   style={{
                     fontSize: "12px",
                     color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                    marginBottom: "4px",
+                    marginBottom: "6px",
                     display: "block",
                     fontWeight: 500,
                   }}
@@ -1041,7 +1041,7 @@ function TradingContent() {
                   onClick={() => setIsTradeTypeDropdownOpen(!isTradeTypeDropdownOpen)}
                   style={{
                     width: "100%",
-                    padding: "8px 10px",
+                    padding: "10px 12px",
                     borderRadius: "8px",
                     backgroundColor: "rgba(255, 255, 255, 0.03)",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -1120,7 +1120,7 @@ function TradingContent() {
                   style={{
                     fontSize: "12px",
                     color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                    marginBottom: "4px",
+                    marginBottom: "6px",
                     display: "block",
                     fontWeight: 500,
                   }}
@@ -1130,7 +1130,7 @@ function TradingContent() {
                 <div
                   style={{
                     width: "100%",
-                    padding: "4px 6px 4px 10px",
+                    padding: "6px 8px 6px 12px",
                     borderRadius: "8px",
                     backgroundColor: "rgba(255, 255, 255, 0.03)",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -1160,7 +1160,7 @@ function TradingContent() {
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      padding: "5px 10px",
+                      padding: "6px 10px",
                       borderRadius: "6px",
                       backgroundColor: "rgba(255, 255, 255, 0.06)",
                       color: "#fff",
@@ -1231,7 +1231,7 @@ function TradingContent() {
               </div>
 
               {/* Dynamic Balance & Current Asset Price (Matching Image 1) */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", margin: "2px 0" }}>
                 <div
                   style={{
                     display: "flex",
@@ -1271,7 +1271,7 @@ function TradingContent() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginBottom: "6px",
+                    marginBottom: "8px",
                   }}
                 >
                   <label
@@ -1297,7 +1297,7 @@ function TradingContent() {
                   </div>
                 </div>
 
-                <div style={{ position: "relative", width: "100%", padding: "2px 0" }}>
+                <div style={{ position: "relative", width: "100%", padding: "4px 0" }}>
                   <input
                     type="range"
                     min="0"
@@ -1440,7 +1440,7 @@ function TradingContent() {
                   style={{
                     fontSize: "12px",
                     color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                    marginBottom: "4px",
+                    marginBottom: "6px",
                     display: "block",
                     fontWeight: 500,
                   }}
@@ -1451,7 +1451,7 @@ function TradingContent() {
                   onClick={() => setIsDurationDropdownOpen(!isDurationDropdownOpen)}
                   style={{
                     width: "100%",
-                    padding: "8px 10px",
+                    padding: "10px 12px",
                     borderRadius: "8px",
                     backgroundColor: "rgba(255, 255, 255, 0.03)",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -1527,7 +1527,7 @@ function TradingContent() {
                 disabled={orderExecuting}
                 style={{
                   width: "100%",
-                  padding: "10px",
+                  padding: "13px",
                   borderRadius: "8px",
                   backgroundColor: orderTab === "sell" ? "#f84960" : "#01b28b",
                   color: "#ffffff",
@@ -1537,7 +1537,7 @@ function TradingContent() {
                   cursor: "pointer",
                   transition: "all 0.15s ease",
                   opacity: orderExecuting ? 0.7 : 1,
-                  marginTop: "2px",
+                  marginTop: "6px",
                 }}
               >
                 {orderExecuting ? "Executing..." : orderTab === "sell" ? "Sell" : "Buy"}
@@ -1552,10 +1552,10 @@ function TradingContent() {
         style={{
           backgroundColor: "var(--color-card-background, rgba(255, 255, 255, 0.02))",
           borderRadius: "12px",
-          padding: "10px 14px",
+          padding: "18px 20px",
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
+          gap: "16px",
           boxSizing: "border-box",
         }}
       >

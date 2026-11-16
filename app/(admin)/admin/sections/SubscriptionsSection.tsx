@@ -183,7 +183,7 @@ export default function SubscriptionsSection({
   const totalAccruedProfit = useMemo(() => investments.reduce((a, inv) => a + (inv.accruedProfit || 0), 0), [investments]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", width: "100%", minWidth: 0, boxSizing: "border-box" }}>
       {/* Stats Cards */}
       <div className={styles.stats}>
         <div className={styles.statCard}>
@@ -259,18 +259,18 @@ export default function SubscriptionsSection({
           </div>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "950px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "220px" }}>
+          <table className={styles.table} style={{ minWidth: "980px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "200px" }}>User</th>
-                <th style={{ minWidth: "140px" }}>Subscribed Plan</th>
-                <th className={styles.right} style={{ minWidth: "125px" }}>Amount Subscribed</th>
-                <th className={styles.right} style={{ minWidth: "115px" }}>Accrued Profit</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Days Remaining</th>
-                <th style={{ minWidth: "95px" }}>Status</th>
-                <th style={{ minWidth: "125px" }}>Date</th>
-                <th style={{ minWidth: "120px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "200px" }}>User</th>
+                <th style={{ width: "150px" }}>Subscribed Plan</th>
+                <th className={styles.right} style={{ width: "135px" }}>Amount Subscribed</th>
+                <th className={styles.right} style={{ width: "120px" }}>Accrued Profit</th>
+                <th className={styles.right} style={{ width: "110px" }}>Days Left</th>
+                <th style={{ width: "95px" }}>Status</th>
+                <th style={{ width: "120px" }}>Date</th>
+                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -294,8 +294,11 @@ export default function SubscriptionsSection({
                 ))
               ) : filteredInvestments.length === 0 ? (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: "center", padding: "36px", color: "var(--a-muted)" }}>
-                    No subscriptions found.
+                  <td colSpan={8} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <Sparkles size={26} style={{ opacity: 0.35 }} />
+                      <span>No subscriptions found matching criteria.</span>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -375,16 +378,16 @@ export default function SubscriptionsSection({
           </button>
         </div>
 
-        <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "720px" }}>
+        <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
+          <table className={styles.table} style={{ minWidth: "720px", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "170px" }}>Plan Name</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Min. Deposit</th>
-                <th className={styles.right} style={{ minWidth: "110px" }}>Max. Deposit</th>
-                <th className={styles.right} style={{ minWidth: "100px" }}>Duration</th>
-                <th className={styles.right} style={{ minWidth: "90px" }}>Target ROI</th>
-                <th style={{ minWidth: "100px", textAlign: "right" }}>Actions</th>
+                <th style={{ width: "200px" }}>Plan Name</th>
+                <th className={styles.right} style={{ width: "120px" }}>Min. Deposit</th>
+                <th className={styles.right} style={{ width: "120px" }}>Max. Deposit</th>
+                <th className={styles.right} style={{ width: "100px" }}>Duration</th>
+                <th className={styles.right} style={{ width: "100px" }}>Target ROI</th>
+                <th style={{ width: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -401,8 +404,11 @@ export default function SubscriptionsSection({
                 ))
               ) : plans.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ textAlign: "center", padding: "32px", color: "var(--a-muted)" }}>
-                    No investment plans configured. Click Add Plan Tier to create one.
+                  <td colSpan={6} style={{ textAlign: "center", padding: "48px 24px", color: "var(--a-muted)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                      <Sparkles size={26} style={{ opacity: 0.35 }} />
+                      <span>No investment plans configured. Click Add Plan Tier to create one.</span>
+                    </div>
                   </td>
                 </tr>
               ) : plans.map((p) => (
