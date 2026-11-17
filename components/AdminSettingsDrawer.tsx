@@ -380,6 +380,16 @@ export default function AdminSettingsDrawer({ onClose, onLogout }: { onClose: ()
 function DepositSettingsView() {
   const [minDeposit, setMinDeposit] = useState(100);
   const [maxDeposit, setMaxDeposit] = useState(100000);
+  const [allowCrypto, setAllowCrypto] = useState(true);
+  const [allowBankTransfer, setAllowBankTransfer] = useState(false);
+  const [allowPayPal, setAllowPayPal] = useState(false);
+  const [paypalRecipientName, setPaypalRecipientName] = useState("");
+  const [paypalEmail, setPaypalEmail] = useState("");
+  const [banks, setBanks] = useState<Array<{
+    id: string; country: string; recipientName: string; recipientAddress: string;
+    accountType: string; accountNumber: string; routingNumber: string;
+    bankName: string; bankAddress: string; narration: string;
+  }>>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -392,6 +402,12 @@ function DepositSettingsView() {
         if (s) {
           if (typeof s.minDeposit === "number") setMinDeposit(s.minDeposit);
           if (typeof s.maxDeposit === "number") setMaxDeposit(s.maxDeposit);
+          if (typeof s.allowCrypto === "boolean") setAllowCrypto(s.allowCrypto);
+          if (typeof s.allowBankTransfer === "boolean") setAllowBankTransfer(s.allowBankTransfer);
+          if (typeof s.allowPayPal === "boolean") setAllowPayPal(s.allowPayPal);
+          if (Array.isArray(s.banks)) setBanks(s.banks);
+          if (typeof s.paypalRecipientName === "string") setPaypalRecipientName(s.paypalRecipientName);
+          if (typeof s.paypalEmail === "string") setPaypalEmail(s.paypalEmail);
         }
       })
       .catch(() => null)
@@ -408,6 +424,12 @@ function DepositSettingsView() {
         body: JSON.stringify({
           minDeposit: Number(minDeposit) || 0,
           maxDeposit: Number(maxDeposit) || 0,
+          allowCrypto,
+          allowBankTransfer,
+          allowPayPal,
+          banks,
+          paypalRecipientName,
+          paypalEmail,
         }),
       });
       const data = await res.json();
@@ -458,6 +480,69 @@ function DepositSettingsView() {
           </div>
         </div>
 
+        <h3 className="as-block-title" style={{ marginTop: 20 }}>Payment options</h3>
+        <p className="as-block-sub">Choose the deposit methods shown to clients.</p>
+        {[
+          ["Crypto", "Use configured crypto deposit addresses", allowCrypto, setAllowCrypto],
+          ["Bank transfer", "Show active bank transfer details", allowBankTransfer, setAllowBankTransfer],
+          ["PayPal", "Accept deposits through PayPal", allowPayPal, setAllowPayPal],
+        ].map(([title, subtitle, enabled, setter]) => (
+          <div className="as-toggle-card" key={String(title)}>
+            <div className="as-toggle-card-left">
+              <span className="as-toggle-card-title">{String(title)}</span>
+              <span className="as-toggle-card-sub">{String(subtitle)}</span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={Boolean(enabled)}
+              className="app-switch"
+              data-on={enabled ? "true" : "false"}
+              onClick={() => (setter as React.Dispatch<React.SetStateAction<boolean>>)(!enabled)}
+            ><span /></button>
+          </div>
+        ))}
+
+        {allowPayPal && (
+          <div className="as-method-config">
+            <h4>PayPal transfer settings</h4>
+            <div className="as-responsive-fields">
+              <label className="as-input-wrap"><span className="as-label">Recipient name</span><input className="app-input" value={paypalRecipientName} onChange={(e) => setPaypalRecipientName(e.target.value)} placeholder="Recipient name" /></label>
+              <label className="as-input-wrap"><span className="as-label">PayPal email</span><input className="app-input" type="email" value={paypalEmail} onChange={(e) => setPaypalEmail(e.target.value)} placeholder="payments@example.com" /></label>
+            </div>
+          </div>
+        )}
+
+        {allowBankTransfer && (
+          <div className="as-method-config">
+            <div className="as-method-config-head">
+              <h4>Bank transfer settings</h4>
+              <button type="button" className="as-small-action" onClick={() => setBanks((current) => [...current, {
+                id: crypto.randomUUID(), country: "", recipientName: "", recipientAddress: "", accountType: "",
+                accountNumber: "", routingNumber: "", bankName: "", bankAddress: "", narration: "",
+              }])}>Add a new bank</button>
+            </div>
+            {banks.length === 0 && <p className="as-empty-method">No banks configured yet.</p>}
+            {banks.map((bank, index) => {
+              const update = (field: keyof typeof bank, value: string) => setBanks((current) => current.map((item) => item.id === bank.id ? { ...item, [field]: value } : item));
+              return (
+                <div className="as-bank-card" key={bank.id}>
+                  <div className="as-method-config-head"><strong>Bank {index + 1}</strong><button type="button" className="as-remove-action" onClick={() => setBanks((current) => current.filter((item) => item.id !== bank.id))}>Remove</button></div>
+                  <div className="as-responsive-fields">
+                    {([
+                      ["country", "Country"], ["recipientName", "Recipient name"], ["recipientAddress", "Recipient address"],
+                      ["accountType", "Account type"], ["accountNumber", "Account number"], ["routingNumber", "Routing number"],
+                      ["bankName", "Bank name"], ["bankAddress", "Bank address"], ["narration", "Bank narration"],
+                    ] as Array<[keyof typeof bank, string]>).map(([field, label]) => (
+                      <label className="as-input-wrap" key={field}><span className="as-label">{label}</span><input className="app-input" value={String(bank[field])} onChange={(e) => update(field, e.target.value)} placeholder={label} /></label>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {notice && (
           <div className={`as-notice ${notice.kind}`} style={{ marginTop: "4px" }}>
             {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
@@ -492,6 +577,8 @@ function WithdrawalSettingsView() {
   const [maxWithdrawal, setMaxWithdrawal] = useState(1000000);
   const [useWithdrawalCode, setUseWithdrawalCode] = useState(true);
   const [allowCrypto, setAllowCrypto] = useState(true);
+  const [allowBankTransfer, setAllowBankTransfer] = useState(false);
+  const [allowPayPal, setAllowPayPal] = useState(false);
   const [showAssetsModal, setShowAssetsModal] = useState(false);
 
   const [loading, setLoading] = useState(true);
@@ -508,6 +595,8 @@ function WithdrawalSettingsView() {
           if (typeof s.maxWithdrawal === "number") setMaxWithdrawal(s.maxWithdrawal);
           if (typeof s.useWithdrawalCode === "boolean") setUseWithdrawalCode(s.useWithdrawalCode);
           if (typeof s.allowCrypto === "boolean") setAllowCrypto(s.allowCrypto);
+          if (typeof s.allowBankTransfer === "boolean") setAllowBankTransfer(s.allowBankTransfer);
+          if (typeof s.allowPayPal === "boolean") setAllowPayPal(s.allowPayPal);
         }
       })
       .catch(() => null)
@@ -526,6 +615,8 @@ function WithdrawalSettingsView() {
           maxWithdrawal: Number(maxWithdrawal) || 0,
           useWithdrawalCode,
           allowCrypto,
+          allowBankTransfer,
+          allowPayPal,
         }),
       });
       const data = await res.json();
@@ -629,6 +720,22 @@ function WithdrawalSettingsView() {
               <span />
             </button>
           </div>
+        </div>
+
+        <div className="as-toggle-card">
+          <div className="as-toggle-card-left">
+            <span className="as-toggle-card-title">Bank transfer</span>
+            <span className="as-toggle-card-sub">Allow clients to request withdrawals to a bank account</span>
+          </div>
+          <button type="button" role="switch" aria-checked={allowBankTransfer} className="app-switch" data-on={allowBankTransfer ? "true" : "false"} onClick={() => setAllowBankTransfer(!allowBankTransfer)}><span /></button>
+        </div>
+
+        <div className="as-toggle-card">
+          <div className="as-toggle-card-left">
+            <span className="as-toggle-card-title">PayPal</span>
+            <span className="as-toggle-card-sub">Allow clients to request withdrawals to PayPal</span>
+          </div>
+          <button type="button" role="switch" aria-checked={allowPayPal} className="app-switch" data-on={allowPayPal ? "true" : "false"} onClick={() => setAllowPayPal(!allowPayPal)}><span /></button>
         </div>
 
         {showAssetsModal && (

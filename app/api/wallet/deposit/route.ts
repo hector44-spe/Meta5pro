@@ -72,6 +72,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Live price for ${symbol} is unavailable. Please try again shortly.` }, { status: 503 });
     }
     const depositSettings = await getSettings("deposit");
+    if (!depositSettings.allowCrypto) {
+      return NextResponse.json({ error: "Cryptocurrency deposits are temporarily unavailable." }, { status: 409 });
+    }
     const minD = depositSettings.minDeposit || MIN_DEPOSIT_USD;
     const maxD = depositSettings.maxDeposit || MAX_DEPOSIT_USD;
 

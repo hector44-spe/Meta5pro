@@ -403,6 +403,30 @@
 .as-blue-link:hover {
   text-decoration: underline;
 }
+
+.as-method-config {
+  margin: 14px 0 18px;
+  padding: clamp(14px, 3vw, 20px);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #1d2025;
+}
+.as-method-config h4 { color: #fff; font-size: 14px; font-weight: 700; margin: 0 0 14px; }
+.as-method-config-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.as-responsive-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.as-bank-card { padding: 14px; border-radius: 9px; background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.07); margin-top: 12px; }
+.as-small-action, .as-remove-action { min-height: 38px !important; width: auto !important; padding: 0 14px !important; border-radius: 8px !important; font-weight: 600 !important; }
+.as-small-action { background: #4763f0 !important; color: #fff !important; border: 0 !important; }
+.as-remove-action { background: rgba(248,73,96,.1) !important; color: #f84960 !important; border: 1px solid rgba(248,73,96,.25) !important; }
+.as-empty-method { color: rgba(255,255,255,.5); font-size: 12.5px; padding: 10px 0; }
+
+@media (max-width: 640px) {
+  .as-toggle-card { padding: 14px; gap: 14px; align-items: center; }
+  .as-toggle-card-right { gap: 8px; }
+  .as-responsive-fields { grid-template-columns: 1fr; gap: 12px; }
+  .as-method-config-head { align-items: stretch; flex-direction: column; }
+  .as-small-action, .as-remove-action { width: 100% !important; }
+}
 .as-primary-btn {
   display: flex !important;
   align-items: center;

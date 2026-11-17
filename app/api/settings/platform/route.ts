@@ -1,9 +1,12 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSettings } from "@/lib/appSettings";
+import { getSession } from "@/lib/auth";
 
-/** Public platform flags the investor UI needs (no admin-only data). */
+/** Signed-in investor settings, including enabled payment instructions. */
 export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const [general, deposit, withdrawal, copyExperts, mining, referrals, cards, levels] = await Promise.all([
     getSettings("general"),
     getSettings("deposit"),
@@ -25,12 +28,23 @@ export async function GET() {
       issuanceFee: cards.issuanceFee,
       minDepositTotal: cards.minDepositTotal,
     },
-    deposit: { minDeposit: deposit.minDeposit, maxDeposit: deposit.maxDeposit },
+    deposit: {
+      minDeposit: deposit.minDeposit,
+      maxDeposit: deposit.maxDeposit,
+      allowCrypto: deposit.allowCrypto,
+      allowBankTransfer: deposit.allowBankTransfer,
+      allowPayPal: deposit.allowPayPal,
+      banks: deposit.banks,
+      paypalRecipientName: deposit.paypalRecipientName,
+      paypalEmail: deposit.paypalEmail,
+    },
     withdrawal: {
       minWithdrawal: withdrawal.minWithdrawal,
       maxWithdrawal: withdrawal.maxWithdrawal,
       useWithdrawalCode: withdrawal.useWithdrawalCode,
       allowCrypto: withdrawal.allowCrypto,
+      allowBankTransfer: withdrawal.allowBankTransfer,
+      allowPayPal: withdrawal.allowPayPal,
     },
     copyExperts: { lockCopyExpertsPage: copyExperts.lockCopyExpertsPage },
     mining: { useMinerPictures: mining.useMinerPictures },

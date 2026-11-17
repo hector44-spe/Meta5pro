@@ -3,9 +3,13 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
 export async function GET() {
   try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const [rawAddresses, qrSetting, signalSetting, toggleSetting] = await Promise.all([
       prisma.depositAddress.findMany({ orderBy: [{ symbol: "asc" }, { network: "asc" }] }),
       prisma.appSetting.findUnique({ where: { key: "deposit_address_qrs" } }),

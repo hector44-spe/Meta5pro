@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   X,
   ChevronLeft,
@@ -12,7 +12,6 @@ import {
   FileCheck,
   AlertCircle,
   Loader2,
-  ShieldCheck,
 } from "lucide-react";
 import "@/styles/deposit-modal.css";
 import { usePrices } from "@/lib/usePrices";
@@ -47,15 +46,13 @@ export interface DepositModalProps {
   fixedAmount?: number;
 }
 
-// Supported tokens with their designated networks
-const SUPPORTED_TOKENS = [
-  { name: "Tether", symbol: "USDT", networks: ["TRC-20", "BEP-20", "ERC-20"] },
-  { name: "Bitcoin", symbol: "BTC", networks: ["Bitcoin"] },
-  { name: "Ethereum", symbol: "ETH", networks: ["ERC-20"] },
-  { name: "Solana", symbol: "SOL", networks: ["Solana"] },
-  { name: "USD Coin", symbol: "USDC", networks: ["ERC-20", "BEP-20", "Solana"] },
-  { name: "Ripple", symbol: "XRP", networks: ["XRP"] },
-];
+type TokenOption = { name: string; symbol: string; networks: string[] };
+type PaymentMethod = "CRYPTO" | "BANK" | "PAYPAL";
+type BankDetails = {
+  id: string; country: string; recipientName: string; recipientAddress: string;
+  accountType: string; accountNumber: string; routingNumber: string;
+  bankName: string; bankAddress: string; narration: string;
+};
 
 export default function DepositModal({
   isOpen,
@@ -67,11 +64,11 @@ export default function DepositModal({
   fixedAmount,
 }: DepositModalProps) {
   // Navigation step: "METHOD" (Image 1) -> "STEPPER" (Images 2 & 3) -> "CONFIRMATION" (Image 4) -> "SUCCESS"
-  const [step, setStep] = useState<"METHOD" | "STEPPER" | "CONFIRMATION" | "SUCCESS">("METHOD");
+  const [step, setStep] = useState<"METHOD" | "STEPPER" | "OFFLINE" | "CONFIRMATION" | "SUCCESS">("METHOD");
 
   // Stepper selections
   const [addresses, setAddresses] = useState<DepositAddressItem[]>([]);
-  const [selectedToken, setSelectedToken] = useState<typeof SUPPORTED_TOKENS[0] | null>(null);
+  const [selectedToken, setSelectedToken] = useState<TokenOption | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<string>("");
   const [tokenDropdownOpen, setTokenDropdownOpen] = useState(false);
   const [networkDropdownOpen, setNetworkDropdownOpen] = useState(false);
@@ -92,6 +89,14 @@ export default function DepositModal({
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [minDeposit, setMinDeposit] = useState<number>(100);
   const [maxDeposit, setMaxDeposit] = useState<number>(100000);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CRYPTO");
+  const [allowCrypto, setAllowCrypto] = useState(true);
+  const [allowBankTransfer, setAllowBankTransfer] = useState(false);
+  const [allowPayPal, setAllowPayPal] = useState(false);
+  const [banks, setBanks] = useState<BankDetails[]>([]);
+  const [selectedBankId, setSelectedBankId] = useState("");
+  const [paypalRecipientName, setPaypalRecipientName] = useState("");
+  const [paypalEmail, setPaypalEmail] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -111,13 +116,39 @@ export default function DepositModal({
   } | null>(null);
 
   const effectiveFixed = fixedAmount ?? (context === "signal" ? signal?.price : context === "card" ? card?.issuanceFee : undefined);
+  const availableTokens = useMemo<TokenOption[]>(() => {
+    const grouped = new Map<string, TokenOption>();
+    for (const address of addresses) {
+      const symbol = address.symbol.toUpperCase();
+      const current = grouped.get(symbol) || { name: address.token || symbol, symbol, networks: [] };
+      if (!current.networks.includes(address.network)) current.networks.push(address.network);
+      grouped.set(symbol, current);
+    }
+    return [...grouped.values()];
+  }, [addresses]);
+  const selectedBank = banks.find((bank) => bank.id === selectedBankId) || banks[0] || null;
+  const bankDepositAvailable = context === "default" && allowBankTransfer && banks.length > 0;
+  const paypalDepositAvailable = context === "default" && allowPayPal && Boolean(paypalEmail);
+
+  useEffect(() => {
+    const availability = {
+      CRYPTO: allowCrypto && availableTokens.length > 0,
+      BANK: bankDepositAvailable,
+      PAYPAL: paypalDepositAvailable,
+    } as const;
+    if (availability[paymentMethod]) return;
+    if (availability.CRYPTO) setPaymentMethod("CRYPTO");
+    else if (availability.BANK) setPaymentMethod("BANK");
+    else if (availability.PAYPAL) setPaymentMethod("PAYPAL");
+  }, [allowCrypto, availableTokens.length, bankDepositAvailable, paypalDepositAvailable, paymentMethod]);
 
   // Reset or fetch addresses on open
   useEffect(() => {
     if (isOpen) {
       setStep("METHOD");
-      setSelectedToken(SUPPORTED_TOKENS[0]);
-      setSelectedNetwork(SUPPORTED_TOKENS[0].networks[0]);
+      setSelectedToken(null);
+      setSelectedNetwork("");
+      setPaymentMethod("CRYPTO");
       setActiveAddress("");
       setAmountInput(effectiveFixed ? String(effectiveFixed) : "100");
       setTxHash("");
@@ -147,18 +178,32 @@ export default function DepositModal({
       ]);
       if (addrRes.ok) {
         const data = await addrRes.json();
-        const combined = [
-          ...(Array.isArray(data.signalAddresses) && data.signalAddresses.length > 0
-            ? data.signalAddresses
-            : []),
-          ...(Array.isArray(data.addresses) ? data.addresses : []),
-        ];
-        setAddresses(combined);
+        const regular = Array.isArray(data.addresses) ? data.addresses : [];
+        const signalOnly = Array.isArray(data.signalAddresses) ? data.signalAddresses : [];
+        const relevant = context === "signal" && !data.useSameAddressForSignals && signalOnly.length > 0
+          ? signalOnly
+          : regular;
+        setAddresses(relevant);
+        const first = relevant[0];
+        if (first) {
+          const sameSymbol = relevant.filter((item: DepositAddressItem) => item.symbol.toUpperCase() === first.symbol.toUpperCase());
+          setSelectedToken({ name: first.token || first.symbol, symbol: first.symbol.toUpperCase(), networks: sameSymbol.map((item: DepositAddressItem) => item.network) });
+          setSelectedNetwork(first.network);
+        }
       }
       if (platRes && platRes.ok) {
         const platData = await platRes.json();
         if (platData?.deposit?.minDeposit != null) setMinDeposit(platData.deposit.minDeposit);
         if (platData?.deposit?.maxDeposit != null) setMaxDeposit(platData.deposit.maxDeposit);
+        if (typeof platData?.deposit?.allowCrypto === "boolean") setAllowCrypto(platData.deposit.allowCrypto);
+        if (typeof platData?.deposit?.allowBankTransfer === "boolean") setAllowBankTransfer(platData.deposit.allowBankTransfer);
+        if (typeof platData?.deposit?.allowPayPal === "boolean") setAllowPayPal(platData.deposit.allowPayPal);
+        if (Array.isArray(platData?.deposit?.banks)) {
+          setBanks(platData.deposit.banks);
+          setSelectedBankId(platData.deposit.banks[0]?.id || "");
+        }
+        setPaypalRecipientName(platData?.deposit?.paypalRecipientName || "");
+        setPaypalEmail(platData?.deposit?.paypalEmail || "");
       }
     } catch (e) {
       console.error("Error fetching deposit addresses:", e);
@@ -220,6 +265,10 @@ export default function DepositModal({
     if (effectiveFixed != null) {
       return `$${effectiveFixed.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
     }
+    if (paymentMethod !== "CRYPTO") {
+      const amount = parseFloat(amountInput) || 0;
+      return `$${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`;
+    }
     if (!selectedToken) return "$0.00 USD";
     const num = parseFloat(amountInput) || 0;
     const rate = priceOf(selectedToken.symbol);
@@ -232,12 +281,17 @@ export default function DepositModal({
     e.preventDefault();
     setErrorMessage("");
 
-    if (!proofFile && !txHash.trim()) {
+    if (paymentMethod !== "CRYPTO" && !proofFile) {
       setErrorMessage("Please upload your transfer screenshot proof before proceeding.");
       return;
     }
 
-    if (!activeAddress) {
+    if (paymentMethod === "CRYPTO" && !proofFile && !txHash.trim()) {
+      setErrorMessage("Please upload a payment screenshot or provide the transaction hash.");
+      return;
+    }
+
+    if (paymentMethod === "CRYPTO" && !activeAddress) {
       setErrorMessage("Deposits for this token and network are not available right now.");
       return;
     }
@@ -272,8 +326,29 @@ export default function DepositModal({
         receiptUrl = uploadJson.url;
       }
 
-      // 2. Submit based on context
-      if (context === "signal") {
+      // 2. Submit based on context/payment method
+      if (context === "default" && paymentMethod !== "CRYPTO") {
+        const depositRes = await fetch("/api/wallet/deposit/manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method: paymentMethod,
+            amountUsd: numAmount,
+            receiptUrl,
+            reference: txHash.trim() || undefined,
+          }),
+        });
+        const depositData = await depositRes.json();
+        if (!depositRes.ok) throw new Error(depositData.error || "Deposit recording failed");
+        setReceipt({
+          reference: depositData.reference,
+          units: numAmount,
+          symbol: "USD",
+          network: paymentMethod === "BANK" ? "Bank transfer" : "PayPal",
+          usdAmount: numAmount,
+          submittedAt: new Date().toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }),
+        });
+      } else if (context === "signal") {
         const res = await fetch("/api/signals/purchase", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -336,6 +411,7 @@ export default function DepositModal({
             currency: selectedToken?.symbol || "USDT",
             network: selectedNetwork,
             cryptoAddress: activeAddress,
+            txHash: txHash.trim() || undefined,
             receiptUrl,
           }),
         });
@@ -446,9 +522,25 @@ export default function DepositModal({
 
             <div className="dm-section-label">Payment options</div>
 
-            {/* Crypto option (Selected with blue outline) */}
-            <div className="dm-option-card selected">
-              <span>Crypto</span>
+            <div className="dm-payment-options">
+              {allowCrypto && availableTokens.length > 0 && (
+                <button type="button" className={`dm-option-card ${paymentMethod === "CRYPTO" ? "selected" : ""}`} onClick={() => setPaymentMethod("CRYPTO")}>
+                  <span>Crypto</span><small>{availableTokens.length} available asset{availableTokens.length === 1 ? "" : "s"}</small>
+                </button>
+              )}
+              {bankDepositAvailable && (
+                <button type="button" className={`dm-option-card ${paymentMethod === "BANK" ? "selected" : ""}`} onClick={() => setPaymentMethod("BANK")}>
+                  <span>Bank transfer</span><small>{banks.length} available bank{banks.length === 1 ? "" : "s"}</small>
+                </button>
+              )}
+              {paypalDepositAvailable && (
+                <button type="button" className={`dm-option-card ${paymentMethod === "PAYPAL" ? "selected" : ""}`} onClick={() => setPaymentMethod("PAYPAL")}>
+                  <span>PayPal</span><small>Transfer using PayPal</small>
+                </button>
+              )}
+              {(!allowCrypto || availableTokens.length === 0) && !bankDepositAvailable && !paypalDepositAvailable && (
+                <div className="dm-method-empty">No deposit methods are currently available.</div>
+              )}
             </div>
 
             {/* Limits */}
@@ -473,7 +565,8 @@ export default function DepositModal({
               <button
                 type="button"
                 className="dm-primary-btn"
-                onClick={() => setStep("STEPPER")}
+                disabled={paymentMethod === "CRYPTO" ? !allowCrypto || availableTokens.length === 0 : paymentMethod === "BANK" ? !bankDepositAvailable : !paypalDepositAvailable}
+                onClick={() => setStep(paymentMethod === "CRYPTO" ? "STEPPER" : "OFFLINE")}
               >
                 Continue
               </button>
@@ -535,7 +628,7 @@ export default function DepositModal({
 
                   {tokenDropdownOpen && (
                     <div className="dm-dropdown-menu">
-                      {SUPPORTED_TOKENS.map((t) => (
+                      {availableTokens.map((t) => (
                         <div
                           key={t.symbol}
                           className="dm-dropdown-item"
@@ -710,6 +803,48 @@ export default function DepositModal({
           </div>
         )}
 
+        {step === "OFFLINE" && (
+          <div>
+            <div className="dm-header">
+              <div className="dm-header-left">
+                <button type="button" className="dm-back-btn" onClick={() => setStep("METHOD")} aria-label="Back"><ChevronLeft size={20} /></button>
+                <h2 className="dm-title">{paymentMethod === "BANK" ? "Bank transfer" : "PayPal deposit"}</h2>
+              </div>
+              <button type="button" className="dm-close-btn" onClick={onClose} aria-label="Close"><X size={19} /></button>
+            </div>
+            <p className="dm-subtitle">Make payment using the details below, then continue to submit your confirmation.</p>
+
+            {paymentMethod === "BANK" && selectedBank && (
+              <div className="dm-offline-details">
+                {banks.length > 1 && (
+                  <label className="dm-form-group"><span className="dm-field-label">Select country</span>
+                    <select className="app-input" value={selectedBank.id} onChange={(e) => setSelectedBankId(e.target.value)}>
+                      {banks.map((bank) => <option key={bank.id} value={bank.id}>{bank.country || bank.bankName || "Bank"}</option>)}
+                    </select>
+                  </label>
+                )}
+                {[
+                  ["Recipient name", selectedBank.recipientName], ["Recipient address", selectedBank.recipientAddress],
+                  ["Account type", selectedBank.accountType], ["Account number", selectedBank.accountNumber],
+                  ["Routing number", selectedBank.routingNumber], ["Bank name", selectedBank.bankName],
+                  ["Bank address", selectedBank.bankAddress], ["Narration", selectedBank.narration],
+                ].filter(([, value]) => value).map(([label, value]) => (
+                  <div className="dm-detail-row" key={label}><span>{label}</span><strong>{value}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(value)}>Copy</button></div>
+                ))}
+              </div>
+            )}
+
+            {paymentMethod === "PAYPAL" && (
+              <div className="dm-offline-details">
+                <div className="dm-detail-row"><span>Recipient name</span><strong>{paypalRecipientName}</strong></div>
+                <div className="dm-detail-row"><span>PayPal email</span><strong>{paypalEmail}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(paypalEmail)}>Copy</button></div>
+              </div>
+            )}
+
+            <button type="button" className="dm-primary-btn" onClick={() => setStep("CONFIRMATION")}>Continue</button>
+          </div>
+        )}
+
         {/* ====================================================================
             STEP 2: CONFIRMATION & PROOF UPLOAD (IMAGE 4)
             ==================================================================== */}
@@ -720,7 +855,7 @@ export default function DepositModal({
                 <button
                   type="button"
                   className="dm-back-btn"
-                  onClick={() => setStep("STEPPER")}
+                  onClick={() => setStep(paymentMethod === "CRYPTO" ? "STEPPER" : "OFFLINE")}
                   aria-label="Back"
                 >
                   <ChevronLeft size={20} />
@@ -773,7 +908,7 @@ export default function DepositModal({
                   {effectiveFixed == null && (
                     <span style={{ color: "rgba(255, 255, 255, 0.4)", cursor: "pointer" }} onClick={() => setAmountInput("")}>✕</span>
                   )}
-                  <span>{effectiveFixed != null ? "USD" : selectedToken?.symbol || "USD"}</span>
+                  <span>{effectiveFixed != null || paymentMethod !== "CRYPTO" ? "USD" : selectedToken?.symbol || "USD"}</span>
                 </span>
               </div>
             </div>
@@ -806,6 +941,12 @@ export default function DepositModal({
                     <span className="dm-limit-val">${card.issuanceFee.toLocaleString()}.00</span>
                   </div>
                 </>
+              ) : paymentMethod !== "CRYPTO" ? (
+                <>
+                  <div className="dm-limit-row"><span className="dm-limit-label">Payment method</span><span className="dm-limit-dots"></span><span className="dm-limit-val">{paymentMethod === "BANK" ? "Bank transfer" : "PayPal"}</span></div>
+                  <div className="dm-limit-row"><span className="dm-limit-label">Minimum deposit</span><span className="dm-limit-dots"></span><span className="dm-limit-val">${minDeposit.toLocaleString()}.00</span></div>
+                  <div className="dm-limit-row"><span className="dm-limit-label">Maximum deposit</span><span className="dm-limit-dots"></span><span className="dm-limit-val">${maxDeposit.toLocaleString()}.00</span></div>
+                </>
               ) : (
                 <>
                   <div className="dm-limit-row">
@@ -829,7 +970,7 @@ export default function DepositModal({
 
             {/* Optional TxHash Input */}
             <div className="dm-form-group">
-              <label className="dm-field-label">Transaction Hash / TxID (Optional):</label>
+              <label className="dm-field-label">{paymentMethod === "CRYPTO" ? "Transaction Hash / TxID (Optional):" : "Payment reference (Optional):"}</label>
               <input
                 type="text"
                 placeholder="e.g. 0x4f8a... or 7f12..."
@@ -898,8 +1039,8 @@ export default function DepositModal({
               <button
                 type="submit"
                 className="dm-primary-btn"
-                disabled={isSubmitting || (!proofFile && !txHash.trim())}
-                style={{ backgroundColor: isSubmitting ? "#2563eb" : !proofFile && !txHash.trim() ? "#4b5563" : "#3b82f6" }}
+                disabled={isSubmitting || (paymentMethod === "CRYPTO" ? !proofFile && !txHash.trim() : !proofFile)}
+                style={{ backgroundColor: isSubmitting ? "#2563eb" : (paymentMethod === "CRYPTO" ? !proofFile && !txHash.trim() : !proofFile) ? "#4b5563" : "#3b82f6" }}
               >
                 {isSubmitting ? (
                   <>

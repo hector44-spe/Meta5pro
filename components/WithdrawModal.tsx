@@ -22,15 +22,13 @@ const TOKENS = [
   { name: "Ripple", symbol: "XRP", networks: ["XRP"] },
 ];
 
-const MIN_WITHDRAWAL = 10;
-const MAX_WITHDRAWAL = 1_000_000;
-
 const fmtUsd = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtUnits = (n: number) => n.toFixed(8);
 
 export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawModalProps) {
-  const [step, setStep] = useState<"METHOD" | "FORM" | "SUCCESS">("METHOD");
+  const [step, setStep] = useState<"METHOD" | "FORM" | "MANUAL" | "SUCCESS">("METHOD");
+  const [paymentMethod, setPaymentMethod] = useState<"CRYPTO" | "BANK" | "PAYPAL">("CRYPTO");
 
   const [balanceUsd, setBalanceUsd] = useState(0);
   const [token, setToken] = useState<(typeof TOKENS)[number] | null>(null);
@@ -50,11 +48,19 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
   const [maxWithdrawal, setMaxWithdrawal] = useState(1_000_000);
   const [useWithdrawalCode, setUseWithdrawalCode] = useState(true);
   const [allowCrypto, setAllowCrypto] = useState(true);
+  const [allowBankTransfer, setAllowBankTransfer] = useState(false);
+  const [allowPayPal, setAllowPayPal] = useState(false);
+  const [recipientName, setRecipientName] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [routingNumber, setRoutingNumber] = useState("");
+  const [paypalEmail, setPaypalEmail] = useState("");
 
   // Reset and load the real balance each time the modal opens
   useEffect(() => {
     if (!isOpen) return;
     setStep("METHOD");
+    setPaymentMethod("CRYPTO");
     setToken(null);
     setTokenOpen(false);
     setShowNetwork(false);
@@ -65,6 +71,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
     setCodeStatus("idle");
     setCodeMessage("");
     setError("");
+    setRecipientName(""); setBankName(""); setAccountNumber(""); setRoutingNumber(""); setPaypalEmail("");
     fetch("/api/wallet")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setBalanceUsd(Number(d?.wallet?.mainBalance ?? 0)))
@@ -78,6 +85,8 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
           if (typeof d.withdrawal.maxWithdrawal === "number") setMaxWithdrawal(d.withdrawal.maxWithdrawal);
           if (typeof d.withdrawal.useWithdrawalCode === "boolean") setUseWithdrawalCode(d.withdrawal.useWithdrawalCode);
           if (typeof d.withdrawal.allowCrypto === "boolean") setAllowCrypto(d.withdrawal.allowCrypto);
+          if (typeof d.withdrawal.allowBankTransfer === "boolean") setAllowBankTransfer(d.withdrawal.allowBankTransfer);
+          if (typeof d.withdrawal.allowPayPal === "boolean") setAllowPayPal(d.withdrawal.allowPayPal);
         }
       })
       .catch(() => null);
@@ -87,8 +96,20 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
   const { prices } = usePrices();
   const price = token ? prices[token.symbol] ?? 0 : 0;
   const units = parseFloat(amount) || 0;
-  const totalUsd = Math.round(units * price * 100) / 100;
+  const totalUsd = paymentMethod === "CRYPTO" ? Math.round(units * price * 100) / 100 : Math.round(units * 100) / 100;
   const availableUnits = useMemo(() => (price > 0 ? balanceUsd / price : 0), [balanceUsd, price]);
+
+  useEffect(() => {
+    const enabled = {
+      CRYPTO: allowCrypto,
+      BANK: allowBankTransfer,
+      PAYPAL: allowPayPal,
+    } as const;
+    if (enabled[paymentMethod]) return;
+    if (allowCrypto) setPaymentMethod("CRYPTO");
+    else if (allowBankTransfer) setPaymentMethod("BANK");
+    else if (allowPayPal) setPaymentMethod("PAYPAL");
+  }, [allowCrypto, allowBankTransfer, allowPayPal, paymentMethod]);
 
   if (!isOpen) return null;
 
@@ -112,7 +133,21 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
   };
 
   const validate = (): string | null => {
-    if (!allowCrypto) return "Crypto withdrawals are temporarily paused by administration.";
+    if (paymentMethod === "BANK") {
+      if (!allowBankTransfer) return "Bank withdrawals are temporarily unavailable.";
+      if (!recipientName.trim() || !bankName.trim() || !accountNumber.trim()) return "Enter the required bank account details.";
+    } else if (paymentMethod === "PAYPAL") {
+      if (!allowPayPal) return "PayPal withdrawals are temporarily unavailable.";
+      if (!recipientName.trim() || !/^\S+@\S+\.\S+$/.test(paypalEmail)) return "Enter a valid PayPal recipient and email.";
+    } else if (!allowCrypto) return "Crypto withdrawals are temporarily paused by administration.";
+    if (paymentMethod !== "CRYPTO") {
+      if (!units || units <= 0) return "Enter an amount.";
+      if (totalUsd < minWithdrawal) return `Minimum withdrawal is ${fmtUsd(minWithdrawal)}.`;
+      if (totalUsd > maxWithdrawal) return `Maximum withdrawal is ${fmtUsd(maxWithdrawal)}.`;
+      if (totalUsd > balanceUsd) return `Insufficient balance. Available: ${fmtUsd(balanceUsd)}.`;
+      if (useWithdrawalCode && !/^\d{6}$/.test(code.trim())) return "Enter the 6-digit withdrawal code emailed to you.";
+      return null;
+    }
     if (!token) return "Select the asset to withdraw.";
     if (!(price > 0)) return "Loading the live price… please try again in a moment.";
     if (address.trim().length < 10) return "Enter a valid destination address.";
@@ -134,6 +169,27 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
     setError("");
     setSubmitting(true);
     try {
+      if (paymentMethod !== "CRYPTO") {
+        const res = await fetch("/api/wallet/withdraw/manual", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            method: paymentMethod,
+            amountUsd: totalUsd,
+            code: code.trim(),
+            recipientName: recipientName.trim(),
+            paypalEmail: paymentMethod === "PAYPAL" ? paypalEmail.trim() : undefined,
+            bankName: paymentMethod === "BANK" ? bankName.trim() : undefined,
+            accountNumber: paymentMethod === "BANK" ? accountNumber.trim() : undefined,
+            routingNumber: paymentMethod === "BANK" ? routingNumber.trim() : undefined,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Withdrawal failed");
+        setStep("SUCCESS");
+        onSuccess?.();
+        return;
+      }
       const chosenNetwork = network || token!.networks[0];
       const res = await fetch("/api/wallet/withdraw", {
         method: "POST",
@@ -175,27 +231,57 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
             </p>
 
             <div className="dm-section-label">Available methods</div>
-            <div className="dm-option-card selected">
-              <span>Crypto</span>
+            <div className="dm-payment-options">
+              {allowCrypto && <button type="button" className={`dm-option-card ${paymentMethod === "CRYPTO" ? "selected" : ""}`} onClick={() => setPaymentMethod("CRYPTO")}><span>Crypto</span><small>Withdraw to a wallet</small></button>}
+              {allowBankTransfer && <button type="button" className={`dm-option-card ${paymentMethod === "BANK" ? "selected" : ""}`} onClick={() => setPaymentMethod("BANK")}><span>Bank transfer</span><small>Withdraw to your bank</small></button>}
+              {allowPayPal && <button type="button" className={`dm-option-card ${paymentMethod === "PAYPAL" ? "selected" : ""}`} onClick={() => setPaymentMethod("PAYPAL")}><span>PayPal</span><small>Withdraw to PayPal</small></button>}
+              {!allowCrypto && !allowBankTransfer && !allowPayPal && <div className="dm-method-empty">No withdrawal methods are currently available.</div>}
             </div>
 
             <div className="dm-limits-box">
               <div className="dm-limit-row">
                 <span className="dm-limit-label">Minimum withdrawal</span>
                 <span className="dm-limit-dots"></span>
-                <span className="dm-limit-val">{fmtUsd(MIN_WITHDRAWAL).replace(".00", "")}</span>
+                <span className="dm-limit-val">{fmtUsd(minWithdrawal).replace(".00", "")}</span>
               </div>
               <div className="dm-limit-row">
                 <span className="dm-limit-label">Maximum withdrawal</span>
                 <span className="dm-limit-dots"></span>
-                <span className="dm-limit-val">{fmtUsd(MAX_WITHDRAWAL).replace(".00", "")}</span>
+                <span className="dm-limit-val">{fmtUsd(maxWithdrawal).replace(".00", "")}</span>
               </div>
             </div>
 
-            <button type="button" className="dm-primary-btn" onClick={() => setStep("FORM")}>
+            <button type="button" className="dm-primary-btn" disabled={!allowCrypto && !allowBankTransfer && !allowPayPal} onClick={() => setStep(paymentMethod === "CRYPTO" ? "FORM" : "MANUAL")}>
               Continue
             </button>
           </div>
+        )}
+
+        {step === "MANUAL" && (
+          <form onSubmit={handleSubmit} className="app-form">
+            <div className="dm-header">
+              <div className="dm-header-left"><button type="button" className="dm-back-btn" onClick={() => setStep("METHOD")}><ChevronLeft size={20} /></button><h2 className="dm-title">{paymentMethod === "BANK" ? "Bank withdrawal" : "PayPal withdrawal"}</h2></div>
+              <button type="button" className="dm-close-btn" onClick={onClose}><X size={19} /></button>
+            </div>
+            <p className="dm-subtitle">Enter the receiving account details. Your request will remain pending until reviewed.</p>
+            {error && <div className="dm-error"><AlertCircle size={15} /><span>{error}</span></div>}
+            <label><span className="app-label">Amount (USD)</span><input className="app-input" type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" /></label>
+            <label><span className="app-label">Recipient name</span><input className="app-input" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Full legal name" /></label>
+            {paymentMethod === "BANK" ? (
+              <>
+                <label><span className="app-label">Bank name</span><input className="app-input" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Bank name" /></label>
+                <label><span className="app-label">Account number / IBAN</span><input className="app-input" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Account number or IBAN" /></label>
+                <label><span className="app-label">Routing / SWIFT code (optional)</span><input className="app-input" value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder="Routing or SWIFT code" /></label>
+              </>
+            ) : (
+              <label><span className="app-label">PayPal email</span><input className="app-input" type="email" value={paypalEmail} onChange={(e) => setPaypalEmail(e.target.value)} placeholder="paypal@example.com" /></label>
+            )}
+            {useWithdrawalCode && (
+              <div><span className="app-label">Withdrawal code</span><div className="dm-code-row"><input className="app-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="6-digit code" /><button type="button" className="app-side-btn" onClick={requestCode} disabled={codeStatus === "sending"}>{codeStatus === "sending" ? "Sending…" : codeStatus === "sent" ? "Resend" : "Send code"}</button></div>{codeMessage && <div style={{ color: "#10b981", fontSize: 12, marginTop: 6 }}>{codeMessage}</div>}</div>
+            )}
+            <div className="dm-limits-box"><div className="dm-limit-row"><span className="dm-limit-label">Available balance</span><span className="dm-limit-dots"/><span className="dm-limit-val">{fmtUsd(balanceUsd)}</span></div><div className="dm-limit-row"><span className="dm-limit-label">Requested</span><span className="dm-limit-dots"/><span className="dm-limit-val">{fmtUsd(totalUsd)}</span></div></div>
+            <button type="submit" className="dm-primary-btn" disabled={submitting}>{submitting ? <Loader2 size={16} className="animate-spin" /> : "Request withdrawal"}</button>
+          </form>
         )}
 
         {/* STEP 2: crypto withdrawal form */}
