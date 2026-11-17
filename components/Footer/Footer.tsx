@@ -61,7 +61,7 @@ export default function Footer() {
                 <li className="four-module__98-FTG__footerLinksItem">
                   <Link
                     className="four-module__98-FTG__footerLink"
-                    href="/staking"
+                    href="/stake"
                   >
                     Staking
                   </Link>

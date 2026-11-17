@@ -66,7 +66,7 @@ export default function Header() {
       title: "Explore",
       links: [
         {
-          href: "/staking",
+          href: "/stake",
           title: "Staking",
           description: "Stake your tokens and earn",
           renderIcon: () => (
@@ -700,7 +700,7 @@ export default function Header() {
             >
               {/* Staking */}
               <Link
-                href="/staking"
+                href="/stake"
                 onClick={() => setMobileOpen(false)}
                 style={{
                   display: "flex",

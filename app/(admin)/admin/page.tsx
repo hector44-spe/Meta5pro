@@ -180,14 +180,6 @@ function AdminContent() {
 
   const [section, setSection] = useState<Section>(() => {
     if (urlSection && validSections.includes(urlSection)) return urlSection;
-    if (typeof window !== "undefined") {
-      try {
-        const u = new URLSearchParams(window.location.search).get("section") as Section;
-        if (u && validSections.includes(u)) return u;
-        const saved = localStorage.getItem("admin_active_section") as Section;
-        if (saved && validSections.includes(saved)) return saved;
-      } catch {}
-    }
     return "overview";
   });
 
@@ -261,11 +253,11 @@ function AdminContent() {
     }
   }, [flash]);
 
-  // Re-fetch whenever section changes or window gets focus (silent so no UI flash occurs)
+  // Load shared admin data once, then refresh it when the tab becomes active again.
+  // Section changes do not require another request and previously caused overlapping
+  // initial loads while the page was hydrating.
   useEffect(() => {
-    // Only show full skeleton loader on very first load before transactions/users are loaded
-    const isFirstLoad = transactions.length === 0 && users.length === 0;
-    loadAll(!isFirstLoad);
+    loadAll(false);
 
     const handleFocus = () => {
       if (document.visibilityState === "visible") {
@@ -278,15 +270,15 @@ function AdminContent() {
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleFocus);
     };
-  }, [loadAll, section]);
+  }, [loadAll]);
 
-  // Close the mobile menu when switching sections and persist URL + localStorage
+  // Close the mobile menu and persist the section in the URL. Keeping the URL as
+  // the single source of truth avoids a server/client hydration mismatch.
   const go = (s: Section) => {
     setSection(s);
     setNavOpen(false);
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     try {
-      localStorage.setItem("admin_active_section", s);
       const u = new URL(window.location.href);
       u.searchParams.set("section", s);
       window.history.replaceState(null, "", u.toString());

@@ -552,12 +552,39 @@
   background: rgba(255, 255, 255, 0.22);
 }
 .table {
+  display: table;
   width: 100%;
   min-width: 760px;
+  padding: 0;
   border-collapse: collapse;
+  border-spacing: 0;
+  table-layout: auto;
   font-size: 13.5px;
 }
+.table thead {
+  display: table-header-group;
+}
+.table tbody {
+  display: table-row-group;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  padding: 0 !important;
+  mask: none;
+  -webkit-mask: none;
+}
+.table tr,
+.table thead tr,
+.table tbody tr {
+  display: table-row;
+  width: auto;
+  height: auto;
+  padding: 0 !important;
+  border-radius: 0;
+  cursor: default;
+}
 .table th {
+  display: table-cell;
   text-align: left;
   font-size: 12px;
   font-weight: 600;
@@ -567,6 +594,7 @@
   white-space: nowrap;
 }
 .table td {
+  display: table-cell;
   padding: 12px;
   border-bottom: 1px solid var(--a-border);
   vertical-align: middle;
@@ -574,6 +602,12 @@
 }
 .table tbody tr:last-child td {
   border-bottom: none;
+}
+.table tbody tr:nth-of-type(odd),
+.table tbody tr:nth-of-type(even),
+.table tbody tr:hover {
+  background: transparent !important;
+  opacity: 1;
 }
 .table tbody tr:hover td {
   background: rgba(255, 255, 255, 0.015);

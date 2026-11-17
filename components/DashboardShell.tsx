@@ -574,11 +574,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <span>Real estate</span>
             </Link>
             <Link
-              href="/staking"
-              className="dashboard-mobile-grid-item"
+              href="/stake"
+              className={`dashboard-mobile-grid-item ${pathname.startsWith("/stake") ? "active" : ""}`}
               onClick={() => setMobileSidebarOpen(false)}
             >
-              <PieChart size={22} />
+              <PieChart size={22} color={pathname.startsWith("/stake") ? "#4763f0" : "currentColor"} />
               <span>Stake</span>
             </Link>
             <button
@@ -1137,19 +1137,21 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       <span>Real estate</span>
                     </Link>
                     <Link
-                      href="/staking"
+                      href="/stake"
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: "10px",
                         padding: "7px 10px",
-                        color: "rgba(255, 255, 255, 0.65)",
+                        color: pathname.startsWith("/stake") ? "#fff" : "rgba(255, 255, 255, 0.65)",
+                        backgroundColor: pathname.startsWith("/stake") ? "rgba(71, 99, 240, 0.12)" : "transparent",
                         fontSize: "12.5px",
                         textDecoration: "none",
                         borderRadius: "6px",
+                        fontWeight: pathname.startsWith("/stake") ? 600 : 500,
                       }}
                     >
-                      <PieChart size={15} strokeWidth={1.5} />
+                      <PieChart size={15} strokeWidth={1.5} color={pathname.startsWith("/stake") ? "#4763f0" : "currentColor"} />
                       <span>Stake</span>
                     </Link>
                     <button
@@ -1368,8 +1370,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                       ? "Signals"
                       : pathname.startsWith("/copy-trading")
                       ? "Copy trading"
-                      : pathname.startsWith("/staking")
-                      ? "Staking"
+                      : pathname.startsWith("/stake") || pathname.startsWith("/staking")
+                      ? "Stake"
+                      : pathname.startsWith("/mining")
+                      ? "Mining"
                       : pathname.startsWith("/subscribe")
                       ? "Subscriptions"
                       : pathname.startsWith("/real-estate")
