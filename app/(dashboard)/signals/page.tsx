@@ -924,15 +924,18 @@ export default function SignalPage() {
       {/* Admin Edit / Add Signal Modal */}
       {(editingSignal || isCreatingSignal) && (
         <div
-          className="admin_edit_modal_overlay"
+          className="admin_edit_modal_overlay signal-admin-modal"
           onClick={() => !savingSignal && (setEditingSignal(null), setIsCreatingSignal(false))}
         >
           <div
-            className="admin_edit_modal_dialog"
+            className="admin_edit_modal_dialog signal-admin-modal-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="signal-modal-title"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="admin_edit_modal_header">
-              <h3>{isCreatingSignal ? "Add Signal Package" : "Edit Signal Package"}</h3>
+              <h3 id="signal-modal-title">{isCreatingSignal ? "Add Signal Package" : "Edit Signal Package"}</h3>
               <button
                 type="button"
                 className="close_btn"

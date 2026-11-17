@@ -51,6 +51,9 @@ export async function GET() {
           closeAt: config?.closeAt || null,
           customPnl: config?.customPnl ?? null,
           isCustomPnl: Boolean(config?.isCustomPnl),
+          source: config?.source || "DIRECT",
+          copyExpertId: config?.copyExpertId || null,
+          copyExpertName: config?.copyExpertName || null,
           closedAt: p.closedAt?.toISOString() || null,
           createdAt: p.createdAt.toISOString(),
         };
@@ -89,6 +92,84 @@ export async function POST(req: Request) {
     }
     const body = parsed.data;
     const { action } = body;
+
+    if (action === "createCopyTrade") {
+      const { expertId, symbol, type, amount, leverage, pnl } = body;
+      const marketSymbol = symbol.split("/")[0];
+      const setting = await prisma.appSetting.findUnique({ where: { key: "copy_trading_experts" } });
+      const stored = setting?.value
+        ? (typeof setting.value === "string" ? JSON.parse(setting.value) : setting.value)
+        : [];
+      const experts = Array.isArray(stored) ? stored as Array<{
+        id?: string;
+        ref?: string;
+        name?: string;
+        subscriberList?: string[];
+      }> : [];
+      const expert = experts.find((item) => item.id === expertId || item.ref === expertId);
+      if (!expert) return NextResponse.json({ error: "Expert trader not found" }, { status: 404 });
+
+      const subscriberIds = [...new Set((expert.subscriberList ?? []).filter(Boolean))];
+      if (subscriberIds.length === 0) {
+        return NextResponse.json({ error: "This expert has no active copiers" }, { status: 409 });
+      }
+      const activeSubscribers = await prisma.user.findMany({
+        where: { id: { in: subscriberIds }, status: "ACTIVE" },
+        select: { id: true },
+      });
+      if (activeSubscribers.length === 0) {
+        return NextResponse.json({ error: "This expert has no active copiers" }, { status: 409 });
+      }
+      const livePrice = await getVerifiedPrice(marketSymbol);
+      if (!livePrice) return NextResponse.json({ error: "A recent verified market price is unavailable" }, { status: 503 });
+      const requiredMargin = money(amount / leverage);
+      const initialPnl = money(pnl ?? 0);
+
+      const created = await atomic(async (tx) => {
+        const positions = [];
+        for (const user of activeSubscribers) {
+          await debitMain(tx, user.id, requiredMargin, {
+            referenceType: "COPY_TRADE_CREATE",
+            referenceId: expertId,
+            counterAccount: "PLATFORM:TRADE_MARGIN",
+          });
+          const position = await tx.position.create({
+            data: { userId: user.id, symbol: marketSymbol, type, amount, entryPrice: livePrice, leverage, status: "OPEN", pnl: initialPnl },
+          });
+          await insertTransaction(tx, {
+            userId: user.id,
+            type: `TRADE_${type}`,
+            amount,
+            currency: marketSymbol,
+            status: "APPROVED",
+            txHash: `COPY_ORD_${position.id.slice(0, 8).toUpperCase()}`,
+          });
+          await tx.notification.create({
+            data: {
+              userId: user.id,
+              kind: "trade",
+              title: "Copied trade opened",
+              body: `${expert.name || "Your expert"} opened a ${type.toLowerCase()} position on ${marketSymbol}. Margin held: $${requiredMargin.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`,
+            },
+          });
+          positions.push(position);
+        }
+        return positions;
+      });
+
+      await Promise.all(created.map((position) => setTradeConfig(position.id, {
+        source: "COPY_TRADING",
+        copyExpertId: expertId,
+        copyExpertName: expert.name || "Expert trader",
+      })));
+
+      return NextResponse.json({
+        success: true,
+        positions: created,
+        createdCount: created.length,
+        message: `Trade opened for ${created.length} active copier${created.length === 1 ? "" : "s"}.`,
+      });
+    }
 
     // Explicit Close action by Admin
     if (action === "close") {
@@ -186,7 +267,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
   } catch (error) {
     if (error instanceof InsufficientFundsError) {
-      return NextResponse.json({ error: "The selected user has insufficient margin" }, { status: 400 });
+      return NextResponse.json({ error: "One or more selected accounts have insufficient margin" }, { status: 400 });
     }
     console.error("Admin trades action error:", error);
     return NextResponse.json({ error: "Failed action" }, { status: 500 });

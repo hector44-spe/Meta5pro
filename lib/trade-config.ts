@@ -5,6 +5,9 @@ export interface TradeConfig {
   closeAt?: string; // ISO date string
   isCustomPnl?: boolean;
   customPnl?: number;
+  source?: "DIRECT" | "COPY_TRADING";
+  copyExpertId?: string;
+  copyExpertName?: string;
 }
 
 const META_PREFIX = "trade_meta_";

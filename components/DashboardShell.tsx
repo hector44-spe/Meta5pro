@@ -496,16 +496,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <WalletMinimal size={22} />
               <span>Assets</span>
             </Link>
-            <button
-              className="dashboard-mobile-grid-item"
-              onClick={() => {
-                setActiveModal("settings");
-                setMobileSidebarOpen(false);
-              }}
+            <Link
+              href="/copy-trading"
+              className={`dashboard-mobile-grid-item ${pathname.startsWith("/copy-trading") ? "active" : ""}`}
+              onClick={() => setMobileSidebarOpen(false)}
             >
-              <Settings size={22} />
-              <span>Settings</span>
-            </button>
+              <Users size={22} />
+              <span>Copy trading</span>
+            </Link>
             <button
               className="dashboard-mobile-grid-item"
               onClick={() => {
@@ -588,14 +586,16 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               <TrendingUp size={22} />
               <span>Investing</span>
             </Link>
-            <Link
-              href="/copy-trading"
+            <button
               className="dashboard-mobile-grid-item"
-              onClick={() => setMobileSidebarOpen(false)}
+              onClick={() => {
+                setActiveModal("settings");
+                setMobileSidebarOpen(false);
+              }}
             >
-              <Users size={22} />
-              <span>Copy trading</span>
-            </Link>
+              <Settings size={22} />
+              <span>Settings</span>
+            </button>
             <Link
               href="/mining"
               className="dashboard-mobile-grid-item"

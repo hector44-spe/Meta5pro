@@ -33,6 +33,9 @@ interface Position {
   createdAt: string;
   durationSeconds?: number;
   settlesAt?: string;
+  source?: "DIRECT" | "COPY_TRADING";
+  copyExpertId?: string | null;
+  copyExpertName?: string | null;
 }
 
 const ASSETS_BY_TYPE: Record<
@@ -1717,7 +1720,14 @@ function TradingContent() {
                                   <td style={{ padding: "12px 14px", fontWeight: 600, color: "#fff", whiteSpace: "nowrap" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                       <AssetBrandIcon symbol={pos.symbol} size={18} />
-                                      <span>{pos.symbol}</span>
+                                      <span>
+                                        {pos.symbol}
+                                        {pos.source === "COPY_TRADING" && (
+                                          <small style={{ display: "block", marginTop: 2, color: "#8ea0ff", fontSize: 9.5, fontWeight: 600 }}>
+                                            Copied from {pos.copyExpertName || "expert"}
+                                          </small>
+                                        )}
+                                      </span>
                                     </div>
                                   </td>
                                   <td style={{ padding: "12px 14px", whiteSpace: "nowrap" }}>
@@ -1850,7 +1860,14 @@ function TradingContent() {
                                   <td style={{ padding: "12px 14px", fontWeight: 600, color: "#fff" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                                       <AssetBrandIcon symbol={pos.symbol} size={18} />
-                                      <span>{pos.symbol}</span>
+                                      <span>
+                                        {pos.symbol}
+                                        {pos.source === "COPY_TRADING" && (
+                                          <small style={{ display: "block", marginTop: 2, color: "#8ea0ff", fontSize: 9.5, fontWeight: 600 }}>
+                                            Copied from {pos.copyExpertName || "expert"}
+                                          </small>
+                                        )}
+                                      </span>
                                     </div>
                                   </td>
                                   <td style={{ padding: "12px 14px" }}>

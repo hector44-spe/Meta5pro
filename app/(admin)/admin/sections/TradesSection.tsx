@@ -41,6 +41,9 @@ interface AdminTrade {
   closeAt?: string | null;
   customPnl?: number | null;
   isCustomPnl?: boolean;
+  source?: "DIRECT" | "COPY_TRADING";
+  copyExpertId?: string | null;
+  copyExpertName?: string | null;
 }
 
 export default function TradesSection({
@@ -439,6 +442,11 @@ export default function TradesSection({
                     </td>
                     <td style={{ fontWeight: 700 }}>
                       {t.symbol}
+                      {t.source === "COPY_TRADING" && (
+                        <div style={{ marginTop: 4, fontSize: "10.5px", fontWeight: 600, color: "#8ea0ff" }}>
+                          Copied from {t.copyExpertName || "expert"}
+                        </div>
+                      )}
                       {t.duration && (
                         <span
                           style={{
@@ -586,6 +594,11 @@ export default function TradesSection({
                         </span>
                       )}
                     </div>
+                    {t.source === "COPY_TRADING" && (
+                      <span style={{ display: "block", marginTop: 4, fontSize: "10px", color: "#8ea0ff" }}>
+                        Copied from {t.copyExpertName || "expert"}
+                      </span>
+                    )}
                   </div>
 
                   <div className={styles.itemMetaCol}>

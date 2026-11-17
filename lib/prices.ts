@@ -301,16 +301,22 @@ export async function getPrices(): Promise<PriceSnapshot> {
         const dbSnap = await loadPersistedCache();
         if (dbSnap) {
           cache = dbSnap;
+          cacheAt = Date.now();
           return dbSnap;
         }
 
-        return {
+        const fallback: PriceSnapshot = {
           prices: { ...CALIBRATED_BASELINES, USD: 1 },
           changes24h: {},
           updatedAt: new Date().toISOString(),
           live: false,
           liveSymbols: [],
         };
+        // Cache degraded snapshots too, otherwise every lookup retries an
+        // unavailable provider and can stall the UI for several seconds.
+        cache = fallback;
+        cacheAt = Date.now();
+        return fallback;
       })
       .finally(() => {
         inflight = null;

@@ -1418,3 +1418,80 @@
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
 }
+
+/* Final responsive contract: the dashboard shell owns vertical scrolling. */
+.cold-storage-page,
+.cold-storage-content-card,
+.cold-storage-content-card > *,
+.cold-storage-mobile-wrapper,
+.cold-storage-mobile-wrapper .content_wrapper {
+  min-width: 0;
+}
+
+.cold-storage-content-card {
+  height: auto !important;
+  min-height: 0 !important;
+  max-width: 100%;
+  overflow: visible !important;
+  padding: clamp(14px, 2.4vw, 24px) !important;
+}
+
+.cold-storage-switcher {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.cold-storage-assets-header,
+.cold-storage-assets-header .titles {
+  min-width: 0;
+}
+
+.cold-storage-overlay,
+.cold-storage-success-overlay {
+  height: var(--dashboard-viewport-height, 100dvh) !important;
+}
+
+.cold-storage-success-card {
+  width: min(440px, calc(100vw - 24px)) !important;
+  max-height: calc(var(--dashboard-viewport-height, 100dvh) - 24px) !important;
+  overflow-y: auto !important;
+}
+
+@media screen and (max-width: 640px) {
+  .cold-storage-drawer {
+    height: var(--dashboard-viewport-height, 100dvh) !important;
+    max-height: var(--dashboard-viewport-height, 100dvh) !important;
+    padding-bottom: max(14px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .asset.cold-storage-asset-row {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .cold-storage-mobile-wrapper .asset_right {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+  }
+
+  .cold-storage-mobile-wrapper .asset_value,
+  .cold-storage-mobile-wrapper p.current_price {
+    min-width: 0 !important;
+    overflow-wrap: anywhere;
+  }
+
+  .cold-storage-mobile-wrapper .cold-storage-add-btn {
+    flex: 0 0 auto;
+  }
+
+  .cold-storage-success-card {
+    padding: 20px 16px !important;
+  }
+}

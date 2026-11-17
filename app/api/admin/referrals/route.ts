@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
     const key = `user_referrals_${userId}`;
     const setting = await prisma.appSetting.findUnique({ where: { key } });
-    let data: UserReferralData = (setting?.value as unknown as UserReferralData) || {
+    const data: UserReferralData = (setting?.value as unknown as UserReferralData) || {
       userId,
       referralCode: generateReferralCode(userId),
       referralBalance: 0,

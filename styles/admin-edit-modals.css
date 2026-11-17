@@ -240,3 +240,77 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* Signal pages also load the dashboard stylesheet during client navigation.
+   Keep this modal's geometry deterministic regardless of stylesheet order. */
+.signal-admin-modal {
+  width: 100% !important;
+  height: var(--dashboard-viewport-height, 100dvh) !important;
+  min-height: 0 !important;
+  padding: 12px !important;
+  box-sizing: border-box !important;
+}
+
+.signal-admin-modal .signal-admin-modal-dialog {
+  display: block !important;
+  width: min(440px, calc(100vw - 24px)) !important;
+  max-width: 440px !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: calc(var(--dashboard-viewport-height, 100dvh) - 24px) !important;
+  margin: auto !important;
+  padding: 24px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+  overscroll-behavior: contain;
+}
+
+.signal-admin-modal-dialog,
+.signal-admin-modal-dialog * {
+  box-sizing: border-box;
+}
+
+.signal-admin-modal-dialog .admin_input_row {
+  display: flex !important;
+  width: 100% !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  padding: 0 14px !important;
+}
+
+.signal-admin-modal-dialog .admin_input_row input {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.signal-admin-modal-dialog .close_btn {
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  padding: 0 !important;
+}
+
+.signal-admin-modal-dialog .admin_modal_actions button {
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 16px !important;
+}
+
+@media (max-width: 480px) {
+  .signal-admin-modal .signal-admin-modal-dialog {
+    padding: 18px !important;
+  }
+
+  .signal-admin-modal-dialog .admin_modal_actions {
+    flex-direction: column-reverse;
+  }
+}

@@ -69,5 +69,14 @@ export const adminTradeActionSchema = z.discriminatedUnion("action", [
     pnl: finiteMoney.optional(),
     status: z.literal("OPEN").default("OPEN"),
   }).strict(),
+  z.object({
+    action: z.literal("createCopyTrade"),
+    expertId: z.string().trim().min(1).max(100),
+    symbol: z.string().trim().toUpperCase().regex(/^[A-Z0-9/]{2,15}$/),
+    type: z.enum(["BUY", "SELL"]),
+    amount: z.number().positive().max(1_000_000_000),
+    leverage: z.number().int().min(1).max(100),
+    pnl: finiteMoney.optional(),
+  }).strict(),
   z.object({ action: z.literal("delete"), positionId: z.string().uuid() }).strict(),
 ]);

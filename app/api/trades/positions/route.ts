@@ -45,11 +45,15 @@ export async function GET() {
 
         return {
           ...p,
+          side: p.type,
           margin: Number(margin.toFixed(2)),
           duration: config?.duration || null,
           closeAt: config?.closeAt || null,
           customPnl: config?.customPnl ?? null,
           isCustomPnl: Boolean(config?.isCustomPnl),
+          source: config?.source || "DIRECT",
+          copyExpertId: config?.copyExpertId || null,
+          copyExpertName: config?.copyExpertName || null,
         };
       })
     );

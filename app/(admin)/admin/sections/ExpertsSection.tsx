@@ -16,6 +16,7 @@ import {
   TrendingUp,
   X,
   Save,
+  CandlestickChart,
 } from "lucide-react";
 import styles from "../page.module.css";
 import { AdminExpertCopier, CopyExpertData } from "@/app/api/admin/experts/route";
@@ -24,6 +25,16 @@ import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/
 
 const usd = (n: number) =>
   `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+interface CopyTradeDraft {
+  expertId: string;
+  expertName: string;
+  symbol: string;
+  type: "BUY" | "SELL";
+  amount: number;
+  leverage: number;
+  pnl: number;
+}
 
 export default function ExpertsSection({
   flash,
@@ -39,6 +50,7 @@ export default function ExpertsSection({
 
   // Edit / Add modal
   const [editModal, setEditModal] = useState<Partial<CopyExpertData> | null>(null);
+  const [copyTrade, setCopyTrade] = useState<CopyTradeDraft | null>(null);
 
   // Custom Confirm & Notification State
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
@@ -127,6 +139,50 @@ export default function ExpertsSection({
     } catch (e: any) {
       setNotification({ type: "error", message: e.message || "Failed to save expert" });
       flash("error", e.message || "Failed to save expert");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const openCopyTrade = (expert: CopyExpertData) => {
+    setCopyTrade({
+      expertId: expert.id || expert.ref,
+      expertName: expert.name,
+      symbol: "BTC",
+      type: "BUY",
+      amount: Math.max(100, Number(expert.minimumStartUp || 1000)),
+      leverage: 1,
+      pnl: 0,
+    });
+  };
+
+  const handlePlaceCopyTrade = async () => {
+    if (!copyTrade) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/trades", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "createCopyTrade",
+          expertId: copyTrade.expertId,
+          symbol: copyTrade.symbol.trim().toUpperCase(),
+          type: copyTrade.type,
+          amount: Number(copyTrade.amount),
+          leverage: Number(copyTrade.leverage),
+          pnl: Number(copyTrade.pnl || 0),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to place copied trade");
+      setNotification({ type: "success", message: data.message || "Copied trade opened successfully." });
+      flash("ok", data.message || "Copied trade opened successfully.");
+      setCopyTrade(null);
+      await loadData(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to place copied trade";
+      setNotification({ type: "error", message });
+      flash("error", message);
     } finally {
       setSubmitting(false);
     }
@@ -490,7 +546,7 @@ export default function ExpertsSection({
                 <th className={styles.right} style={{ minWidth: "110px" }}>Min. Startup</th>
                 <th style={{ minWidth: "95px" }}>Followers</th>
                 <th style={{ minWidth: "80px" }}>Badge</th>
-                <th style={{ minWidth: "130px", width: "130px", textAlign: "right" }}>Actions</th>
+                <th style={{ minWidth: "220px", width: "220px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -552,6 +608,14 @@ export default function ExpertsSection({
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        className={styles.btnPrimarySm}
+                        onClick={() => openCopyTrade(exp)}
+                        title="Place a trade for all active copiers"
+                      >
+                        <CandlestickChart size={14} /> Trade
+                      </button>
                       <button
                         type="button"
                         className={styles.btnGhostSm}
@@ -635,6 +699,14 @@ export default function ExpertsSection({
 
                 <div className={styles.itemBottom}>
                   <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className={styles.btnPrimarySm}
+                      onClick={() => openCopyTrade(exp)}
+                      style={{ height: "32px", padding: "0 12px", fontSize: "12px" }}
+                    >
+                      <CandlestickChart size={13} /> Trade
+                    </button>
                     <button
                       type="button"
                       className={styles.btnGhostSm}
@@ -798,6 +870,93 @@ export default function ExpertsSection({
               >
                 {submitting ? <Loader2 size={15} className={styles.spin} /> : <Save size={15} />}
                 Save Expert
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Place one expert trade across every active copier account. */}
+      {copyTrade && (
+        <div className={styles.modalBackdrop} onClick={() => !submitting && setCopyTrade(null)}>
+          <div
+            className={styles.modal}
+            style={{ width: "100%", maxWidth: "520px", maxHeight: "calc(100dvh - 24px)", overflowY: "auto", padding: "20px" }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.modalHead}>
+              <div>
+                <h2>Place Copied Trade</h2>
+                <div className={styles.faint} style={{ marginTop: 4 }}>Expert: {copyTrade.expertName}</div>
+              </div>
+              <button type="button" className={styles.iconBtn} onClick={() => setCopyTrade(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
+              <div>
+                <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Market symbol</label>
+                <input
+                  value={copyTrade.symbol}
+                  onChange={(event) => setCopyTrade({ ...copyTrade, symbol: event.target.value })}
+                  placeholder="BTC"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                />
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
+                <div>
+                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Side</label>
+                  <select
+                    value={copyTrade.type}
+                    onChange={(event) => setCopyTrade({ ...copyTrade, type: event.target.value as "BUY" | "SELL" })}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                  >
+                    <option value="BUY">Buy</option>
+                    <option value="SELL">Sell</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Notional per copier ($)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={copyTrade.amount}
+                    onChange={(event) => setCopyTrade({ ...copyTrade, amount: Number(event.target.value) })}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                  />
+                </div>
+                <div>
+                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Leverage</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={copyTrade.leverage}
+                    onChange={(event) => setCopyTrade({ ...copyTrade, leverage: Number(event.target.value) })}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                  />
+                </div>
+                <div>
+                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Starting P&amp;L ($)</label>
+                  <input
+                    type="number"
+                    value={copyTrade.pnl}
+                    onChange={(event) => setCopyTrade({ ...copyTrade, pnl: Number(event.target.value) })}
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                  />
+                </div>
+              </div>
+              <div className={styles.faint} style={{ fontSize: 12, lineHeight: 1.5 }}>
+                Required margin per copier: {usd(copyTrade.amount / Math.max(1, copyTrade.leverage))}. The batch is atomic: if any active copier cannot fund the margin, no positions are created.
+              </div>
+            </div>
+
+            <div className={styles.modalActions} style={{ marginTop: 20 }}>
+              <button type="button" className={styles.btnGhost} onClick={() => setCopyTrade(null)} disabled={submitting}>Cancel</button>
+              <button type="button" className={styles.btnSuccess} onClick={handlePlaceCopyTrade} disabled={submitting || !copyTrade.symbol || copyTrade.amount <= 0}>
+                {submitting ? <Loader2 size={15} className={styles.spin} /> : <CandlestickChart size={15} />}
+                Place for all copiers
               </button>
             </div>
           </div>

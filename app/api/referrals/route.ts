@@ -83,7 +83,7 @@ export async function POST(req: Request) {
       where: { key },
     });
 
-    let data: UserReferralData = (setting?.value as unknown as UserReferralData) || {
+    const data: UserReferralData = (setting?.value as unknown as UserReferralData) || {
       userId: session.userId,
       referralCode: generateReferralCode(session.userId),
       referralBalance: 0,
