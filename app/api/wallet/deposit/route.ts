@@ -138,8 +138,9 @@ export async function POST(req: Request) {
         `We received your deposit of ${fmtUnits(units, symbol)} (≈ ${fmtUsd(usdAmount)}). Reference ${reference}. It will be credited once confirmed.`,
       );
 
-      // Send emails asynchronously in the background so the user's submission finishes immediately without waiting for SMTP handshakes
-      void Promise.allSettled([
+      // Await delivery attempts: serverless runtimes may terminate unawaited SMTP work
+      // as soon as the HTTP response is returned.
+      const emailResults = await Promise.allSettled([
         sendDepositReceivedEmail(session.email, {
           reference,
           units,
@@ -156,7 +157,10 @@ export async function POST(req: Request) {
           hasReceipt: Boolean(receiptUrl),
           transactionId: transaction.id,
         }),
-      ]).catch((err) => console.error("Async deposit notification error:", err));
+      ]);
+      emailResults.forEach((result) => {
+        if (result.status === "rejected") console.error("Deposit notification error:", result.reason);
+      });
 
       return NextResponse.json({
         success: true,

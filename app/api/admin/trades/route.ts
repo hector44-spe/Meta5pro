@@ -115,7 +115,7 @@ export async function POST(req: Request) {
       }
       const activeSubscribers = await prisma.user.findMany({
         where: { id: { in: subscriberIds }, status: "ACTIVE" },
-        select: { id: true },
+        select: { id: true, wallet: { select: { mainBalance: true } } },
       });
       if (activeSubscribers.length === 0) {
         return NextResponse.json({ error: "This expert has no active copiers" }, { status: 409 });
@@ -124,38 +124,59 @@ export async function POST(req: Request) {
       if (!livePrice) return NextResponse.json({ error: "A recent verified market price is unavailable" }, { status: 503 });
       const requiredMargin = money(amount / leverage);
       const initialPnl = money(pnl ?? 0);
+      const accountsWithoutWallets = activeSubscribers.filter((user) => !user.wallet).length;
+      if (accountsWithoutWallets > 0) {
+        return NextResponse.json({
+          error: `${accountsWithoutWallets} active copier account${accountsWithoutWallets === 1 ? " has" : "s have"} no trading wallet. No trades were created.`,
+        }, { status: 409 });
+      }
+      const underfunded = activeSubscribers.filter((user) => Number(user.wallet?.mainBalance ?? 0) < requiredMargin).length;
+      if (underfunded > 0) {
+        return NextResponse.json({
+          error: `${underfunded} active copier${underfunded === 1 ? " has" : "s have"} insufficient margin. No trades were created.`,
+        }, { status: 400 });
+      }
 
-      const created = await atomic(async (tx) => {
-        const positions = [];
-        for (const user of activeSubscribers) {
-          await debitMain(tx, user.id, requiredMargin, {
-            referenceType: "COPY_TRADE_CREATE",
-            referenceId: expertId,
-            counterAccount: "PLATFORM:TRADE_MARGIN",
-          });
-          const position = await tx.position.create({
-            data: { userId: user.id, symbol: marketSymbol, type, amount, entryPrice: livePrice, leverage, status: "OPEN", pnl: initialPnl },
-          });
-          await insertTransaction(tx, {
-            userId: user.id,
-            type: `TRADE_${type}`,
-            amount,
-            currency: marketSymbol,
-            status: "APPROVED",
-            txHash: `COPY_ORD_${position.id.slice(0, 8).toUpperCase()}`,
-          });
-          await tx.notification.create({
-            data: {
+      let created;
+      try {
+        created = await prisma.$transaction(async (tx) => {
+          const positions = [];
+          for (const user of activeSubscribers) {
+            await debitMain(tx, user.id, requiredMargin, {
+              referenceType: "COPY_TRADE_CREATE",
+              referenceId: expertId,
+              counterAccount: "PLATFORM:TRADE_MARGIN",
+            });
+            const position = await tx.position.create({
+              data: { userId: user.id, symbol: marketSymbol, type, amount, entryPrice: livePrice, leverage, status: "OPEN", pnl: initialPnl },
+            });
+            await insertTransaction(tx, {
               userId: user.id,
-              kind: "trade",
-              title: "Copied trade opened",
-              body: `${expert.name || "Your expert"} opened a ${type.toLowerCase()} position on ${marketSymbol}. Margin held: $${requiredMargin.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`,
-            },
-          });
-          positions.push(position);
-        }
-        return positions;
-      });
+              type: `TRADE_${type}`,
+              amount,
+              currency: marketSymbol,
+              status: "APPROVED",
+              txHash: `COPY_ORD_${position.id.slice(0, 8).toUpperCase()}`,
+            });
+            await tx.notification.create({
+              data: {
+                userId: user.id,
+                kind: "trade",
+                title: "Copied trade opened",
+                body: `${expert.name || "Your expert"} opened a ${type.toLowerCase()} position on ${marketSymbol}. Margin held: $${requiredMargin.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`,
+              },
+            });
+            positions.push(position);
+          }
+          return positions;
+        }, { maxWait: 10_000, timeout: 120_000 });
+      } catch (error) {
+        if (error instanceof InsufficientFundsError) throw error;
+        console.error("Create copied trade batch error:", error);
+        return NextResponse.json({
+          error: "The copied-trade batch could not be completed. No copier accounts were charged; please try again.",
+        }, { status: 409 });
+      }
 
       await Promise.all(created.map((position) => setTradeConfig(position.id, {
         source: "COPY_TRADING",

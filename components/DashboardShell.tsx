@@ -172,9 +172,21 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   // its final controls reachable while an input is focused.
   useEffect(() => {
     const viewport = window.visualViewport;
+    let stableHeight = window.innerHeight;
+    let stableWidth = window.innerWidth;
     const updateViewportHeight = () => {
-      const height = Math.round(viewport?.height ?? window.innerHeight);
-      document.documentElement.style.setProperty("--dashboard-viewport-height", `${height}px`);
+      const visualHeight = Math.round(viewport?.height ?? window.innerHeight);
+      const visualOffsetTop = Math.round(viewport?.offsetTop ?? 0);
+      const orientationChanged = Math.abs(window.innerWidth - stableWidth) > 40;
+      if (orientationChanged || visualHeight >= stableHeight - 120) {
+        stableHeight = window.innerHeight;
+        stableWidth = window.innerWidth;
+      }
+      const keyboardInset = Math.max(0, stableHeight - visualHeight - visualOffsetTop);
+      document.documentElement.style.setProperty("--dashboard-viewport-height", `${stableHeight}px`);
+      document.documentElement.style.setProperty("--visual-viewport-height", `${visualHeight}px`);
+      document.documentElement.style.setProperty("--visual-viewport-offset-top", `${visualOffsetTop}px`);
+      document.documentElement.style.setProperty("--dashboard-keyboard-inset", `${keyboardInset}px`);
     };
     updateViewportHeight();
     viewport?.addEventListener("resize", updateViewportHeight);
@@ -185,6 +197,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       viewport?.removeEventListener("scroll", updateViewportHeight);
       window.removeEventListener("resize", updateViewportHeight);
       document.documentElement.style.removeProperty("--dashboard-viewport-height");
+      document.documentElement.style.removeProperty("--visual-viewport-height");
+      document.documentElement.style.removeProperty("--visual-viewport-offset-top");
+      document.documentElement.style.removeProperty("--dashboard-keyboard-inset");
     };
   }, []);
 
@@ -219,13 +234,18 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const demoBalance = 10000;
   const currentBalance = accountType === "real" ? realBalance : demoBalance;
   const [balanceLoaded, setBalanceLoaded] = useState(false);
+  const [accountStats, setAccountStats] = useState({
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    totalProfits: 0,
+    totalTrades: 0,
+  });
 
   // Display currency (Settings > Account); amounts are converted with live FX rates
   const { prices } = usePrices();
   const { summary: holdingsSummary } = useHoldings();
-  const portfolioBalance = accountType === "real"
-    ? Math.max(0, realBalance + holdingsSummary.equityAdjustmentUsd)
-    : demoBalance;
+  const realPortfolioBalance = Math.max(0, realBalance + holdingsSummary.equityAdjustmentUsd);
+  const portfolioBalance = accountType === "real" ? realPortfolioBalance : demoBalance;
   const [displayCurrency, setDisplayCurrency] = useState("USD");
   const formatMoney = (usd: number) => {
     const code = displayCurrency;
@@ -278,7 +298,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   const fetchBalance = async () => {
     try {
-      const res = await fetch("/api/auth/me");
+      const [res, walletRes] = await Promise.all([
+        fetch("/api/auth/me", { cache: "no-store" }),
+        fetch("/api/wallet", { cache: "no-store" }),
+      ]);
       if (res.ok) {
         const data = await res.json();
         if (data.user?.wallet?.mainBalance !== undefined) {
@@ -292,6 +315,17 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             email: data.user.email,
             phoneNumber: data.user.phoneNumber ?? null,
             country: data.user.country ?? null,
+          });
+        }
+      }
+      if (walletRes.ok) {
+        const walletData = await walletRes.json();
+        if (walletData.stats) {
+          setAccountStats({
+            totalDeposits: Number(walletData.stats.totalDeposits || 0),
+            totalWithdrawals: Number(walletData.stats.totalWithdrawals || 0),
+            totalProfits: Number(walletData.stats.totalProfits || 0),
+            totalTrades: Number(walletData.stats.totalTrades || 0),
           });
         }
       }
@@ -1602,7 +1636,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         }}
                       >
                         <span>Real account</span>
-                        <span style={{ color: "#4763f0" }}>$0</span>
+                        <span style={{ color: "#4763f0" }}>{formatMoney(realPortfolioBalance)}</span>
                       </button>
                       <button
                         onClick={() => {
@@ -1698,19 +1732,21 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                         <div className="uad-summary-list">
                           <div className="uad-summary-row">
                             <span>Total Deposits</span>
-                            <span>$0.00</span>
+                            <span>{formatMoney(accountStats.totalDeposits)}</span>
                           </div>
                           <div className="uad-summary-row">
                             <span>Total Withdrawals</span>
-                            <span>$0.00</span>
+                            <span>{formatMoney(accountStats.totalWithdrawals)}</span>
                           </div>
                           <div className="uad-summary-row">
                             <span>Total Profits</span>
-                            <span>$0.00</span>
+                            <span style={{ color: accountStats.totalProfits >= 0 ? "#01b28b" : "#f84960" }}>
+                              {formatMoney(accountStats.totalProfits)}
+                            </span>
                           </div>
                           <div className="uad-summary-row">
                             <span>Total trades</span>
-                            <span>0</span>
+                            <span>{accountStats.totalTrades.toLocaleString("en-US")}</span>
                           </div>
                         </div>
                       </div>

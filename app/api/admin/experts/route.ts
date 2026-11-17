@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { normalizeExpertPicture } from "@/lib/copy-expert-image";
 
 export interface AdminExpertCopier {
   id: string;
@@ -77,7 +78,7 @@ const DEFAULT_EXPERTS: CopyExpertData[] = [
     ref: "Crypto1234",
     name: "Crypto Shark",
     username: "crypto_shark",
-    picture: "https://i0.wp.com/blogs.cfainstitute.org/investor/files/2022/04/Crypto-Tokens-and-Crypto-Coins-What-Drives-Performance.png?fit=1200%2C697&ssl=1",
+    picture: "/assets/copy-trading/Crypto-Tokens-and-Crypto-Coins-What-Drives-Performance.png",
     bio: "Trading crypto momentum and swing positions with strict capital protection.",
     winRate: 100,
     profitShare: 15,
@@ -119,7 +120,10 @@ async function getStoredExperts(): Promise<CopyExpertData[]> {
           ? JSON.parse(setting.value)
           : (setting.value as unknown);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed as CopyExpertData[];
+        return (parsed as CopyExpertData[]).map((expert) => ({
+          ...expert,
+          picture: normalizeExpertPicture(expert.picture, expert.id || expert.ref || expert.name),
+        }));
       }
     }
   } catch (e) {
@@ -246,7 +250,7 @@ export async function POST(req: Request) {
         ref: expert.ref || id,
         name: expert.name,
         username: expert.username || "",
-        picture: expert.picture || "/assets/copy-trading/albania_support.png",
+        picture: normalizeExpertPicture(expert.picture, id),
         bio: expert.bio || "",
         winRate: Number(expert.winRate) || 0,
         profitShare: Number(expert.profitShare) || 0,

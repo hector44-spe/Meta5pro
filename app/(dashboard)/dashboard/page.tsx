@@ -387,15 +387,16 @@ export default function DashboardPage() {
       return { name: c?.name ?? sym, icon: c?.icon ?? `/dashboard_files/${sym}.svg` };
     };
 
-    const heldMap = new Map<string, { units: number; usd: number; changePercent: number; changeUsd: number }>();
+    const heldMap = new Map<string, { units: number; pendingUnits: number; usd: number; changePercent: number; changeUsd: number }>();
 
     // 1. From wallet holdings (strictly approved deposits, conversions, bought assets)
     for (const h of holdings) {
       const u = h.units; // Only approved units; do not add unapproved pending deposits
-      if (u > 0) {
+      if (u > 0 || h.pendingUnits > 0) {
         const p = prices[h.symbol] ?? h.price ?? 0;
         heldMap.set(h.symbol.toUpperCase(), {
           units: u,
+          pendingUnits: h.pendingUnits,
           usd: u * p,
           changePercent: h.changePercent,
           changeUsd: h.changeUsd,
@@ -410,6 +411,7 @@ export default function DashboardPage() {
         usdNum: data.usd,
         usd: fmtUsdValue(data.usd),
         amount: fmtUnitsValue(data.units, sym),
+        pendingAmount: data.pendingUnits > 0 ? fmtUnitsValue(data.pendingUnits, sym) : null,
         changePercent: data.changePercent,
         changeUsd: data.changeUsd,
       }))
@@ -423,6 +425,7 @@ export default function DashboardPage() {
         usdNum: 0,
         usd: fmtUsdValue(0),
         amount: fmtUnitsValue(0, sym),
+        pendingAmount: null,
         changePercent: 0,
         changeUsd: 0,
       }));
@@ -1052,7 +1055,7 @@ export default function DashboardPage() {
 
             {/* Assets Rows */}
             <div style={{ display: "grid", gap: "2px" }}>
-              {assetsList.slice(0, 4).map((asset) => (
+              {assetsList.map((asset) => (
                 <div
                   key={asset.symbol}
                   style={{
@@ -1119,6 +1122,11 @@ export default function DashboardPage() {
                     >
                       {asset.amount}
                     </div>
+                    {asset.pendingAmount && (
+                      <div style={{ fontSize: "10.5px", color: "#f5a524", marginTop: 2 }}>
+                        Pending: {asset.pendingAmount}
+                      </div>
+                    )}
                     {asset.usdNum > 0 && (
                       <div style={{ fontSize: "10.5px", fontWeight: 600, marginTop: 2, color: asset.changePercent >= 0 ? "#01b28b" : "#f84960" }}>
                         {asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%
@@ -1369,6 +1377,11 @@ export default function DashboardPage() {
                     >
                       {asset.amount}
                     </div>
+                    {asset.pendingAmount && (
+                      <div style={{ fontSize: "10.5px", color: "#f5a524", marginTop: 2 }}>
+                        Pending: {asset.pendingAmount}
+                      </div>
+                    )}
                     {asset.usdNum > 0 && (
                       <div style={{ fontSize: "10.5px", fontWeight: 600, marginTop: 2, color: asset.changePercent >= 0 ? "#01b28b" : "#f84960" }}>
                         {asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%

@@ -1,4 +1,5 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import { prisma } from "@/lib/prisma";
 
 /**
  * Outgoing email through Zoho Mail SMTP.
@@ -68,10 +69,10 @@ ${table}${button}
 }
 
 /** Sends an email. Never throws: failures are logged so they can't break the request that triggered them. */
-export async function sendMail(to: string, subject: string, html: string): Promise<boolean> {
+export async function sendMail(to: string | string[], subject: string, html: string): Promise<boolean> {
   if (!mailConfigured()) {
     if (process.env.NODE_ENV !== "production") {
-      console.info(`[mail:dev] To: ${to} | Subject: ${subject}\n${html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`);
+      console.info(`[mail:dev] To: ${Array.isArray(to) ? to.join(", ") : to} | Subject: ${subject}\n${html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`);
     } else {
       console.warn("[mail] ZOHO_SMTP_USER / ZOHO_SMTP_PASS not set; email skipped:", subject);
     }
@@ -91,8 +92,27 @@ export async function sendMail(to: string, subject: string, html: string): Promi
   }
 }
 
-function adminEmail(): string | null {
-  return process.env.ADMIN_NOTIFY_EMAIL || process.env.ZOHO_SMTP_USER || null;
+async function adminEmails(): Promise<string[]> {
+  const configured = (process.env.ADMIN_NOTIFY_EMAIL || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+  try {
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN", status: "ACTIVE" },
+      select: { email: true },
+    });
+    const zohoMailbox = process.env.ZOHO_SMTP_USER?.trim().toLowerCase();
+    return [...new Set([
+      ...configured,
+      ...admins.map((admin) => admin.email.trim().toLowerCase()),
+      ...(zohoMailbox ? [zohoMailbox] : []),
+    ])];
+  } catch (error) {
+    console.error("[mail] Could not load administrator recipients:", error);
+    const zohoMailbox = process.env.ZOHO_SMTP_USER?.trim().toLowerCase();
+    return [...new Set([...configured, ...(zohoMailbox ? [zohoMailbox] : [])])];
+  }
 }
 
 const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -101,7 +121,7 @@ const usd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits
 /* Templates                                                           */
 /* ------------------------------------------------------------------ */
 
-export function notifyAdminDeposit(d: {
+export async function notifyAdminDeposit(d: {
   userEmail: string;
   amount: number;
   currency: string;
@@ -109,8 +129,11 @@ export function notifyAdminDeposit(d: {
   hasReceipt: boolean;
   transactionId: string;
 }) {
-  const to = adminEmail();
-  if (!to) return Promise.resolve(false);
+  const to = await adminEmails();
+  if (to.length === 0) {
+    console.error("[mail] Deposit alert has no administrator recipient configured");
+    return false;
+  }
   return sendMail(
     to,
     `New deposit pending review: ${usd(d.amount)} from ${d.userEmail}`,
@@ -130,15 +153,18 @@ export function notifyAdminDeposit(d: {
   );
 }
 
-export function notifyAdminWithdrawal(w: {
+export async function notifyAdminWithdrawal(w: {
   userEmail: string;
   amount: number;
   currency: string;
   address: string;
   transactionId: string;
 }) {
-  const to = adminEmail();
-  if (!to) return Promise.resolve(false);
+  const to = await adminEmails();
+  if (to.length === 0) {
+    console.error("[mail] Withdrawal alert has no administrator recipient configured");
+    return false;
+  }
   return sendMail(
     to,
     `New withdrawal request: ${usd(w.amount)} from ${w.userEmail}`,
