@@ -3453,8 +3453,8 @@
     transform: translateY(-50%);
   }
 
-  select,
-  .select {
+  .select_wrapper select,
+  .select_wrapper .select {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;

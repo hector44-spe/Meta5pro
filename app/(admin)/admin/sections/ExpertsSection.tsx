@@ -301,7 +301,7 @@ export default function ExpertsSection({
                 <th className={styles.right} style={{ minWidth: "110px" }}>Min. Startup</th>
                 <th className={styles.right} style={{ minWidth: "95px" }}>Profit Share</th>
                 <th style={{ minWidth: "90px" }}>Status</th>
-                <th style={{ minWidth: "110px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "110px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -319,7 +319,7 @@ export default function ExpertsSection({
                     <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
                     <td className={styles.right} style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 40, marginLeft: "auto" }} /></td>
                     <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ minWidth: "110px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "110px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredCopiers.length === 0 ? (
@@ -490,7 +490,7 @@ export default function ExpertsSection({
                 <th className={styles.right} style={{ minWidth: "110px" }}>Min. Startup</th>
                 <th style={{ minWidth: "95px" }}>Followers</th>
                 <th style={{ minWidth: "80px" }}>Badge</th>
-                <th style={{ minWidth: "130px", width: "130px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "130px", width: "130px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -511,7 +511,7 @@ export default function ExpertsSection({
                     <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
                     <td style={{ minWidth: "95px" }}><div className={styles.skeletonCell} style={{ width: 50 }} /></td>
                     <td style={{ minWidth: "80px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                    <td style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "130px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : experts.length === 0 ? (
@@ -550,7 +550,7 @@ export default function ExpertsSection({
                       {exp.tickType || "none"}
                     </span>
                   </td>
-                  <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                  <td style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "6px" }}>
                       <button
                         type="button"

@@ -48,6 +48,9 @@ export default function CustomConfirmModal({
         style={{
           width: "100%",
           maxWidth: "440px",
+          maxHeight: "min(92vh, calc(100dvh - 24px))",
+          overflowY: "auto",
+          WebkitOverflowScrolling: "touch",
           backgroundColor: "#16181e",
           border: "1px solid rgba(255, 255, 255, 0.1)",
           borderRadius: "14px",

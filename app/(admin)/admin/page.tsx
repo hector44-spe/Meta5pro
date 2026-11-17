@@ -890,36 +890,36 @@ function TxTable({
   return (
     <>
       <div className={styles.tableWrap} style={{ minHeight: "180px" }}>
-      <table className={styles.table} style={{ minWidth: showType ? "980px" : "860px", tableLayout: "fixed" }}>
+      <table className={styles.table} style={{ minWidth: showType ? "1060px" : "950px" }}>
         <thead>
           <tr>
-            <th style={{ width: "110px" }}>Reference</th>
-            <th style={{ width: "200px" }}>User</th>
-            {showType && <th style={{ width: "120px" }}>Type</th>}
-            <th className={styles.right} style={{ width: "130px" }}>Amount</th>
-            <th style={{ width: "90px" }}>Asset</th>
-            <th style={{ width: "85px" }}>Proof</th>
-            <th style={{ width: "125px" }}>Date</th>
-            <th style={{ width: "140px" }} className={onReview ? styles.stickyActionTh : ""}>{onReview ? "Action" : "Status"}</th>
+            <th style={{ minWidth: "110px", width: "110px" }}>Reference</th>
+            <th style={{ minWidth: "190px" }}>User</th>
+            {showType && <th style={{ minWidth: "110px", width: "110px" }}>Type</th>}
+            <th className={styles.right} style={{ minWidth: "125px", width: "125px" }}>Amount</th>
+            <th style={{ minWidth: "130px", width: "130px" }}>Asset</th>
+            <th style={{ minWidth: "105px", width: "105px" }}>Proof</th>
+            <th style={{ minWidth: "125px", width: "125px" }}>Date</th>
+            <th style={{ minWidth: "190px", width: "190px", textAlign: "right" }}>{onReview ? "Action" : "Status"}</th>
           </tr>
         </thead>
         <tbody>
           {loading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <tr key={i}>
-                <td style={{ minWidth: "100px" }}><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
-                <td style={{ minWidth: "200px" }}>
+                <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 70 }} /></td>
+                <td style={{ minWidth: "190px" }}>
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <div className={styles.skeletonCell} style={{ width: 130 }} />
                     <div className={styles.skeletonCell} style={{ width: 90 }} />
                   </div>
                 </td>
                 {showType && <td style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>}
-                <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
-                <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
-                <td style={{ minWidth: "85px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
+                <td className={styles.right} style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                <td style={{ minWidth: "130px" }}><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
+                <td style={{ minWidth: "105px" }}><div className={styles.skeletonCell} style={{ width: 45 }} /></td>
                 <td style={{ minWidth: "125px" }}><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
-                <td style={{ minWidth: "135px" }} className={onReview ? styles.stickyActionTd : ""}><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
+                <td style={{ minWidth: "190px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 80, marginLeft: "auto" }} /></td>
               </tr>
             ))
           ) : (
@@ -958,9 +958,9 @@ function TxTable({
                 )}
               </td>
               <td className={styles.muted}>{when(t.createdAt)}</td>
-              <td className={onReview ? styles.stickyActionTd : ""}>
+              <td style={{ minWidth: "190px", textAlign: "right" }}>
                 {onReview && t.status === "PENDING" ? (
-                  <div className={styles.rowActions}>
+                  <div className={styles.rowActions} style={{ justifyContent: "flex-end" }}>
                     <button type="button" className={styles.btnSuccessSm} onClick={() => onReview(t, "approve")}>
                       <Check size={14} /> Approve
                     </button>
@@ -969,7 +969,9 @@ function TxTable({
                     </button>
                   </div>
                 ) : (
-                  <StatusPill status={t.status} />
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <StatusPill status={t.status} />
+                  </div>
                 )}
               </td>
             </tr>
@@ -1198,7 +1200,7 @@ function UsersSection({
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
-                  <th style={{ minWidth: "180px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1219,7 +1221,7 @@ function UsersSection({
                     <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                     <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 100, marginLeft: "auto" }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 100, marginLeft: "auto" }} /></td>
                   </tr>
                 ))}
               </tbody>
@@ -1239,7 +1241,7 @@ function UsersSection({
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
-                  <th style={{ minWidth: "180px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1260,7 +1262,7 @@ function UsersSection({
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalDeposited)}</td>
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalWithdrawn)}</td>
                     <td className={styles.muted}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                    <td style={{ textAlign: "right" }}>
                       <div className={styles.rowActions}>
                         <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
                           <Bell size={14} /> Notify

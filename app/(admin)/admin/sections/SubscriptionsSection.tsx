@@ -271,7 +271,7 @@ export default function SubscriptionsSection({
                 <th className={styles.right} style={{ minWidth: "105px" }}>Days Left</th>
                 <th style={{ minWidth: "90px" }}>Status</th>
                 <th style={{ minWidth: "125px" }}>Date</th>
-                <th style={{ minWidth: "140px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "140px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -293,7 +293,7 @@ export default function SubscriptionsSection({
                     <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 55, marginLeft: "auto" }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 65 }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredInvestments.length === 0 ? (
@@ -338,7 +338,7 @@ export default function SubscriptionsSection({
                     <td className={styles.faint} style={{ fontSize: "12px" }}>
                       {new Date(inv.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                    <td style={{ textAlign: "right" }}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         <button
                           type="button"

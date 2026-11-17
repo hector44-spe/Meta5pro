@@ -257,7 +257,7 @@ export default function SignalsSection({
                 <th style={{ minWidth: "110px" }}>Reference</th>
                 <th style={{ minWidth: "125px" }}>Purchase Date</th>
                 <th style={{ minWidth: "90px" }}>Status</th>
-                <th style={{ minWidth: "150px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "150px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -279,7 +279,7 @@ export default function SignalsSection({
                     <td><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredPurchases.length === 0 ? (
@@ -324,7 +324,7 @@ export default function SignalsSection({
                         {p.status}
                       </span>
                     </td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                    <td style={{ textAlign: "right" }}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         <button
                           type="button"
@@ -461,7 +461,7 @@ export default function SignalsSection({
                 <th style={{ minWidth: "180px" }}>Signal Name</th>
                 <th className={styles.right} style={{ minWidth: "110px" }}>Price</th>
                 <th style={{ minWidth: "160px" }}>Accuracy / Strength</th>
-                <th style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "130px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -471,7 +471,7 @@ export default function SignalsSection({
                     <td style={{ minWidth: "160px" }}><div className={styles.skeletonCell} style={{ width: 120 }} /></td>
                     <td className={styles.right} style={{ minWidth: "110px" }}><div className={styles.skeletonCell} style={{ width: 65, marginLeft: "auto" }} /></td>
                     <td style={{ minWidth: "160px" }}><div className={styles.skeletonCell} style={{ width: 90 }} /></td>
-                    <td style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "130px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : signals.length === 0 ? (
@@ -497,7 +497,7 @@ export default function SignalsSection({
                       <span className={styles.mono}>{sig.strength}%</span>
                     </div>
                   </td>
-                  <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                  <td style={{ textAlign: "right" }}>
                     <div style={{ display: "inline-flex", gap: "6px" }}>
                       <button
                         type="button"

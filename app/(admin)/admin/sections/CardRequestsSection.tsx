@@ -237,7 +237,7 @@ export default function CardRequestsSection({
                 <th className={styles.right} style={{ minWidth: "100px" }}>Fee Paid</th>
                 <th style={{ minWidth: "125px" }}>Requested Date</th>
                 <th style={{ minWidth: "90px" }}>Status</th>
-                <th style={{ minWidth: "180px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -259,7 +259,7 @@ export default function CardRequestsSection({
                     <td className={styles.right}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 85 }} /></td>
                     <td><div className={styles.skeletonCell} style={{ width: 60 }} /></td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 80, marginLeft: "auto" }} /></td>
+                    <td style={{ textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 80, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredCards.length === 0 ? (
@@ -321,7 +321,7 @@ export default function CardRequestsSection({
                         {c.status}
                       </span>
                     </td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                    <td style={{ textAlign: "right" }}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         {c.status !== "active" ? (
                           <button

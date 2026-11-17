@@ -295,7 +295,7 @@ export default function AdminEditExpertModal({
             overflowX: "hidden",
             WebkitOverflowScrolling: "touch",
             paddingRight: "4px",
-            paddingBottom: "8px",
+            paddingBottom: "18px",
           }}
         >
           {error && (
@@ -552,28 +552,34 @@ export default function AdminEditExpertModal({
                       value={tickType}
                       onChange={(e) => setTickType(e.target.value as any)}
                       style={{
+                        position: "relative",
+                        display: "block",
                         width: "100%",
                         height: "44px",
-                        backgroundColor: "rgba(255, 255, 255, 0.03)",
-                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                        backgroundColor: "rgba(255, 255, 255, 0.05)",
+                        border: "1px solid rgba(255, 255, 255, 0.14)",
                         borderRadius: "8px",
-                        padding: "0 14px",
+                        padding: "0 34px 0 14px",
                         color: "#ffffff",
                         fontSize: "14px",
                         fontWeight: 600,
                         boxSizing: "border-box",
                         outline: "none",
                         appearance: "none",
+                        WebkitAppearance: "none",
                         cursor: "pointer",
+                        transform: "none",
+                        left: "auto",
+                        top: "auto",
                       }}
                     >
-                      <option value="gold" style={{ background: "#16181d" }}>
+                      <option value="gold" style={{ background: "#16181d", color: "#ffffff" }}>
                         gold
                       </option>
-                      <option value="blue" style={{ background: "#16181d" }}>
+                      <option value="blue" style={{ background: "#16181d", color: "#ffffff" }}>
                         blue
                       </option>
-                      <option value="none" style={{ background: "#16181d" }}>
+                      <option value="none" style={{ background: "#16181d", color: "#ffffff" }}>
                         none
                       </option>
                     </select>
@@ -1070,6 +1076,31 @@ export default function AdminEditExpertModal({
       </div>
 
       <style jsx>{`
+        .meta-gold-modal-dialog select {
+          position: relative !important;
+          left: auto !important;
+          top: auto !important;
+          transform: none !important;
+          width: 100% !important;
+          height: 44px !important;
+          background-color: rgba(255, 255, 255, 0.05) !important;
+          border: 1px solid rgba(255, 255, 255, 0.14) !important;
+          border-radius: 8px !important;
+          padding: 0 34px 0 14px !important;
+          color: #ffffff !important;
+          font-size: 14px !important;
+          font-weight: 600 !important;
+          box-sizing: border-box !important;
+          outline: none !important;
+          -webkit-appearance: none !important;
+          appearance: none !important;
+          cursor: pointer !important;
+          display: block !important;
+        }
+        .meta-gold-modal-dialog input,
+        .meta-gold-modal-dialog textarea {
+          box-sizing: border-box !important;
+        }
         @media screen and (max-width: 600px) {
           .meta-gold-modal-overlay {
             padding: 12px 10px !important;

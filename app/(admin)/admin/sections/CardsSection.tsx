@@ -209,7 +209,7 @@ export default function CardsSection({
                 <th className={styles.right} style={{ minWidth: "140px" }}>Deposit Minimum</th>
                 <th style={{ minWidth: "130px" }}>KYC Verification</th>
                 <th style={{ minWidth: "90px" }}>Status</th>
-                <th style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ minWidth: "130px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -226,7 +226,7 @@ export default function CardsSection({
                     <td className={styles.right} style={{ minWidth: "130px" }}><div className={styles.skeletonCell} style={{ width: 75, marginLeft: "auto" }} /></td>
                     <td style={{ minWidth: "120px" }}><div className={styles.skeletonCell} style={{ width: 80 }} /></td>
                     <td style={{ minWidth: "90px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
-                    <td style={{ minWidth: "130px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
+                    <td style={{ minWidth: "130px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 70, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : cardOptions.length === 0 ? (
@@ -261,7 +261,7 @@ export default function CardsSection({
                         {opt.enabled ? "Active" : "Disabled"}
                       </span>
                     </td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                    <td style={{ textAlign: "right" }}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
                         <button
                           type="button"

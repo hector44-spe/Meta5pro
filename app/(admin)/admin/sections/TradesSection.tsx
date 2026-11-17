@@ -385,7 +385,7 @@ export default function TradesSection({
                 <th className={styles.right} style={{ width: "110px", minWidth: "110px" }}>PnL</th>
                 <th style={{ width: "85px", minWidth: "85px" }}>Status</th>
                 <th style={{ width: "130px", minWidth: "130px" }}>Date</th>
-                <th style={{ width: "165px", minWidth: "165px", textAlign: "right" }} className={styles.stickyActionTh}>Actions</th>
+                <th style={{ width: "165px", minWidth: "165px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -409,7 +409,7 @@ export default function TradesSection({
                     <td className={styles.right} style={{ width: "110px" }}><div className={styles.skeletonCell} style={{ width: 60, marginLeft: "auto" }} /></td>
                     <td style={{ width: "85px" }}><div className={styles.skeletonCell} style={{ width: 55 }} /></td>
                     <td style={{ width: "130px" }}><div className={styles.skeletonCell} style={{ width: 75 }} /></td>
-                    <td style={{ width: "165px", textAlign: "right" }} className={styles.stickyActionTd}><div className={styles.skeletonCell} style={{ width: 85, marginLeft: "auto" }} /></td>
+                    <td style={{ width: "165px", textAlign: "right" }}><div className={styles.skeletonCell} style={{ width: 85, marginLeft: "auto" }} /></td>
                   </tr>
                 ))
               ) : filteredTrades.length === 0 ? (
@@ -486,7 +486,7 @@ export default function TradesSection({
                     <td className={styles.faint} style={{ fontSize: "12px" }}>
                       {new Date(t.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </td>
-                    <td style={{ textAlign: "right" }} className={styles.stickyActionTd}>
+                    <td style={{ textAlign: "right" }}>
                       <div style={{ display: "inline-flex", gap: "6px", alignItems: "center" }}>
                         {t.status === "OPEN" && (
                           <button
