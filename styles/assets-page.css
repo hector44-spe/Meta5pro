@@ -82,6 +82,26 @@
   font-feature-settings: "tnum";
 }
 
+.assets-change-positive,
+.assets-change-negative {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.assets-change-positive,
+.wallet-change-positive { color: #01b28b; }
+.assets-change-negative,
+.wallet-change-negative { color: #f84960; }
+.wallet-change-positive,
+.wallet-change-negative {
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .assets-balance-bars-wrapper {
   margin-top: 16px;
   display: flex;

@@ -38,6 +38,7 @@ import {
   Sparkles,
   ArrowLeft,
   Cpu,
+  UserPlus,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -47,6 +48,7 @@ import TradesSection from "./sections/TradesSection";
 import SignalsSection from "./sections/SignalsSection";
 import StakingSection from "./sections/StakingSection";
 import MiningSection from "./sections/MiningSection";
+import ReferralsSection from "./sections/ReferralsSection";
 import CardRequestsSection from "./sections/CardRequestsSection";
 import CardsSection from "./sections/CardsSection";
 import SubscriptionsSection from "./sections/SubscriptionsSection";
@@ -107,6 +109,7 @@ type Section =
   | "signals"
   | "staking"
   | "mining"
+  | "referrals"
   | "card-requests"
   | "cards"
   | "subscriptions"
@@ -169,6 +172,7 @@ function AdminContent() {
       "signals",
       "staking",
       "mining",
+      "referrals",
       "card-requests",
       "cards",
       "subscriptions",
@@ -325,6 +329,7 @@ function AdminContent() {
     { id: "signals", label: "Signals", icon: <Radio size={18} /> },
     { id: "staking", label: "Staking", icon: <Layers size={18} /> },
     { id: "mining", label: "Mining", icon: <Cpu size={18} /> },
+    { id: "referrals", label: "Referrals", icon: <UserPlus size={18} /> },
     { id: "card-requests", label: "Card requests", icon: <CreditCard size={18} /> },
     { id: "cards", label: "Cards", icon: <Layers size={18} /> },
     { id: "subscriptions", label: "Subscription", icon: <Sparkles size={18} /> },
@@ -341,6 +346,7 @@ function AdminContent() {
     signals: ["Signals", "Signal packages and purchases"],
     staking: ["Staking", "Staking pools and user staking contracts"],
     mining: ["Mining", "Cloud mining pools and active contracts"],
+    referrals: ["Referrals", "Referral program codes, balances, and investor rewards"],
     "card-requests": ["Card Requests", "User card requests"],
     cards: ["Cards", "Manage card products and settings"],
     subscriptions: ["Subscriptions", "Investment plans and subscribers"],
@@ -481,6 +487,8 @@ function AdminContent() {
           {section === "staking" && <StakingSection />}
 
           {section === "mining" && <MiningSection />}
+
+          {section === "referrals" && <ReferralsSection />}
 
           {section === "card-requests" && <CardRequestsSection flash={flash} />}
 

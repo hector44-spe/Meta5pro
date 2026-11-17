@@ -9,9 +9,10 @@
  */
 
 import { prisma } from "./prisma";
+import assetsData from "@/data/assetsData.json";
 
 const COINBASE_URL = "https://api.coinbase.com/v2/exchange-rates?currency=USD";
-const TTL_MS = 60_000;
+const TTL_MS = 15_000;
 const DB_CACHE_KEY = "market_prices_cache";
 
 /** Commodity symbol aliases mapped to market tickers */
@@ -26,8 +27,13 @@ const COMMODITY_MAP: Record<string, string> = {
   NG: "NG=F",
 };
 
+const EQUITY_SYMBOLS = (assetsData as Array<{ symbol: string; type: string }>)
+  .filter((asset) => asset.type === "Stocks")
+  .map((asset) => asset.symbol.toUpperCase());
+
 const YAHOO_SYMBOLS = new Set([
   ...Object.keys(COMMODITY_MAP),
+  ...EQUITY_SYMBOLS,
   "AAPL", "ABT", "ADBE", "ADI", "AEMD", "TSLA", "NVDA", "MSFT", "AMZN", "GOOGL",
   "META", "NFLX", "BABA", "BA", "DIS", "KO", "NKE", "WMT", "V", "SPY", "QQQ",
 ]);
@@ -95,6 +101,7 @@ const CALIBRATED_BASELINES: Record<string, number> = {
 
 export interface PriceSnapshot {
   prices: Record<string, number>;
+  changes24h: Record<string, number>;
   updatedAt: string;
   live: boolean;
   /** Symbols backed by a successful upstream quote, rather than a static baseline. */
@@ -104,7 +111,55 @@ export interface PriceSnapshot {
 let cache: PriceSnapshot | null = null;
 let cacheAt = 0;
 let inflight: Promise<PriceSnapshot> | null = null;
-const stockCache = new Map<string, { price: number; timestamp: number }>();
+const stockCache = new Map<string, { price: number; change24h: number; timestamp: number }>();
+
+/** Fetch every supported equity in one request, avoiding one network call per table row. */
+async function fetchEquitySnapshot(): Promise<Record<string, { price: number; change24h: number }>> {
+  const now = Date.now();
+  const allFresh = EQUITY_SYMBOLS.every((symbol) => {
+    const item = stockCache.get(symbol);
+    return item && now - item.timestamp < TTL_MS;
+  });
+  if (!allFresh) {
+    try {
+      const symbols = encodeURIComponent(EQUITY_SYMBOLS.join(","));
+      const res = await fetch(
+        `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols}&range=1d&interval=5m`,
+        {
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+          signal: AbortSignal.timeout(8000),
+          cache: "no-store",
+        },
+      );
+      if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
+      const data = await res.json() as {
+        spark?: { result?: Array<{ symbol?: string; response?: Array<{ meta?: Record<string, unknown> }> }> };
+      };
+      for (const result of data.spark?.result ?? []) {
+        const symbol = String(result.symbol ?? "").toUpperCase();
+        const meta = result.response?.[0]?.meta;
+        const price = Number(meta?.regularMarketPrice);
+        const change24h = Number(meta?.regularMarketChangePercent);
+        if (symbol && Number.isFinite(price) && price > 0) {
+          stockCache.set(symbol, {
+            price,
+            change24h: Number.isFinite(change24h) ? change24h : 0,
+            timestamp: now,
+          });
+        }
+      }
+    } catch (error) {
+      console.warn("[prices] Equity batch refresh failed:", error instanceof Error ? error.message : error);
+    }
+  }
+
+  return Object.fromEntries(
+    EQUITY_SYMBOLS.flatMap((symbol) => {
+      const item = stockCache.get(symbol);
+      return item ? [[symbol, { price: item.price, change24h: item.change24h }]] : [];
+    }),
+  );
+}
 
 /** Fetches a single stock or commodity price from market feeds */
 export async function fetchStockOrCommodityPrice(symbol: string, allowFallback = true): Promise<number | null> {
@@ -126,7 +181,9 @@ export async function fetchStockOrCommodityPrice(symbol: string, allowFallback =
       const data = await res.json();
       const price = data.chart?.result?.[0]?.meta?.regularMarketPrice;
       if (typeof price === "number" && price > 0) {
-        stockCache.set(sym, { price, timestamp: Date.now() });
+        const previousClose = Number(data.chart?.result?.[0]?.meta?.previousClose);
+        const change24h = previousClose > 0 ? ((price - previousClose) / previousClose) * 100 : 0;
+        stockCache.set(sym, { price, change24h, timestamp: Date.now() });
         return price;
       }
     }
@@ -146,10 +203,11 @@ async function loadPersistedCache(): Promise<PriceSnapshot | null> {
     const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
     const setting = await Promise.race([dbPromise, timeoutPromise]);
     if (setting && setting.value && typeof setting.value === "object") {
-      const data = setting.value as unknown as { prices: Record<string, number>; updatedAt: string; liveSymbols?: string[] };
+      const data = setting.value as unknown as { prices: Record<string, number>; changes24h?: Record<string, number>; updatedAt: string; liveSymbols?: string[] };
       if (data.prices && Object.keys(data.prices).length > 0) {
         return {
           prices: { ...CALIBRATED_BASELINES, ...data.prices },
+          changes24h: data.changes24h ?? {},
           updatedAt: data.updatedAt || new Date().toISOString(),
           live: false,
           liveSymbols: Array.isArray(data.liveSymbols) ? data.liveSymbols : [],
@@ -169,10 +227,10 @@ function persistCache(snap: PriceSnapshot) {
       where: { key: DB_CACHE_KEY },
       create: {
         key: DB_CACHE_KEY,
-        value: { prices: snap.prices, updatedAt: snap.updatedAt, liveSymbols: snap.liveSymbols } as any,
+        value: { prices: snap.prices, changes24h: snap.changes24h, updatedAt: snap.updatedAt, liveSymbols: snap.liveSymbols } as any,
       },
       update: {
-        value: { prices: snap.prices, updatedAt: snap.updatedAt, liveSymbols: snap.liveSymbols } as any,
+        value: { prices: snap.prices, changes24h: snap.changes24h, updatedAt: snap.updatedAt, liveSymbols: snap.liveSymbols } as any,
       },
     })
     .catch(() => {});
@@ -190,6 +248,7 @@ async function fetchSnapshot(): Promise<PriceSnapshot> {
     USD: 1,
   };
   const liveSymbols = new Set<string>(["USD"]);
+  const changes24h: Record<string, number> = {};
 
   for (const [sym, perUsd] of Object.entries(rates)) {
     const r = Number(perUsd);
@@ -199,13 +258,22 @@ async function fetchSnapshot(): Promise<PriceSnapshot> {
     }
   }
 
-  // Also include cached stock/commodity prices in the main snapshot
+  const equities = await fetchEquitySnapshot();
+  for (const [sym, quote] of Object.entries(equities)) {
+    prices[sym] = quote.price;
+    changes24h[sym] = quote.change24h;
+    liveSymbols.add(sym);
+  }
+
+  // Also include individually cached stock/commodity prices in the main snapshot
   for (const [sym, entry] of stockCache.entries()) {
     prices[sym] = entry.price;
+    changes24h[sym] = entry.change24h;
   }
 
   const snapshot: PriceSnapshot = {
     prices,
+    changes24h,
     updatedAt: new Date().toISOString(),
     live: true,
     liveSymbols: [...liveSymbols],
@@ -238,6 +306,7 @@ export async function getPrices(): Promise<PriceSnapshot> {
 
         return {
           prices: { ...CALIBRATED_BASELINES, USD: 1 },
+          changes24h: {},
           updatedAt: new Date().toISOString(),
           live: false,
           liveSymbols: [],

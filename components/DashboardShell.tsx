@@ -51,9 +51,11 @@ import { ProfileSettings, SecuritySettings, AccountSettings, type UserProfile } 
 import NotificationsPanel, { type AppNotification } from "@/components/NotificationsPanel";
 import AdminSettingsDrawer from "@/components/AdminSettingsDrawer";
 import { usePrices } from "@/lib/usePrices";
+import { useHoldings } from "@/lib/useHoldings";
 import StakeModal from "@/components/StakeModal";
 import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
 import CardsDrawer from "@/components/Cards/CardsDrawer";
+import ReferralsDrawer from "@/components/ReferralsDrawer";
 import {
   ALL_LANGUAGES,
   getCurrentLanguageCode,
@@ -86,6 +88,9 @@ interface DashboardContextType {
   realBalance: number;
   demoBalance: number;
   currentBalance: number;
+  portfolioBalance: number;
+  portfolioChangeUsd: number;
+  portfolioChangePercent: number;
   refreshBalance: () => void;
   /** Formats a USD amount in the user's display currency (live FX). */
   formatMoney: (usd: number) => string;
@@ -162,6 +167,27 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     setProfileDropdownOpen(false);
   }, [pathname]);
 
+  // iOS/Android keyboards resize the visual viewport without reliably updating
+  // CSS vh units. Publish the actual visible height so every dashboard page keeps
+  // its final controls reachable while an input is focused.
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    const updateViewportHeight = () => {
+      const height = Math.round(viewport?.height ?? window.innerHeight);
+      document.documentElement.style.setProperty("--dashboard-viewport-height", `${height}px`);
+    };
+    updateViewportHeight();
+    viewport?.addEventListener("resize", updateViewportHeight);
+    viewport?.addEventListener("scroll", updateViewportHeight);
+    window.addEventListener("resize", updateViewportHeight);
+    return () => {
+      viewport?.removeEventListener("resize", updateViewportHeight);
+      viewport?.removeEventListener("scroll", updateViewportHeight);
+      window.removeEventListener("resize", updateViewportHeight);
+      document.documentElement.style.removeProperty("--dashboard-viewport-height");
+    };
+  }, []);
+
   // Click outside for user profile dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -196,6 +222,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
   // Display currency (Settings > Account); amounts are converted with live FX rates
   const { prices } = usePrices();
+  const { summary: holdingsSummary } = useHoldings();
+  const portfolioBalance = accountType === "real"
+    ? Math.max(0, realBalance + holdingsSummary.equityAdjustmentUsd)
+    : demoBalance;
   const [displayCurrency, setDisplayCurrency] = useState("USD");
   const formatMoney = (usd: number) => {
     const code = displayCurrency;
@@ -311,13 +341,19 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     fetchBalance();
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const action = params.get("action");
+      const action = params.get("action") || params.get("drawer") || params.get("open");
       if (action === "stake") {
         setActiveModal("stake");
       } else if (action === "deposit") {
         setActiveModal("deposit");
       } else if (action === "withdraw") {
         setActiveModal("withdraw");
+      } else if (action === "referrals" || action === "referral") {
+        setActiveModal("referrals");
+      } else if (action === "cards" || action === "card") {
+        setActiveModal("cards");
+      } else if (action === "connectWallet") {
+        setActiveModal("connectWallet");
       }
     }
   }, [pathname, activeModal]);
@@ -363,6 +399,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     realBalance,
     demoBalance,
     currentBalance,
+    portfolioBalance,
+    portfolioChangeUsd: holdingsSummary.totalChangeUsd,
+    portfolioChangePercent: holdingsSummary.totalChangePercent,
     refreshBalance: fetchBalance,
     formatMoney,
     balanceLoaded,
@@ -1507,7 +1546,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     className="tp-account-pill"
                   >
                     <span className="tp-account-mask">
-                      {hideBalance ? "******" : !balanceLoaded ? "…" : formatMoney(currentBalance)}{" "}
+                      {hideBalance ? "******" : !balanceLoaded ? "…" : formatMoney(portfolioBalance)}{" "}
                     </span>
                     <span
                       style={{
@@ -2712,100 +2751,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           onClose={() => setActiveModal(null)}
         />
 
-        {/* Referrals Modal */}
-        {activeModal === "referrals" && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.75)",
-              backdropFilter: "blur(8px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
-              padding: "20px",
-            }}
-            onClick={() => setActiveModal(null)}
-          >
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "460px",
-                backgroundColor: "#16181d",
-                borderRadius: "14px",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                boxSizing: "border-box",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ fontSize: "17px", fontWeight: 700, color: "#fff" }}>
-                  Refer and earn
-                </div>
-                <button
-                  onClick={() => setActiveModal(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.7)", lineHeight: "1.5" }}>
-                Earn up to 20% commission on trading fees from every trader you refer to the platform.
-              </div>
-              <div
-                style={{
-                  padding: "12px",
-                  borderRadius: "8px",
-                  backgroundColor: "rgba(255, 255, 255, 0.04)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span style={{ fontSize: "12px", color: "#4763f0", fontFamily: "monospace", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "220px" }}>
-                  {`${siteOrigin}/register?ref=${userRefCode}`}
-                </span>
-                <button
-                  onClick={() => handleCopy(`${siteOrigin}/register?ref=${userRefCode}`)}
-                  style={{
-                    padding: "6px 12px",
-                    borderRadius: "6px",
-                    backgroundColor: copied ? "#01b28b" : "#4763f0",
-                    color: "#fff",
-                    border: "none",
-                    fontSize: "12px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    flexShrink: 0,
-                    marginLeft: "8px",
-                  }}
-                >
-                  {copied ? "Copied" : "Copy"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Referrals Drawer (Exact Meta Gold Replica) */}
+        <ReferralsDrawer
+          isOpen={activeModal === "referrals"}
+          onClose={() => setActiveModal(null)}
+          referralCode={userRefCode}
+        />
       </div>
 
       <CustomNotificationBar

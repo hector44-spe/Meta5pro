@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export interface Holding {
   symbol: string;
@@ -8,35 +8,91 @@ export interface Holding {
   price: number | null;
   usd: number | null;
   pendingUnits: number;
+  costBasisUsd: number;
+  changeUsd: number;
+  changePercent: number;
+  marketChange24h: number;
+  externalBookUsd: number;
+}
+
+export interface HoldingsSummary {
+  totalUsd: number;
+  totalCostBasisUsd: number;
+  totalChangeUsd: number;
+  totalChangePercent: number;
+  externalBookUsd: number;
+  equityAdjustmentUsd: number;
+}
+
+const EMPTY_SUMMARY: HoldingsSummary = {
+  totalUsd: 0,
+  totalCostBasisUsd: 0,
+  totalChangeUsd: 0,
+  totalChangePercent: 0,
+  externalBookUsd: 0,
+  equityAdjustmentUsd: 0,
+};
+
+interface HoldingsState {
+  holdings: Holding[];
+  summary: HoldingsSummary;
+  loading: boolean;
+}
+
+let shared: HoldingsState = { holdings: [], summary: EMPTY_SUMMARY, loading: true };
+const listeners = new Set<(state: HoldingsState) => void>();
+let timer: ReturnType<typeof setInterval> | null = null;
+let inflight: Promise<void> | null = null;
+
+async function refreshHoldings() {
+  if (inflight) return inflight;
+  inflight = (async () => {
+    try {
+      const res = await fetch("/api/wallet/holdings", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        shared = {
+          holdings: data.holdings || [],
+          summary: data.summary || EMPTY_SUMMARY,
+          loading: false,
+        };
+      }
+    } catch {
+      shared = { ...shared, loading: false };
+    } finally {
+      listeners.forEach((listener) => listener(shared));
+      inflight = null;
+    }
+  })();
+  return inflight;
 }
 
 /** The signed-in user's per-coin holdings (approved deposits minus withdrawals). */
 export function useHoldings() {
-  const [holdings, setHoldings] = useState<Holding[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
-    try {
-      const res = await fetch("/api/wallet/holdings", { cache: "no-store" });
-      if (res.ok) setHoldings((await res.json()).holdings || []);
-    } catch {
-      /* keep previous */
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const [state, setState] = useState<HoldingsState>(shared);
 
   useEffect(() => {
-    refresh();
-    // Pick up approvals made while the page is open
-    const t = setInterval(refresh, 60_000);
-    const onFocus = () => refresh();
-    window.addEventListener("focus", onFocus);
+    listeners.add(setState);
+    if (!timer) {
+      refreshHoldings();
+      timer = setInterval(refreshHoldings, 15_000);
+    } else {
+      setState(shared);
+    }
+    window.addEventListener("focus", refreshHoldings);
+    window.addEventListener("balance-changed", refreshHoldings);
+    window.addEventListener("deposit-submitted", refreshHoldings);
     return () => {
-      clearInterval(t);
-      window.removeEventListener("focus", onFocus);
+      listeners.delete(setState);
+      window.removeEventListener("focus", refreshHoldings);
+      window.removeEventListener("balance-changed", refreshHoldings);
+      window.removeEventListener("deposit-submitted", refreshHoldings);
+      if (listeners.size === 0 && timer) {
+        clearInterval(timer);
+        timer = null;
+      }
     };
-  }, [refresh]);
+  }, []);
 
-  return { holdings, loading, refresh };
+  return { ...state, refresh: refreshHoldings };
 }

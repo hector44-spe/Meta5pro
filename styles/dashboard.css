@@ -23907,6 +23907,19 @@
   mask: none !important;
 }
 
+/* Shared responsive guardrails for every page rendered by DashboardShell. */
+.dashboard-page-content,
+.dashboard-page-content > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.dashboard-page-content img,
+.dashboard-page-content video,
+.dashboard-page-content iframe {
+  max-width: 100%;
+}
+
 /* TradingView chart: placeholder shown behind the iframe until it paints */
 .tv-chart-loading {
   position: absolute;
@@ -23937,10 +23950,14 @@ body:has(.dashboard-page-container) {
 .dashboard-page-container {
   min-height: 100vh;
   min-height: 100dvh;
-  height: 100%;
+  min-height: var(--dashboard-viewport-height, 100dvh);
+  height: var(--dashboard-viewport-height, 100dvh);
+  max-height: var(--dashboard-viewport-height, 100dvh);
 }
 .dashboard-page-wrapper {
   height: 100%;
+  min-height: 0;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -23957,6 +23974,7 @@ body:has(.dashboard-page-container) {
 }
 .dashboard-page-content {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto !important;
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
@@ -23982,23 +24000,23 @@ body:has(.dashboard-page-container) {
     padding: 0 !important;
     width: 100% !important;
     max-width: 100vw !important;
-    min-height: 100dvh !important;
-    height: auto !important;
-    max-height: none !important;
+    min-height: var(--dashboard-viewport-height, 100dvh) !important;
+    height: var(--dashboard-viewport-height, 100dvh) !important;
+    max-height: var(--dashboard-viewport-height, 100dvh) !important;
     overflow-x: hidden !important;
-    overflow-y: visible !important;
+    overflow-y: hidden !important;
   }
   .dashboard-page-wrapper {
     width: 100% !important;
     max-width: 100vw !important;
     padding: 0 4px !important;
     margin: 0 !important;
-    min-height: 100dvh !important;
-    height: auto !important;
-    max-height: none !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
     box-sizing: border-box !important;
     overflow-x: hidden !important;
-    overflow-y: visible !important;
+    overflow-y: hidden !important;
     display: flex !important;
     flex-direction: column !important;
   }
@@ -24024,10 +24042,11 @@ body:has(.dashboard-page-container) {
     min-height: 52px !important;
   }
   .dashboard-page-content {
-    overflow-y: visible !important;
+    overflow-y: auto !important;
     overflow-x: hidden !important;
     height: auto !important;
-    flex: 1 0 auto !important;
+    min-height: 0 !important;
+    flex: 1 1 auto !important;
     padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .dashboard-upper-grid,
@@ -24047,15 +24066,46 @@ body:has(.dashboard-page-container) {
   }
   .dashboard-page-content {
     flex: 1 1 auto !important;
-    height: 100% !important;
-    max-height: calc(100dvh - 66px) !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     margin-top: 4px !important;
     padding-top: 10px !important;
-    padding-bottom: 140px !important;
+    padding-bottom: calc(48px + env(safe-area-inset-bottom, 0px)) !important;
     box-sizing: border-box !important;
+  }
+  .dashboard-mobile-menu-wrapper,
+  .settings-drawer-panel,
+  .cards-drawer-panel,
+  .tp-drawer-panel {
+    height: var(--dashboard-viewport-height, 100dvh) !important;
+    max-height: var(--dashboard-viewport-height, 100dvh) !important;
+  }
+  .request-card-modal-dialog,
+  .admin_edit_modal_dialog,
+  .invest_modal,
+  .re_admin_modal {
+    max-height: calc(var(--dashboard-viewport-height, 100dvh) - 20px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  /* Prevent iOS focus zoom and keep form controls inside the visual viewport. */
+  .dashboard-page-container input,
+  .dashboard-page-container select,
+  .dashboard-page-container textarea {
+    font-size: 16px !important;
+    max-width: 100% !important;
+  }
+  .dashboard-page-content {
+    overscroll-behavior-y: contain;
+    scroll-padding-top: 76px;
+    scroll-padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -24456,8 +24506,8 @@ img, svg, video {
     right: 0 !important;
     bottom: 0 !important;
     width: 100vw !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
+    height: var(--dashboard-viewport-height, 100dvh) !important;
+    max-height: var(--dashboard-viewport-height, 100dvh) !important;
     max-width: 100vw !important;
     border-radius: 0 !important;
     border: none !important;
@@ -24471,3 +24521,43 @@ img, svg, video {
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
+
+/* Final viewport contract: keep this last so legacy theme media queries cannot
+   reintroduce a layout-viewport height after the mobile keyboard opens. */
+.dashboard-page-container {
+  height: var(--dashboard-viewport-height, 100dvh) !important;
+  min-height: var(--dashboard-viewport-height, 100dvh) !important;
+  max-height: var(--dashboard-viewport-height, 100dvh) !important;
+  overflow: hidden !important;
+}
+.dashboard-page-wrapper {
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+}
+.dashboard-page-content {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-page-content {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+

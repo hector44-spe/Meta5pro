@@ -10,14 +10,17 @@ export async function GET(req: Request) {
   const snap = await getPrices();
   const wanted = new URL(req.url).searchParams.get("symbols");
   let prices = snap.prices;
+  let changes24h = snap.changes24h;
   if (wanted) {
     prices = {};
+    changes24h = {};
     for (const s of wanted.split(",").map((x) => x.trim().toUpperCase()).filter(Boolean).slice(0, 300)) {
       if (snap.prices[s] != null) prices[s] = snap.prices[s];
+      if (snap.changes24h[s] != null) changes24h[s] = snap.changes24h[s];
     }
   }
   return NextResponse.json(
-    { prices, updatedAt: snap.updatedAt, live: snap.live },
-    { headers: { "Cache-Control": "public, max-age=30, s-maxage=30" } },
+    { prices, changes24h, updatedAt: snap.updatedAt, live: snap.live },
+    { headers: { "Cache-Control": "public, max-age=10, s-maxage=10" } },
   );
 }

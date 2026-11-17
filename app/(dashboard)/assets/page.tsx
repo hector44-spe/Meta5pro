@@ -26,7 +26,16 @@ interface AssetItem {
 }
 
 export default function AssetsPage() {
-  const { currentBalance, hideBalance, setHideBalance, openModal, formatMoney, balanceLoaded } = useDashboard();
+  const {
+    portfolioBalance,
+    portfolioChangeUsd,
+    portfolioChangePercent,
+    hideBalance,
+    setHideBalance,
+    openModal,
+    formatMoney,
+    balanceLoaded,
+  } = useDashboard();
 
   // Search & Type Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -40,8 +49,8 @@ export default function AssetsPage() {
   const [selectedAssetSymbol, setSelectedAssetSymbol] = useState<string | null>(null);
 
   // Live prices and the user's holdings
-  const { prices } = usePrices();
-  const { holdings } = useHoldings();
+  const { prices, changes24h } = usePrices();
+  const { holdings, summary } = useHoldings();
 
   // Catalogue merged with live prices (crypto & fiat) and real holdings.
   // Stocks keep their catalogue price: the live source only covers crypto and currencies.
@@ -52,7 +61,7 @@ export default function AssetsPage() {
         : n.toLocaleString("en-US", { maximumSignificantDigits: 4 });
     return (assetsData as AssetItem[]).map((asset) => {
       const sym = asset.symbol.toUpperCase();
-      const live = asset.type !== "Stocks" ? prices[sym] : undefined;
+      const live = prices[sym];
       const h = holdings.find((x) => x.symbol === sym);
       const units = h?.units ?? 0;
       const unitPrice = live ?? h?.price ?? null;
@@ -65,9 +74,12 @@ export default function AssetsPage() {
             ? `$${(units * unitPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
             : asset.walletValue,
         heldUsd: units > 0 && unitPrice != null ? units * unitPrice : 0,
+        changePercent: h?.changePercent ?? 0,
+        changeUsd: h?.changeUsd ?? 0,
+        marketChange24h: changes24h[sym] ?? h?.marketChange24h ?? 0,
       };
     });
-  }, [prices, holdings]);
+  }, [prices, changes24h, holdings]);
 
   // Filtered Assets list (assets you hold are listed first)
   const filteredAssets = useMemo(() => {
@@ -92,7 +104,7 @@ export default function AssetsPage() {
     openModal("withdraw");
   };
 
-  const formattedBalance = !balanceLoaded ? "…" : formatMoney(currentBalance);
+  const formattedBalance = !balanceLoaded ? "…" : formatMoney(portfolioBalance);
 
   return (
     <div className="assets-page-container">
@@ -120,13 +132,19 @@ export default function AssetsPage() {
             <div className="assets-balance-amount">
               {hideBalance ? "******" : formattedBalance}
             </div>
+            {!hideBalance && balanceLoaded && summary.totalCostBasisUsd > 0 && (
+              <div className={portfolioChangeUsd >= 0 ? "assets-change-positive" : "assets-change-negative"}>
+                {portfolioChangeUsd >= 0 ? "+" : "−"}{formatMoney(Math.abs(portfolioChangeUsd))}
+                {" "}({portfolioChangePercent >= 0 ? "+" : ""}{portfolioChangePercent.toFixed(2)}%) since acquisition
+              </div>
+            )}
           </div>
 
           <div className="assets-balance-bars-wrapper">
             <div className="assets-balance-bar">
               <div
                 style={{
-                  width: currentBalance > 0 ? "100%" : "0%",
+                  width: portfolioBalance > 0 ? "100%" : "0%",
                   background: "#4763f0",
                   height: "100%",
                   borderRadius: "2px",
@@ -265,6 +283,11 @@ export default function AssetsPage() {
                           <span className="wallet-amount-usd">
                             {hideBalance ? "******" : asset.walletValue}
                           </span>
+                          {!hideBalance && asset.heldUsd > 0 && (
+                            <span className={asset.changePercent >= 0 ? "wallet-change-positive" : "wallet-change-negative"}>
+                              {asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%
+                            </span>
+                          )}
                         </div>
 
                         {/* Mobile action buttons when desktop actions column is hidden */}
