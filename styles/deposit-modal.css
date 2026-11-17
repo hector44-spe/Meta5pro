@@ -574,59 +574,55 @@
 }
 
 .dm-action-footer {
-  margin-top: 16px;
-  position: -webkit-sticky;
-  position: sticky;
-  bottom: 0;
-  background: linear-gradient(180deg, rgba(20, 23, 29, 0) 0%, rgba(20, 23, 29, 0.95) 20%, #14171d 100%);
-  padding-top: 10px;
-  padding-bottom: max(6px, env(safe-area-inset-bottom, 12px));
-  z-index: 10;
+  margin-top: 20px;
+  width: 100%;
 }
 
 @media (max-width: 640px) {
   .dm-backdrop {
-    padding: 8px 6px !important;
+    padding: 16px 12px !important;
+    display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
     overscroll-behavior-y: contain !important;
   }
   .dm-card {
-    padding: 16px 14px max(24px, env(safe-area-inset-bottom, 20px) + 16px) !important;
-    border-radius: 14px !important;
-    max-height: min(94vh, calc(100dvh - 16px)) !important;
+    padding: 20px 16px 24px !important;
+    border-radius: 16px !important;
+    max-height: calc(100dvh - 32px) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain !important;
-    margin: 8px auto !important;
+    margin: auto !important;
     box-sizing: border-box !important;
     width: 100% !important;
-    max-width: 100% !important;
+    max-width: 460px !important;
   }
   .dm-title {
-    font-size: 16px !important;
+    font-size: 17px !important;
   }
   .dm-limits-box {
-    margin: 10px 0 !important;
-    gap: 8px !important;
+    margin: 12px 0 !important;
+    gap: 10px !important;
   }
   .dm-form-group {
-    margin-bottom: 12px !important;
+    margin-bottom: 14px !important;
   }
   .dm-upload-dropzone {
-    padding: 12px !important;
+    padding: 14px !important;
   }
   .dm-total-value-row {
-    margin: 10px 0 16px 0 !important;
+    margin: 12px 0 16px 0 !important;
   }
   .dm-primary-btn {
     height: 44px !important;
     min-height: 44px !important;
   }
   .dm-stepper {
-    margin-bottom: 14px !important;
+    margin-bottom: 16px !important;
   }
   .dm-step-item {
-    padding-bottom: 12px !important;
+    padding-bottom: 14px !important;
   }
   .dm-input-row {
     padding: 8px 10px !important;
@@ -636,10 +632,9 @@
     height: 130px !important;
   }
   .dm-action-footer {
-    position: -webkit-sticky !important;
-    position: sticky !important;
-    bottom: -10px !important;
-    margin-top: 12px !important;
-    padding-bottom: max(8px, env(safe-area-inset-bottom, 12px)) !important;
+    position: static !important;
+    margin-top: 18px !important;
+    padding: 0 !important;
+    background: transparent !important;
   }
 }
