@@ -4,7 +4,7 @@ export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { normalizeExpertPicture } from "@/lib/copy-expert-image";
+import { normalizeExpertPicture, normalizeExpertPictures } from "@/lib/copy-expert-image";
 
 export interface AdminExpertCopier {
   id: string;
@@ -120,10 +120,7 @@ async function getStoredExperts(): Promise<CopyExpertData[]> {
           ? JSON.parse(setting.value)
           : (setting.value as unknown);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return (parsed as CopyExpertData[]).map((expert) => ({
-          ...expert,
-          picture: normalizeExpertPicture(expert.picture, expert.id || expert.ref || expert.name),
-        }));
+        return normalizeExpertPictures(parsed as CopyExpertData[]);
       }
     }
   } catch (e) {

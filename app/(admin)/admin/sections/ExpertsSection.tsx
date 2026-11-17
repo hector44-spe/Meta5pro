@@ -17,6 +17,7 @@ import {
   X,
   Save,
   CandlestickChart,
+  ImagePlus,
 } from "lucide-react";
 import styles from "../page.module.css";
 import { AdminExpertCopier, CopyExpertData } from "@/app/api/admin/experts/route";
@@ -51,6 +52,7 @@ export default function ExpertsSection({
   // Edit / Add modal
   const [editModal, setEditModal] = useState<Partial<CopyExpertData> | null>(null);
   const [copyTrade, setCopyTrade] = useState<CopyTradeDraft | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   // Custom Confirm & Notification State
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
@@ -122,7 +124,7 @@ export default function ExpertsSection({
   };
 
   const handleSaveExpert = async () => {
-    if (!editModal || !editModal.name) return;
+    if (!editModal || !editModal.name || !editModal.picture || imageUploading) return;
     setSubmitting(true);
     try {
       const res = await fetch("/api/admin/experts", {
@@ -141,6 +143,28 @@ export default function ExpertsSection({
       flash("error", e.message || "Failed to save expert");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleExpertImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !editModal) return;
+    setImageUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/admin/expert-images", { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) throw new Error(data.error || "Image upload failed");
+      setEditModal((current) => current ? { ...current, picture: data.url } : current);
+      setNotification({ type: "success", message: "Expert image uploaded. Save the expert to apply it." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Image upload failed";
+      setNotification({ type: "error", message });
+      flash("error", message);
+    } finally {
+      setImageUploading(false);
     }
   };
 
@@ -766,6 +790,34 @@ export default function ExpertsSection({
                   placeholder="e.g. Albania fx"
                 />
               </div>
+              <div>
+                <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 6 }}>
+                  Expert Image
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                  <img
+                    src={editModal.picture || "/assets/copy-trading/albania_support.png"}
+                    alt="Expert preview"
+                    style={{ width: 58, height: 58, borderRadius: 10, objectFit: "cover", border: "1px solid var(--a-border)", flexShrink: 0 }}
+                    onError={(event) => { event.currentTarget.src = "/assets/copy-trading/albania_support.png"; }}
+                  />
+                  <label
+                    className={styles.btnGhost}
+                    style={{ minHeight: 40, padding: "0 14px", display: "inline-flex", alignItems: "center", gap: 7, cursor: imageUploading ? "wait" : "pointer" }}
+                  >
+                    {imageUploading ? <Loader2 size={15} className={styles.spin} /> : <ImagePlus size={15} />}
+                    {imageUploading ? "Uploading..." : editModal.picture ? "Replace Image" : "Upload Image"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={handleExpertImageUpload}
+                      disabled={imageUploading}
+                      style={{ display: "none" }}
+                    />
+                  </label>
+                </div>
+                <div className={styles.faint} style={{ fontSize: 11, marginTop: 6 }}>PNG, JPG or WEBP, up to 5 MB.</div>
+              </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
                 <div>
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
@@ -856,7 +908,7 @@ export default function ExpertsSection({
                 type="button"
                 className={styles.btnGhost}
                 onClick={() => setEditModal(null)}
-                disabled={submitting}
+                disabled={submitting || imageUploading}
                 style={{ flex: "1 1 100px" }}
               >
                 Cancel
@@ -865,7 +917,7 @@ export default function ExpertsSection({
                 type="button"
                 className={styles.btnSuccess}
                 onClick={handleSaveExpert}
-                disabled={submitting}
+                disabled={submitting || imageUploading || !editModal.picture || !editModal.name?.trim()}
                 style={{ flex: "1 1 auto" }}
               >
                 {submitting ? <Loader2 size={15} className={styles.spin} /> : <Save size={15} />}

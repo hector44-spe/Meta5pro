@@ -65,6 +65,7 @@ export default function AdminEditExpertModal({
 
   // Loading & Error States
   const [saving, setSaving] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
   const [autoFilling, setAutoFilling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,12 +112,25 @@ export default function AdminEditExpertModal({
 
   if (!isOpen) return null;
 
-  // Handle Image Upload locally with object URL preview
-  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Persist the image before saving the expert. Object URLs only exist in the
+  // current browser tab and previously caused saved avatars to disappear.
+  const handleImageFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setPicture(url);
+    e.target.value = "";
+    if (!file) return;
+    setImageUploading(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/admin/expert-images", { method: "POST", body: form });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) throw new Error(data.error || "Image upload failed");
+      setPicture(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Image upload failed");
+    } finally {
+      setImageUploading(false);
     }
   };
 
@@ -151,6 +165,7 @@ export default function AdminEditExpertModal({
 
   // Step 3: Final Save
   const handleSaveExpert = async () => {
+    if (imageUploading) return;
     setSaving(true);
     setError(null);
 
@@ -440,13 +455,18 @@ export default function AdminEditExpertModal({
                       <FileUp size={16} color="#4F6BFF" />
                     )}
                     <span style={{ fontSize: "13.5px", fontWeight: 600, color: "#4F6BFF" }}>
-                      {picture ? "Click here to change expert image" : "Click here to upload expert image"}
+                      {imageUploading
+                        ? "Uploading image..."
+                        : picture
+                        ? "Click here to change expert image"
+                        : "Click here to upload expert image"}
                     </span>
                     <input
                       ref={imageInputRef}
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp"
                       onChange={handleImageFile}
+                      disabled={imageUploading}
                       style={{ display: "none" }}
                     />
                   </div>
@@ -955,18 +975,18 @@ export default function AdminEditExpertModal({
           {step === 1 && (
             <button
               type="button"
-              disabled={!name.trim()}
+              disabled={!name.trim() || !picture || imageUploading}
               onClick={() => setStep(2)}
               style={{
                 width: "100%",
                 height: "44px",
-                backgroundColor: name.trim() ? "#4F6BFF" : "rgba(255, 255, 255, 0.15)",
+                backgroundColor: name.trim() && picture && !imageUploading ? "#4F6BFF" : "rgba(255, 255, 255, 0.15)",
                 color: "#ffffff",
                 border: "none",
                 borderRadius: "8px",
                 fontSize: "14px",
                 fontWeight: 600,
-                cursor: name.trim() ? "pointer" : "not-allowed",
+                cursor: name.trim() && picture && !imageUploading ? "pointer" : "not-allowed",
                 transition: "background 0.15s",
               }}
             >
@@ -1050,7 +1070,7 @@ export default function AdminEditExpertModal({
               <button
                 type="button"
                 onClick={handleSaveExpert}
-                disabled={saving}
+                disabled={saving || imageUploading || !picture}
                 style={{
                   flex: 1,
                   height: "44px",

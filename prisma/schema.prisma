@@ -341,6 +341,17 @@ model AssetBalance {
   @@map("asset_balances")
 }
 
+// Public profile imagery for copy-trading experts. This is deliberately
+// separate from private payment-proof uploads.
+model ExpertImage {
+  id          String   @id @default(uuid())
+  data        Bytes
+  contentType String
+  createdAt   DateTime @default(now())
+
+  @@map("expert_images")
+}
+
 // Shared, database-backed authentication throttles. This works across processes and deploys.
 model AuthRateLimit {
   key       String   @id

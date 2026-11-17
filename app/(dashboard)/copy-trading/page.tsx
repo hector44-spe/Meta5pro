@@ -239,10 +239,10 @@ export default function CopyTradingPage() {
     setNotification({ type, message });
   };
 
-  const fetchExperts = async () => {
+  const fetchExperts = async (silent = false) => {
     try {
-      setLoading(true);
-      const res = await fetch("/api/copy-trading/experts");
+      if (!silent) setLoading(true);
+      const res = await fetch("/api/copy-trading/experts", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.experts)) {
@@ -268,7 +268,7 @@ export default function CopyTradingPage() {
     } catch (err) {
       console.error("Failed to load experts", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -276,6 +276,13 @@ export default function CopyTradingPage() {
   useEffect(() => {
     setMounted(true);
     fetchExperts();
+    const refresh = () => fetchExperts(true);
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
   }, []);
 
   const filteredExperts = useMemo(() => {

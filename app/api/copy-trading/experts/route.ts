@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import type { CopyExpert } from "@/types/copy-trading";
-import { normalizeExpertPicture } from "@/lib/copy-expert-image";
+import { normalizeExpertPicture, normalizeExpertPictures } from "@/lib/copy-expert-image";
 
 export const dynamic = "force-dynamic";
 
@@ -92,10 +92,7 @@ async function getStoredExperts(): Promise<CopyExpert[]> {
           ? JSON.parse(setting.value)
           : (setting.value as unknown);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return (parsed as CopyExpert[]).map((expert) => ({
-          ...expert,
-          picture: normalizeExpertPicture(expert.picture, expert.id || expert.ref || expert.name),
-        }));
+        return normalizeExpertPictures(parsed as CopyExpert[]);
       }
     }
   } catch (err) {
@@ -123,12 +120,15 @@ export async function GET() {
     const session = await getSession();
     const experts = await getStoredExperts();
 
-    return NextResponse.json({
-      success: true,
-      experts,
-      userId: session?.userId || "user_guest",
-      isAdmin: session?.role === "ADMIN",
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        experts,
+        userId: session?.userId || "user_guest",
+        isAdmin: session?.role === "ADMIN",
+      },
+      { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } },
+    );
   } catch (err: any) {
     console.error("Error fetching copy trading experts:", err);
     return NextResponse.json(
