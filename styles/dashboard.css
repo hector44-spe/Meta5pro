@@ -1240,7 +1240,7 @@
 
 
 /* --- TextBoxWithButton --- */
-
+.TextBoxWithButton {
   display: grid;
   gap: 6px;
   margin: 0px !important;
@@ -1274,7 +1274,6 @@
     height: 100%;
     width: 100%;
     margin: 0px !important;
-    /* padding: 0px !important; */
     appearance: none;
     padding: 10px 8px !important;
     border-radius: 8px;
@@ -1333,10 +1332,11 @@
     background: var(--color-input-hover);
     border: 1px solid var(--color-box-border);
   }
+}
 
 
 /* --- TextBoxWithButtonIcon --- */
-
+.TextBoxWithButtonIcon {
   display: grid;
   gap: 6px;
   margin: 0px !important;
@@ -1435,6 +1435,7 @@
   button:hover {
     background: var(--color-control-active) !important;
   }
+}
 
 
 /* --- InnerSearchBox --- */
@@ -23757,16 +23758,35 @@
     gap: 8px;
     margin-top: 24px;
   }
-  .balance-card-mobile-action-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
+  .balance-card-mobile-action-btn,
+  button.balance-card-mobile-action-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+  }
+  .balance-card-mobile-action-btn:hover,
+  .balance-card-mobile-action-btn:focus,
+  .balance-card-mobile-action-btn:active,
+  button.balance-card-mobile-action-btn:hover,
+  button.balance-card-mobile-action-btn:focus,
+  button.balance-card-mobile-action-btn:active {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    outline: none !important;
   }
   .balance-card-mobile-action-icon {
     width: 44px;
@@ -23960,21 +23980,25 @@ body:has(.dashboard-page-container) {
     flex-direction: column !important;
     grid-template-columns: 1fr !important;
     padding: 0 !important;
-    width: 100vw !important;
+    width: 100% !important;
     max-width: 100vw !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
-    overflow: hidden !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
   }
   .dashboard-page-wrapper {
     width: 100% !important;
     max-width: 100vw !important;
     padding: 0 4px !important;
     margin: 0 !important;
-    height: 100% !important;
-    max-height: 100dvh !important;
+    min-height: 100dvh !important;
+    height: auto !important;
+    max-height: none !important;
     box-sizing: border-box !important;
-    overflow: hidden !important;
+    overflow-x: hidden !important;
+    overflow-y: visible !important;
     display: flex !important;
     flex-direction: column !important;
   }
@@ -23984,18 +24008,27 @@ body:has(.dashboard-page-container) {
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
-    padding: 4px 6px 0 6px !important;
+    padding: calc(env(safe-area-inset-top, 0px) + 4px) 6px 0 6px !important;
     box-sizing: border-box !important;
-    z-index: 100 !important;
-    background: rgba(12, 15, 20, 0.96) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    backdrop-filter: blur(12px) !important;
+    z-index: 1000 !important;
+    background: rgba(12, 15, 20, 0.98) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    backdrop-filter: blur(16px) !important;
+    transform: translateZ(0);
+    will-change: transform;
   }
   .dashboard-header-wrapper {
     width: 100% !important;
     padding: 10px 14px !important;
     height: auto !important;
     min-height: 52px !important;
+  }
+  .dashboard-page-content {
+    overflow-y: visible !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    flex: 1 0 auto !important;
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .dashboard-upper-grid,
   .dashboard-maincard-grid {
@@ -24394,3 +24427,47 @@ img, svg, video {
   }
 }
 
+
+/* ===================== LIVE CHAT PANEL RESPONSIVE ===================== */
+.live-chat-panel {
+  position: fixed;
+  bottom: 86px;
+  right: 24px;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  height: 480px;
+  max-height: calc(100dvh - 100px);
+  background-color: #16181d;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .live-chat-panel {
+    position: fixed !important;
+    inset: 0 !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    max-width: 100vw !important;
+    border-radius: 0 !important;
+    border: none !important;
+    z-index: 100000 !important;
+  }
+  .live-chat-header {
+    padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: 14px !important;
+  }
+  .live-chat-form {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}

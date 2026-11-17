@@ -244,7 +244,7 @@ export default function SignalDepositModal({
 
   return (
     <div className="dm-backdrop" onClick={onClose}>
-      <div className="dm-card" onClick={(e) => e.stopPropagation()}>
+      <div className="dm-card signal-deposit-modal" onClick={(e) => e.stopPropagation()}>
         {receipt ? (
           /* ====================================================================
              SUCCESS CONFIRMATION (Matching Normal Deposit Modal)

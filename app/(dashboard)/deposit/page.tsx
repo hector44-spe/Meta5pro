@@ -119,6 +119,12 @@ export default function DepositPage() {
           className="tp-action-btn"
           onClick={() => openModal("deposit")}
           id="deposit-now-btn"
+          style={{
+            backgroundColor: "#3861fb",
+            color: "#ffffff",
+            border: "none",
+            boxShadow: "0 4px 14px rgba(56, 97, 251, 0.4)",
+          }}
         >
           <CreditCard size={18} strokeWidth={1.8} />
           <span>Deposit now</span>
@@ -136,6 +142,7 @@ export default function DepositPage() {
             border: "1px solid rgba(245, 158, 11, 0.28)",
             borderRadius: "10px",
             padding: "14px 16px",
+            marginTop: "24px",
             marginBottom: "16px",
             boxSizing: "border-box",
             width: "100%",

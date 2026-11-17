@@ -1052,19 +1052,63 @@ export default function RealEstateDashboardPage() {
               )}
             </div>
 
-            {/* Sticky Drawer Footer */}
-            {!selectedProjectForView.closedByDefault && (
-              <div className="project_view_footer">
+            {/* Sticky Drawer Footer with Cancel and Invest */}
+            <div
+              className="project_view_footer"
+              style={{
+                display: "flex",
+                gap: "12px",
+                alignItems: "center",
+                padding: "16px 20px calc(16px + env(safe-area-inset-bottom, 0px)) 20px",
+              }}
+            >
+              <button
+                type="button"
+                className="project_view_cancel_btn"
+                onClick={() => setSelectedProjectForView(null)}
+                style={{
+                  flex: selectedProjectForView.closedByDefault ? "1" : "0 0 110px",
+                  height: "46px",
+                  borderRadius: "8px",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.14)",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                Cancel
+              </button>
+              {!selectedProjectForView.closedByDefault && (
                 <button
+                  type="button"
                   className="project_view_invest_btn"
                   onClick={() => {
                     handleOpenInvest(selectedProjectForView);
                   }}
+                  style={{
+                    flex: "1",
+                    height: "46px",
+                    borderRadius: "8px",
+                    background: "#3861fb",
+                    border: "none",
+                    color: "#ffffff",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
                   Invest in this project
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </>
       )}
@@ -1085,6 +1129,8 @@ export default function RealEstateDashboardPage() {
               padding: "24px 22px",
               width: "100%",
               maxWidth: "430px",
+              maxHeight: "calc(100dvh - 32px)",
+              overflowY: "auto",
               boxSizing: "border-box",
               boxShadow: "0 20px 50px rgba(0, 0, 0, 0.8), 0 0 25px rgba(37, 99, 235, 0.2)",
               display: "flex",
@@ -1320,48 +1366,66 @@ export default function RealEstateDashboardPage() {
               </div>
             </div>
 
-            {/* Action Button: Invest */}
-            <button
-              type="button"
-              disabled={
-                Boolean(investError) ||
-                parsedAmount < selectedProjectForInvest.minimum ||
-                isSubmittingInvest
-              }
-              onClick={handleConfirmInvestment}
-              style={{
-                width: "100%",
-                height: "48px",
-                borderRadius: "10px",
-                background:
-                  Boolean(investError) || parsedAmount < selectedProjectForInvest.minimum || isSubmittingInvest
-                    ? "rgba(255, 255, 255, 0.1)"
-                    : "#64748b",
-                border: "none",
-                color: "#ffffff",
-                fontSize: "15px",
-                fontWeight: 600,
-                cursor:
-                  Boolean(investError) || parsedAmount < selectedProjectForInvest.minimum || isSubmittingInvest
-                    ? "not-allowed"
-                    : "pointer",
-                marginTop: "4px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {isSubmittingInvest ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Processing...</span>
-                </>
-              ) : (
-                <span>Invest</span>
-              )}
-            </button>
+            {/* Action Buttons: Cancel + Invest */}
+            <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
+              <button
+                type="button"
+                onClick={() => setSelectedProjectForInvest(null)}
+                style={{
+                  flex: "1",
+                  height: "48px",
+                  borderRadius: "10px",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  color: "#ffffff",
+                  fontSize: "14px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={
+                  Boolean(investError) ||
+                  parsedAmount < selectedProjectForInvest.minimum ||
+                  isSubmittingInvest
+                }
+                onClick={handleConfirmInvestment}
+                style={{
+                  flex: "2",
+                  height: "48px",
+                  borderRadius: "10px",
+                  background:
+                    Boolean(investError) || parsedAmount < selectedProjectForInvest.minimum || isSubmittingInvest
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "#2563eb",
+                  border: "none",
+                  color: "#ffffff",
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  cursor:
+                    Boolean(investError) || parsedAmount < selectedProjectForInvest.minimum || isSubmittingInvest
+                      ? "not-allowed"
+                      : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                {isSubmittingInvest ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <span>Invest</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

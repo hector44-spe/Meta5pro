@@ -961,6 +961,7 @@ export default function DashboardPage() {
           <div className="balance-card-mobile-actions">
             <button
               className="balance-card-mobile-action-btn"
+              style={{ background: "transparent", backgroundColor: "transparent", border: "none", boxShadow: "none", padding: 0 }}
               onClick={() => openModal("deposit")}
             >
               <div className="balance-card-mobile-action-icon">
@@ -970,6 +971,7 @@ export default function DashboardPage() {
             </button>
             <button
               className="balance-card-mobile-action-btn"
+              style={{ background: "transparent", backgroundColor: "transparent", border: "none", boxShadow: "none", padding: 0 }}
               onClick={() => openModal("withdraw")}
             >
               <div className="balance-card-mobile-action-icon">
@@ -979,6 +981,7 @@ export default function DashboardPage() {
             </button>
             <button
               className="balance-card-mobile-action-btn"
+              style={{ background: "transparent", backgroundColor: "transparent", border: "none", boxShadow: "none", padding: 0 }}
               onClick={() => {
                 const el = document.getElementById("trade-section");
                 if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -991,6 +994,7 @@ export default function DashboardPage() {
             </button>
             <button
               className="balance-card-mobile-action-btn"
+              style={{ background: "transparent", backgroundColor: "transparent", border: "none", boxShadow: "none", padding: 0 }}
               onClick={() => {
                 setOrderTab("convert");
                 const el = document.getElementById("trade-section");

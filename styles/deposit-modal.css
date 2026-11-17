@@ -584,21 +584,23 @@
   z-index: 10;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .dm-backdrop {
     padding: 8px 6px !important;
-    align-items: flex-start !important;
+    align-items: center !important;
     overscroll-behavior-y: contain !important;
   }
   .dm-card {
     padding: 16px 14px max(24px, env(safe-area-inset-bottom, 20px) + 16px) !important;
     border-radius: 14px !important;
-    max-height: min(90dvh, calc(100dvh - 32px)) !important;
+    max-height: min(94vh, calc(100dvh - 16px)) !important;
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain !important;
     margin: 8px auto !important;
     box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
   .dm-title {
     font-size: 16px !important;

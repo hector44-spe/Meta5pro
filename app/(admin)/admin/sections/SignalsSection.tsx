@@ -36,6 +36,11 @@ export default function SignalsSection({
   const [submitting, setSubmitting] = useState(false);
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
+  // Edit Purchase Strength modal
+  const [editingPurchase, setEditingPurchase] = useState<AdminSignalPurchase | null>(null);
+  const [editStrengthVal, setEditStrengthVal] = useState<number>(50);
+  const [savingStrength, setSavingStrength] = useState(false);
+
   const loadData = async (silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -87,6 +92,37 @@ export default function SignalsSection({
       loadData();
     } catch (e: any) {
       flash("error", e.message || "Failed to update status");
+    }
+  };
+
+  const handleSavePurchaseStrength = async () => {
+    if (!editingPurchase) return;
+    setSavingStrength(true);
+    try {
+      const res = await fetch("/api/admin/signals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updatePurchaseStrength",
+          purchaseId: editingPurchase.id || editingPurchase.ref,
+          strength: editStrengthVal,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update strength");
+      flash("ok", `Signal strength updated to ${editStrengthVal}%.`);
+      setPurchases((prev) =>
+        prev.map((p) =>
+          p.id === editingPurchase.id || p.ref === editingPurchase.ref
+            ? { ...p, strength: editStrengthVal }
+            : p
+        )
+      );
+      setEditingPurchase(null);
+    } catch (err: any) {
+      flash("error", err.message || "Failed to update strength");
+    } finally {
+      setSavingStrength(false);
     }
   };
 
@@ -305,12 +341,32 @@ export default function SignalsSection({
                     </td>
                     <td style={{ fontWeight: 600 }}>{p.signalTitle}</td>
                     <td>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingPurchase(p);
+                          setEditStrengthVal(p.strength);
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          textAlign: "left",
+                        }}
+                        title="Click to edit signal strength"
+                      >
                         <div style={{ width: "40px", height: "6px", borderRadius: "3px", background: "rgba(255,255,255,0.1)", overflow: "hidden" }}>
                           <div style={{ width: `${p.strength}%`, height: "100%", background: "#4763f0" }} />
                         </div>
-                        <span className={styles.mono} style={{ fontSize: "12px" }}>{p.strength}%</span>
-                      </div>
+                        <span className={styles.mono} style={{ fontSize: "12px", color: "var(--color-primary, #3861fb)", textDecoration: "underline" }}>
+                          {p.strength}%
+                        </span>
+                        <Edit2 size={11} style={{ opacity: 0.7 }} />
+                      </button>
                     </td>
                     <td className={`${styles.right} ${styles.mono}`} style={{ fontWeight: 700, color: "#34d399" }}>
                       {usd(p.amount)}
@@ -326,6 +382,17 @@ export default function SignalsSection({
                     </td>
                     <td style={{ textAlign: "right" }}>
                       <div style={{ display: "inline-flex", gap: "6px" }}>
+                        <button
+                          type="button"
+                          className={styles.btnGhostSm}
+                          onClick={() => {
+                            setEditingPurchase(p);
+                            setEditStrengthVal(p.strength);
+                          }}
+                          title="Edit Strength"
+                        >
+                          Edit %
+                        </button>
                         <button
                           type="button"
                           className={styles.btnGhostSm}
@@ -395,7 +462,29 @@ export default function SignalsSection({
                   </div>
                   <div className={styles.itemMetaCol}>
                     <span className={styles.itemMetaLabel}>Confidence</span>
-                    <span className={styles.itemMetaValue}>{p.strength}% Strength</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingPurchase(p);
+                        setEditStrengthVal(p.strength);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        textAlign: "left",
+                      }}
+                      title="Edit strength"
+                    >
+                      <span className={styles.itemMetaValue} style={{ color: "#3861fb", textDecoration: "underline" }}>
+                        {p.strength}% Strength
+                      </span>
+                      <Edit2 size={11} color="#3861fb" />
+                    </button>
                   </div>
                   <div className={styles.itemMetaCol}>
                     <span className={styles.itemMetaLabel}>Reference</span>
@@ -408,6 +497,18 @@ export default function SignalsSection({
                     {new Date(p.date).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
                   <div style={{ display: "flex", gap: "6px", marginLeft: "auto" }}>
+                    <button
+                      type="button"
+                      className={styles.btnGhostSm}
+                      onClick={() => {
+                        setEditingPurchase(p);
+                        setEditStrengthVal(p.strength);
+                      }}
+                      style={{ height: "32px", fontSize: "12px" }}
+                      title="Edit Signal Strength"
+                    >
+                      Edit %
+                    </button>
                     <button
                       type="button"
                       className={styles.btnGhostSm}
@@ -634,6 +735,108 @@ export default function SignalsSection({
               <button type="button" className={styles.btnSuccess} onClick={handleSaveSignal} disabled={submitting}>
                 {submitting ? <Loader2 size={15} className={styles.spin} /> : <Save size={15} />}
                 Save Package
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Purchase Strength Modal */}
+      {editingPurchase && (
+        <div className={styles.modalBackdrop} onClick={() => !savingStrength && setEditingPurchase(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHead}>
+              <h2>Edit Investor Signal Strength</h2>
+              <button
+                type="button"
+                className={styles.iconBtn}
+                onClick={() => setEditingPurchase(null)}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: "14px", marginTop: "14px" }}>
+              <div
+                style={{
+                  padding: "12px 14px",
+                  background: "rgba(255, 255, 255, 0.03)",
+                  borderRadius: 8,
+                  border: "1px solid var(--a-border)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 4,
+                }}
+              >
+                <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>
+                  {editingPurchase.signalTitle}
+                </div>
+                <div className={styles.faint} style={{ fontSize: "12px" }}>
+                  Investor: {editingPurchase.userFullName} ({editingPurchase.userEmail})
+                </div>
+                <div className={styles.mono} style={{ fontSize: "11.5px", color: "var(--a-muted)" }}>
+                  Ref: {editingPurchase.ref}
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <label className={styles.faint} style={{ fontSize: "12px" }}>
+                    Signal Strength Percentage
+                  </label>
+                  <span className={styles.mono} style={{ fontSize: "14px", fontWeight: 700, color: "#3861fb" }}>
+                    {editStrengthVal}%
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={100}
+                    value={editStrengthVal}
+                    onChange={(e) => setEditStrengthVal(Number(e.target.value))}
+                    style={{ flex: 1, accentColor: "#3861fb", cursor: "pointer" }}
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={editStrengthVal}
+                    onChange={(e) => setEditStrengthVal(Math.min(100, Math.max(0, Number(e.target.value))))}
+                    style={{
+                      width: "70px",
+                      padding: "8px 10px",
+                      borderRadius: 6,
+                      border: "1px solid var(--a-border)",
+                      background: "var(--a-raised)",
+                      color: "#fff",
+                      textAlign: "center",
+                      fontWeight: 700,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalActions} style={{ marginTop: "20px" }}>
+              <button
+                type="button"
+                className={styles.btnGhost}
+                onClick={() => setEditingPurchase(null)}
+                disabled={savingStrength}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.btnSuccess}
+                onClick={handleSavePurchaseStrength}
+                disabled={savingStrength}
+              >
+                {savingStrength ? <Loader2 size={15} className={styles.spin} /> : <Save size={15} />}
+                Update Strength
               </button>
             </div>
           </div>

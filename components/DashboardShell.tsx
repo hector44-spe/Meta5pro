@@ -1780,26 +1780,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
         {/* ===================== LIVE CHAT DIALOG ===================== */}
         {isChatOpen && (
-          <div
-            style={{
-              position: "fixed",
-              bottom: "86px",
-              right: "24px",
-              width: "360px",
-              maxWidth: "calc(100vw - 32px)",
-              height: "460px",
-              backgroundColor: "#16181d",
-              borderRadius: "14px",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              boxShadow: "0 12px 36px rgba(0,0,0,0.6)",
-              zIndex: 9001,
-              display: "flex",
-              flexDirection: "column",
-              overflow: "hidden",
-            }}
-          >
+          <div className="live-chat-panel">
             {/* Chat Header */}
             <div
+              className="live-chat-header"
               style={{
                 padding: "14px 16px",
                 backgroundColor: "#1e2126",
@@ -1840,9 +1824,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   border: "none",
                   color: "rgba(255, 255, 255, 0.6)",
                   cursor: "pointer",
+                  padding: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
+                aria-label="Close live support"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
@@ -1850,11 +1839,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <div
               style={{
                 flex: 1,
-                padding: "14px",
+                padding: "16px",
                 overflowY: "auto",
                 display: "flex",
                 flexDirection: "column",
-                gap: "10px",
+                gap: "12px",
               }}
             >
               {chatMessages.map((msg, index) => (
@@ -1862,22 +1851,23 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   key={index}
                   style={{
                     alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
-                    maxWidth: "80%",
+                    maxWidth: "85%",
                     backgroundColor:
-                      msg.sender === "user" ? "#4763f0" : "rgba(255, 255, 255, 0.06)",
+                      msg.sender === "user" ? "#4763f0" : "rgba(255, 255, 255, 0.08)",
                     color: "#fff",
-                    padding: "10px 12px",
-                    borderRadius: "10px",
-                    fontSize: "13px",
-                    lineHeight: "1.4",
+                    padding: "11px 14px",
+                    borderRadius: "12px",
+                    fontSize: "13.5px",
+                    lineHeight: "1.45",
+                    wordBreak: "break-word",
                   }}
                 >
                   <div>{msg.text}</div>
                   <div
                     style={{
-                      fontSize: "10px",
+                      fontSize: "10.5px",
                       opacity: 0.6,
-                      marginTop: "4px",
+                      marginTop: "5px",
                       textAlign: "right",
                     }}
                   >
@@ -1890,12 +1880,13 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             {/* Chat Input */}
             <form
               onSubmit={handleSendChatMessage}
+              className="live-chat-form"
               style={{
-                padding: "10px 14px",
+                padding: "12px 16px",
                 borderTop: "1px solid rgba(255, 255, 255, 0.08)",
                 display: "flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "10px",
                 backgroundColor: "#12141a",
               }}
             >
@@ -1906,12 +1897,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 onChange={(e) => setChatInput(e.target.value)}
                 style={{
                   flex: 1,
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: "rgba(255, 255, 255, 0.07)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
                   borderRadius: "20px",
-                  padding: "8px 14px",
+                  padding: "10px 16px",
                   color: "#fff",
-                  fontSize: "13px",
+                  fontSize: "14px",
                   outline: "none",
                 }}
               />
@@ -1921,16 +1912,18 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   background: "#4763f0",
                   border: "none",
                   borderRadius: "50%",
-                  width: "34px",
-                  height: "34px",
+                  width: "38px",
+                  height: "38px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: "#fff",
                   cursor: "pointer",
+                  flexShrink: 0,
                 }}
+                aria-label="Send message"
               >
-                <Send size={15} />
+                <Send size={16} />
               </button>
             </form>
           </div>

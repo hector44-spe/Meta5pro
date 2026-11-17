@@ -134,6 +134,27 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true });
     }
 
+    // C. Update strength of user signal purchase
+    if (action === "updatePurchaseStrength") {
+      const { strength } = body;
+      if (!purchaseId || strength === undefined || isNaN(Number(strength))) {
+        return NextResponse.json({ error: "Missing purchaseId or strength" }, { status: 400 });
+      }
+
+      const clampedStrength = Math.min(100, Math.max(0, Math.round(Number(strength))));
+
+      const updated = await prisma.signalPurchase.updateMany({
+        where: { OR: [{ id: purchaseId }, { ref: purchaseId }] },
+        data: { strength: clampedStrength },
+      });
+
+      if (updated.count === 0) {
+        return NextResponse.json({ error: "Purchase not found" }, { status: 404 });
+      }
+
+      return NextResponse.json({ success: true, strength: clampedStrength });
+    }
+
     // C. Save / update signal package
     if (action === "saveSignal") {
       const setting = await prisma.appSetting.findUnique({ where: { key: "trading_signals" } });
