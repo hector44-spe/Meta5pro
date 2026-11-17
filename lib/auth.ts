@@ -1,5 +1,8 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "node:crypto";
+import { isIP } from "node:net";
+import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 
 const COOKIE_NAME = process.env.COOKIE_NAME || "mg5_token";
@@ -72,7 +75,7 @@ export async function getSession(): Promise<TokenPayload | null> {
   }
 }
 
-/* ---------- in-memory rate limiter with periodic cleanup ---------- */
+/* Database-backed limiter; the local map is only a fail-safe for tests/startup outages. */
 const attempts = new Map<string, { count: number; resetAt: number }>();
 
 function pruneExpiredAttempts() {
@@ -84,8 +87,7 @@ function pruneExpiredAttempts() {
   }
 }
 
-/** Returns true if the key is over the limit. */
-export function rateLimited(key: string, max = 5, windowMs = 15 * 60 * 1000): boolean {
+function localRateLimited(key: string, max: number, windowMs: number): boolean {
   const now = Date.now();
   if (attempts.size > 2000) pruneExpiredAttempts();
 
@@ -98,16 +100,65 @@ export function rateLimited(key: string, max = 5, windowMs = 15 * 60 * 1000): bo
   return entry.count > max;
 }
 
+/** Returns true if the key is over the limit. Shared by every app instance. */
+export async function rateLimited(key: string, max = 5, windowMs = 15 * 60 * 1000): Promise<boolean> {
+  const hashedKey = crypto.createHash("sha256").update(key).digest("hex");
+  if (process.env.NODE_ENV === "test") return localRateLimited(hashedKey, max, windowMs);
+  const now = new Date();
+
+  for (let retry = 0; retry < 3; retry++) {
+    try {
+      const count = await prisma.$transaction(async (tx) => {
+        const row = await tx.authRateLimit.findUnique({ where: { key: hashedKey } });
+        if (!row) {
+          await tx.authRateLimit.create({
+            data: { key: hashedKey, count: 1, resetAt: new Date(now.getTime() + windowMs) },
+          });
+          return 1;
+        }
+        if (row.resetAt <= now) {
+          await tx.authRateLimit.update({
+            where: { key: hashedKey },
+            data: { count: 1, resetAt: new Date(now.getTime() + windowMs) },
+          });
+          return 1;
+        }
+        const updated = await tx.authRateLimit.update({
+          where: { key: hashedKey },
+          data: { count: { increment: 1 } },
+          select: { count: true },
+        });
+        return updated.count;
+      }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+      return count > max;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034" && retry < 2) {
+        continue;
+      }
+      // Authentication should still be throttled if the limiter table is temporarily unavailable.
+      return localRateLimited(hashedKey, max, windowMs);
+    }
+  }
+  return true;
+}
+
 export function clearRateLimit(key: string) {
-  attempts.delete(key);
+  const hashedKey = crypto.createHash("sha256").update(key).digest("hex");
+  attempts.delete(hashedKey);
+  if (process.env.NODE_ENV === "test") return;
+  void prisma.authRateLimit.delete({ where: { key: hashedKey } }).catch(() => {});
 }
 
 export function clientIp(req: Request): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown"
-  );
+  const forwarded = req.headers.get("x-forwarded-for")
+    ?.split(",")
+    .map((part) => part.trim())
+    .filter(Boolean) ?? [];
+  const trustedHops = Math.max(0, Number.parseInt(process.env.TRUST_PROXY_HOPS || "1", 10) || 0);
+  const candidate = forwarded.length
+    ? forwarded[Math.max(0, forwarded.length - trustedHops)]
+    : req.headers.get("x-real-ip");
+  return candidate && isIP(candidate) ? candidate : "unknown";
 }
 
 export const AUTH_COOKIE = COOKIE_NAME;

@@ -207,7 +207,7 @@ export default function AdminEditExpertModal({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 10000,
+        zIndex: 100005,
         padding: "16px",
       }}
       onClick={onClose}
@@ -220,7 +220,7 @@ export default function AdminEditExpertModal({
           backgroundColor: "#16181d",
           border: "1px solid rgba(255, 255, 255, 0.08)",
           borderRadius: "14px",
-          padding: "20px 20px 16px 20px",
+          padding: "20px 20px 20px 20px",
           maxHeight: "min(92vh, calc(100dvh - 24px))",
           height: "auto",
           display: "flex",
@@ -295,7 +295,7 @@ export default function AdminEditExpertModal({
             overflowX: "hidden",
             WebkitOverflowScrolling: "touch",
             paddingRight: "4px",
-            paddingBottom: "18px",
+            paddingBottom: "36px",
           }}
         >
           {error && (

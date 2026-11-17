@@ -2,13 +2,13 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { atomic, money } from "@/lib/ledger";
+import { atomic, creditInterest, creditMain, money } from "@/lib/ledger";
 
 export async function POST(req: Request) {
   try {
     // Allow either Admin browser session OR Bearer CRON_SECRET authorization for scheduled jobs
     const authHeader = req.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET || process.env.JWT_SECRET;
+    const cronSecret = process.env.CRON_SECRET;
     const isCronAuthorized =
       authHeader && cronSecret && authHeader === `Bearer ${cronSecret}`;
 
@@ -50,13 +50,18 @@ export async function POST(req: Request) {
         });
         if (claim.count !== 1) return false;
 
-        await tx.wallet.update({
-          where: { userId: inv.userId },
-          data: {
-            interestBalance: { increment: dailyYield },
-            ...(isCompleted && inv.plan.capitalRefund ? { mainBalance: { increment: amount } } : {}),
-          },
+        await creditInterest(tx, inv.userId, dailyYield, {
+          referenceType: "INVESTMENT_YIELD",
+          referenceId: inv.id,
+          counterAccount: "PLATFORM:INVESTMENT_YIELD",
         });
+        if (isCompleted && inv.plan.capitalRefund) {
+          await creditMain(tx, inv.userId, amount, {
+            referenceType: "INVESTMENT_CAPITAL_REFUND",
+            referenceId: inv.id,
+            counterAccount: "PLATFORM:INVESTMENT_CAPITAL",
+          });
+        }
         return true;
       });
 

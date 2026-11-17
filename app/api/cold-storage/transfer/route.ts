@@ -4,14 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { atomic, debitMain, creditMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
-import { z } from "zod";
-
-const transferSchema = z.object({
-  action: z.enum(["deposit", "withdraw"]),
-  symbol: z.string().trim().toUpperCase(),
-  amount: z.number().positive("Amount must be positive"),
-  price: z.number().positive("Asset price must be positive"),
-});
+import { getVerifiedPrice } from "@/lib/prices";
+import { coldStorageTransferSchema } from "@/lib/schemas";
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const parsed = transferSchema.safeParse(await req.json());
+    const parsed = coldStorageTransferSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Validation failed" },
@@ -28,14 +22,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const { action, symbol, amount, price } = parsed.data;
+    const { action, symbol, amount } = parsed.data;
+    const price = await getVerifiedPrice(symbol);
+    if (!price) {
+      return NextResponse.json(
+        { error: `A recent verified price for ${symbol} is unavailable. Try again later.` },
+        { status: 503 },
+      );
+    }
     const usdValue = money(amount * price);
 
     try {
       const { newBalance, updatedAsset } = await atomic(async (tx) => {
         if (action === "deposit") {
           // 1. Debit trading balance
-          const newBalance = await debitMain(tx, session.userId, usdValue);
+          const newBalance = await debitMain(tx, session.userId, usdValue, {
+            referenceType: "COLD_STORAGE_DEPOSIT",
+            counterAccount: `COLD_STORAGE:${symbol}`,
+          });
 
           // 2. Add to cold storage
           const updatedAsset = await tx.coldStorageAsset.upsert({
@@ -70,35 +74,27 @@ export async function POST(req: Request) {
           return { newBalance, updatedAsset };
         } else {
           // action === "withdraw" (cold storage -> trading wallet)
-          const existing = await tx.coldStorageAsset.findUnique({
-            where: {
-              userId_symbol: {
-                userId: session.userId,
-                symbol,
-              },
-            },
+          // 1. Atomically claim the asset quantity. Concurrent requests cannot overdraw it.
+          const claim = await tx.coldStorageAsset.updateMany({
+            where: { userId: session.userId, symbol, amount: { gte: amount } },
+            data: { amount: { decrement: amount } },
           });
-
-          const currentColdAmt = existing ? existing.amount.toNumber() : 0;
-          if (currentColdAmt < amount) {
-            throw new Error(`Insufficient ${symbol} in cold storage. Available: ${currentColdAmt}`);
+          if (claim.count !== 1) {
+            const existing = await tx.coldStorageAsset.findUnique({
+              where: { userId_symbol: { userId: session.userId, symbol } },
+              select: { amount: true },
+            });
+            throw new Error(`Insufficient ${symbol} in cold storage. Available: ${existing?.amount.toNumber() ?? 0}`);
           }
-
-          // 1. Decrement cold storage
-          const updatedAsset = await tx.coldStorageAsset.update({
-            where: {
-              userId_symbol: {
-                userId: session.userId,
-                symbol,
-              },
-            },
-            data: {
-              amount: { decrement: amount },
-            },
+          const updatedAsset = await tx.coldStorageAsset.findUniqueOrThrow({
+            where: { userId_symbol: { userId: session.userId, symbol } },
           });
 
           // 2. Credit trading balance
-          const newBalance = await creditMain(tx, session.userId, usdValue);
+          const newBalance = await creditMain(tx, session.userId, usdValue, {
+            referenceType: "COLD_STORAGE_WITHDRAW",
+            counterAccount: `COLD_STORAGE:${symbol}`,
+          });
 
           // 3. Record transaction
           await insertTransaction(tx, {

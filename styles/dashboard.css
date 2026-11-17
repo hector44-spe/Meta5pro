@@ -24447,7 +24447,7 @@ img, svg, video {
   overflow: hidden;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .live-chat-panel {
     position: fixed !important;
     inset: 0 !important;

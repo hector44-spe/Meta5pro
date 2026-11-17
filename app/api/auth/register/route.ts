@@ -24,7 +24,7 @@ function generateUsernameCandidate(email: string): string {
 
 export async function POST(req: Request) {
   try {
-    if (rateLimited(`register:${clientIp(req)}`, 10, 60 * 60 * 1000)) {
+    if (await rateLimited(`register:${clientIp(req)}`, 10, 60 * 60 * 1000)) {
       return NextResponse.json({ error: "Too many sign-ups from this address. Try again later." }, { status: 429 });
     }
 

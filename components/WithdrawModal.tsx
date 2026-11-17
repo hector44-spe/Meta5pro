@@ -120,7 +120,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
     if (totalUsd < minWithdrawal) return `Minimum withdrawal is ${fmtUsd(minWithdrawal)}.`;
     if (totalUsd > maxWithdrawal) return `Maximum withdrawal is ${fmtUsd(maxWithdrawal)}.`;
     if (totalUsd > balanceUsd) return `Insufficient balance. Available: ${fmtUsd(balanceUsd)}.`;
-    if (useWithdrawalCode && !/^\d{6}$/.test(code.trim())) return "Enter the 6-digit withdrawal code (default: 123456).";
+    if (useWithdrawalCode && !/^\d{6}$/.test(code.trim())) return "Enter the 6-digit withdrawal code emailed to you.";
     return null;
   };
 
@@ -143,7 +143,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
           currency: token!.symbol,
           network: chosenNetwork,
           cryptoAddress: address.trim(),
-          code: code.trim() || "123456",
+          code: code.trim(),
         }),
       });
       const data = await res.json();
@@ -313,7 +313,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
               </div>
             </div>
 
-            {/* Withdrawal code (emailed one-time code or default 123456) */}
+            {/* Emailed one-time withdrawal code */}
             {useWithdrawalCode && (
               <div className="dm-form-group">
                 <label className="dm-field-label app-label">Withdrawal code:</label>
@@ -325,7 +325,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
                     maxLength={6}
                     value={code}
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                    placeholder="Enter code (default: 123456)"
+                    placeholder="Enter emailed code"
                     className="app-input" style={{ flex: 1 }}
                   />
                   <button
@@ -343,7 +343,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
                   </div>
                 ) : (
                   <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginTop: "5px" }}>
-                    Default code is 123456 unless a custom code is requested.
+                    Request a one-time code. It expires after 10 minutes.
                   </div>
                 )}
               </div>

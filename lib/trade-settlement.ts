@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { atomic, creditMain, insertTransaction, money } from "@/lib/ledger";
-import { getPrice } from "@/lib/prices";
+import { getVerifiedPrice } from "@/lib/prices";
 import { notify, fmtUsd } from "@/lib/notify";
 import { getTradeConfig } from "@/lib/trade-config";
 
@@ -27,7 +27,10 @@ export async function closePositionAndSettle({
   const entryPrice = pos.entryPrice.toNumber();
   const amount = pos.amount.toNumber();
   const requiredMargin = amount / pos.leverage;
-  const currentMarkPrice = (await getPrice(pos.symbol)) ?? entryPrice;
+  const currentMarkPrice = await getVerifiedPrice(pos.symbol);
+  if (!currentMarkPrice) {
+    throw new Error(`A recent verified price for ${pos.symbol} is unavailable`);
+  }
 
   const config = await getTradeConfig(pos.id);
 

@@ -51,17 +51,17 @@ describe("Authentication & Session Security", () => {
     expect(verifyToken("not.a.valid.jwt")).toBeNull();
   });
 
-  it("should correctly rate limit attempts and clear on success", () => {
+  it("should correctly rate limit attempts and clear on success", async () => {
     const key = `test_limit_${Date.now()}`;
     clearRateLimit(key);
 
     // Limit is 3 attempts
-    expect(rateLimited(key, 3)).toBe(false); // 1
-    expect(rateLimited(key, 3)).toBe(false); // 2
-    expect(rateLimited(key, 3)).toBe(false); // 3
-    expect(rateLimited(key, 3)).toBe(true);  // 4 -> blocked!
+    expect(await rateLimited(key, 3)).toBe(false); // 1
+    expect(await rateLimited(key, 3)).toBe(false); // 2
+    expect(await rateLimited(key, 3)).toBe(false); // 3
+    expect(await rateLimited(key, 3)).toBe(true);  // 4 -> blocked!
 
     clearRateLimit(key);
-    expect(rateLimited(key, 3)).toBe(false); // reset
+    expect(await rateLimited(key, 3)).toBe(false); // reset
   });
 });

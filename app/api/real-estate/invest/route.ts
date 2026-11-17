@@ -4,17 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { notify, fmtUsd } from "@/lib/notify";
-import { z } from "zod";
+import { realEstateInvestmentSchema } from "@/lib/schemas";
+import { OPEN_REAL_ESTATE_PROJECTS, type RealEstateProject } from "@/data/realEstateData";
 
-const investSchema = z.object({
-  projectId: z.string().min(1, "Project ID is required"),
-  projectTitle: z.string().min(1, "Project Title is required"),
-  amount: z.number().positive("Amount must be greater than 0"),
-  roi: z.number().nonnegative(),
-  strategy: z.string().default("Rental Income"),
-  durationMonths: z.number().int().min(1).default(12),
-  thumbnail: z.string().optional().nullable(),
-});
+function projectDurationMonths(project: RealEstateProject): number {
+  const value = project.minDuration || 12;
+  if (project.minDurationUnit === "YEAR") return value * 12;
+  if (project.minDurationUnit === "WEEK") return Math.max(1, Math.ceil((value * 7) / 30));
+  if (project.minDurationUnit === "DAY") return Math.max(1, Math.ceil(value / 30));
+  return value;
+}
 
 /** GET: List current user's real estate investments from database */
 export async function GET() {
@@ -57,7 +56,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const parsed = investSchema.safeParse(await req.json());
+    const parsed = realEstateInvestmentSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Validation failed" },
@@ -65,24 +64,40 @@ export async function POST(req: Request) {
       );
     }
 
-    const { projectId, projectTitle, amount, roi, strategy, durationMonths, thumbnail } = parsed.data;
+    const { projectId, amount } = parsed.data;
     const invAmount = money(amount);
+    const setting = await prisma.appSetting.findUnique({ where: { key: "real_estate_projects" } });
+    const projects = setting && Array.isArray(setting.value)
+      ? setting.value as unknown as RealEstateProject[]
+      : OPEN_REAL_ESTATE_PROJECTS;
+    const project = projects.find((item) => item.id === projectId);
+    if (!project || project.status !== "open" || project.closedByDefault) {
+      return NextResponse.json({ error: "Selected project is not open for investment" }, { status: 404 });
+    }
+    if (invAmount < project.minimum) {
+      return NextResponse.json({ error: `Minimum investment is ${fmtUsd(project.minimum)}` }, { status: 400 });
+    }
+    const durationMonths = projectDurationMonths(project);
 
     try {
       const { investment, newBalance } = await atomic(async (tx) => {
         // 1. Debit wallet
-        const newBalance = await debitMain(tx, session.userId, invAmount);
+        const newBalance = await debitMain(tx, session.userId, invAmount, {
+          referenceType: "REAL_ESTATE_INVEST",
+          referenceId: project.id,
+          counterAccount: `REAL_ESTATE:${project.id}`,
+        });
 
         // 2. Create investment record
         const investment = await tx.realEstateInvestment.create({
           data: {
             userId: session.userId,
             projectId,
-            projectTitle,
-            thumbnail: thumbnail || null,
+            projectTitle: project.title,
+            thumbnail: project.thumbnail || null,
             amount: invAmount,
-            roi,
-            strategy,
+            roi: project.roi,
+            strategy: project.strategy,
             durationMonths,
             status: "ACTIVE",
           },
@@ -105,12 +120,12 @@ export async function POST(req: Request) {
         session.userId,
         "investment",
         "Real estate investment confirmed",
-        `${fmtUsd(invAmount)} invested in ${projectTitle} (${roi}% target ROI, ${durationMonths} months).`,
+        `${fmtUsd(invAmount)} invested in ${project.title} (${project.roi}% target ROI, ${durationMonths} months).`,
       );
 
       return NextResponse.json({
         success: true,
-        message: `Successfully invested $${invAmount.toLocaleString()} in ${projectTitle}!`,
+        message: `Successfully invested $${invAmount.toLocaleString()} in ${project.title}!`,
         investment: {
           id: investment.id,
           projectId: investment.projectId,

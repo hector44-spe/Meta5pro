@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       message: "If an account exists with this email, a reset link has been dispatched.",
     });
 
-    if (rateLimited(`forgot:${clientIp(req)}:${email.toLowerCase()}`, 3, 60 * 60 * 1000)) {
+    if (await rateLimited(`forgot:${clientIp(req)}:${email.toLowerCase()}`, 3, 60 * 60 * 1000)) {
       return genericOk;
     }
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
@@ -38,12 +38,13 @@ export async function POST(req: Request) {
 
     // Generate cryptographic token
     const token = crypto.randomBytes(32).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const expiresAt = new Date(Date.now() + 3600000); // 1 hour
 
     // Invalidate any earlier unused tokens for this user
     await prisma.$transaction([
       prisma.passwordResetToken.updateMany({ where: { userId: user.id, used: false }, data: { used: true } }),
-      prisma.passwordResetToken.create({ data: { userId: user.id, token, expiresAt } }),
+      prisma.passwordResetToken.create({ data: { userId: user.id, token: tokenHash, expiresAt } }),
     ]);
 
     const resetUrl = `${process.env.APP_URL || ""}/reset-password?token=${token}`;

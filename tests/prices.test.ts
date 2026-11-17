@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getPrice, getPrices } from "../lib/prices";
+import { getPrice, getPrices, getVerifiedPrice } from "../lib/prices";
 
 describe("Multi-Asset Market Prices", () => {
   it("should return realistic, non-distorted prices for crypto assets", async () => {
@@ -42,5 +42,16 @@ describe("Multi-Asset Market Prices", () => {
     expect(snap.prices["USD"]).toBe(1);
     expect(snap.prices["BTC"]).toBeGreaterThan(0);
     expect(snap.prices["AAPL"]).toBeGreaterThan(0);
+  });
+
+  it("fails closed for transaction pricing when live crypto quotes are unavailable", async () => {
+    const snap = await getPrices();
+    const verified = await getVerifiedPrice("BTC");
+    const fresh = Date.now() - Date.parse(snap.updatedAt) <= 5 * 60_000;
+    if (fresh && snap.liveSymbols?.includes("BTC")) {
+      expect(verified).toBeGreaterThan(0);
+    } else {
+      expect(verified).toBeNull();
+    }
   });
 });

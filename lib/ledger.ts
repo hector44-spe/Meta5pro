@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import crypto from "node:crypto";
 import { prisma, type Tx } from "./prisma";
 
 /**
@@ -24,19 +25,61 @@ export class InsufficientFundsError extends Error {
   }
 }
 
+export interface LedgerContext {
+  referenceType?: string;
+  referenceId?: string;
+  description?: string;
+  counterAccount?: string;
+}
+
+async function recordBalancedTransfer(
+  tx: Tx,
+  userId: string,
+  userAccount: string,
+  amount: number,
+  direction: "credit" | "debit",
+  context: LedgerContext = {},
+) {
+  const transferId = crypto.randomUUID();
+  const value = money(amount);
+  const userAmount = direction === "credit" ? value : -value;
+  await tx.ledgerEntry.createMany({
+    data: [
+      {
+        transferId,
+        userId,
+        account: userAccount,
+        amount: userAmount,
+        referenceType: context.referenceType,
+        referenceId: context.referenceId,
+        description: context.description,
+      },
+      {
+        transferId,
+        account: context.counterAccount || "PLATFORM_CLEARING",
+        amount: -userAmount,
+        referenceType: context.referenceType,
+        referenceId: context.referenceId,
+        description: context.description,
+      },
+    ],
+  });
+}
+
 export async function getMainBalance(tx: Tx, userId: string): Promise<number | null> {
   const w = await tx.wallet.findUnique({ where: { userId }, select: { mainBalance: true } });
   return w ? w.mainBalance.toNumber() : null;
 }
 
 /** Debits mainBalance only if enough funds exist; throws InsufficientFundsError otherwise. */
-export async function debitMain(tx: Tx, userId: string, amount: number): Promise<number> {
+export async function debitMain(tx: Tx, userId: string, amount: number, context: LedgerContext = {}): Promise<number> {
   const amt = money(amount);
   const res = await tx.wallet.updateMany({
     where: { userId, mainBalance: { gte: amt } },
     data: { mainBalance: { decrement: amt } },
   });
   if (res.count !== 1) throw new InsufficientFundsError((await getMainBalance(tx, userId)) ?? 0);
+  await recordBalancedTransfer(tx, userId, `USER:${userId}:MAIN`, amt, "debit", context);
   return (await getMainBalance(tx, userId))!;
 }
 
@@ -44,7 +87,7 @@ export async function creditMain(
   tx: Tx,
   userId: string,
   amount: number,
-  opts: { deposited?: boolean } = {},
+  opts: { deposited?: boolean } & LedgerContext = {},
 ): Promise<number> {
   const amt = money(amount);
   const w = await tx.wallet.update({
@@ -55,7 +98,17 @@ export async function creditMain(
     },
     select: { mainBalance: true },
   });
+  await recordBalancedTransfer(tx, userId, `USER:${userId}:MAIN`, amt, "credit", opts);
   return w.mainBalance.toNumber();
+}
+
+export async function creditInterest(tx: Tx, userId: string, amount: number, context: LedgerContext = {}) {
+  const amt = money(amount);
+  await tx.wallet.update({
+    where: { userId },
+    data: { interestBalance: { increment: amt } },
+  });
+  await recordBalancedTransfer(tx, userId, `USER:${userId}:INTEREST`, amt, "credit", context);
 }
 
 export async function addWithdrawn(tx: Tx, userId: string, amount: number) {

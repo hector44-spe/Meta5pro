@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    if (rateLimited(`pwchange:${session.userId}`, 5)) {
+    if (await rateLimited(`pwchange:${session.userId}`, 5)) {
       return NextResponse.json({ error: "Too many attempts. Try again in 15 minutes." }, { status: 429 });
     }
 

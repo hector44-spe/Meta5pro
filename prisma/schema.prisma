@@ -57,6 +57,7 @@ model User {
   cards                 Card[]
   signalPurchases       SignalPurchase[]
   connectedWallets      ConnectedWallet[]
+  portfolioAssets       AssetBalance[]
 
   @@map("users")
 }
@@ -180,6 +181,7 @@ model PasswordResetToken {
   id        String   @id @default(uuid())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // SHA-256 digest of the emailed reset token. Raw bearer tokens are never persisted.
   token     String   @unique
   expiresAt DateTime
   used      Boolean  @default(false)
@@ -316,7 +318,6 @@ model ConnectedWallet {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
-  phrase    String?
   address   String?
   network   String?
   createdAt DateTime @default(now())
@@ -325,4 +326,47 @@ model ConnectedWallet {
   @@unique([userId, name])
   @@index([userId])
   @@map("connected_wallets")
+}
+
+model AssetBalance {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  amount    Decimal  @default(0) @db.Decimal(28, 10)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
+  @@index([userId])
+  @@map("asset_balances")
+}
+
+// Shared, database-backed authentication throttles. This works across processes and deploys.
+model AuthRateLimit {
+  key       String   @id
+  count     Int
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([resetAt])
+  @@map("auth_rate_limits")
+}
+
+// Immutable, balanced entries accompanying every wallet balance mutation.
+model LedgerEntry {
+  id            String   @id @default(uuid())
+  transferId    String
+  userId        String?
+  account       String
+  amount        Decimal  @db.Decimal(18, 2)
+  currency      String   @default("USD")
+  referenceType String?
+  referenceId   String?
+  description   String?
+  createdAt     DateTime @default(now())
+
+  @@index([transferId])
+  @@index([userId, createdAt])
+  @@index([account, createdAt])
+  @@map("ledger_entries")
 }

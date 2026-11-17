@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { getSession, hashPassword } from "@/lib/auth";
+import { atomic, debitMain, insertTransaction, InsufficientFundsError } from "@/lib/ledger";
+import { getSettings } from "@/lib/appSettings";
+import { cardPinSchema, cardRequestSchema, cardStatusSchema, cardTopupSchema } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -122,10 +126,17 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, cardType, cardPin, cardId, amount, newPin, newStatus, currency, network, txHash, receiptUrl, cryptoAddress } = body;
+    const action = body.action || "request";
 
     if (action === "request" || !action) {
-      const type = (cardType || "Regular") as "Regular" | "Virtual" | "Physical";
+      const parsed = cardRequestSchema.safeParse({ ...body, action: "request" });
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid card request" }, { status: 400 });
+      }
+      const { cardType: type, cardPin, currency, txHash, receiptUrl, cryptoAddress } = parsed.data;
+      if (!txHash && !receiptUrl) {
+        return NextResponse.json({ error: "A transaction hash or uploaded payment proof is required" }, { status: 400 });
+      }
 
       // Check if user already has this card type
       const existing = await prisma.card.findFirst({
@@ -142,36 +153,40 @@ export async function POST(req: Request) {
       const last4 = rawNumber.slice(-4);
       const masked = `${rawNumber.slice(0, 4)} **** **** ${last4}`;
       const ref = `CRD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
-      const pinHash = await hashPassword(String(cardPin || "1234").trim());
+      const pinHash = await hashPassword(cardPin);
+      const cardSettings = await getSettings("cards");
+      const issuanceFee = cardSettings.issuanceFee;
 
-      // All cards are paid for separately via fresh deposit (not from user balance)
-      const card = await prisma.card.create({
-        data: {
-          userId: session.userId,
-          ref,
-          type,
-          cardNumber: masked,
-          last4,
-          expiryDate: generateExpiry(),
-          pinHash,
-          status: "pending",
-          balance: 0,
-          issuanceFee: 1000,
-        },
-      });
-
-      // Record a dedicated deposit transaction for the $1,000 card issuance payment
-      await prisma.transaction.create({
-        data: {
-          userId: session.userId,
-          type: "DEPOSIT",
-          status: "PENDING",
-          amount: 1000,
-          currency: currency ? String(currency).toUpperCase() : "USDT",
-          txHash: txHash ? String(txHash).trim() : `CRD_${Date.now().toString(36).toUpperCase()}`,
-          receiptUrl: receiptUrl ? String(receiptUrl).trim() : undefined,
-          cryptoAddress: cryptoAddress ? String(cryptoAddress).trim() : undefined,
-        },
+      // The card and its exact payment record are created together and linked by an immutable reference.
+      const card = await atomic(async (tx) => {
+        const created = await tx.card.create({
+          data: {
+            userId: session.userId,
+            ref,
+            type,
+            cardNumber: masked,
+            last4,
+            expiryDate: generateExpiry(),
+            pinHash,
+            status: "pending",
+            balance: 0,
+            issuanceFee,
+          },
+        });
+        await tx.transaction.create({
+          data: {
+            userId: session.userId,
+            type: "CARD_ISSUANCE_PAYMENT",
+            status: "PENDING",
+            amount: issuanceFee,
+            currency: currency || "USDT",
+            txHash: `CARD_PAYMENT_${created.id}`,
+            depositHash: txHash || null,
+            receiptUrl: receiptUrl || null,
+            cryptoAddress: cryptoAddress || null,
+          },
+        });
+        return created;
       });
 
       const newCard: UserCard = {
@@ -208,6 +223,9 @@ export async function POST(req: Request) {
     }
 
     if (action === "topup") {
+      const parsed = cardTopupSchema.safeParse(body);
+      if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid top-up" }, { status: 400 });
+      const { cardId, amount } = parsed.data;
       const target = await prisma.card.findFirst({
         where: {
           userId: session.userId,
@@ -217,11 +235,32 @@ export async function POST(req: Request) {
       if (!target) {
         return NextResponse.json({ error: "Card not found" }, { status: 404 });
       }
-      const topupAmount = Number(amount) || 0;
-      await prisma.card.update({
-        where: { id: target.id },
-        data: { balance: { increment: topupAmount } },
-      });
+      if (target.status !== "active") {
+        return NextResponse.json({ error: "Only an active card can be topped up" }, { status: 400 });
+      }
+      try {
+        await atomic(async (tx) => {
+          await debitMain(tx, session.userId, amount, {
+            referenceType: "CARD_TOPUP",
+            referenceId: target.id,
+            counterAccount: `CARD:${target.id}`,
+          });
+          await tx.card.update({ where: { id: target.id }, data: { balance: { increment: amount } } });
+          await insertTransaction(tx, {
+            userId: session.userId,
+            type: "CARD_TOPUP",
+            amount,
+            currency: "USD",
+            status: "APPROVED",
+            txHash: `CARD_TOPUP_${crypto.randomUUID()}`,
+          });
+        });
+      } catch (error) {
+        if (error instanceof InsufficientFundsError) {
+          return NextResponse.json({ error: "Insufficient wallet balance" }, { status: 400 });
+        }
+        throw error;
+      }
 
       const userCards = await prisma.card.findMany({
         where: { userId: session.userId },
@@ -235,6 +274,9 @@ export async function POST(req: Request) {
     }
 
     if (action === "changePin") {
+      const parsed = cardPinSchema.safeParse(body);
+      if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid PIN" }, { status: 400 });
+      const { cardId, newPin } = parsed.data;
       const target = await prisma.card.findFirst({
         where: {
           userId: session.userId,
@@ -244,7 +286,7 @@ export async function POST(req: Request) {
       if (!target) {
         return NextResponse.json({ error: "Card not found" }, { status: 404 });
       }
-      const pinHash = await hashPassword(String(newPin || "").trim());
+      const pinHash = await hashPassword(newPin);
       await prisma.card.update({
         where: { id: target.id },
         data: { pinHash },
@@ -254,6 +296,9 @@ export async function POST(req: Request) {
     }
 
     if (action === "toggleStatus") {
+      const parsed = cardStatusSchema.safeParse(body);
+      if (!parsed.success) return NextResponse.json({ error: "Invalid card status request" }, { status: 400 });
+      const { cardId } = parsed.data;
       const target = await prisma.card.findFirst({
         where: {
           userId: session.userId,
@@ -263,7 +308,10 @@ export async function POST(req: Request) {
       if (!target) {
         return NextResponse.json({ error: "Card not found" }, { status: 404 });
       }
-      const nextStatus = newStatus || (target.status === "blocked" ? "active" : "blocked");
+      if (target.status === "pending") {
+        return NextResponse.json({ error: "Pending cards can only be activated by an administrator" }, { status: 403 });
+      }
+      const nextStatus = target.status === "blocked" ? "active" : "blocked";
       const updated = await prisma.card.update({
         where: { id: target.id },
         data: { status: nextStatus },

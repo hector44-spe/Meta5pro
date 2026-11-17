@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
-import { getPrice } from "@/lib/prices";
+import { getVerifiedPrice } from "@/lib/prices";
 import { notify, fmtUsd } from "@/lib/notify";
 import { setTradeConfig } from "@/lib/trade-config";
 import { z } from "zod";
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     const requiredMargin = money(amount / leverage);
 
     // Fill at the live market price
-    const fillPrice = await getPrice(symbol);
+    const fillPrice = await getVerifiedPrice(symbol);
     if (!fillPrice) {
       return NextResponse.json({ error: `No live price for ${symbol}. Try again shortly.` }, { status: 503 });
     }

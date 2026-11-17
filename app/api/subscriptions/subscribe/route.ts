@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { notify, fmtUsd } from "@/lib/notify";
+import { subscriptionPurchaseSchema } from "@/lib/schemas";
 
 export const dynamic = "force-dynamic";
 
@@ -47,47 +48,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { planId, amount, planName, duration, roi } = body;
-    const subAmount = money(Number(amount));
-
-    if (!subAmount || subAmount <= 0) {
-      return NextResponse.json({ error: "Please enter a valid investment amount" }, { status: 400 });
+    const parsed = subscriptionPurchaseSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid subscription" }, { status: 400 });
     }
-
-    const planDuration = Number(duration) || 3;
-    const totalRoi = Number(roi) || 200;
-    const dailyRoi = Number((totalRoi / planDuration).toFixed(3));
-    const targetName = planName || "Subscription Plan";
-
-    // 1. Find or create matching relational Plan in Postgres
-    let plan = await prisma.plan.findFirst({
-      where: {
-        OR: [
-          ...(planId ? [{ id: planId }] : []),
-          { name: { equals: targetName, mode: "insensitive" } },
-        ],
-      },
-    });
-
-    if (!plan) {
-      plan = await prisma.plan.create({
-        data: {
-          name: targetName,
-          minDeposit: money(subAmount > 1000 ? 1000 : subAmount),
-          maxDeposit: money(subAmount * 10),
-          dailyRoiPercentage: dailyRoi,
-          durationDays: planDuration,
-          capitalRefund: true,
-          isActive: true,
-        },
-      });
+    const { planId, amount } = parsed.data;
+    const subAmount = money(amount);
+    const plan = await prisma.plan.findUnique({ where: { id: planId } });
+    if (!plan || !plan.isActive) {
+      return NextResponse.json({ error: "Selected plan is unavailable" }, { status: 404 });
+    }
+    if (subAmount < plan.minDeposit.toNumber() || subAmount > plan.maxDeposit.toNumber()) {
+      return NextResponse.json(
+        { error: `Investment must be between $${plan.minDeposit.toNumber()} and $${plan.maxDeposit.toNumber()}` },
+        { status: 400 },
+      );
     }
 
     try {
       const { newBalance, investment } = await atomic(async (tx) => {
         // 2. Atomically debit user balance
-        const newBalance = await debitMain(tx, session.userId, subAmount);
+        const newBalance = await debitMain(tx, session.userId, subAmount, {
+          referenceType: "INVESTMENT_SUBSCRIBE",
+          referenceId: plan.id,
+          counterAccount: `INVESTMENT_PLAN:${plan.id}`,
+        });
 
         // 3. Create real relational Investment
         const investment = await tx.investment.create({
@@ -149,7 +134,7 @@ export async function POST(req: Request) {
         duration: investment.plan.durationDays,
         daysLeft: investment.daysRemaining,
         amount: investment.amount.toNumber(),
-        roi: totalRoi,
+        roi: Number((investment.plan.dailyRoiPercentage.toNumber() * investment.plan.durationDays).toFixed(1)),
         status: investment.status.toLowerCase(),
         date: investment.createdAt.toISOString(),
       };

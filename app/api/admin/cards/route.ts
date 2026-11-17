@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { atomic, settlePending } from "@/lib/ledger";
 
 export interface CardOption {
   id: string;
@@ -121,47 +122,31 @@ export async function POST(req: Request) {
       if (!cardId || !newStatus) {
         return NextResponse.json({ error: "Missing cardId or newStatus" }, { status: 400 });
       }
+      if (!["active", "blocked", "pending"].includes(newStatus)) {
+        return NextResponse.json({ error: "Invalid card status" }, { status: 400 });
+      }
 
-      const updated = await prisma.card.update({
-        where: { id: cardId },
-        data: { status: newStatus },
-      });
-
-      // If approved & activated by admin, confirm related issuance deposit and notify user
-      if (newStatus === "active") {
-        try {
-          const depositTx = await prisma.transaction.findFirst({
-            where: {
-              userId: updated.userId,
-              type: "DEPOSIT",
-              status: "PENDING",
-              amount: { gte: 900 },
-            },
-            orderBy: { createdAt: "desc" },
+      const updated = await atomic(async (tx) => {
+        const current = await tx.card.findUnique({ where: { id: cardId } });
+        if (!current) throw new Error("Card not found");
+        if (newStatus === "active" && current.status === "pending") {
+          const payment = await tx.transaction.findFirst({
+            where: { txHash: `CARD_PAYMENT_${current.id}`, type: "CARD_ISSUANCE_PAYMENT", status: "PENDING" },
           });
-
-          if (depositTx) {
-            await prisma.transaction.update({
-              where: { id: depositTx.id },
-              data: {
-                status: "APPROVED",
-                approvedAt: new Date(),
-              },
-            });
+          if (!payment || !(await settlePending(tx, payment.id, "APPROVED"))) {
+            throw new Error("The payment linked to this card is missing or already settled");
           }
-
-          await prisma.notification.create({
+          await tx.notification.create({
             data: {
-              userId: updated.userId,
+              userId: current.userId,
               kind: "account",
               title: "Card Approved & Details Unlocked",
-              body: `Your ${updated.type} card payment has been confirmed by administration. Your card is active and credentials (card number, CVV, expiry & PIN) are now unlocked.`,
+              body: `Your ${current.type} card payment has been confirmed by administration. Your card is now active.`,
             },
           });
-        } catch (e) {
-          console.error("Card activation side-effects error:", e);
         }
-      }
+        return tx.card.update({ where: { id: cardId }, data: { status: newStatus } });
+      });
 
       return NextResponse.json({
         success: true,

@@ -6,6 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { closePositionAndSettle } from "@/lib/trade-settlement";
 import { getTradeConfig, setTradeConfig, deleteTradeConfig } from "@/lib/trade-config";
+import { adminTradeActionSchema } from "@/lib/schemas";
+import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
+import { getVerifiedPrice } from "@/lib/prices";
 
 export async function GET() {
   try {
@@ -80,15 +83,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { action, positionId, pnl, status, userId, symbol, type, amount, entryPrice, leverage } = body;
+    const parsed = adminTradeActionSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid trade action" }, { status: 400 });
+    }
+    const body = parsed.data;
+    const { action } = body;
 
     // Explicit Close action by Admin
     if (action === "close") {
-      if (!positionId) {
-        return NextResponse.json({ error: "Missing positionId" }, { status: 400 });
-      }
-      const overridePnlVal = typeof pnl === "number" && !isNaN(pnl) ? pnl : undefined;
+      const { positionId, pnl } = body;
+      const overridePnlVal = pnl;
       const res = await closePositionAndSettle({
         positionId,
         overridePnl: overridePnlVal,
@@ -98,13 +103,16 @@ export async function POST(req: Request) {
     }
 
     if (action === "update") {
-      if (!positionId) {
-        return NextResponse.json({ error: "Missing positionId" }, { status: 400 });
+      const { positionId, pnl, status } = body;
+      const current = await prisma.position.findUnique({ where: { id: positionId } });
+      if (!current) return NextResponse.json({ error: "Position not found" }, { status: 404 });
+      if (current.status !== "OPEN") {
+        return NextResponse.json({ error: "Closed positions are immutable" }, { status: 409 });
       }
 
       // If status requested is CLOSED, execute full financial settlement
       if (status === "CLOSED") {
-        const overridePnlVal = typeof pnl === "number" && !isNaN(pnl) ? pnl : undefined;
+        const overridePnlVal = pnl;
         const res = await closePositionAndSettle({
           positionId,
           overridePnl: overridePnlVal,
@@ -114,7 +122,7 @@ export async function POST(req: Request) {
       }
 
       // If trade remains OPEN, save custom profit/PnL so investor sees it and it settles with this PnL
-      if (typeof pnl === "number" && !isNaN(pnl)) {
+      if (typeof pnl === "number") {
         await setTradeConfig(positionId, {
           isCustomPnl: true,
           customPnl: pnl,
@@ -136,25 +144,38 @@ export async function POST(req: Request) {
     }
 
     if (action === "create") {
-      if (!userId || !symbol || !amount) {
-        return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-      }
-      const created = await prisma.position.create({
-        data: {
+      const { userId, symbol, type, amount, leverage, status, pnl } = body;
+      const livePrice = await getVerifiedPrice(symbol);
+      if (!livePrice) return NextResponse.json({ error: "A recent verified market price is unavailable" }, { status: 503 });
+      const requiredMargin = money(amount / leverage);
+      const created = await atomic(async (tx) => {
+        await debitMain(tx, userId, requiredMargin, {
+          referenceType: "ADMIN_TRADE_CREATE",
+          counterAccount: "PLATFORM:TRADE_MARGIN",
+        });
+        const position = await tx.position.create({
+          data: { userId, symbol, type, amount, entryPrice: livePrice, leverage, status, pnl: pnl || 0 },
+        });
+        await insertTransaction(tx, {
           userId,
-          symbol: String(symbol).toUpperCase(),
-          type: type || "BUY",
-          amount: Number(amount),
-          entryPrice: Number(entryPrice || 1),
-          leverage: Number(leverage || 1),
-          status: status || "OPEN",
-          pnl: Number(pnl || 0),
-        },
+          type: `TRADE_${type}`,
+          amount,
+          currency: symbol,
+          status: "APPROVED",
+          txHash: `ADMIN_ORD_${position.id.slice(0, 8).toUpperCase()}`,
+        });
+        return position;
       });
       return NextResponse.json({ success: true, position: created });
     }
 
     if (action === "delete") {
+      const { positionId } = body;
+      const current = await prisma.position.findUnique({ where: { id: positionId }, select: { status: true } });
+      if (!current) return NextResponse.json({ error: "Position not found" }, { status: 404 });
+      if (current.status !== "CLOSED") {
+        return NextResponse.json({ error: "Open positions must be closed and settled before deletion" }, { status: 409 });
+      }
       await deleteTradeConfig(positionId);
       await prisma.position.delete({
         where: { id: positionId },
@@ -163,8 +184,11 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  } catch (error: any) {
+  } catch (error) {
+    if (error instanceof InsufficientFundsError) {
+      return NextResponse.json({ error: "The selected user has insufficient margin" }, { status: 400 });
+    }
     console.error("Admin trades action error:", error);
-    return NextResponse.json({ error: error.message || "Failed action" }, { status: 500 });
+    return NextResponse.json({ error: "Failed action" }, { status: 500 });
   }
 }

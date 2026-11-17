@@ -3,34 +3,34 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getPrices } from "@/lib/prices";
+import { getVerifiedPrice } from "@/lib/prices";
+import { atomic, creditMain, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
+import { z } from "zod";
 
-// GET user's conversion / swap transactions
+const conversionSchema = z.object({
+  fromSymbol: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/),
+  toSymbol: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/),
+  fromAmount: z.coerce.number().positive().max(1e12),
+}).strict();
+
 export async function GET() {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const swaps = await prisma.transaction.findMany({
-      where: {
-        userId: session.userId,
-        type: "TRADE_CONVERT",
-      },
+      where: { userId: session.userId, type: "TRADE_CONVERT" },
       orderBy: { createdAt: "desc" },
       take: 50,
     });
-
     return NextResponse.json({
       success: true,
-      swaps: swaps.map((s) => ({
-        id: s.id,
-        createdAt: s.createdAt.toISOString(),
-        trade: `${s.currency} → ${s.assetSymbol || "USD"}`,
-        from: `${Number(s.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${s.currency}`,
-        to: `${Number(s.assetAmount || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })} ${s.assetSymbol || "USD"}`,
-        status: s.status === "APPROVED" ? "Completed" : s.status,
+      swaps: swaps.map((swap) => ({
+        id: swap.id,
+        createdAt: swap.createdAt.toISOString(),
+        trade: `${swap.currency} → ${swap.assetSymbol || "USD"}`,
+        from: `${Number(swap.amount).toLocaleString(undefined, { maximumFractionDigits: 8 })} ${swap.currency}`,
+        to: `${Number(swap.assetAmount || 0).toLocaleString(undefined, { maximumFractionDigits: 8 })} ${swap.assetSymbol || "USD"}`,
+        status: swap.status === "APPROVED" ? "Completed" : swap.status,
       })),
     });
   } catch (error) {
@@ -39,153 +39,71 @@ export async function GET() {
   }
 }
 
-// POST execute conversion
 export async function POST(req: Request) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const body = await req.json();
-    const fromSymbol = String(body.fromSymbol || "USD").toUpperCase();
-    const toSymbol = String(body.toSymbol || "BTC").toUpperCase();
-    const fromAmount = parseFloat(body.fromAmount);
-    const toAmount = parseFloat(body.toAmount);
-
-    if (isNaN(fromAmount) || fromAmount <= 0) {
-      return NextResponse.json({ error: "Please enter a valid amount to convert." }, { status: 400 });
+    const parsed = conversionSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid conversion" }, { status: 400 });
     }
-
+    const { fromSymbol, toSymbol, fromAmount } = parsed.data;
     if (fromSymbol === toSymbol) {
-      return NextResponse.json({ error: "Cannot convert to the same asset." }, { status: 400 });
+      return NextResponse.json({ error: "Cannot convert an asset to itself" }, { status: 400 });
     }
 
-    // Verify wallet
-    const wallet = await prisma.wallet.findUnique({
-      where: { userId: session.userId },
-    });
-
-    if (!wallet) {
-      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
+    const [fromPrice, toPrice] = await Promise.all([
+      fromSymbol === "USD" ? Promise.resolve(1) : getVerifiedPrice(fromSymbol),
+      toSymbol === "USD" ? Promise.resolve(1) : getVerifiedPrice(toSymbol),
+    ]);
+    if (!fromPrice || !toPrice) {
+      return NextResponse.json({ error: "A recent verified market quote is unavailable" }, { status: 503 });
     }
+    const usdValue = money(fromAmount * fromPrice);
+    const toAmount = Number((usdValue / toPrice).toFixed(10));
 
-    const currentBalance = Number(wallet.mainBalance);
-
-    // If converting From USD to Crypto:
-    if (fromSymbol === "USD") {
-      if (currentBalance < fromAmount) {
-        return NextResponse.json(
-          { error: `Insufficient USD balance. You have $${currentBalance.toFixed(2)}, but tried to convert $${fromAmount.toFixed(2)}.` },
-          { status: 400 }
-        );
+    await atomic(async (tx) => {
+      if (fromSymbol === "USD") {
+        await debitMain(tx, session.userId, usdValue, {
+          referenceType: "TRADE_CONVERT",
+          counterAccount: `ASSET:${toSymbol}`,
+        });
+      } else {
+        const claimed = await tx.assetBalance.updateMany({
+          where: { userId: session.userId, symbol: fromSymbol, amount: { gte: fromAmount } },
+          data: { amount: { decrement: fromAmount } },
+        });
+        if (claimed.count !== 1) throw new InsufficientFundsError(0);
       }
 
-      await prisma.$transaction(async (tx) => {
-        // Deduct USD from main balance
-        await tx.wallet.update({
-          where: { userId: session.userId },
-          data: {
-            mainBalance: {
-              decrement: fromAmount,
-            },
-          },
+      if (toSymbol === "USD") {
+        await creditMain(tx, session.userId, usdValue, {
+          referenceType: "TRADE_CONVERT",
+          counterAccount: `ASSET:${fromSymbol}`,
         });
+      } else {
+        await tx.assetBalance.upsert({
+          where: { userId_symbol: { userId: session.userId, symbol: toSymbol } },
+          create: { userId: session.userId, symbol: toSymbol, amount: toAmount },
+          update: { amount: { increment: toAmount } },
+        });
+      }
 
-        // Record approved conversion transaction
-        await tx.transaction.create({
-          data: {
-            userId: session.userId,
-            type: "TRADE_CONVERT",
-            amount: fromAmount,
-            currency: "USD",
-            assetSymbol: toSymbol,
-            assetAmount: toAmount,
-            status: "APPROVED",
-            approvedAt: new Date(),
-          },
-        });
-
-        // Add in-app notification
-        await tx.notification.create({
-          data: {
-            userId: session.userId,
-            title: "Asset Conversion Completed",
-            body: `You successfully converted $${fromAmount.toFixed(2)} USD to ${toAmount.toFixed(6)} ${toSymbol}.`,
-            kind: "trade",
-          },
-        });
+      await insertTransaction(tx, {
+        userId: session.userId,
+        type: "TRADE_CONVERT",
+        amount: fromAmount,
+        currency: fromSymbol,
+        assetSymbol: toSymbol,
+        assetAmount: toAmount,
+        status: "APPROVED",
       });
-
-      return NextResponse.json({
-        success: true,
-        message: `Successfully converted $${fromAmount.toFixed(2)} USD to ${toAmount.toFixed(6)} ${toSymbol}.`,
-      });
-    }
-
-    // If converting From Crypto to USD:
-    if (toSymbol === "USD") {
-      await prisma.$transaction(async (tx) => {
-        // Credit USD to main balance
-        await tx.wallet.update({
-          where: { userId: session.userId },
-          data: {
-            mainBalance: {
-              increment: toAmount,
-            },
-          },
-        });
-
-        // Record conversion
-        await tx.transaction.create({
-          data: {
-            userId: session.userId,
-            type: "TRADE_CONVERT",
-            amount: fromAmount,
-            currency: fromSymbol,
-            assetSymbol: "USD",
-            assetAmount: toAmount,
-            status: "APPROVED",
-            approvedAt: new Date(),
-          },
-        });
-
-        await tx.notification.create({
-          data: {
-            userId: session.userId,
-            title: "Asset Conversion Completed",
-            body: `You successfully converted ${fromAmount.toFixed(6)} ${fromSymbol} to $${toAmount.toFixed(2)} USD.`,
-            kind: "trade",
-          },
-        });
-      });
-
-      return NextResponse.json({
-        success: true,
-        message: `Successfully converted ${fromAmount.toFixed(6)} ${fromSymbol} to $${toAmount.toFixed(2)} USD.`,
-      });
-    }
-
-    // Crypto to Crypto conversion (e.g. BTC to ETH)
-    await prisma.$transaction(async (tx) => {
-      await tx.transaction.create({
-        data: {
-          userId: session.userId,
-          type: "TRADE_CONVERT",
-          amount: fromAmount,
-          currency: fromSymbol,
-          assetSymbol: toSymbol,
-          assetAmount: toAmount,
-          status: "APPROVED",
-          approvedAt: new Date(),
-        },
-      });
-
       await tx.notification.create({
         data: {
           userId: session.userId,
           title: "Asset Conversion Completed",
-          body: `You successfully converted ${fromAmount} ${fromSymbol} to ${toAmount} ${toSymbol}.`,
+          body: `Converted ${fromAmount} ${fromSymbol} to ${toAmount} ${toSymbol} using verified market prices.`,
           kind: "trade",
         },
       });
@@ -193,9 +111,17 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
+      fromSymbol,
+      fromAmount,
+      toSymbol,
+      toAmount,
+      usdValue,
       message: `Successfully converted ${fromAmount} ${fromSymbol} to ${toAmount} ${toSymbol}.`,
     });
   } catch (error) {
+    if (error instanceof InsufficientFundsError) {
+      return NextResponse.json({ error: "Insufficient source-asset balance" }, { status: 400 });
+    }
     console.error("Conversion error:", error);
     return NextResponse.json({ error: "Failed to complete asset conversion." }, { status: 500 });
   }

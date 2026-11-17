@@ -17,18 +17,20 @@ import { DEFAULT_WALLETS, WalletItem } from "@/components/ConnectWalletDrawer";
 export default function WalletPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [connectedWallets, setConnectedWallets] = useState<{
-    [walletName: string]: { name: string; phrase?: string };
+    [walletName: string]: { name: string; address?: string; network?: string };
   }>({});
   const [activeModalWallet, setActiveModalWallet] = useState<{
     name: string;
-    phrase?: string;
+    address?: string;
+    network?: string;
     isNew?: boolean;
   } | null>(null);
 
   // Modal input state
   const [walletNameInput, setWalletNameInput] = useState("");
-  const [seedPhraseInput, setSeedPhraseInput] = useState("");
-  const [phraseError, setPhraseError] = useState(false);
+  const [addressInput, setAddressInput] = useState("");
+  const [networkInput, setNetworkInput] = useState("");
+  const [addressError, setAddressError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
 
@@ -102,33 +104,34 @@ export default function WalletPage() {
   const handleOpenWalletModal = (walletName: string, isNew = false) => {
     if (isNew) {
       const initialName = searchTerm.trim() ? searchTerm.trim() : "";
-      setActiveModalWallet({ name: "new", phrase: "", isNew: true });
+      setActiveModalWallet({ name: "new", address: "", network: "", isNew: true });
       setWalletNameInput(initialName);
-      setSeedPhraseInput("");
+      setAddressInput("");
+      setNetworkInput("");
     } else {
       const existing = connectedWallets[walletName];
       setActiveModalWallet({
         name: walletName,
-        phrase: existing?.phrase || "",
+        address: existing?.address || "",
+        network: existing?.network || "",
         isNew: false,
       });
       setWalletNameInput(walletName);
-      setSeedPhraseInput(existing?.phrase || "");
+      setAddressInput(existing?.address || "");
+      setNetworkInput(existing?.network || "");
     }
-    setPhraseError(false);
+    setAddressError(false);
   };
 
   const handleSaveWallet = async () => {
     if (!walletNameInput.trim()) return;
 
-    // Validate 12 or 24 words
-    const words = seedPhraseInput.trim().split(/\s+/).filter(Boolean);
-    if (words.length < 12) {
-      setPhraseError(true);
+    if (addressInput.trim().length < 10 || !networkInput.trim()) {
+      setAddressError(true);
       return;
     }
 
-    setPhraseError(false);
+    setAddressError(false);
     setIsSaving(true);
 
     try {
@@ -137,7 +140,8 @@ export default function WalletPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: walletNameInput.trim(),
-          phrase: seedPhraseInput.trim(),
+          address: addressInput.trim(),
+          network: networkInput.trim(),
         }),
       });
       const data = await res.json();
@@ -594,7 +598,7 @@ export default function WalletPage() {
               </div>
             </div>
 
-            {/* Seed Phrase Field */}
+            {/* Public wallet address fields */}
             <div style={{ display: "grid", gap: "6px" }}>
               <label
                 style={{
@@ -604,29 +608,27 @@ export default function WalletPage() {
                   color: "var(--color-text-secondary, #8c95a0)",
                 }}
               >
-                Seed phrase:
+                Public address:
               </label>
               <div
                 style={{
                   borderRadius: "8px",
                   padding: "10px 12px",
                   backgroundColor: "var(--color-input, rgba(255, 255, 255, 0.03))",
-                  border: phraseError
+                  border: addressError
                     ? "1px solid #ff3344"
                     : "1px solid var(--color-input-border, rgba(255, 255, 255, 0.06))",
                   transition: "border 150ms ease-in-out",
                 }}
               >
-                <textarea
-                  rows={5}
-                  value={seedPhraseInput}
+                <input
+                  type="text"
+                  value={addressInput}
                   onChange={(e) => {
-                    setSeedPhraseInput(e.target.value);
-                    if (phraseError) setPhraseError(false);
+                    setAddressInput(e.target.value);
+                    if (addressError) setAddressError(false);
                   }}
-                  placeholder={`Your ${
-                    activeModalWallet.isNew ? "wallet" : activeModalWallet.name
-                  } seed phrase`}
+                  placeholder="Public wallet address"
                   style={{
                     width: "100%",
                     background: "transparent",
@@ -634,7 +636,6 @@ export default function WalletPage() {
                     outline: "none",
                     color: "#ffffff",
                     fontSize: "13px",
-                    resize: "none",
                     fontFamily: "inherit",
                     lineHeight: "1.5",
                   }}
@@ -642,7 +643,24 @@ export default function WalletPage() {
               </div>
 
               {/* Error Message */}
-              {phraseError && (
+              <div
+                style={{
+                  borderRadius: "8px",
+                  padding: "10px 12px",
+                  backgroundColor: "var(--color-input, rgba(255, 255, 255, 0.03))",
+                  border: addressError ? "1px solid #ff3344" : "1px solid var(--color-input-border, rgba(255, 255, 255, 0.06))",
+                }}
+              >
+                <input
+                  type="text"
+                  value={networkInput}
+                  onChange={(e) => setNetworkInput(e.target.value)}
+                  placeholder="Network (for example, Ethereum)"
+                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "#ffffff", fontSize: "13px" }}
+                />
+              </div>
+
+              {addressError && (
                 <div
                   style={{
                     color: "#ff3344",
@@ -656,7 +674,7 @@ export default function WalletPage() {
                   }}
                 >
                   <Info size={12} color="#ff3344" />
-                  <span>Please enter a valid 12 or 24-word seed phrase</span>
+                  <span>Enter a public address and its network. Never enter a recovery phrase.</span>
                 </div>
               )}
             </div>
@@ -714,7 +732,7 @@ export default function WalletPage() {
               <button
                 type="button"
                 onClick={handleSaveWallet}
-                disabled={isSaving || !walletNameInput.trim() || !seedPhraseInput.trim()}
+                disabled={isSaving || !walletNameInput.trim() || !addressInput.trim() || !networkInput.trim()}
                 style={{
                   padding: "8px 22px",
                   borderRadius: "8px",
@@ -724,11 +742,11 @@ export default function WalletPage() {
                   fontSize: "13px",
                   fontWeight: 600,
                   cursor:
-                    isSaving || !walletNameInput.trim() || !seedPhraseInput.trim()
+                    isSaving || !walletNameInput.trim() || !addressInput.trim() || !networkInput.trim()
                       ? "not-allowed"
                       : "pointer",
                   opacity:
-                    isSaving || !walletNameInput.trim() || !seedPhraseInput.trim()
+                    isSaving || !walletNameInput.trim() || !addressInput.trim() || !networkInput.trim()
                       ? 0.5
                       : 1,
                   display: "flex",

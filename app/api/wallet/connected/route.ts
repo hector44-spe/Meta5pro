@@ -2,14 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { z } from "zod";
-
-const connectWalletSchema = z.object({
-  name: z.string().trim().min(1, "Wallet name is required"),
-  phrase: z.string().trim().optional(),
-  address: z.string().trim().optional(),
-  network: z.string().trim().optional(),
-});
+import { walletConnectionSchema } from "@/lib/schemas";
 
 /** GET: List user's connected external wallets from PostgreSQL */
 export async function GET() {
@@ -24,12 +17,10 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Map to dictionary format expected by the frontend: { [walletName]: { name, phrase, address, network } }
-    const walletsMap: Record<string, { name: string; phrase?: string; address?: string; network?: string }> = {};
+    const walletsMap: Record<string, { name: string; address?: string; network?: string }> = {};
     for (const w of rows) {
       walletsMap[w.name] = {
         name: w.name,
-        phrase: w.phrase || undefined,
         address: w.address || undefined,
         network: w.network || undefined,
       };
@@ -54,7 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const parsed = connectWalletSchema.safeParse(await req.json());
+    const parsed = walletConnectionSchema.safeParse(await req.json());
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message || "Validation failed" },
@@ -62,7 +53,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, phrase, address, network } = parsed.data;
+    const { name, address, network } = parsed.data;
 
     const wallet = await prisma.connectedWallet.upsert({
       where: {
@@ -74,25 +65,22 @@ export async function POST(req: Request) {
       create: {
         userId: session.userId,
         name,
-        phrase: phrase || null,
-        address: address || null,
-        network: network || null,
+        address,
+        network,
       },
       update: {
-        phrase: phrase || null,
-        address: address || null,
-        network: network || null,
+        address,
+        network,
       },
     });
 
     const rows = await prisma.connectedWallet.findMany({
       where: { userId: session.userId },
     });
-    const walletsMap: Record<string, { name: string; phrase?: string; address?: string; network?: string }> = {};
+    const walletsMap: Record<string, { name: string; address?: string; network?: string }> = {};
     for (const w of rows) {
       walletsMap[w.name] = {
         name: w.name,
-        phrase: w.phrase || undefined,
         address: w.address || undefined,
         network: w.network || undefined,
       };
@@ -134,11 +122,12 @@ export async function DELETE(req: Request) {
     const rows = await prisma.connectedWallet.findMany({
       where: { userId: session.userId },
     });
-    const walletsMap: Record<string, { name: string; phrase?: string }> = {};
+    const walletsMap: Record<string, { name: string; address?: string; network?: string }> = {};
     for (const w of rows) {
       walletsMap[w.name] = {
         name: w.name,
-        phrase: w.phrase || undefined,
+        address: w.address || undefined,
+        network: w.network || undefined,
       };
     }
 

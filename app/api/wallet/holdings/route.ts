@@ -14,7 +14,7 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [deposits, withdrawals, pendingDeposits, converts, openPositions, snap] = await Promise.all([
+  const [deposits, withdrawals, pendingDeposits, trades, portfolioAssets, snap] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["assetSymbol"],
       where: { userId: session.userId, type: "DEPOSIT", status: "APPROVED", assetSymbol: { not: null } },
@@ -33,13 +33,11 @@ export async function GET() {
     prisma.transaction.findMany({
       where: {
         userId: session.userId,
-        type: { in: ["TRADE_CONVERT", "TRADE_BUY", "BUY", "TRADE_SELL", "SELL"] },
+        type: { in: ["TRADE_BUY", "BUY", "TRADE_SELL", "SELL"] },
         status: "APPROVED",
       },
     }),
-    prisma.position.findMany({
-      where: { userId: session.userId, status: "OPEN" },
-    }),
+    prisma.assetBalance.findMany({ where: { userId: session.userId, amount: { gt: 0 } } }),
     getPrices(),
   ]);
 
@@ -61,18 +59,14 @@ export async function GET() {
     }
   }
 
-  // 3. Conversions & Bought/Sold Trades
-  for (const c of converts) {
-    if (c.type === "TRADE_CONVERT") {
-      if (c.assetSymbol && c.assetSymbol !== "USD") {
-        const sym = c.assetSymbol.toUpperCase();
-        units.set(sym, (units.get(sym) ?? 0) + Number(c.assetAmount ?? 0));
-      }
-      if (c.currency && c.currency !== "USD") {
-        const sym = c.currency.toUpperCase();
-        units.set(sym, (units.get(sym) ?? 0) - Number(c.amount ?? 0));
-      }
-    } else if (c.type === "TRADE_BUY" || c.type === "BUY") {
+  // 3. Canonical balances created by conversions.
+  for (const asset of portfolioAssets) {
+    units.set(asset.symbol, (units.get(asset.symbol) ?? 0) + asset.amount.toNumber());
+  }
+
+  // 4. Bought/Sold Trades
+  for (const c of trades) {
+    if (c.type === "TRADE_BUY" || c.type === "BUY") {
       const sym = (c.assetSymbol || c.currency || "").toUpperCase().replace(/\/USDT$|\/USD$|USDT$|USD$/, "").trim();
       if (sym && sym !== "USD") {
         const qty = Number(c.assetAmount || 0);
@@ -88,16 +82,6 @@ export async function GET() {
           units.set(sym, Math.max(0, (units.get(sym) ?? 0) - qty));
         }
       }
-    }
-  }
-
-  // 4. Client purchased assets from open positions (trades)
-  for (const pos of openPositions) {
-    const rawSym = pos.symbol.toUpperCase().replace(/\/USDT$|\/USD$|USDT$|USD$/, "").trim();
-    const entry = Number(pos.entryPrice) || 1;
-    const posUnits = Number(pos.amount) / entry;
-    if (pos.type === "BUY") {
-      units.set(rawSym, (units.get(rawSym) ?? 0) + posUnits);
     }
   }
 

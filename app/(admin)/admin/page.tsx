@@ -37,6 +37,7 @@ import {
   Layers,
   Sparkles,
   ArrowLeft,
+  Cpu,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -44,6 +45,8 @@ import AdminSettingsDrawer from "@/components/AdminSettingsDrawer";
 import ExpertsSection from "./sections/ExpertsSection";
 import TradesSection from "./sections/TradesSection";
 import SignalsSection from "./sections/SignalsSection";
+import StakingSection from "./sections/StakingSection";
+import MiningSection from "./sections/MiningSection";
 import CardRequestsSection from "./sections/CardRequestsSection";
 import CardsSection from "./sections/CardsSection";
 import SubscriptionsSection from "./sections/SubscriptionsSection";
@@ -102,6 +105,8 @@ type Section =
   | "experts"
   | "trades"
   | "signals"
+  | "staking"
+  | "mining"
   | "card-requests"
   | "cards"
   | "subscriptions"
@@ -162,6 +167,8 @@ function AdminContent() {
       "experts",
       "trades",
       "signals",
+      "staking",
+      "mining",
       "card-requests",
       "cards",
       "subscriptions",
@@ -324,6 +331,8 @@ function AdminContent() {
     { id: "experts", label: "Experts", icon: <UserCheck size={18} /> },
     { id: "trades", label: "Trades", icon: <TrendingUp size={18} /> },
     { id: "signals", label: "Signals", icon: <Radio size={18} /> },
+    { id: "staking", label: "Staking", icon: <Layers size={18} /> },
+    { id: "mining", label: "Mining", icon: <Cpu size={18} /> },
     { id: "card-requests", label: "Card requests", icon: <CreditCard size={18} /> },
     { id: "cards", label: "Cards", icon: <Layers size={18} /> },
     { id: "subscriptions", label: "Subscription", icon: <Sparkles size={18} /> },
@@ -338,6 +347,8 @@ function AdminContent() {
     experts: ["Experts", "Copy trading experts and copiers"],
     trades: ["Trades", "User trades and positions"],
     signals: ["Signals", "Signal packages and purchases"],
+    staking: ["Staking", "Staking pools and user staking contracts"],
+    mining: ["Mining", "Cloud mining pools and active contracts"],
     "card-requests": ["Card Requests", "User card requests"],
     cards: ["Cards", "Manage card products and settings"],
     subscriptions: ["Subscriptions", "Investment plans and subscribers"],
@@ -474,6 +485,10 @@ function AdminContent() {
           {section === "trades" && <TradesSection users={users} flash={flash} />}
 
           {section === "signals" && <SignalsSection flash={flash} />}
+
+          {section === "staking" && <StakingSection />}
+
+          {section === "mining" && <MiningSection />}
 
           {section === "card-requests" && <CardRequestsSection flash={flash} />}
 
@@ -944,7 +959,7 @@ function TxTable({
                   t.currency
                 )}
               </td>
-              <td>
+              <td style={{ minWidth: "105px", width: "105px" }}>
                 {t.receiptUrl ? (
                   <button type="button" className={styles.linkBtn} onClick={() => onPreview?.(t.receiptUrl!)}>
                     <Eye size={14} /> View
@@ -957,8 +972,8 @@ function TxTable({
                   <span className={styles.muted}>—</span>
                 )}
               </td>
-              <td className={styles.muted}>{when(t.createdAt)}</td>
-              <td style={{ minWidth: "190px", textAlign: "right" }}>
+              <td className={styles.muted} style={{ minWidth: "125px", width: "125px", whiteSpace: "nowrap" }}>{when(t.createdAt)}</td>
+              <td style={{ minWidth: "190px", width: "190px", textAlign: "right" }}>
                 {onReview && t.status === "PENDING" ? (
                   <div className={styles.rowActions} style={{ justifyContent: "flex-end" }}>
                     <button type="button" className={styles.btnSuccessSm} onClick={() => onReview(t, "approve")}>

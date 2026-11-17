@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { consumeWithdrawalCode } from "@/lib/withdrawalCode";
-import { getPrice } from "@/lib/prices";
+import { getVerifiedPrice } from "@/lib/prices";
 import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
 import { notifyAdminWithdrawal } from "@/lib/mail";
 import { getSettings } from "@/lib/appSettings";
@@ -11,6 +11,8 @@ import { z } from "zod";
 
 const MIN_WITHDRAWAL = 10;
 const MAX_WITHDRAWAL = 1_000_000;
+
+class WithdrawalCodeError extends Error {}
 
 const withdrawSchema = z.object({
   // Quantity of the coin to receive; the USD value comes from the live price.
@@ -44,7 +46,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Value the request at the live price and check limits before using the code
-    const price = await getPrice(symbol);
+    const price = await getVerifiedPrice(symbol);
     if (!price) {
       return NextResponse.json({ error: `Live price for ${symbol} is unavailable. Please try again shortly.` }, { status: 503 });
     }
@@ -59,21 +61,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Maximum withdrawal is ${fmtUsd(maxW)}.` }, { status: 400 });
     }
 
-    // 2. Verify and consume the withdrawal code if required
-    if (withdrawalSettings.useWithdrawalCode) {
-      const codeError = await atomic((tx) => consumeWithdrawalCode(tx, session.userId, code));
-      if (codeError) {
-        return NextResponse.json({ error: codeError }, { status: 400 });
-      }
-    }
-
     const currencyLabel = network ? `${symbol} (${network})` : symbol;
 
     try {
       // 3. Balance check, debit and pending record happen in one transaction,
       //    so two simultaneous requests cannot both spend the same funds.
       const { transaction, newBalance } = await atomic(async (tx) => {
-        const newBalance = await debitMain(tx, session.userId, amount);
+        if (withdrawalSettings.useWithdrawalCode) {
+          const codeError = await consumeWithdrawalCode(tx, session.userId, code);
+          if (codeError) throw new WithdrawalCodeError(codeError);
+        }
+        const newBalance = await debitMain(tx, session.userId, amount, {
+          referenceType: "WITHDRAWAL_HOLD",
+          counterAccount: "PLATFORM:WITHDRAWAL_HOLDS",
+        });
         const transaction = await insertTransaction(tx, {
           userId: session.userId,
           type: "WITHDRAWAL",
@@ -119,6 +120,9 @@ export async function POST(req: Request) {
           { error: `Insufficient available funds. Current balance: ${fmtUsd(e.available)}` },
           { status: 400 },
         );
+      }
+      if (e instanceof WithdrawalCodeError) {
+        return NextResponse.json({ error: e.message }, { status: 400 });
       }
       throw e;
     }

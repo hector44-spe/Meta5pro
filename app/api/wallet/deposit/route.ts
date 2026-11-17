@@ -4,7 +4,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { money } from "@/lib/ledger";
-import { getPrice } from "@/lib/prices";
+import { getVerifiedPrice } from "@/lib/prices";
 import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
 import { notifyAdminDeposit, sendDepositReceivedEmail } from "@/lib/mail";
 import { getSettings } from "@/lib/appSettings";
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Value the deposit at the live price
-    const price = await getPrice(symbol);
+    const price = await getVerifiedPrice(symbol);
     if (!price) {
       return NextResponse.json({ error: `Live price for ${symbol} is unavailable. Please try again shortly.` }, { status: 503 });
     }

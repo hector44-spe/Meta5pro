@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
 import { z } from "zod";
+import crypto from "node:crypto";
 
 const resetSchema = z.object({
   token: z.string().min(10, "Invalid reset token"),
@@ -22,10 +23,11 @@ export async function POST(req: Request) {
     }
 
     const { token, newPassword } = parsed.data;
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
 
     // Check token
     const tokenRecord = await prisma.passwordResetToken.findFirst({
-      where: { token, used: false },
+      where: { token: tokenHash, used: false },
     });
 
     if (!tokenRecord) {
@@ -46,26 +48,22 @@ export async function POST(req: Request) {
     // Hash new password
     const passwordHash = await hashPassword(newPassword);
 
-    // Claim the token first (only one request can win), then update the password.
-    const claimed = await prisma.passwordResetToken.updateMany({
-      where: { id: tokenRecord.id, used: false },
-      data: { used: true },
+    // Claim the token and update the password atomically. A partial failure cannot burn the token.
+    const changed = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.passwordResetToken.updateMany({
+        where: { id: tokenRecord.id, used: false, expiresAt: { gt: new Date() } },
+        data: { used: true },
+      });
+      if (claimed.count !== 1) return false;
+      await tx.user.update({
+        where: { id: tokenRecord.userId },
+        data: { passwordHash, tokenVersion: { increment: 1 } },
+      });
+      return true;
     });
-    if (claimed.count !== 1) {
-      return NextResponse.json(
-        { error: "Invalid or already used password reset link" },
-        { status: 400 }
-      );
+    if (!changed) {
+      return NextResponse.json({ error: "Invalid or already used password reset link" }, { status: 400 });
     }
-
-    // Invalidate all existing sessions by incrementing tokenVersion
-    await prisma.user.update({
-      where: { id: tokenRecord.userId },
-      data: {
-        passwordHash,
-        tokenVersion: { increment: 1 },
-      },
-    });
 
     return NextResponse.json({
       success: true,

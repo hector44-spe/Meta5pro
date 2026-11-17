@@ -28,6 +28,12 @@ export async function PATCH(
     if (!tx) {
       return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
     }
+    if (tx.type !== "DEPOSIT" && tx.type !== "WITHDRAWAL") {
+      return NextResponse.json(
+        { error: "This transaction must be settled through its dedicated administrative workflow" },
+        { status: 400 },
+      );
+    }
 
     const status = action === "approve" ? "APPROVED" : "REJECTED";
     const ip = clientIp(req);

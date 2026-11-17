@@ -26,6 +26,12 @@ const COMMODITY_MAP: Record<string, string> = {
   NG: "NG=F",
 };
 
+const YAHOO_SYMBOLS = new Set([
+  ...Object.keys(COMMODITY_MAP),
+  "AAPL", "ABT", "ADBE", "ADI", "AEMD", "TSLA", "NVDA", "MSFT", "AMZN", "GOOGL",
+  "META", "NFLX", "BABA", "BA", "DIS", "KO", "NKE", "WMT", "V", "SPY", "QQQ",
+]);
+
 /**
  * Realistic calibrated baseline rates across asset classes.
  * Used only if external networks and the database cache are simultaneously unavailable.
@@ -91,6 +97,8 @@ export interface PriceSnapshot {
   prices: Record<string, number>;
   updatedAt: string;
   live: boolean;
+  /** Symbols backed by a successful upstream quote, rather than a static baseline. */
+  liveSymbols?: string[];
 }
 
 let cache: PriceSnapshot | null = null;
@@ -99,7 +107,7 @@ let inflight: Promise<PriceSnapshot> | null = null;
 const stockCache = new Map<string, { price: number; timestamp: number }>();
 
 /** Fetches a single stock or commodity price from market feeds */
-export async function fetchStockOrCommodityPrice(symbol: string): Promise<number | null> {
+export async function fetchStockOrCommodityPrice(symbol: string, allowFallback = true): Promise<number | null> {
   const sym = symbol.toUpperCase().trim();
   const cached = stockCache.get(sym);
   if (cached && Date.now() - cached.timestamp < TTL_MS) {
@@ -126,7 +134,7 @@ export async function fetchStockOrCommodityPrice(symbol: string): Promise<number
     // network or timeout
   }
 
-  return CALIBRATED_BASELINES[sym] ?? null;
+  return allowFallback ? CALIBRATED_BASELINES[sym] ?? null : null;
 }
 
 /** Tries to load previous verified market rates from PostgreSQL */
@@ -138,12 +146,13 @@ async function loadPersistedCache(): Promise<PriceSnapshot | null> {
     const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000));
     const setting = await Promise.race([dbPromise, timeoutPromise]);
     if (setting && setting.value && typeof setting.value === "object") {
-      const data = setting.value as unknown as { prices: Record<string, number>; updatedAt: string };
+      const data = setting.value as unknown as { prices: Record<string, number>; updatedAt: string; liveSymbols?: string[] };
       if (data.prices && Object.keys(data.prices).length > 0) {
         return {
           prices: { ...CALIBRATED_BASELINES, ...data.prices },
           updatedAt: data.updatedAt || new Date().toISOString(),
           live: false,
+          liveSymbols: Array.isArray(data.liveSymbols) ? data.liveSymbols : [],
         };
       }
     }
@@ -160,10 +169,10 @@ function persistCache(snap: PriceSnapshot) {
       where: { key: DB_CACHE_KEY },
       create: {
         key: DB_CACHE_KEY,
-        value: { prices: snap.prices, updatedAt: snap.updatedAt } as any,
+        value: { prices: snap.prices, updatedAt: snap.updatedAt, liveSymbols: snap.liveSymbols } as any,
       },
       update: {
-        value: { prices: snap.prices, updatedAt: snap.updatedAt } as any,
+        value: { prices: snap.prices, updatedAt: snap.updatedAt, liveSymbols: snap.liveSymbols } as any,
       },
     })
     .catch(() => {});
@@ -180,11 +189,13 @@ async function fetchSnapshot(): Promise<PriceSnapshot> {
     ...CALIBRATED_BASELINES,
     USD: 1,
   };
+  const liveSymbols = new Set<string>(["USD"]);
 
   for (const [sym, perUsd] of Object.entries(rates)) {
     const r = Number(perUsd);
     if (r > 0 && Number.isFinite(r)) {
       prices[sym.toUpperCase()] = 1 / r;
+      liveSymbols.add(sym.toUpperCase());
     }
   }
 
@@ -197,6 +208,7 @@ async function fetchSnapshot(): Promise<PriceSnapshot> {
     prices,
     updatedAt: new Date().toISOString(),
     live: true,
+    liveSymbols: [...liveSymbols],
   };
 
   persistCache(snapshot);
@@ -228,6 +240,7 @@ export async function getPrices(): Promise<PriceSnapshot> {
           prices: { ...CALIBRATED_BASELINES, USD: 1 },
           updatedAt: new Date().toISOString(),
           live: false,
+          liveSymbols: [],
         };
       })
       .finally(() => {
@@ -259,4 +272,27 @@ export async function getPrice(symbol: string): Promise<number | null> {
   }
 
   return CALIBRATED_BASELINES[sym] ?? null;
+}
+
+/**
+ * Price suitable for a balance-changing transaction. Static baselines are deliberately
+ * rejected: callers must fail closed unless a quote was verified recently.
+ */
+export async function getVerifiedPrice(symbol: string, maxAgeMs = 5 * 60_000): Promise<number | null> {
+  const sym = symbol.toUpperCase().trim();
+  const snapshot = await getPrices();
+  const age = Date.now() - Date.parse(snapshot.updatedAt);
+  if (
+    Number.isFinite(age) &&
+    age >= 0 &&
+    age <= maxAgeMs &&
+    snapshot.liveSymbols?.includes(sym) &&
+    typeof snapshot.prices[sym] === "number"
+  ) {
+    return snapshot.prices[sym];
+  }
+
+  // Only the platform's explicit equity/commodity allowlist may use Yahoo. This prevents a
+  // crypto symbol such as BTC from accidentally resolving to an unrelated stock ticker.
+  return YAHOO_SYMBOLS.has(sym) ? fetchStockOrCommodityPrice(sym, false) : null;
 }

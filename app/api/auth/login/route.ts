@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const { email, password } = parsed.data;
 
     const limitKey = `login:${clientIp(req)}:${email.toLowerCase()}`;
-    if (rateLimited(limitKey, 5)) {
+    if (await rateLimited(limitKey, 5)) {
       return NextResponse.json(
         { error: "Too many login attempts. Please wait 15 minutes and try again." },
         { status: 429 },
