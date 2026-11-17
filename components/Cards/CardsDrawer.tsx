@@ -582,7 +582,6 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
               onChange={(e) => setTopUpAmount(e.target.value)}
               className="request-card-pin-input"
               style={{ letterSpacing: "normal" }}
-              autoFocus
             />
             <div className="request-card-footer" style={{ marginTop: "16px" }}>
               <button

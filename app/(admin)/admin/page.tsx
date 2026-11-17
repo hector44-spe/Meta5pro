@@ -1390,7 +1390,7 @@ function UsersSection({
             </div>
             <label className={styles.field}>
               <span>Amount (USD)</span>
-              <input className={styles.input} type="number" min="0" step="0.01" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" autoFocus />
+              <input className={styles.input} type="number" min="0" step="0.01" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
             </label>
             <label className={styles.field}>
               <span>Reason (saved in the audit log)</span>
@@ -1445,7 +1445,6 @@ function UsersSection({
                 value={notifyTitle}
                 onChange={(e) => setNotifyTitle(e.target.value)}
                 placeholder="e.g. Account Verification Approved"
-                autoFocus
                 maxLength={100}
               />
             </label>

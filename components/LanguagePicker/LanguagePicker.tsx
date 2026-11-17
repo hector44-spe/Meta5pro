@@ -147,7 +147,6 @@ export default function LanguagePicker() {
                   color: "#111",
                   boxSizing: "border-box",
                 }}
-                autoFocus
               />
             </div>
 

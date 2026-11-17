@@ -261,6 +261,48 @@ a {
   text-transform: none;
 }
 
+/* Project-wide responsive baseline. Individual pages can still define their
+   own grids, but media and controls must never force horizontal cropping. */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+main,
+section,
+article,
+nav,
+header,
+footer,
+form {
+  min-width: 0;
+}
+
+img,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media screen and (max-width: 768px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* Allow crypto symbols to remain uppercase */
 .cold-storage-page-wrapper .unit,
 .cold-storage-page-wrapper .symbol,

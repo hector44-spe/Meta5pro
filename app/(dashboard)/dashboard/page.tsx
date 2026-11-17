@@ -371,7 +371,7 @@ export default function DashboardPage() {
 
   // Live prices (refresh every minute) and the user's real per-coin holdings
   const { prices } = usePrices();
-  const { holdings, summary: holdingsSummary } = useHoldings();
+  const { holdings, summary: holdingsSummary, loading: holdingsLoading } = useHoldings();
   const btcPrice = prices[(currency || "BTC").toUpperCase()] ?? 0;
 
   const fmtUsdValue = (n: number) =>
@@ -412,6 +412,7 @@ export default function DashboardPage() {
         usd: fmtUsdValue(data.usd),
         amount: fmtUnitsValue(data.units, sym),
         pendingAmount: data.pendingUnits > 0 ? fmtUnitsValue(data.pendingUnits, sym) : null,
+        livePrice: prices[sym] ?? 0,
         changePercent: data.changePercent,
         changeUsd: data.changeUsd,
       }))
@@ -426,6 +427,7 @@ export default function DashboardPage() {
         usd: fmtUsdValue(0),
         amount: fmtUnitsValue(0, sym),
         pendingAmount: null,
+        livePrice: prices[sym] ?? 0,
         changePercent: 0,
         changeUsd: 0,
       }));
@@ -1055,7 +1057,11 @@ export default function DashboardPage() {
 
             {/* Assets Rows */}
             <div style={{ display: "grid", gap: "2px" }}>
-              {assetsList.map((asset) => (
+              {holdingsLoading ? (
+                <div style={{ padding: "18px 10px", color: "rgba(255,255,255,.55)", fontSize: 12 }}>
+                  Loading live holdings…
+                </div>
+              ) : assetsList.map((asset) => (
                 <div
                   key={asset.symbol}
                   style={{
@@ -1099,7 +1105,7 @@ export default function DashboardPage() {
                           color: "rgba(255, 255, 255, 0.45)",
                         }}
                       >
-                        {asset.symbol}
+                        {asset.symbol}{asset.livePrice > 0 ? ` · ${fmtUsdValue(asset.livePrice)}` : ""}
                       </div>
                     </div>
                   </div>
@@ -1129,7 +1135,8 @@ export default function DashboardPage() {
                     )}
                     {asset.usdNum > 0 && (
                       <div style={{ fontSize: "10.5px", fontWeight: 600, marginTop: 2, color: asset.changePercent >= 0 ? "#01b28b" : "#f84960" }}>
-                        {asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%
+                        {asset.changeUsd >= 0 ? "+" : "−"}{fmtUsdValue(Math.abs(asset.changeUsd))}
+                        {" "}({asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%)
                       </div>
                     )}
                   </div>
@@ -1320,7 +1327,11 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ display: "grid", gap: "2px" }}>
-              {assetsList.map((asset) => (
+              {holdingsLoading ? (
+                <div style={{ padding: "18px 0", color: "rgba(255,255,255,.55)", fontSize: 12 }}>
+                  Loading live holdings…
+                </div>
+              ) : assetsList.map((asset) => (
                 <div
                   key={asset.symbol}
                   style={{
@@ -1355,7 +1366,7 @@ export default function DashboardPage() {
                           color: "rgba(255, 255, 255, 0.45)",
                         }}
                       >
-                        {asset.symbol}
+                        {asset.symbol}{asset.livePrice > 0 ? ` · ${fmtUsdValue(asset.livePrice)}` : ""}
                       </div>
                     </div>
                   </div>
@@ -1384,7 +1395,8 @@ export default function DashboardPage() {
                     )}
                     {asset.usdNum > 0 && (
                       <div style={{ fontSize: "10.5px", fontWeight: 600, marginTop: 2, color: asset.changePercent >= 0 ? "#01b28b" : "#f84960" }}>
-                        {asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%
+                        {asset.changeUsd >= 0 ? "+" : "−"}{fmtUsdValue(Math.abs(asset.changeUsd))}
+                        {" "}({asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%)
                       </div>
                     )}
                   </div>

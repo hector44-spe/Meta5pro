@@ -23967,6 +23967,12 @@ body:has(.dashboard-page-container) {
   position: sticky;
   top: 0;
   z-index: 50;
+  display: block !important;
+  flex: 0 0 auto !important;
+  min-height: 64px;
+  visibility: visible !important;
+  opacity: 1 !important;
+  isolation: isolate;
 }
 .dashboard-header-wrapper {
   background: rgba(12, 15, 20, 0.92);
@@ -24035,6 +24041,7 @@ body:has(.dashboard-page-container) {
     backdrop-filter: blur(16px) !important;
     transform: translateZ(0);
     will-change: transform;
+    min-height: calc(56px + env(safe-area-inset-top, 0px)) !important;
   }
   .dashboard-header-wrapper {
     width: 100% !important;

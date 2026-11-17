@@ -14,7 +14,34 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [deposits, withdrawals, pendingDeposits, conversions, portfolioAssets, snap] = await Promise.all([
+  const snap = await getPrices();
+
+  // Older approved deposits pre-date assetSymbol/assetAmount. Repair them once
+  // using their booked USD value and the first available market snapshot so
+  // they remain visible and move with subsequent prices instead of vanishing.
+  const legacyDeposits = await prisma.transaction.findMany({
+    where: {
+      userId: session.userId,
+      type: "DEPOSIT",
+      OR: [{ assetSymbol: null }, { assetAmount: null }],
+    },
+    select: { id: true, amount: true, currency: true, assetSymbol: true },
+  });
+  await Promise.all(legacyDeposits.map(async (transaction) => {
+    const parsedSymbol = transaction.assetSymbol?.toUpperCase()
+      || transaction.currency.trim().match(/^([A-Z0-9]{2,10})/i)?.[1]?.toUpperCase();
+    const price = parsedSymbol ? snap.prices[parsedSymbol] : null;
+    if (!parsedSymbol || !price || price <= 0) return;
+    await prisma.transaction.update({
+      where: { id: transaction.id },
+      data: {
+        assetSymbol: parsedSymbol,
+        assetAmount: transaction.amount.toNumber() / price,
+      },
+    });
+  }));
+
+  const [deposits, withdrawals, pendingDeposits, conversions, portfolioAssets] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["assetSymbol"],
       where: { userId: session.userId, type: "DEPOSIT", status: "APPROVED", assetSymbol: { not: null } },
@@ -39,8 +66,12 @@ export async function GET() {
       },
       select: { currency: true, amount: true, assetSymbol: true, assetAmount: true },
     }),
-    prisma.assetBalance.findMany({ where: { userId: session.userId, amount: { gt: 0 } } }),
-    getPrices(),
+    prisma.assetBalance
+      .findMany({ where: { userId: session.userId, amount: { gt: 0 } } })
+      .catch((error) => {
+        console.error("Asset balance lookup failed; returning deposit holdings only:", error);
+        return [];
+      }),
   ]);
 
   const externalUnits = new Map<string, number>();
