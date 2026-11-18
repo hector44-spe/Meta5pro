@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/metagold.css";
 import "@/styles/globals.css";
+import "@/styles/responsive-contract.css";
 import "@/styles/edit-modal-stability.css";
 import GoogleTranslateProvider from "@/components/GoogleTranslateProvider";
+import ViewportMetrics from "@/components/ViewportMetrics";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -56,6 +58,7 @@ export default function RootLayout({
         <meta name="MobileOptimized" content="width" />
       </head>
       <body suppressHydrationWarning className="inter_b65991a8-module__hDb0IG__variable mori_f26f32d3-module__KmV5nG__variable digitalnumbers_d8613293-module__O5KEpG__variable">
+        <ViewportMetrics />
         <GoogleTranslateProvider />
         {children}
       </body>

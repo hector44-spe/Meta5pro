@@ -27,12 +27,10 @@ export async function GET() {
           const expiryTime = new Date(config.closeAt).getTime();
           if (now >= expiryTime) {
             try {
-              await closePositionAndSettle({ positionId: p.id });
+              const settled = await closePositionAndSettle({ positionId: p.id });
               p.status = "CLOSED";
               p.closedAt = new Date();
-              if (config.isCustomPnl && typeof config.customPnl === "number") {
-                p.pnl = config.customPnl as any;
-              }
+              p.pnl = settled.pnl as any;
             } catch (err) {
               console.error(`Auto-close error for position ${p.id}:`, err);
             }

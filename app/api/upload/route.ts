@@ -2,8 +2,9 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { randomUUID } from "crypto";
+import { deleteMediaObject, isCloudflareR2Configured, putMediaObject } from "@/lib/cloudflare-r2";
 
-// Neon/Postgres stores these as BYTEA; keep them reasonably small.
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 /** Detect the real image type from magic bytes; never trust the client's name or MIME type. */
@@ -19,6 +20,12 @@ export async function POST(req: Request) {
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isCloudflareR2Configured()) {
+      return NextResponse.json(
+        { error: "Media storage is temporarily unavailable" },
+        { status: 503 },
+      );
     }
 
     const formData = await req.formData();
@@ -39,10 +46,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const upload = await prisma.proofUpload.create({
-      data: { userId: session.userId, contentType, data: buf },
-      select: { id: true },
-    });
+    const extension = contentType === "image/jpeg" ? "jpg" : contentType.split("/")[1];
+    const objectKey = `private/payment-proofs/${session.userId}/${randomUUID()}.${extension}`;
+    await putMediaObject(objectKey, buf, contentType);
+
+    let upload;
+    try {
+      upload = await prisma.proofUpload.create({
+        data: { userId: session.userId, contentType, objectKey },
+        select: { id: true },
+      });
+    } catch (error) {
+      await deleteMediaObject(objectKey).catch(() => undefined);
+      throw error;
+    }
 
     return NextResponse.json({ success: true, url: `/api/upload/${upload.id}` });
   } catch (error) {

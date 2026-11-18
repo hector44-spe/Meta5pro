@@ -29,6 +29,8 @@ const ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   security: { icon: <ShieldCheck size={16} />, color: "#ff7a87" },
   account: { icon: <UserRound size={16} />, color: "#8fa2ff" },
   trade: { icon: <LineChart size={16} />, color: "#a78bfa" },
+  trade_profit: { icon: <LineChart size={16} />, color: "#01b28b" },
+  trade_loss: { icon: <LineChart size={16} />, color: "#f84960" },
   investment: { icon: <Layers size={16} />, color: "#38bdf8" },
   custom: { icon: <Bell size={16} />, color: "#4F6BFF" },
   admin: { icon: <ShieldCheck size={16} />, color: "#f5a524" },
@@ -95,6 +97,7 @@ export default function NotificationsPanel({
 
       {items.map((n) => {
         const meta = ICONS[n.kind] ?? ICONS.account;
+        const resultColor = n.kind === "trade_profit" ? "#01b28b" : n.kind === "trade_loss" ? "#f84960" : "#fff";
         return (
           <div
             key={n.id}
@@ -124,7 +127,7 @@ export default function NotificationsPanel({
             </div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "baseline" }}>
-                <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#fff" }}>{n.title}</div>
+                <div style={{ fontSize: "13.5px", fontWeight: 600, color: resultColor }}>{n.title}</div>
                 {!n.read && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4763f0", flexShrink: 0 }} />}
               </div>
               <div style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.65)", marginTop: "4px", lineHeight: 1.5, wordBreak: "break-word" }}>

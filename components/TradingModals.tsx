@@ -65,7 +65,7 @@ export function LiveChatDialog({ isOpen, onClose }: LiveChatDialogProps) {
   };
 
   return (
-    <div className="tp-chat-dialog">
+    <div className="tp-chat-dialog" data-visual-viewport>
       <div className="tp-chat-header">
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div

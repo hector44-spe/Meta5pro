@@ -58,6 +58,7 @@ model User {
   signalPurchases       SignalPurchase[]
   connectedWallets      ConnectedWallet[]
   portfolioAssets       AssetBalance[]
+  closedTradeResults    ClosedTradeResult[]
 
   @@map("users")
 }
@@ -164,6 +165,7 @@ model Position {
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   symbol     String
+  fundingAsset String   @default("USD")
   type       String // BUY | SELL | CONVERT
   amount     Decimal   @db.Decimal(18, 2)
   entryPrice Decimal   @db.Decimal(24, 8)
@@ -172,9 +174,27 @@ model Position {
   pnl        Decimal   @default(0) @db.Decimal(18, 2)
   closedAt   DateTime?
   createdAt  DateTime  @default(now())
+  result     ClosedTradeResult?
 
   @@index([userId, createdAt])
   @@map("positions")
+}
+
+// Immutable realized result attached to the asset used to fund a closed trade.
+// The unique positionId makes close settlement and dashboard attribution idempotent.
+model ClosedTradeResult {
+  id           String   @id @default(uuid())
+  positionId   String   @unique
+  position     Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fundingAsset String
+  marketSymbol String
+  pnl          Decimal  @db.Decimal(18, 2)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, fundingAsset, createdAt])
+  @@map("closed_trade_results")
 }
 
 model PasswordResetToken {
@@ -190,13 +210,15 @@ model PasswordResetToken {
   @@map("password_reset_tokens")
 }
 
-// Payment-proof screenshots. Kept in Postgres so they survive serverless deploys.
+// Payment-proof metadata. New binary objects live in private Cloudflare R2;
+// `data` remains nullable so pre-R2 records continue to load during migration.
 model ProofUpload {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   contentType String
-  data        Bytes
+  data        Bytes?
+  objectKey   String?  @unique
   createdAt   DateTime @default(now())
 
   @@index([userId])
@@ -341,11 +363,12 @@ model AssetBalance {
   @@map("asset_balances")
 }
 
-// Public profile imagery for copy-trading experts. This is deliberately
-// separate from private payment-proof uploads.
+// Public profile imagery for copy-trading experts. New binary objects live in
+// Cloudflare R2; nullable `data` preserves backwards compatibility.
 model ExpertImage {
   id          String   @id @default(uuid())
-  data        Bytes
+  data        Bytes?
+  objectKey   String?  @unique
   contentType String
   createdAt   DateTime @default(now())
 

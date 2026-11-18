@@ -159,3 +159,38 @@
   border-radius: var(--radius-full);
   text-align: center;
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: 2rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .tabs {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .tabBtn {
+    flex: 1 0 auto;
+    padding-inline: 1rem;
+  }
+
+  .card,
+  .qrSection {
+    padding: 1.25rem;
+  }
+
+  .cryptoSelector {
+    grid-template-columns: 1fr;
+  }
+
+  .addressBox {
+    align-items: stretch;
+    flex-direction: column;
+    border-radius: var(--radius-md);
+  }
+}

@@ -514,7 +514,9 @@
 /* -------------------- Slide-Over Details Drawer (ProjectView) -------------------- */
 .project_view_backdrop {
   position: fixed;
-  inset: 0;
+  inset: auto 0 auto 0;
+  top: var(--visual-viewport-offset-top, 0px);
+  height: var(--visual-viewport-height, 100dvh);
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
   z-index: 99990;
@@ -528,9 +530,10 @@
 
 .project_view_drawer {
   position: fixed;
-  top: 0;
+  top: var(--visual-viewport-offset-top, 0px);
   right: 0;
-  bottom: 0;
+  bottom: auto;
+  height: var(--visual-viewport-height, 100dvh);
   width: 100%;
   max-width: 580px;
   background: #141417;

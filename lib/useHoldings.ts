@@ -13,6 +13,7 @@ export interface Holding {
   changePercent: number;
   marketChange24h: number;
   externalBookUsd: number;
+  realizedTradePnl: number;
 }
 
 export interface HoldingsSummary {

@@ -4,7 +4,9 @@
 
 .cards-drawer-overlay {
   position: fixed;
-  inset: 0;
+  inset: auto 0 auto 0;
+  top: var(--visual-viewport-offset-top, 0px);
+  height: var(--visual-viewport-height, 100dvh);
   background-color: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
@@ -17,7 +19,8 @@
 .cards-drawer-panel {
   width: 100%;
   max-width: 440px;
-  height: 100%;
+  height: var(--visual-viewport-height, 100dvh);
+  max-height: var(--visual-viewport-height, 100dvh);
   background-color: #0d0e12;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
@@ -145,7 +148,10 @@
 /* Request Card Modal Overlay & Dialog (Matching Screenshot 2 & 3) */
 .request-card-modal-overlay {
   position: fixed;
-  inset: 0;
+  inset: auto 0 auto 0;
+  top: var(--visual-viewport-offset-top, 0px);
+  height: var(--visual-viewport-height, 100dvh);
+  overflow-y: auto;
   background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -160,6 +166,8 @@
 .request-card-modal-dialog {
   width: 100%;
   max-width: 440px;
+  max-height: calc(var(--visual-viewport-height, 100dvh) - 32px);
+  overflow-y: auto;
   background-color: #16171d;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;

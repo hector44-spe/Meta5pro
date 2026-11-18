@@ -1,0 +1,87 @@
+:root {
+  --app-viewport-height: 100dvh;
+  --visual-viewport-height: 100dvh;
+  --visual-viewport-offset-top: 0px;
+  --app-keyboard-inset: 0px;
+  --fixed-bottom-keyboard-offset: 0px;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: clip;
+}
+
+body {
+  min-height: var(--app-viewport-height, 100dvh);
+}
+
+main,
+section,
+article,
+form,
+fieldset {
+  min-width: 0;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+/* Explicit behavior for controls anchored to the bottom of the browser. */
+[data-fixed-bottom="lift"] {
+  position: fixed !important;
+  bottom: calc(var(--fixed-bottom-keyboard-offset, 0px) + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+[data-fixed-bottom="hide"] {
+  position: fixed !important;
+  bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+  transition: opacity 160ms ease, transform 160ms ease !important;
+}
+
+html[data-keyboard-open="true"] [data-fixed-bottom="hide"] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(16px) !important;
+}
+
+/* Full-height surfaces follow the visual viewport while a keyboard is visible. */
+[data-visual-viewport] {
+  top: var(--visual-viewport-offset-top, 0px) !important;
+  height: var(--visual-viewport-height, 100dvh) !important;
+  max-height: var(--visual-viewport-height, 100dvh) !important;
+}
+
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    /* 16px prevents Safari from zooming and crushing the viewport on focus. */
+    font-size: max(16px, 1em);
+  }
+
+  :where(.dashboard-page-content, .subscribe-content-card, .signal-content-card) {
+    min-height: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  :where(.subscribe-tabs, .signal-tabs, [role="tablist"]) {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+  }
+}
+
+@media (max-width: 560px) {
+  :where(.subscribe-page, .signal-page) {
+    padding-inline: 12px !important;
+  }
+}

@@ -167,42 +167,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     setProfileDropdownOpen(false);
   }, [pathname]);
 
-  // iOS/Android keyboards resize the visual viewport without reliably updating
-  // CSS vh units. Publish the actual visible height so every dashboard page keeps
-  // its final controls reachable while an input is focused.
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    let stableHeight = window.innerHeight;
-    let stableWidth = window.innerWidth;
-    const updateViewportHeight = () => {
-      const visualHeight = Math.round(viewport?.height ?? window.innerHeight);
-      const visualOffsetTop = Math.round(viewport?.offsetTop ?? 0);
-      const orientationChanged = Math.abs(window.innerWidth - stableWidth) > 40;
-      if (orientationChanged || visualHeight >= stableHeight - 120) {
-        stableHeight = window.innerHeight;
-        stableWidth = window.innerWidth;
-      }
-      const keyboardInset = Math.max(0, stableHeight - visualHeight - visualOffsetTop);
-      document.documentElement.style.setProperty("--dashboard-viewport-height", `${stableHeight}px`);
-      document.documentElement.style.setProperty("--visual-viewport-height", `${visualHeight}px`);
-      document.documentElement.style.setProperty("--visual-viewport-offset-top", `${visualOffsetTop}px`);
-      document.documentElement.style.setProperty("--dashboard-keyboard-inset", `${keyboardInset}px`);
-    };
-    updateViewportHeight();
-    viewport?.addEventListener("resize", updateViewportHeight);
-    viewport?.addEventListener("scroll", updateViewportHeight);
-    window.addEventListener("resize", updateViewportHeight);
-    return () => {
-      viewport?.removeEventListener("resize", updateViewportHeight);
-      viewport?.removeEventListener("scroll", updateViewportHeight);
-      window.removeEventListener("resize", updateViewportHeight);
-      document.documentElement.style.removeProperty("--dashboard-viewport-height");
-      document.documentElement.style.removeProperty("--visual-viewport-height");
-      document.documentElement.style.removeProperty("--visual-viewport-offset-top");
-      document.documentElement.style.removeProperty("--dashboard-keyboard-inset");
-    };
-  }, []);
-
   // Click outside for user profile dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -268,13 +232,26 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(true);
+  const shownTradeResultIdsRef = useRef(new Set<string>());
   const fetchNotifications = async () => {
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        setNotifications(data.notifications || []);
+        const nextNotifications: AppNotification[] = data.notifications || [];
+        setNotifications(nextNotifications);
         setUnreadCount(data.unread || 0);
+        const result = nextNotifications.find(
+          (item) => !item.read && (item.kind === "trade_profit" || item.kind === "trade_loss"),
+        );
+        if (result && !shownTradeResultIdsRef.current.has(result.id)) {
+            shownTradeResultIdsRef.current.add(result.id);
+            setToastNotification({
+              type: result.kind === "trade_profit" ? "success" : "error",
+              message: result.title,
+              durationMs: 15_000,
+            });
+        }
       }
     } catch {
       /* ignore */
@@ -1843,6 +1820,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         {/* ===================== FLOATING LIVE SUPPORT CHAT BUTTON ===================== */}
         <button
           type="button"
+          data-fixed-bottom="hide"
           onClick={() => setIsChatOpen(!isChatOpen)}
           style={{
             position: "fixed",
@@ -2590,6 +2568,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
               {/* Floating Blue Chat Bubble at Bottom Right (Images 1 & 2) */}
               <button
+                data-fixed-bottom="hide"
                 onClick={() => setIsChatOpen(true)}
                 style={{
                   position: "fixed",

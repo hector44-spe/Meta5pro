@@ -96,13 +96,14 @@ function TradingContent() {
 
   const { accountType, realBalance, demoBalance, openModal, refreshBalance } = useDashboard();
   const { prices } = usePrices();
-  const { holdings } = useHoldings();
+  const { holdings, refresh: refreshHoldings } = useHoldings();
 
   // Primary state
   const [orderTab, setOrderTab] = useState<"buy" | "sell" | "convert">("buy");
   const [tradeType, setTradeType] = useState<string>(initialType);
   const [isTradeTypeDropdownOpen, setIsTradeTypeDropdownOpen] = useState(false);
   const [currency, setCurrency] = useState<string>(initialSymbol.toUpperCase());
+  const [fundingAsset, setFundingAsset] = useState("USD");
   const [isAssetDropdownOpen, setIsAssetDropdownOpen] = useState(false);
   const [amount, setAmount] = useState("0.03");
   const [leverage, setLeverage] = useState(5);
@@ -112,6 +113,12 @@ function TradingContent() {
   const [duration, setDuration] = useState("2 minutes");
   const [isDurationDropdownOpen, setIsDurationDropdownOpen] = useState(false);
   const [chartHidden, setChartHidden] = useState(false);
+
+  const fundingOptions = useMemo(
+    () => ["USD", ...holdings.filter((holding) => holding.units > 0).map((holding) => holding.symbol)]
+      .filter((symbol, index, all) => all.indexOf(symbol) === index),
+    [holdings],
+  );
 
   // Convert state matching Image 2
   const [convertFromSymbol, setConvertFromSymbol] = useState("USD");
@@ -405,6 +412,7 @@ function TradingContent() {
           accountType,
           side: orderTab === "sell" ? "SELL" : "BUY",
           symbol: currency || "BTC",
+          fundingAsset,
           amount: parsedAmount,
           leverage: leverage || 5,
           duration,
@@ -473,11 +481,14 @@ function TradingContent() {
             });
           } else {
             setNotification({
-              type: "success",
-              message: `Position on ${pos.symbol} closed successfully. Realized PnL: $${Number(data.position?.pnl || 0).toFixed(2)}`,
+              type: Number(data.pnl || 0) >= 0 ? "success" : "error",
+              message: `${Number(data.pnl || 0) >= 0 ? "+" : "-"}$${Math.abs(Number(data.pnl || 0)).toFixed(2)} ${Number(data.pnl || 0) >= 0 ? "profit made" : "loss made"}`,
+              durationMs: 15_000,
             });
             await fetchPositions();
             refreshBalance();
+            refreshHoldings();
+            window.dispatchEvent(new Event("notifications-updated"));
           }
         } catch (err) {
           console.error("Close position error:", err);
@@ -1231,6 +1242,29 @@ function TradingContent() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              {/* Dynamic Balance & Current Asset Price (Matching Image 1) */}
+              <div>
+                <label
+                  htmlFor="trade-funding-asset"
+                  style={{ fontSize: "12px", color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))", marginBottom: 6, display: "block", fontWeight: 500 }}
+                >
+                  Funding asset / result display:
+                </label>
+                <select
+                  id="trade-funding-asset"
+                  value={fundingAsset}
+                  onChange={(event) => setFundingAsset(event.target.value)}
+                  style={{ width: "100%", minHeight: 42, padding: "9px 36px 9px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,.08)", backgroundColor: "rgba(255,255,255,.03)", color: "#fff" }}
+                >
+                  {fundingOptions.map((symbol) => (
+                    <option key={symbol} value={symbol}>{symbol}</option>
+                  ))}
+                </select>
+                <div style={{ fontSize: "10.5px", color: "rgba(255,255,255,.45)", marginTop: 5, lineHeight: 1.4 }}>
+                  The final profit or loss will appear under this asset on your dashboard.
+                </div>
               </div>
 
               {/* Dynamic Balance & Current Asset Price (Matching Image 1) */}

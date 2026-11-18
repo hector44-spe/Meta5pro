@@ -70,3 +70,23 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
 }
+
+@media (max-width: 640px) {
+  .tickerContainer {
+    height: 40px;
+  }
+
+  .track {
+    gap: 1.5rem;
+  }
+
+  .tickerItem {
+    font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    animation-duration: 90s;
+  }
+}

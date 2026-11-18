@@ -156,3 +156,37 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1.5rem 1rem calc(2rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  .topRow,
+  .quickActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .actionBtn {
+    justify-content: center;
+  }
+
+  .balanceCard,
+  .tableSection {
+    padding: 1.15rem;
+  }
+
+  .balanceValue {
+    font-size: clamp(1.65rem, 9vw, 2.25rem);
+    overflow-wrap: anywhere;
+  }
+
+  .tableSection {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 620px;
+  }
+}

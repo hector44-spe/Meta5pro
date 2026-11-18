@@ -1,16 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { atomic, creditMain, insertTransaction, money } from "@/lib/ledger";
 import { getVerifiedPrice } from "@/lib/prices";
-import { notify, fmtUsd } from "@/lib/notify";
+import { fmtUsd } from "@/lib/notify";
 import { getTradeConfig } from "@/lib/trade-config";
 
 export async function closePositionAndSettle({
   positionId,
   overridePnl,
+  fundingAssetOverride,
   closedByAdmin = false,
 }: {
   positionId: string;
   overridePnl?: number;
+  fundingAssetOverride?: string;
   closedByAdmin?: boolean;
 }) {
   const pos = await prisma.position.findUnique({
@@ -49,6 +51,7 @@ export async function closePositionAndSettle({
   }
 
   const returnCapital = money(Math.max(0, requiredMargin + finalPnl));
+  const fundingAsset = (fundingAssetOverride || pos.fundingAsset || pos.symbol).toUpperCase();
 
   const newBalance = await atomic(async (tx) => {
     const res = await tx.position.updateMany({
@@ -57,6 +60,7 @@ export async function closePositionAndSettle({
         status: "CLOSED",
         pnl: finalPnl,
         closedAt: new Date(),
+        fundingAsset,
       },
     });
 
@@ -73,6 +77,27 @@ export async function closePositionAndSettle({
       status: "APPROVED",
     });
 
+    await tx.closedTradeResult.create({
+      data: {
+        positionId: pos.id,
+        userId: pos.userId,
+        fundingAsset,
+        marketSymbol: pos.symbol,
+        pnl: finalPnl,
+      },
+    });
+
+    const outcome = finalPnl >= 0 ? "profit" : "loss";
+    const signedPnl = `${finalPnl >= 0 ? "+" : "-"}${fmtUsd(Math.abs(finalPnl))}`;
+    await tx.notification.create({
+      data: {
+        userId: pos.userId,
+        kind: finalPnl >= 0 ? "trade_profit" : "trade_loss",
+        title: `${signedPnl} ${outcome} made`,
+        body: `${signedPnl} ${outcome} made using ${fundingAsset} on ${pos.symbol}. ${fmtUsd(returnCapital)} returned to your trading balance${closedByAdmin ? " after the position was closed by an administrator" : ""}.`,
+      },
+    });
+
     return balance;
   });
 
@@ -80,21 +105,12 @@ export async function closePositionAndSettle({
     throw new Error("Position is already closed");
   }
 
-  // Do not notify the investor on any admin changes/closures on the trades
-  if (!closedByAdmin) {
-    await notify(
-      pos.userId,
-      "trade",
-      "Position closed",
-      `${pos.symbol} ${pos.type.toLowerCase()} closed. Realized P&L: ${finalPnl >= 0 ? "+" : "-"}${fmtUsd(Math.abs(finalPnl))}; ${fmtUsd(returnCapital)} returned to your balance.`,
-    );
-  }
-
   return {
     success: true,
     pnl: finalPnl,
     returnCapital,
     newBalance,
+    fundingAsset,
     message: `Position closed. Realized PnL: ${finalPnl >= 0 ? "+" : ""}$${finalPnl.toFixed(2)}. Capital returned: $${returnCapital.toFixed(2)}`,
   };
 }

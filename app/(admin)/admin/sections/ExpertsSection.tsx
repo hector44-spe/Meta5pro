@@ -31,6 +31,7 @@ interface CopyTradeDraft {
   expertId: string;
   expertName: string;
   symbol: string;
+  fundingAsset: string;
   type: "BUY" | "SELL";
   amount: number;
   leverage: number;
@@ -173,6 +174,7 @@ export default function ExpertsSection({
       expertId: expert.id || expert.ref,
       expertName: expert.name,
       symbol: "BTC",
+      fundingAsset: "BTC",
       type: "BUY",
       amount: Math.max(100, Number(expert.minimumStartUp || 1000)),
       leverage: 1,
@@ -191,6 +193,7 @@ export default function ExpertsSection({
           action: "createCopyTrade",
           expertId: copyTrade.expertId,
           symbol: copyTrade.symbol.trim().toUpperCase(),
+          fundingAsset: copyTrade.fundingAsset.trim().toUpperCase(),
           type: copyTrade.type,
           amount: Number(copyTrade.amount),
           leverage: Number(copyTrade.leverage),
@@ -954,6 +957,15 @@ export default function ExpertsSection({
                   onChange={(event) => setCopyTrade({ ...copyTrade, symbol: event.target.value })}
                   placeholder="BTC"
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                />
+              </div>
+              <div>
+                <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Funding asset / result row</label>
+                <input
+                  value={copyTrade.fundingAsset}
+                  onChange={(event) => setCopyTrade({ ...copyTrade, fundingAsset: event.target.value.toUpperCase() })}
+                  placeholder="XRP"
+                  style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", textTransform: "uppercase" }}
                 />
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>

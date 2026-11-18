@@ -23,6 +23,7 @@ function parseDurationMs(durationStr: string): number {
 const orderSchema = z.object({
   side: z.enum(["BUY", "SELL", "CONVERT"]),
   symbol: z.string().default("BTC"),
+  fundingAsset: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/).default("USD"),
   amount: z.number().positive("Trade amount must be positive"),
   leverage: z.number().int().min(1).max(100).default(5),
   duration: z.string().optional().default("2 minutes"),
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { side, symbol, amount, leverage, duration } = parsed.data;
+    const { side, symbol, fundingAsset, amount, leverage, duration } = parsed.data;
     const durationMs = parseDurationMs(duration);
     const closeAt = new Date(Date.now() + durationMs).toISOString();
 
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
 
         // 2. Open the position
         const position = await t.position.create({
-          data: { userId: session.userId, symbol, type: side, amount, entryPrice: fillPrice, leverage },
+          data: { userId: session.userId, symbol, fundingAsset, type: side, amount, entryPrice: fillPrice, leverage },
         });
 
         // 3. Record trade transaction
@@ -103,6 +104,7 @@ export async function POST(req: Request) {
           id: position.id,
           side,
           symbol,
+          fundingAsset,
           notionalAmount: amount,
           leverage,
           requiredMargin,

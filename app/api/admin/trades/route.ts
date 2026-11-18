@@ -41,6 +41,7 @@ export async function GET() {
           userFullName: p.user?.fullName || null,
           username: p.user?.username || null,
           symbol: p.symbol,
+          fundingAsset: p.fundingAsset,
           type: p.type,
           amount: Number(p.amount),
           entryPrice: Number(p.entryPrice),
@@ -94,7 +95,7 @@ export async function POST(req: Request) {
     const { action } = body;
 
     if (action === "createCopyTrade") {
-      const { expertId, symbol, type, amount, leverage, pnl } = body;
+      const { expertId, symbol, fundingAsset, type, amount, leverage, pnl } = body;
       const marketSymbol = symbol.split("/")[0];
       const setting = await prisma.appSetting.findUnique({ where: { key: "copy_trading_experts" } });
       const stored = setting?.value
@@ -148,7 +149,7 @@ export async function POST(req: Request) {
               counterAccount: "PLATFORM:TRADE_MARGIN",
             });
             const position = await tx.position.create({
-              data: { userId: user.id, symbol: marketSymbol, type, amount, entryPrice: livePrice, leverage, status: "OPEN", pnl: initialPnl },
+              data: { userId: user.id, symbol: marketSymbol, fundingAsset: fundingAsset || marketSymbol, type, amount, entryPrice: livePrice, leverage, status: "OPEN", pnl: initialPnl },
             });
             await insertTransaction(tx, {
               userId: user.id,
@@ -194,18 +195,19 @@ export async function POST(req: Request) {
 
     // Explicit Close action by Admin
     if (action === "close") {
-      const { positionId, pnl } = body;
+      const { positionId, pnl, fundingAsset } = body;
       const overridePnlVal = pnl;
       const res = await closePositionAndSettle({
         positionId,
         overridePnl: overridePnlVal,
+        fundingAssetOverride: fundingAsset,
         closedByAdmin: true,
       });
       return NextResponse.json(res);
     }
 
     if (action === "update") {
-      const { positionId, pnl, status } = body;
+      const { positionId, pnl, status, fundingAsset } = body;
       const current = await prisma.position.findUnique({ where: { id: positionId } });
       if (!current) return NextResponse.json({ error: "Position not found" }, { status: 404 });
       if (current.status !== "OPEN") {
@@ -218,6 +220,7 @@ export async function POST(req: Request) {
         const res = await closePositionAndSettle({
           positionId,
           overridePnl: overridePnlVal,
+          fundingAssetOverride: fundingAsset,
           closedByAdmin: true,
         });
         return NextResponse.json(res);
@@ -231,7 +234,7 @@ export async function POST(req: Request) {
         });
         const updated = await prisma.position.update({
           where: { id: positionId },
-          data: { pnl },
+          data: { pnl, ...(fundingAsset ? { fundingAsset } : {}) },
         });
         return NextResponse.json({ success: true, position: updated, message: `Profit updated to $${pnl.toFixed(2)}` });
       }
@@ -240,13 +243,14 @@ export async function POST(req: Request) {
         where: { id: positionId },
         data: {
           ...(status ? { status } : {}),
+          ...(fundingAsset ? { fundingAsset } : {}),
         },
       });
       return NextResponse.json({ success: true, position: updated });
     }
 
     if (action === "create") {
-      const { userId, symbol, type, amount, leverage, status, pnl } = body;
+      const { userId, symbol, fundingAsset, type, amount, leverage, status, pnl } = body;
       const livePrice = await getVerifiedPrice(symbol);
       if (!livePrice) return NextResponse.json({ error: "A recent verified market price is unavailable" }, { status: 503 });
       const requiredMargin = money(amount / leverage);
@@ -256,7 +260,7 @@ export async function POST(req: Request) {
           counterAccount: "PLATFORM:TRADE_MARGIN",
         });
         const position = await tx.position.create({
-          data: { userId, symbol, type, amount, entryPrice: livePrice, leverage, status, pnl: pnl || 0 },
+          data: { userId, symbol, fundingAsset: fundingAsset || symbol, type, amount, entryPrice: livePrice, leverage, status, pnl: pnl || 0 },
         });
         await insertTransaction(tx, {
           userId,

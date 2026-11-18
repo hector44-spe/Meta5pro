@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { randomUUID } from "crypto";
+import { deleteMediaObject, isCloudflareR2Configured, putMediaObject } from "@/lib/cloudflare-r2";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
@@ -18,6 +20,12 @@ export async function POST(req: Request) {
     const session = await getSession();
     if (!session || session.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!isCloudflareR2Configured()) {
+      return NextResponse.json(
+        { error: "Media storage is temporarily unavailable" },
+        { status: 503 },
+      );
     }
 
     const form = await req.formData();
@@ -35,7 +43,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Upload a PNG, JPG, or WEBP image" }, { status: 400 });
     }
 
-    const image = await prisma.expertImage.create({ data: { data, contentType } });
+    const extension = contentType === "image/jpeg" ? "jpg" : contentType.split("/")[1];
+    const objectKey = `public/expert-images/${randomUUID()}.${extension}`;
+    await putMediaObject(objectKey, data, contentType);
+
+    let image;
+    try {
+      image = await prisma.expertImage.create({ data: { objectKey, contentType } });
+    } catch (error) {
+      await deleteMediaObject(objectKey).catch(() => undefined);
+      throw error;
+    }
     return NextResponse.json({ success: true, url: `/api/expert-images/${image.id}` });
   } catch (error) {
     console.error("Expert image upload error:", error);

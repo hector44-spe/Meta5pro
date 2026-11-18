@@ -189,6 +189,7 @@ export default function WalletPage() {
       {/* Toast Notification */}
       {toastMessage && (
         <div
+          data-fixed-bottom="lift"
           style={{
             position: "fixed",
             bottom: "24px",

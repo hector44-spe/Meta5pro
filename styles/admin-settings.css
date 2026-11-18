@@ -3,7 +3,9 @@
 
 .as-backdrop {
   position: fixed;
-  inset: 0;
+  inset: auto 0 auto 0;
+  top: var(--visual-viewport-offset-top, 0px);
+  height: var(--visual-viewport-height, 100dvh);
   z-index: 9999;
   display: flex;
   justify-content: flex-end;

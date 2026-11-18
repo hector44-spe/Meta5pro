@@ -29,6 +29,7 @@ interface AdminTrade {
   userFullName: string | null;
   username: string | null;
   symbol: string;
+  fundingAsset: string;
   type: string;
   amount: number;
   entryPrice: number;
@@ -118,6 +119,7 @@ export default function TradesSection({
             positionId: editTrade.id,
             pnl: Number(editTrade.pnl || 0),
             status: editTrade.status,
+            fundingAsset: editTrade.fundingAsset || editTrade.symbol,
           }),
         });
         if (!res.ok) throw new Error("Failed to update trade");
@@ -134,6 +136,7 @@ export default function TradesSection({
             action: "create",
             userId: editTrade.userId,
             symbol: editTrade.symbol,
+            fundingAsset: editTrade.fundingAsset || editTrade.symbol,
             type: editTrade.type || "BUY",
             amount: Number(editTrade.amount),
             entryPrice: Number(editTrade.entryPrice || 1),
@@ -173,6 +176,7 @@ export default function TradesSection({
               action: "close",
               positionId: trade.id,
               pnl: trade.pnl,
+              fundingAsset: trade.fundingAsset,
             }),
           });
           const data = await res.json().catch(() => ({}));
@@ -211,6 +215,7 @@ export default function TradesSection({
               action: "close",
               positionId: editTrade.id,
               pnl: finalProfit,
+              fundingAsset: editTrade.fundingAsset || editTrade.symbol,
             }),
           });
           const data = await res.json().catch(() => ({}));
@@ -339,6 +344,7 @@ export default function TradesSection({
                 setEditTrade({
                   userId: users[0]?.id || "",
                   symbol: "BTC/USDT",
+                  fundingAsset: "BTC",
                   type: "BUY",
                   amount: 1000,
                   entryPrice: 90000,
@@ -720,6 +726,19 @@ export default function TradesSection({
                     value={editTrade.symbol || ""}
                     disabled={!!editTrade.id}
                     onChange={(e) => setEditTrade({ ...editTrade, symbol: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                    Funding asset / result row
+                  </label>
+                  <input
+                    type="text"
+                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box", textTransform: "uppercase" }}
+                    value={editTrade.fundingAsset || editTrade.symbol || ""}
+                    disabled={editTrade.status === "CLOSED"}
+                    onChange={(e) => setEditTrade({ ...editTrade, fundingAsset: e.target.value.toUpperCase() })}
+                    placeholder="e.g. XRP"
                   />
                 </div>
                 <div>

@@ -41,7 +41,7 @@ export async function GET() {
     });
   }));
 
-  const [deposits, withdrawals, pendingDeposits, conversions, portfolioAssets] = await Promise.all([
+  const [deposits, withdrawals, pendingDeposits, conversions, portfolioAssets, closedTradeResults] = await Promise.all([
     prisma.transaction.groupBy({
       by: ["assetSymbol"],
       where: { userId: session.userId, type: "DEPOSIT", status: "APPROVED", assetSymbol: { not: null } },
@@ -72,6 +72,11 @@ export async function GET() {
         console.error("Asset balance lookup failed; returning deposit holdings only:", error);
         return [];
       }),
+    prisma.closedTradeResult.groupBy({
+      by: ["fundingAsset"],
+      where: { userId: session.userId },
+      _sum: { pnl: true },
+    }),
   ]);
 
   const externalUnits = new Map<string, number>();
@@ -80,6 +85,11 @@ export async function GET() {
   const convertedUnits = new Map<string, number>();
   const convertedCost = new Map<string, number>();
   const portfolioUnits = new Map<string, number>();
+  const realizedTradePnl = new Map<string, number>();
+
+  for (const result of closedTradeResults) {
+    realizedTradePnl.set(result.fundingAsset.toUpperCase(), Number(result._sum.pnl ?? 0));
+  }
 
   // 1. Deposits (Strictly APPROVED deposits only)
   for (const d of deposits) {
@@ -126,7 +136,7 @@ export async function GET() {
   }
 
   const pending = new Map(pendingDeposits.map((p) => [p.assetSymbol!.toUpperCase(), Number(p._sum.assetAmount ?? 0)]));
-  const symbols = new Set([...externalUnits.keys(), ...portfolioUnits.keys(), ...pending.keys()]);
+  const symbols = new Set([...externalUnits.keys(), ...portfolioUnits.keys(), ...pending.keys(), ...realizedTradePnl.keys()]);
   const holdings = [...symbols]
     .map((symbol) => {
       const depositedUnits = Math.max(0, externalUnits.get(symbol) ?? 0);
@@ -144,6 +154,7 @@ export async function GET() {
       const costBasisUsd = (externalCost.get(symbol) ?? 0) + convertedBasis + (price != null ? uncoveredConvertedUnits * price : 0);
       const changeUsd = usd != null ? usd - costBasisUsd : 0;
       const changePercent = costBasisUsd > 0 ? (changeUsd / costBasisUsd) * 100 : 0;
+      const tradePnl = realizedTradePnl.get(symbol) ?? 0;
       return {
         symbol,
         units: Number(u.toFixed(8)),
@@ -155,9 +166,10 @@ export async function GET() {
         marketChange24h: Math.round((snap.changes24h[symbol] ?? 0) * 100) / 100,
         externalBookUsd: Math.round((externalBook.get(symbol) ?? 0) * 100) / 100,
         pendingUnits: Number((pending.get(symbol) ?? 0).toFixed(8)),
+        realizedTradePnl: Math.round(tradePnl * 100) / 100,
       };
     })
-    .filter((h) => h.units > 0 || h.pendingUnits > 0)
+    .filter((h) => h.units > 0 || h.pendingUnits > 0 || h.realizedTradePnl !== 0)
     .sort((a, b) => (b.usd ?? 0) - (a.usd ?? 0));
 
   const totalUsd = holdings.reduce((sum, holding) => sum + (holding.usd ?? 0), 0);

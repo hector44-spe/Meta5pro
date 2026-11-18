@@ -51,17 +51,24 @@ export const cardStatusSchema = z.object({
 
 const finiteMoney = z.number().finite().min(-1_000_000_000).max(1_000_000_000);
 export const adminTradeActionSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("close"), positionId: z.string().uuid(), pnl: finiteMoney.optional() }).strict(),
+  z.object({
+    action: z.literal("close"),
+    positionId: z.string().uuid(),
+    pnl: finiteMoney.optional(),
+    fundingAsset: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/).optional(),
+  }).strict(),
   z.object({
     action: z.literal("update"),
     positionId: z.string().uuid(),
     pnl: finiteMoney.optional(),
     status: z.enum(["OPEN", "CLOSED"]).optional(),
+    fundingAsset: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/).optional(),
   }).strict(),
   z.object({
     action: z.literal("create"),
     userId: z.string().uuid(),
     symbol: z.string().trim().toUpperCase().regex(/^[A-Z0-9/]{2,15}$/),
+    fundingAsset: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/).optional(),
     type: z.enum(["BUY", "SELL"]),
     amount: z.number().positive().max(1_000_000_000),
     entryPrice: z.number().positive().max(1_000_000_000),
@@ -73,6 +80,7 @@ export const adminTradeActionSchema = z.discriminatedUnion("action", [
     action: z.literal("createCopyTrade"),
     expertId: z.string().trim().min(1).max(100),
     symbol: z.string().trim().toUpperCase().regex(/^[A-Z0-9/]{2,15}$/),
+    fundingAsset: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/).optional(),
     type: z.enum(["BUY", "SELL"]),
     amount: z.number().positive().max(1_000_000_000),
     leverage: z.number().int().min(1).max(100),

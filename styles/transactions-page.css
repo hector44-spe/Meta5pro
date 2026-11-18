@@ -393,7 +393,7 @@
 /* Floating Action Button (Live Support Chat) */
 .tp-fab-chat {
   position: fixed;
-  bottom: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   right: 24px;
   width: 52px;
   height: 52px;
@@ -466,7 +466,9 @@
 /* Modals & Drawers */
 .tp-drawer-backdrop {
   position: fixed;
-  inset: 0;
+  inset: auto 0 auto 0;
+  top: var(--visual-viewport-offset-top, 0px);
+  height: var(--visual-viewport-height, 100dvh);
   background-color: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(8px);
   z-index: 200;
@@ -526,12 +528,12 @@
 /* Support Chat Dialog */
 .tp-chat-dialog {
   position: fixed;
-  bottom: 88px;
+  bottom: calc(88px + var(--fixed-bottom-keyboard-offset, 0px));
   right: 24px;
   width: 360px;
   max-width: calc(100vw - 48px);
   height: 480px;
-  max-height: calc(100vh - 120px);
+  max-height: calc(var(--visual-viewport-height, 100dvh) - 120px);
   background-color: #12141a;
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 16px;
@@ -621,7 +623,9 @@
 /* Mobile Sidebar Drawer */
 .tp-mobile-drawer {
   position: fixed;
-  inset: 0;
+  inset: auto 0 auto 0;
+  top: var(--visual-viewport-offset-top, 0px);
+  height: var(--visual-viewport-height, 100dvh);
   background-color: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
   z-index: 250;

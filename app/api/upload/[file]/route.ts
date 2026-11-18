@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getMediaObject } from "@/lib/cloudflare-r2";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -21,7 +22,15 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  return new NextResponse(new Uint8Array(upload.data), {
+  const bytes = upload.objectKey
+    ? (await getMediaObject(upload.objectKey)).bytes
+    : upload.data
+      ? new Uint8Array(upload.data)
+      : null;
+  if (!bytes) return NextResponse.json({ error: "File not found" }, { status: 404 });
+
+  const responseBody = Uint8Array.from(bytes).buffer;
+  return new NextResponse(responseBody, {
     headers: {
       "Content-Type": upload.contentType,
       "Cache-Control": "private, no-store",

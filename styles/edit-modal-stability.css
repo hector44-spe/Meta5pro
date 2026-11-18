@@ -143,6 +143,19 @@ html body :where(
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
+  html body :where(
+    .admin_edit_modal_dialog,
+    .project-edit-modal-dialog,
+    .signal-admin-modal-dialog,
+    .re_admin_modal,
+    .dep_modal,
+    .meta-gold-modal-dialog,
+    [class*="modalBackdrop"] > [class*="modal"],
+    [class*="modalOverlay"] > [class*="modal"]
+  ) [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
   html body :where(.admin_modal_actions, .re_admin_modal_actions) {
     flex-direction: column-reverse !important;
   }

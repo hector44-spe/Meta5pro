@@ -387,7 +387,7 @@ export default function DashboardPage() {
       return { name: c?.name ?? sym, icon: c?.icon ?? `/dashboard_files/${sym}.svg` };
     };
 
-    const heldMap = new Map<string, { units: number; pendingUnits: number; usd: number; changePercent: number; changeUsd: number }>();
+    const heldMap = new Map<string, { units: number; pendingUnits: number; usd: number; changePercent: number; changeUsd: number; realizedTradePnl: number }>();
 
     // 1. From wallet holdings (strictly approved deposits, conversions, bought assets)
     for (const h of holdings) {
@@ -400,6 +400,7 @@ export default function DashboardPage() {
           usd: u * p,
           changePercent: h.changePercent,
           changeUsd: h.changeUsd,
+          realizedTradePnl: h.realizedTradePnl,
         });
       }
     }
@@ -415,6 +416,7 @@ export default function DashboardPage() {
         livePrice: prices[sym] ?? 0,
         changePercent: data.changePercent,
         changeUsd: data.changeUsd,
+        realizedTradePnl: data.realizedTradePnl,
       }))
       .sort((a, b) => b.usdNum - a.usdNum);
 
@@ -430,6 +432,7 @@ export default function DashboardPage() {
         livePrice: prices[sym] ?? 0,
         changePercent: 0,
         changeUsd: 0,
+        realizedTradePnl: 0,
       }));
 
     return [...heldItems, ...defaults];
@@ -1139,6 +1142,11 @@ export default function DashboardPage() {
                         {" "}({asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%)
                       </div>
                     )}
+                    {asset.realizedTradePnl !== 0 && (
+                      <div style={{ fontSize: "10.5px", fontWeight: 700, marginTop: 3, color: asset.realizedTradePnl > 0 ? "#01b28b" : "#f84960" }}>
+                        Trade result: {asset.realizedTradePnl > 0 ? "+" : "−"}{fmtUsdValue(Math.abs(asset.realizedTradePnl))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1397,6 +1405,11 @@ export default function DashboardPage() {
                       <div style={{ fontSize: "10.5px", fontWeight: 600, marginTop: 2, color: asset.changePercent >= 0 ? "#01b28b" : "#f84960" }}>
                         {asset.changeUsd >= 0 ? "+" : "−"}{fmtUsdValue(Math.abs(asset.changeUsd))}
                         {" "}({asset.changePercent >= 0 ? "+" : ""}{asset.changePercent.toFixed(2)}%)
+                      </div>
+                    )}
+                    {asset.realizedTradePnl !== 0 && (
+                      <div style={{ fontSize: "10.5px", fontWeight: 700, marginTop: 3, color: asset.realizedTradePnl > 0 ? "#01b28b" : "#f84960" }}>
+                        Trade result: {asset.realizedTradePnl > 0 ? "+" : "−"}{fmtUsdValue(Math.abs(asset.realizedTradePnl))}
                       </div>
                     )}
                   </div>

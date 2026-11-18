@@ -7,6 +7,7 @@ import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 export interface CustomNotificationState {
   type: "success" | "error" | "info";
   message: string;
+  durationMs?: number;
 }
 
 interface CustomNotificationBarProps {
@@ -28,7 +29,7 @@ export default function CustomNotificationBar({
     if (!notification) return;
     const timer = setTimeout(() => {
       onClose();
-    }, 4500);
+    }, notification.durationMs ?? 4500);
     return () => clearTimeout(timer);
   }, [notification, onClose]);
 
