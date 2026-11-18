@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { getPrices } from "@/lib/prices";
+import { getPricesFast } from "@/lib/prices";
 
 /**
  * Per-asset holdings for the signed-in user:
@@ -14,20 +14,19 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const snap = await getPrices();
+  const snap = getPricesFast();
 
   // Older approved deposits pre-date assetSymbol/assetAmount. Repair them once
   // using their booked USD value and the first available market snapshot so
   // they remain visible and move with subsequent prices instead of vanishing.
-  const legacyDeposits = await prisma.transaction.findMany({
+  void prisma.transaction.findMany({
     where: {
       userId: session.userId,
       type: "DEPOSIT",
       OR: [{ assetSymbol: null }, { assetAmount: null }],
     },
     select: { id: true, amount: true, currency: true, assetSymbol: true },
-  });
-  await Promise.all(legacyDeposits.map(async (transaction) => {
+  }).then((legacyDeposits) => Promise.all(legacyDeposits.map(async (transaction) => {
     const parsedSymbol = transaction.assetSymbol?.toUpperCase()
       || transaction.currency.trim().match(/^([A-Z0-9]{2,10})/i)?.[1]?.toUpperCase();
     const price = parsedSymbol ? snap.prices[parsedSymbol] : null;
@@ -39,7 +38,7 @@ export async function GET() {
         assetAmount: transaction.amount.toNumber() / price,
       },
     });
-  }));
+  }))).catch((error) => console.error("Legacy holding repair failed:", error));
 
   const [deposits, withdrawals, pendingDeposits, conversions, portfolioAssets, closedTradeResults] = await Promise.all([
     prisma.transaction.groupBy({

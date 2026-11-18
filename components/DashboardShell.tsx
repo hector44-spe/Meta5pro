@@ -332,7 +332,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       fetchNotifications();
     };
 
-    const t = setInterval(handleRefresh, 12_000);
+    const t = setInterval(handleRefresh, 30_000);
     window.addEventListener("focus", handleRefresh);
     window.addEventListener("deposit-submitted", handleRefresh);
     window.addEventListener("balance-changed", handleRefresh);

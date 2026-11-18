@@ -122,30 +122,42 @@ async function fetchEquitySnapshot(): Promise<Record<string, { price: number; ch
   });
   if (!allFresh) {
     try {
-      const symbols = encodeURIComponent(EQUITY_SYMBOLS.join(","));
-      const res = await fetch(
-        `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols}&range=1d&interval=5m`,
-        {
-          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
-          signal: AbortSignal.timeout(8000),
-          cache: "no-store",
-        },
+      // Yahoo rejects oversized symbol batches even when the URL itself is
+      // valid. Small concurrent batches are faster and avoid a single 400
+      // response disabling live equity prices for the entire dashboard.
+      const batches = Array.from({ length: Math.ceil(EQUITY_SYMBOLS.length / 20) }, (_, index) =>
+        EQUITY_SYMBOLS.slice(index * 20, index * 20 + 20),
       );
-      if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
-      const data = await res.json() as {
-        spark?: { result?: Array<{ symbol?: string; response?: Array<{ meta?: Record<string, unknown> }> }> };
-      };
-      for (const result of data.spark?.result ?? []) {
-        const symbol = String(result.symbol ?? "").toUpperCase();
-        const meta = result.response?.[0]?.meta;
-        const price = Number(meta?.regularMarketPrice);
-        const change24h = Number(meta?.regularMarketChangePercent);
-        if (symbol && Number.isFinite(price) && price > 0) {
-          stockCache.set(symbol, {
-            price,
-            change24h: Number.isFinite(change24h) ? change24h : 0,
-            timestamp: now,
-          });
+      const responses = await Promise.allSettled(batches.map(async (batch) => {
+        const symbols = encodeURIComponent(batch.join(","));
+        const res = await fetch(
+          `https://query1.finance.yahoo.com/v7/finance/spark?symbols=${symbols}&range=1d&interval=5m`,
+          {
+            headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" },
+            signal: AbortSignal.timeout(8000),
+            cache: "no-store",
+          },
+        );
+        if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
+        return res.json() as Promise<{
+          spark?: { result?: Array<{ symbol?: string; response?: Array<{ meta?: Record<string, unknown> }> }> };
+        }>;
+      }));
+
+      for (const response of responses) {
+        if (response.status !== "fulfilled") continue;
+        for (const result of response.value.spark?.result ?? []) {
+          const symbol = String(result.symbol ?? "").toUpperCase();
+          const meta = result.response?.[0]?.meta;
+          const price = Number(meta?.regularMarketPrice);
+          const change24h = Number(meta?.regularMarketChangePercent);
+          if (symbol && Number.isFinite(price) && price > 0) {
+            stockCache.set(symbol, {
+              price,
+              change24h: Number.isFinite(change24h) ? change24h : 0,
+              timestamp: now,
+            });
+          }
         }
       }
     } catch (error) {
@@ -324,6 +336,25 @@ export async function getPrices(): Promise<PriceSnapshot> {
   }
 
   return inflight;
+}
+
+/**
+ * Non-blocking snapshot for page rendering. It returns the latest in-memory
+ * values (or calibrated values on a cold process) immediately and refreshes
+ * upstream providers in the background. Balance-changing operations continue
+ * to use `getVerifiedPrice`, which still waits for a verified quote.
+ */
+export function getPricesFast(): PriceSnapshot {
+  if (cache) return cache;
+
+  void getPrices().catch(() => undefined);
+  return {
+    prices: { ...CALIBRATED_BASELINES, USD: 1 },
+    changes24h: {},
+    updatedAt: new Date().toISOString(),
+    live: false,
+    liveSymbols: [],
+  };
 }
 
 /**

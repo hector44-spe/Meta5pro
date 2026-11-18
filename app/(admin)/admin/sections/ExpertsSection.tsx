@@ -23,6 +23,7 @@ import styles from "../page.module.css";
 import { AdminExpertCopier, CopyExpertData } from "@/app/api/admin/experts/route";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/CustomNotificationBar";
+import { getExpertPictureFallback } from "@/lib/copy-expert-image";
 
 const usd = (n: number) =>
   `$${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -436,7 +437,10 @@ export default function ExpertsSection({
                           <img
                             src={copier.expertPicture}
                             alt={copier.expertName}
+                            loading="eager"
+                            decoding="async"
                             style={{ width: "24px", height: "24px", borderRadius: "50%", objectFit: "cover" }}
+                            onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = getExpertPictureFallback(copier.expertId); }}
                           />
                         )}
                         <span style={{ fontWeight: 500 }}>{copier.expertName}</span>
@@ -614,7 +618,10 @@ export default function ExpertsSection({
                       <img
                         src={exp.picture || "/assets/copy-trading/albania_support.png"}
                         alt={exp.name}
+                        loading="eager"
+                        decoding="async"
                         style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }}
+                        onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = getExpertPictureFallback(exp.id || exp.ref || exp.name); }}
                       />
                       <div>
                         <div style={{ fontWeight: 600 }}>{exp.name}</div>
@@ -693,7 +700,10 @@ export default function ExpertsSection({
                     <img
                       src={exp.picture || "/assets/copy-trading/albania_support.png"}
                       alt={exp.name}
+                      loading="eager"
+                      decoding="async"
                       style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover" }}
+                      onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = getExpertPictureFallback(exp.id || exp.ref || exp.name); }}
                     />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontWeight: 600, fontSize: "13.5px" }}>{exp.name}</div>
@@ -802,7 +812,7 @@ export default function ExpertsSection({
                     src={editModal.picture || "/assets/copy-trading/albania_support.png"}
                     alt="Expert preview"
                     style={{ width: 58, height: 58, borderRadius: 10, objectFit: "cover", border: "1px solid var(--a-border)", flexShrink: 0 }}
-                    onError={(event) => { event.currentTarget.src = "/assets/copy-trading/albania_support.png"; }}
+                    onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = getExpertPictureFallback(editModal.id || editModal.ref || editModal.name || "expert"); }}
                   />
                   <label
                     className={styles.btnGhost}

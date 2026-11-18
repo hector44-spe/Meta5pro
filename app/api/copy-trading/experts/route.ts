@@ -80,8 +80,14 @@ const DEFAULT_EXPERTS: CopyExpert[] = [
 ];
 
 const SETTING_KEY = "copy_trading_experts";
+const EXPERT_CACHE_TTL_MS = 15_000;
+let storedExpertsCache: CopyExpert[] | null = null;
+let storedExpertsCacheAt = 0;
 
 async function getStoredExperts(): Promise<CopyExpert[]> {
+  if (storedExpertsCache && Date.now() - storedExpertsCacheAt < EXPERT_CACHE_TTL_MS) {
+    return storedExpertsCache;
+  }
   try {
     const setting = await prisma.appSetting.findUnique({
       where: { key: SETTING_KEY },
@@ -92,7 +98,9 @@ async function getStoredExperts(): Promise<CopyExpert[]> {
           ? JSON.parse(setting.value)
           : (setting.value as unknown);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return normalizeExpertPictures(parsed as CopyExpert[]);
+        storedExpertsCache = normalizeExpertPictures(parsed as CopyExpert[]);
+        storedExpertsCacheAt = Date.now();
+        return storedExpertsCache;
       }
     }
   } catch (err) {
@@ -112,6 +120,8 @@ async function saveStoredExperts(experts: CopyExpert[]): Promise<void> {
       value: JSON.stringify(experts),
     },
   });
+  storedExpertsCache = normalizeExpertPictures(experts);
+  storedExpertsCacheAt = Date.now();
 }
 
 // GET: list experts and current user info

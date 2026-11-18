@@ -29,6 +29,7 @@ export function normalizeExpertPicture(source: unknown, stableKey = "expert"): s
   if (picture.startsWith("/assets/") || picture.startsWith("/dashboard_files/") || picture.startsWith("/api/expert-images/")) {
     return picture;
   }
+  if (/^https:\/\//i.test(picture)) return picture;
 
   const lower = picture.toLowerCase();
   for (const [needle, localPath] of Object.entries(KNOWN_REMOTE_IMAGES)) {
@@ -38,6 +39,10 @@ export function normalizeExpertPicture(source: unknown, stableKey = "expert"): s
   let hash = 0;
   for (const char of stableKey) hash = (Math.imul(hash, 31) + char.charCodeAt(0)) | 0;
   return FALLBACKS[Math.abs(hash) % FALLBACKS.length];
+}
+
+export function getExpertPictureFallback(stableKey: string): string {
+  return normalizeExpertPicture("", stableKey);
 }
 
 /** Ensures missing/broken duplicate sources do not make multiple experts share one avatar. */

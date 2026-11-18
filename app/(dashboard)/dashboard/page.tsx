@@ -364,7 +364,7 @@ export default function DashboardPage() {
         if (d.user) setUserProfile(d.user);
       })
       .catch(console.error);
-  }, [currentBalance]);
+  }, []);
 
   const [orderExecuting, setOrderExecuting] = useState(false);
   const [orderFeedback, setOrderFeedback] = useState<string | null>(null);
@@ -1060,7 +1060,7 @@ export default function DashboardPage() {
 
             {/* Assets Rows */}
             <div style={{ display: "grid", gap: "2px" }}>
-              {holdingsLoading ? (
+              {holdingsLoading && assetsList.length === 0 ? (
                 <div style={{ padding: "18px 10px", color: "rgba(255,255,255,.55)", fontSize: 12 }}>
                   Loading live holdings…
                 </div>
@@ -1335,7 +1335,7 @@ export default function DashboardPage() {
             </div>
 
             <div style={{ display: "grid", gap: "2px" }}>
-              {holdingsLoading ? (
+              {holdingsLoading && assetsList.length === 0 ? (
                 <div style={{ padding: "18px 0", color: "rgba(255,255,255,.55)", fontSize: 12 }}>
                   Loading live holdings…
                 </div>

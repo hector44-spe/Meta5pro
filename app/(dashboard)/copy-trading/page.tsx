@@ -17,7 +17,10 @@ import AdminEditExpertModal from "@/components/CopyTrading/AdminEditExpertModal"
 import CustomDeleteConfirmModal from "@/components/CopyTrading/CustomDeleteConfirmModal";
 import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/CustomNotificationBar";
 import type { CopyExpert } from "@/types/copy-trading";
+import { getExpertPictureFallback } from "@/lib/copy-expert-image";
 import "@/styles/copy-trading.css";
+
+const EXPERT_VISUAL_CACHE_KEY = "mg5_copy_experts_visual_cache_v1";
 
 function formatFollowers(count: number): string {
   if (!count) return "0";
@@ -63,8 +66,13 @@ function ExpertCardItem({
                 src={expert.picture || "/assets/copy-trading/albania_support.png"}
                 alt={expert.name}
                 className="expert_avatar_img"
+                loading="eager"
+                decoding="async"
+                fetchPriority="high"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
+                  const image = e.currentTarget;
+                  image.onerror = null;
+                  image.src = getExpertPictureFallback(expert.id || expert.ref || expert.name);
                 }}
               />
             </div>
@@ -247,6 +255,12 @@ export default function CopyTradingPage() {
         const data = await res.json();
         if (Array.isArray(data.experts)) {
           setExperts(data.experts);
+          try {
+            const visualCache = data.experts.map((expert: CopyExpert) => ({ ...expert, subscriberList: [] }));
+            localStorage.setItem(EXPERT_VISUAL_CACHE_KEY, JSON.stringify(visualCache));
+          } catch {
+            /* storage unavailable */
+          }
         }
         if (typeof data.isAdmin === "boolean") {
           setIsAdmin(data.isAdmin);
@@ -275,9 +289,20 @@ export default function CopyTradingPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
-    fetchExperts();
+    let hadVisualCache = false;
+    try {
+      const cached = JSON.parse(localStorage.getItem(EXPERT_VISUAL_CACHE_KEY) || "[]");
+      if (Array.isArray(cached) && cached.length > 0) {
+        setExperts(cached);
+        setLoading(false);
+        hadVisualCache = true;
+      }
+    } catch {
+      /* invalid or unavailable cache */
+    }
+    fetchExperts(hadVisualCache);
     const refresh = () => fetchExperts(true);
-    const timer = window.setInterval(refresh, 30_000);
+    const timer = window.setInterval(refresh, 60_000);
     window.addEventListener("focus", refresh);
     return () => {
       window.clearInterval(timer);
@@ -620,9 +645,13 @@ export default function CopyTradingPage() {
                   <img
                     src={selectedExpertForView.picture || "/assets/copy-trading/albania_support.png"}
                     alt={selectedExpertForView.name}
+                    loading="eager"
+                    decoding="async"
                     style={{ width: "56px", height: "56px", borderRadius: "10px", objectFit: "cover", flexShrink: 0 }}
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/assets/copy-trading/albania_support.png";
+                      const image = e.currentTarget;
+                      image.onerror = null;
+                      image.src = getExpertPictureFallback(selectedExpertForView.id || selectedExpertForView.ref || selectedExpertForView.name);
                     }}
                   />
                   <div style={{ minWidth: 0 }}>
