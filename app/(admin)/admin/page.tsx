@@ -53,6 +53,7 @@ import CardRequestsSection from "./sections/CardRequestsSection";
 import CardsSection from "./sections/CardsSection";
 import SubscriptionsSection from "./sections/SubscriptionsSection";
 import DepositAddressSection from "./sections/DepositAddressSection";
+import assetsData from "@/data/assetsData.json";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -98,6 +99,13 @@ interface AdminUser {
   totalDeposited: number;
   totalWithdrawn: number;
 }
+
+const ADMIN_ASSET_OPTIONS = [
+  { symbol: "USD", name: "US Dollar (cash balance)", type: "Cash" },
+  ...(assetsData as Array<{ symbol: string; name: string; type: string }>),
+]
+  .filter((asset, index, list) => list.findIndex((item) => item.symbol.toUpperCase() === asset.symbol.toUpperCase()) === index)
+  .sort((a, b) => a.symbol === "USD" ? -1 : b.symbol === "USD" ? 1 : a.name.localeCompare(b.name));
 
 type Section =
   | "overview"
@@ -1070,6 +1078,7 @@ function UsersSection({
   const [selected, setSelected] = useState<AdminUser | null>(null);
   const [amount, setAmount] = useState("");
   const [action, setAction] = useState<"credit" | "debit">("credit");
+  const [assetSymbol, setAssetSymbol] = useState("USD");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -1099,6 +1108,7 @@ function UsersSection({
     setAmount("");
     setNote("");
     setAction("credit");
+    setAssetSymbol("USD");
     setError("");
   };
 
@@ -1114,7 +1124,7 @@ function UsersSection({
       const res = await fetch(`/api/admin/users/${selected.id}/balance`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: n, action, note: note.trim() }),
+        body: JSON.stringify({ amount: n, action, assetSymbol, note: note.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Adjustment failed");
@@ -1366,8 +1376,8 @@ function UsersSection({
       </section>
 
       {selected && (
-        <div className={styles.modalBackdrop} onClick={() => !busy && setSelected(null)}>
-          <form className={styles.modal} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} onSubmit={submitAdjust}>
+        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !busy && setSelected(null)}>
+          <form className={`${styles.modal} project-edit-modal-dialog`} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} onSubmit={submitAdjust}>
             <div className={styles.modalHead}>
               <h2>Adjust balance</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setSelected(null)} aria-label="Close">
@@ -1384,14 +1394,31 @@ function UsersSection({
               <button type="button" role="radio" aria-checked={action === "credit"} className={action === "credit" ? styles.segActive : ""} onClick={() => setAction("credit")}>
                 Add funds
               </button>
-              <button type="button" role="radio" aria-checked={action === "debit"} className={action === "debit" ? styles.segActive : ""} onClick={() => setAction("debit")}>
+              <button type="button" role="radio" aria-checked={action === "debit"} className={action === "debit" ? styles.segActive : ""} onClick={() => { setAction("debit"); setAssetSymbol("USD"); }}>
                 Remove funds
               </button>
             </div>
+            {action === "credit" && (
+              <label className={styles.field}>
+                <span>Asset to add</span>
+                <select className={styles.input} value={assetSymbol} onChange={(e) => setAssetSymbol(e.target.value)}>
+                  {ADMIN_ASSET_OPTIONS.map((asset) => (
+                    <option key={asset.symbol} value={asset.symbol}>
+                      {asset.name} ({asset.symbol}){asset.type && asset.type !== "Cash" ? ` · ${asset.type}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className={styles.field}>
-              <span>Amount (USD)</span>
+              <span>{assetSymbol === "USD" ? "Amount (USD)" : "Acquisition value (USD)"}</span>
               <input className={styles.input} type="number" min="0" step="0.01" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
             </label>
+            {action === "credit" && assetSymbol !== "USD" && (
+              <p className={styles.modalNote}>
+                The USD value will be converted to {assetSymbol} with a verified live price. The resulting units will appear in the client&apos;s dashboard assets and will move with the market price.
+              </p>
+            )}
             <label className={styles.field}>
               <span>Reason (saved in the audit log)</span>
               <input className={styles.input} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Correction for deposit ABC123" maxLength={200} />
@@ -1407,7 +1434,7 @@ function UsersSection({
               </button>
               <button type="submit" className={action === "credit" ? styles.btnSuccess : styles.btnDanger} disabled={busy}>
                 {busy && <Loader2 size={15} className={styles.spin} />}
-                {action === "credit" ? "Add funds" : "Remove funds"}
+                {action === "credit" ? assetSymbol === "USD" ? "Add USD funds" : `Add ${assetSymbol}` : "Remove funds"}
               </button>
             </div>
           </form>
