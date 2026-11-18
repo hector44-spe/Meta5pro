@@ -447,7 +447,7 @@ export default function ColdStoragePage() {
           {activeTab === "assets" && (
             <div className="cold-storage-assets-view">
               {/* Cold storage value box ($0 instead of $0.00) */}
-              <div className="cold-storage-balance-box">
+              <div className="cold-storage-balance-box cold-storage-overview-card">
                 <div>
                   <span className="balance_label_wrapper">
                     <p className="balance_label">Cold storage value</p>
@@ -480,16 +480,20 @@ export default function ColdStoragePage() {
                       </span>
                     )}
                   </div>
+                  <p className="cold-storage-overview-caption">
+                    Protected portfolio · {userColdAssets.length} {userColdAssets.length === 1 ? "asset" : "assets"}
+                  </p>
                 </div>
               </div>
 
               {/* "Your assets" Bar */}
               <div className="cold-storage-assets-header">
-                <span className="titles">
-                  <p className="title">Your assets</p>
-                  {userColdAssets.length > 0 && (
-                    <p className="count">({userColdAssets.length})</p>
-                  )}
+                <span className="titles cold-storage-assets-copy">
+                  <span>
+                    <p className="title">Your assets</p>
+                    <p className="cold-storage-assets-subtitle">Assets secured in your cold-storage portfolio</p>
+                  </span>
+                  {userColdAssets.length > 0 && <p className="count">{userColdAssets.length}</p>}
                 </span>
                 <button className="cold-storage-add-btn" onClick={handleOpenAddAsset}>
                   <p>Add asset</p>

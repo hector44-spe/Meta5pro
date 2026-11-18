@@ -731,6 +731,22 @@ export default function DashboardPage() {
     }
   };
 
+  // Keep navigation fixed by scrolling only the dashboard content pane.
+  // `scrollIntoView()` may also scroll outer ancestors on mobile browsers.
+  const scrollToTradingPanel = (tab?: "buy" | "sell" | "convert") => {
+    if (tab) setOrderTab(tab);
+    window.requestAnimationFrame(() => {
+      const target = document.getElementById("trade-section");
+      const scroller = target?.closest(".dashboard-page-content") as HTMLElement | null;
+      if (!target || !scroller) return;
+      const targetTop = scroller.scrollTop
+        + target.getBoundingClientRect().top
+        - scroller.getBoundingClientRect().top
+        - 12;
+      scroller.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+    });
+  };
+
   return (
     <div className="dashboard-content-grid">
       {/* ===================== UPPER SECTION (MainCard: Matches Image 1) ===================== */}
@@ -996,10 +1012,7 @@ export default function DashboardPage() {
             <button
               className="balance-card-mobile-action-btn"
               style={{ background: "transparent", backgroundColor: "transparent", border: "none", boxShadow: "none", padding: 0 }}
-              onClick={() => {
-                const el = document.getElementById("trade-section");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
+              onClick={() => scrollToTradingPanel("buy")}
             >
               <div className="balance-card-mobile-action-icon">
                 <TrendingUp size={18} />
@@ -1009,11 +1022,7 @@ export default function DashboardPage() {
             <button
               className="balance-card-mobile-action-btn"
               style={{ background: "transparent", backgroundColor: "transparent", border: "none", boxShadow: "none", padding: 0 }}
-              onClick={() => {
-                setOrderTab("convert");
-                const el = document.getElementById("trade-section");
-                if (el) el.scrollIntoView({ behavior: "smooth" });
-              }}
+              onClick={() => scrollToTradingPanel("convert")}
             >
               <div className="balance-card-mobile-action-icon">
                 <ArrowLeftRight size={18} />
