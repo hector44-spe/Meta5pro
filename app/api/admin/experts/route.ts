@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { normalizeExpertPicture, normalizeExpertPictures } from "@/lib/copy-expert-image";
+import { getCatalogExperts, saveCatalogExpert, setCatalogExpertSubscription } from "@/lib/relational-catalogs";
 
 export interface AdminExpertCopier {
   id: string;
@@ -110,23 +111,7 @@ const DEFAULT_EXPERTS: CopyExpertData[] = [
 ];
 
 async function getStoredExperts(): Promise<CopyExpertData[]> {
-  try {
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: "copy_trading_experts" },
-    });
-    if (setting && setting.value) {
-      const parsed =
-        typeof setting.value === "string"
-          ? JSON.parse(setting.value)
-          : (setting.value as unknown);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return normalizeExpertPictures(parsed as CopyExpertData[]);
-      }
-    }
-  } catch (e) {
-    console.error("Failed to read copy_trading_experts", e);
-  }
-  return DEFAULT_EXPERTS;
+  return normalizeExpertPictures(await getCatalogExperts()) as CopyExpertData[];
 }
 
 export async function GET() {
@@ -225,11 +210,7 @@ export async function POST(req: Request) {
           subList.splice(uIdx, 1);
           experts[idx].subscriberList = subList;
           experts[idx].followers = Math.max(0, Number(experts[idx].followers || 0) - 1);
-          await prisma.appSetting.upsert({
-            where: { key: "copy_trading_experts" },
-            create: { key: "copy_trading_experts", value: JSON.stringify(experts) },
-            update: { value: JSON.stringify(experts) },
-          });
+          await setCatalogExpertSubscription(experts[idx].id, userId, false);
         }
       }
       return NextResponse.json({ success: true });
@@ -266,11 +247,7 @@ export async function POST(req: Request) {
         experts.unshift(payload);
       }
 
-      await prisma.appSetting.upsert({
-        where: { key: "copy_trading_experts" },
-        create: { key: "copy_trading_experts", value: JSON.stringify(experts) },
-        update: { value: JSON.stringify(experts) },
-      });
+      await saveCatalogExpert(payload);
 
       return NextResponse.json({ success: true, experts });
     }
@@ -281,11 +258,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Missing expertId" }, { status: 400 });
       }
       experts = experts.filter((e) => e.id !== expertId && e.ref !== expertId);
-      await prisma.appSetting.upsert({
-        where: { key: "copy_trading_experts" },
-        create: { key: "copy_trading_experts", value: JSON.stringify(experts) },
-        update: { value: JSON.stringify(experts) },
-      });
+      await prisma.copyExpert.deleteMany({ where: { OR: [{ id: expertId }, { ref: expertId }] } });
       return NextResponse.json({ success: true, experts });
     }
 

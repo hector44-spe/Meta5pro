@@ -151,6 +151,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     },
   ]);
   const [chatInput, setChatInput] = useState("");
+  const chatMessagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isChatOpen) return;
+    chatMessagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
+  }, [chatMessages, isChatOpen]);
 
   // Modal specific states
   const [copied, setCopied] = useState(false);
@@ -1848,7 +1854,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
         {/* ===================== LIVE CHAT DIALOG ===================== */}
         {isChatOpen && (
-          <div className="live-chat-panel">
+          <div className="live-chat-panel" role="dialog" aria-modal="true" aria-label="Live support">
             {/* Chat Header */}
             <div
               className="live-chat-header"
@@ -1905,6 +1911,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
             {/* Chat Messages */}
             <div
+              className="live-chat-messages"
               style={{
                 flex: 1,
                 padding: "16px",
@@ -1943,6 +1950,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   </div>
                 </div>
               ))}
+              <div ref={chatMessagesEndRef} aria-hidden="true" />
             </div>
 
             {/* Chat Input */}
@@ -1972,6 +1980,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   color: "#fff",
                   fontSize: "14px",
                   outline: "none",
+                  minWidth: 0,
                 }}
               />
               <button

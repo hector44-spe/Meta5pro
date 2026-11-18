@@ -894,7 +894,7 @@ export default function RealEstateDashboardPage() {
             onClick={() => setSelectedProjectForView(null)}
           />
 
-          <div className="project_view_drawer scrollbar-hide">
+          <div className="project_view_drawer scrollbar-hide" role="dialog" aria-modal="true" aria-label="Project details">
             {/* Drawer Header */}
             <div className="project_view_top">
               <button
@@ -907,6 +907,7 @@ export default function RealEstateDashboardPage() {
               <button
                 className="project_view_close_btn"
                 onClick={() => setSelectedProjectForView(null)}
+                aria-label="Close project details"
               >
                 <X size={16} />
               </button>
@@ -1439,6 +1440,9 @@ export default function RealEstateDashboardPage() {
           <div
             className="re_admin_modal project-edit-modal-dialog"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit project"
           >
             <div className="re_admin_modal_header">
               <h3>{editingProject.title}</h3>
@@ -1447,6 +1451,7 @@ export default function RealEstateDashboardPage() {
                 className="close_btn"
                 onClick={handleCloseEditModal}
                 disabled={isSavingProject || isDeletingProject}
+                aria-label="Close edit project"
               >
                 <X size={18} />
               </button>

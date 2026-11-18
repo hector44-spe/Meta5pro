@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { getCatalogSignals } from "@/lib/relational-catalogs";
 
 export interface AdminSignalPurchase {
   id: string;
@@ -64,14 +65,7 @@ export async function GET() {
       date: r.createdAt.toISOString(),
     }));
 
-    // 2. Fetch signal offerings
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: "trading_signals" },
-    });
-    let signals: AdminSignalItem[] = DEFAULT_SIGNALS;
-    if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-      signals = setting.value as unknown as AdminSignalItem[];
-    }
+    const signals = await getCatalogSignals();
 
     return NextResponse.json(
       {
@@ -157,39 +151,16 @@ export async function POST(req: Request) {
 
     // C. Save / update signal package
     if (action === "saveSignal") {
-      const setting = await prisma.appSetting.findUnique({ where: { key: "trading_signals" } });
-      let list: AdminSignalItem[] = DEFAULT_SIGNALS;
-      if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-        list = setting.value as unknown as AdminSignalItem[];
-      }
       const sId = signal.id || `sig_${Date.now()}`;
-      const idx = list.findIndex((s) => s.id === sId || s.name === signal.name);
-      if (idx !== -1) {
-        list[idx] = { ...list[idx], ...signal, id: sId };
-      } else {
-        list.push({ ...signal, id: sId });
-      }
-      await prisma.appSetting.upsert({
-        where: { key: "trading_signals" },
-        update: { value: list as any },
-        create: { key: "trading_signals", value: list as any },
-      });
+      await prisma.tradingSignalConfig.upsert({ where: { id: sId }, update: { name: signal.name, title: signal.title, price: Number(signal.price), strength: Math.max(0, Math.min(100, Number(signal.strength))), placeholder: Number(signal.placeholder ?? signal.price), active: true }, create: { id: sId, name: signal.name, title: signal.title, price: Number(signal.price), strength: Math.max(0, Math.min(100, Number(signal.strength))), placeholder: Number(signal.placeholder ?? signal.price) } });
+      const list = await getCatalogSignals();
       return NextResponse.json({ success: true, signals: list });
     }
 
     // D. Delete signal package
     if (action === "deleteSignal") {
-      const setting = await prisma.appSetting.findUnique({ where: { key: "trading_signals" } });
-      let list: AdminSignalItem[] = DEFAULT_SIGNALS;
-      if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-        list = setting.value as unknown as AdminSignalItem[];
-      }
-      list = list.filter((s) => s.id !== signalId && s.name !== signalId);
-      await prisma.appSetting.upsert({
-        where: { key: "trading_signals" },
-        update: { value: list as any },
-        create: { key: "trading_signals", value: list as any },
-      });
+      await prisma.tradingSignalConfig.updateMany({ where: { OR: [{ id: signalId }, { name: signalId }] }, data: { active: false } });
+      const list = await getCatalogSignals();
       return NextResponse.json({ success: true, signals: list });
     }
 

@@ -24503,6 +24503,24 @@ img, svg, video {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  isolation: isolate;
+  overscroll-behavior: contain;
+}
+
+.live-chat-header,
+.live-chat-form {
+  flex: 0 0 auto;
+}
+
+.live-chat-messages {
+  min-height: 0;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.live-chat-form {
+  position: relative;
+  z-index: 2;
 }
 
 @media (max-width: 768px) {
@@ -24527,6 +24545,9 @@ img, svg, video {
   }
   .live-chat-form {
     padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .live-chat-form input {
+    font-size: 16px !important;
   }
 }
 

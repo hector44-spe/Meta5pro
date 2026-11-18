@@ -3,125 +3,18 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import type { CopyExpert } from "@/types/copy-trading";
 import { normalizeExpertPicture, normalizeExpertPictures } from "@/lib/copy-expert-image";
+import { getCatalogExperts, saveCatalogExpert, setCatalogExpertSubscription } from "@/lib/relational-catalogs";
 
 export const dynamic = "force-dynamic";
 
 export type { CopyExpert };
 
-const DEFAULT_EXPERTS: CopyExpert[] = [
-  {
-    id: "albania-fx",
-    ref: "albania-fx",
-    name: "Albania fx",
-    username: "Support",
-    picture: "/assets/copy-trading/albania_support.png",
-    bio: "I can give you a life you dreamed for",
-    winRate: 92,
-    profitShare: 15,
-    wins: 6988,
-    losses: 11,
-    tradesCount: 6999,
-    minimumStartUp: 1000,
-    followers: 13800,
-    tickType: "gold",
-    subscriberList: [],
-  },
-  {
-    id: "alex-fx",
-    ref: "alex-fx",
-    name: "Alex",
-    username: "Alexfx",
-    picture: "/assets/copy-trading/alex_avatar.png",
-    bio: "We all can make it",
-    winRate: 91,
-    profitShare: 12,
-    wins: 11350,
-    losses: 235,
-    tradesCount: 2428,
-    minimumStartUp: 1000,
-    followers: 67500,
-    tickType: "gold",
-    subscriberList: [],
-  },
-  {
-    id: "Crypto1234",
-    ref: "Crypto1234",
-    name: "Crypto Shark",
-    username: "crypto_shark",
-    picture: "/assets/copy-trading/Crypto-Tokens-and-Crypto-Coins-What-Drives-Performance.png",
-    bio: "Trading crypto momentum and swing positions with strict capital protection.",
-    winRate: 100,
-    profitShare: 15,
-    wins: 101,
-    losses: 0,
-    tradesCount: 101,
-    minimumStartUp: 1500,
-    followers: 8400,
-    tickType: "blue",
-    subscriberList: [],
-  },
-  {
-    id: "Sky1234",
-    ref: "Sky1234",
-    name: "Skyital Ltc",
-    username: "skyital",
-    picture: "/assets/copy-trading/IMG_3760.jpeg2026-07-27T02_13_59.718Z.jpg",
-    bio: "Multi-market algorithm & scalping specialist in equities and forex pairs.",
-    winRate: 94,
-    profitShare: 12,
-    wins: 489,
-    losses: 31,
-    tradesCount: 520,
-    minimumStartUp: 1000,
-    followers: 15200,
-    tickType: "gold",
-    subscriberList: [],
-  },
-];
-
-const SETTING_KEY = "copy_trading_experts";
-const EXPERT_CACHE_TTL_MS = 15_000;
-let storedExpertsCache: CopyExpert[] | null = null;
-let storedExpertsCacheAt = 0;
-
 async function getStoredExperts(): Promise<CopyExpert[]> {
-  if (storedExpertsCache && Date.now() - storedExpertsCacheAt < EXPERT_CACHE_TTL_MS) {
-    return storedExpertsCache;
-  }
-  try {
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: SETTING_KEY },
-    });
-    if (setting && setting.value) {
-      const parsed =
-        typeof setting.value === "string"
-          ? JSON.parse(setting.value)
-          : (setting.value as unknown);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        storedExpertsCache = normalizeExpertPictures(parsed as CopyExpert[]);
-        storedExpertsCacheAt = Date.now();
-        return storedExpertsCache;
-      }
-    }
-  } catch (err) {
-    console.error("Failed to read copy_trading_experts setting", err);
-  }
-  return DEFAULT_EXPERTS;
+  return normalizeExpertPictures(await getCatalogExperts()) as CopyExpert[];
 }
 
 async function saveStoredExperts(experts: CopyExpert[]): Promise<void> {
-  await prisma.appSetting.upsert({
-    where: { key: SETTING_KEY },
-    create: {
-      key: SETTING_KEY,
-      value: JSON.stringify(experts),
-    },
-    update: {
-      value: JSON.stringify(experts),
-    },
-  });
-  storedExpertsCache = normalizeExpertPictures(experts);
-  storedExpertsCacheAt = Date.now();
+  for (const expert of experts) await saveCatalogExpert(expert);
 }
 
 // GET: list experts and current user info
@@ -173,7 +66,7 @@ export async function PUT(req: Request) {
       experts = experts.filter(
         (e) => e.id !== expertId && e.ref !== expertId
       );
-      await saveStoredExperts(experts);
+      await prisma.copyExpert.deleteMany({ where: { OR: [{ id: expertId }, { ref: expertId }] } });
       return NextResponse.json({ success: true, experts });
     }
 
@@ -298,8 +191,8 @@ export async function POST(req: Request) {
     }
 
     target.subscriberList = subList;
-    experts[idx] = target;
-    await saveStoredExperts(experts);
+    await setCatalogExpertSubscription(target.id, session.userId, action === "copy");
+    const refreshed = (await getStoredExperts()).find((item) => item.id === target.id) ?? target;
 
     return NextResponse.json({
       success: true,
@@ -307,7 +200,7 @@ export async function POST(req: Request) {
         action === "copy"
           ? "Expert copied successfully!"
           : "Copying cancelled successfully.",
-      expert: target,
+      expert: refreshed,
     });
   } catch (err: any) {
     console.error("Error in copy trading action:", err);

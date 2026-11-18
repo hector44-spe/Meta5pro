@@ -4,6 +4,7 @@ export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { getCatalogPlans } from "@/lib/relational-catalogs";
 
 export interface AdminSubscriptionPlan {
   id: string;
@@ -62,14 +63,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 1. Subscription plans from appSetting
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: "subscription_plans" },
-    });
-    let plans: AdminSubscriptionPlan[] = DEFAULT_PLANS;
-    if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-      plans = setting.value as unknown as AdminSubscriptionPlan[];
-    }
+    const plans = await getCatalogPlans();
 
     // 2. Active investments / subscriptions from prisma.investment
     const investments = await prisma.investment.findMany({
@@ -130,45 +124,16 @@ export async function POST(req: Request) {
 
     // A. Save plan
     if (action === "savePlan") {
-      const setting = await prisma.appSetting.findUnique({ where: { key: "subscription_plans" } });
-      let currentPlans: AdminSubscriptionPlan[] = DEFAULT_PLANS;
-      if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-        currentPlans = setting.value as unknown as AdminSubscriptionPlan[];
-      }
-
-      let updatedPlans: AdminSubscriptionPlan[];
-      const idx = currentPlans.findIndex((p) => p.id === plan.id);
-      if (idx !== -1) {
-        updatedPlans = [...currentPlans];
-        updatedPlans[idx] = { ...updatedPlans[idx], ...plan };
-      } else {
-        updatedPlans = [...currentPlans, plan];
-      }
-
-      await prisma.appSetting.upsert({
-        where: { key: "subscription_plans" },
-        update: { value: updatedPlans as any },
-        create: { key: "subscription_plans", value: updatedPlans as any },
-      });
-
+      if (!plan?.id || !plan?.name) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+      await prisma.subscriptionPlanConfig.upsert({ where: { id: plan.id }, update: { name: plan.name, title: plan.title, minimum: Number(plan.minimum), maximum: Number(plan.maximum), duration: Number(plan.duration), roi: Number(plan.roi), placeholder: Number(plan.placeholder ?? plan.minimum), active: true }, create: { id: plan.id, name: plan.name, title: plan.title, minimum: Number(plan.minimum), maximum: Number(plan.maximum), duration: Number(plan.duration), roi: Number(plan.roi), placeholder: Number(plan.placeholder ?? plan.minimum) } });
+      const updatedPlans = await getCatalogPlans();
       return NextResponse.json({ success: true, plans: updatedPlans });
     }
 
     // B. Delete plan
     if (action === "deletePlan") {
-      const setting = await prisma.appSetting.findUnique({ where: { key: "subscription_plans" } });
-      let currentPlans: AdminSubscriptionPlan[] = DEFAULT_PLANS;
-      if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-        currentPlans = setting.value as unknown as AdminSubscriptionPlan[];
-      }
-
-      const updatedPlans = currentPlans.filter((p) => p.id !== planId);
-      await prisma.appSetting.upsert({
-        where: { key: "subscription_plans" },
-        update: { value: updatedPlans as any },
-        create: { key: "subscription_plans", value: updatedPlans as any },
-      });
-
+      await prisma.subscriptionPlanConfig.updateMany({ where: { id: planId }, data: { active: false } });
+      const updatedPlans = await getCatalogPlans();
       return NextResponse.json({ success: true, plans: updatedPlans });
     }
 

@@ -9,6 +9,7 @@ import { getTradeConfig, setTradeConfig, deleteTradeConfig } from "@/lib/trade-c
 import { adminTradeActionSchema } from "@/lib/schemas";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { getVerifiedPrice } from "@/lib/prices";
+import { getCatalogExperts } from "@/lib/relational-catalogs";
 
 export async function GET() {
   try {
@@ -97,16 +98,7 @@ export async function POST(req: Request) {
     if (action === "createCopyTrade") {
       const { expertId, symbol, fundingAsset, type, amount, leverage, pnl } = body;
       const marketSymbol = symbol.split("/")[0];
-      const setting = await prisma.appSetting.findUnique({ where: { key: "copy_trading_experts" } });
-      const stored = setting?.value
-        ? (typeof setting.value === "string" ? JSON.parse(setting.value) : setting.value)
-        : [];
-      const experts = Array.isArray(stored) ? stored as Array<{
-        id?: string;
-        ref?: string;
-        name?: string;
-        subscriberList?: string[];
-      }> : [];
+      const experts = await getCatalogExperts();
       const expert = experts.find((item) => item.id === expertId || item.ref === expertId);
       if (!expert) return NextResponse.json({ error: "Expert trader not found" }, { status: 404 });
 

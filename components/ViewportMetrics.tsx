@@ -26,6 +26,7 @@ export default function ViewportMetrics() {
     let stableHeight = window.innerHeight;
     let stableWidth = window.innerWidth;
     let frame = 0;
+    let keyboardWasOpen = false;
 
     const publish = () => {
       cancelAnimationFrame(frame);
@@ -63,17 +64,19 @@ export default function ViewportMetrics() {
 
         // When keyboard closes, iOS Safari fails to reset window.scrollY, causing
         // the top navbar to disappear and the bottom of the page to crop.
-        if (!keyboardOpen && window.scrollY !== 0) {
+        if (keyboardWasOpen && !keyboardOpen && window.scrollY !== 0) {
           window.scrollTo(0, 0);
         }
+        keyboardWasOpen = keyboardOpen;
       });
     };
 
     const handleFocusOut = () => {
       // Restore window scroll when inputs blur so headers never get scrolled off-screen
       setTimeout(() => {
-        if (!isEditableElement(document.activeElement)) {
+        if (keyboardWasOpen && !isEditableElement(document.activeElement)) {
           window.scrollTo(0, 0);
+          keyboardWasOpen = false;
         }
       }, 80);
     };

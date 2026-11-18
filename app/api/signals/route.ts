@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { getCatalogSignals } from "@/lib/relational-catalogs";
 
 export const dynamic = "force-dynamic";
 
@@ -69,14 +70,7 @@ export async function GET() {
     const session = await getSession();
     const isAdmin = session?.role === "ADMIN";
 
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: "trading_signals" },
-    });
-
-    let signals: SignalItem[] = DEFAULT_SIGNALS;
-    if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-      signals = setting.value as unknown as SignalItem[];
-    }
+    const signals = await getCatalogSignals();
 
     return NextResponse.json({
       success: true,
@@ -106,36 +100,16 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { action, signal, signalId } = body;
 
-    const setting = await prisma.appSetting.findUnique({
-      where: { key: "trading_signals" },
-    });
-
-    let currentSignals: SignalItem[] = DEFAULT_SIGNALS;
-    if (setting && Array.isArray(setting.value) && setting.value.length > 0) {
-      currentSignals = setting.value as unknown as SignalItem[];
-    }
-
-    let updatedSignals: SignalItem[];
-
     if (action === "save") {
-      const idx = currentSignals.findIndex((s) => s.id === signal.id);
-      if (idx !== -1) {
-        updatedSignals = [...currentSignals];
-        updatedSignals[idx] = { ...updatedSignals[idx], ...signal };
-      } else {
-        updatedSignals = [...currentSignals, signal];
-      }
+      if (!signal?.id || !signal?.name) return NextResponse.json({ error: "Invalid signal" }, { status: 400 });
+      await prisma.tradingSignalConfig.upsert({ where: { id: signal.id }, update: { name: signal.name, title: signal.title, price: Number(signal.price), strength: Math.max(0, Math.min(100, Number(signal.strength))), placeholder: Number(signal.placeholder ?? signal.price), active: true }, create: { id: signal.id, name: signal.name, title: signal.title, price: Number(signal.price), strength: Math.max(0, Math.min(100, Number(signal.strength))), placeholder: Number(signal.placeholder ?? signal.price) } });
     } else if (action === "delete") {
-      updatedSignals = currentSignals.filter((s) => s.id !== signalId);
+      await prisma.tradingSignalConfig.updateMany({ where: { id: signalId }, data: { active: false } });
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    await prisma.appSetting.upsert({
-      where: { key: "trading_signals" },
-      update: { value: updatedSignals as any },
-      create: { key: "trading_signals", value: updatedSignals as any },
-    });
+    const updatedSignals = await getCatalogSignals();
 
     return NextResponse.json({
       success: true,

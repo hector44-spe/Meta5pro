@@ -43,15 +43,15 @@ model User {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  wallet       Wallet?
-  investments  Investment[]
-  transactions Transaction[]
-  activityLogs ActivityLog[]
-  positions    Position[]
-  resetTokens  PasswordResetToken[]
-  uploads      ProofUpload[]
-  withdrawalCodes WithdrawalCode[]
-  notifications   Notification[]
+  wallet                Wallet?
+  investments           Investment[]
+  transactions          Transaction[]
+  activityLogs          ActivityLog[]
+  positions             Position[]
+  resetTokens           PasswordResetToken[]
+  uploads               ProofUpload[]
+  withdrawalCodes       WithdrawalCode[]
+  notifications         Notification[]
   realEstateInvestments RealEstateInvestment[]
   coldStorageAssets     ColdStorageAsset[]
   cards                 Card[]
@@ -59,6 +59,7 @@ model User {
   connectedWallets      ConnectedWallet[]
   portfolioAssets       AssetBalance[]
   closedTradeResults    ClosedTradeResult[]
+  copySubscriptions     CopyExpertSubscription[]
 
   @@map("users")
 }
@@ -161,20 +162,20 @@ model DepositAddress {
 }
 
 model Position {
-  id         String    @id @default(uuid())
-  userId     String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  symbol     String
-  fundingAsset String   @default("USD")
-  type       String // BUY | SELL | CONVERT
-  amount     Decimal   @db.Decimal(18, 2)
-  entryPrice Decimal   @db.Decimal(24, 8)
-  leverage   Int       @default(1)
-  status     String    @default("OPEN") // OPEN | CLOSED
-  pnl        Decimal   @default(0) @db.Decimal(18, 2)
-  closedAt   DateTime?
-  createdAt  DateTime  @default(now())
-  result     ClosedTradeResult?
+  id           String             @id @default(uuid())
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol       String
+  fundingAsset String             @default("USD")
+  type         String // BUY | SELL | CONVERT
+  amount       Decimal            @db.Decimal(18, 2)
+  entryPrice   Decimal            @db.Decimal(24, 8)
+  leverage     Int                @default(1)
+  status       String             @default("OPEN") // OPEN | CLOSED
+  pnl          Decimal            @default(0) @db.Decimal(18, 2)
+  closedAt     DateTime?
+  createdAt    DateTime           @default(now())
+  result       ClosedTradeResult?
 
   @@index([userId, createdAt])
   @@map("positions")
@@ -265,6 +266,75 @@ model AppSetting {
   @@map("app_settings")
 }
 
+model CopyExpert {
+  id             String                   @id
+  ref            String                   @unique
+  name           String
+  username       String                   @default("")
+  picture        String
+  bio            String                   @default("")
+  winRate        Decimal                  @default(0) @db.Decimal(6, 2)
+  profitShare    Decimal                  @default(0) @db.Decimal(6, 2)
+  wins           Int                      @default(0)
+  losses         Int                      @default(0)
+  tradesCount    Int                      @default(0)
+  minimumStartUp Decimal                  @default(0) @db.Decimal(18, 2)
+  followers      Int                      @default(0)
+  tickType       String                   @default("none")
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  subscribers    CopyExpertSubscription[]
+
+  @@map("copy_experts")
+}
+
+model CopyExpertSubscription {
+  expertId  String
+  userId    String
+  expert    CopyExpert @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@id([expertId, userId])
+  @@index([userId, active])
+  @@map("copy_expert_subscriptions")
+}
+
+model SubscriptionPlanConfig {
+  id          String   @id
+  name        String
+  title       String
+  minimum     Decimal  @db.Decimal(18, 2)
+  maximum     Decimal  @db.Decimal(18, 2)
+  duration    Int
+  roi         Decimal  @db.Decimal(8, 2)
+  placeholder Decimal  @db.Decimal(18, 2)
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active, sortOrder])
+  @@map("subscription_plan_configs")
+}
+
+model TradingSignalConfig {
+  id          String   @id
+  name        String
+  title       String
+  price       Decimal  @db.Decimal(18, 2)
+  strength    Int
+  placeholder Decimal  @db.Decimal(18, 2)
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([active, sortOrder])
+  @@map("trading_signal_configs")
+}
 
 model RealEstateInvestment {
   id             String   @id @default(uuid())
@@ -299,21 +369,21 @@ model ColdStorageAsset {
 }
 
 model Card {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ref         String   @unique
-  type        String
-  cardNumber  String
-  last4       String
-  expiryDate  String
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ref          String   @unique
+  type         String
+  cardNumber   String
+  last4        String
+  expiryDate   String
   cvvEncrypted String?
-  pinHash     String?
-  status      String   @default("pending")
-  balance     Decimal  @default(0) @db.Decimal(18, 2)
-  issuanceFee Decimal  @default(0) @db.Decimal(18, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  pinHash      String?
+  status       String   @default("pending")
+  balance      Decimal  @default(0) @db.Decimal(18, 2)
+  issuanceFee  Decimal  @default(0) @db.Decimal(18, 2)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([userId])
   @@map("cards")
@@ -333,7 +403,6 @@ model SignalPurchase {
   @@index([userId])
   @@map("signal_purchases")
 }
-
 
 model ConnectedWallet {
   id        String   @id @default(uuid())

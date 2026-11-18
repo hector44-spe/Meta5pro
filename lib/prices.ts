@@ -1,6 +1,7 @@
 /**
  * Live market prices across all asset classes:
- * - Crypto & Fiat: Coinbase public exchange rates (650+ pairs)
+ * - Crypto: Binance Spot 24-hour tickers (verified last price + movement)
+ * - Fiat/fallback crypto: Coinbase public exchange rates
  * - Stocks & Equities: Yahoo Finance live regular market quotes
  * - Commodities: Real-time futures mapping (XAU/Gold, XAG/Silver, Oil)
  *
@@ -12,6 +13,7 @@ import { prisma } from "./prisma";
 import assetsData from "@/data/assetsData.json";
 
 const COINBASE_URL = "https://api.coinbase.com/v2/exchange-rates?currency=USD";
+const BINANCE_24H_URL = "https://api.binance.com/api/v3/ticker/24hr";
 const TTL_MS = 15_000;
 const DB_CACHE_KEY = "market_prices_cache";
 
@@ -30,6 +32,12 @@ const COMMODITY_MAP: Record<string, string> = {
 const EQUITY_SYMBOLS = (assetsData as Array<{ symbol: string; type: string }>)
   .filter((asset) => asset.type === "Stocks")
   .map((asset) => asset.symbol.toUpperCase());
+
+const CRYPTO_SYMBOLS = new Set(
+  (assetsData as Array<{ symbol: string; type: string }>)
+    .filter((asset) => asset.type === "Crypto")
+    .map((asset) => asset.symbol.toUpperCase()),
+);
 
 const YAHOO_SYMBOLS = new Set([
   ...Object.keys(COMMODITY_MAP),
@@ -112,6 +120,27 @@ let cache: PriceSnapshot | null = null;
 let cacheAt = 0;
 let inflight: Promise<PriceSnapshot> | null = null;
 const stockCache = new Map<string, { price: number; change24h: number; timestamp: number }>();
+
+async function fetchCryptoSnapshot(): Promise<Record<string, { price: number; change24h: number }>> {
+  const res = await fetch(BINANCE_24H_URL, { cache: "no-store", signal: AbortSignal.timeout(6000) });
+  if (!res.ok) throw new Error(`Binance HTTP ${res.status}`);
+  const rows = await res.json() as Array<{ symbol?: string; lastPrice?: string; priceChangePercent?: string }>;
+  const quotes: Record<string, { price: number; change24h: number }> = {};
+  for (const row of rows) {
+    const pair = String(row.symbol || "").toUpperCase();
+    if (!pair.endsWith("USDT")) continue;
+    const symbol = pair.slice(0, -4);
+    if (!CRYPTO_SYMBOLS.has(symbol)) continue;
+    const price = Number(row.lastPrice);
+    const change24h = Number(row.priceChangePercent);
+    if (price > 0 && Number.isFinite(price) && Number.isFinite(change24h)) {
+      quotes[symbol] = { price, change24h };
+    }
+  }
+  if (Object.keys(quotes).length === 0) throw new Error("Binance returned no supported tickers");
+  quotes.USDT = { price: 1, change24h: 0 };
+  return quotes;
+}
 
 /** Fetch every supported equity in one request, avoiding one network call per table row. */
 async function fetchEquitySnapshot(): Promise<Record<string, { price: number; change24h: number }>> {
@@ -249,11 +278,19 @@ function persistCache(snap: PriceSnapshot) {
 }
 
 async function fetchSnapshot(): Promise<PriceSnapshot> {
-  const res = await fetch(COINBASE_URL, { cache: "no-store", signal: AbortSignal.timeout(6000) });
-  if (!res.ok) throw new Error(`Coinbase HTTP ${res.status}`);
-  const body = (await res.json()) as { data?: { rates?: Record<string, string> } };
-  const rates = body.data?.rates;
-  if (!rates) throw new Error("Coinbase returned no exchange rates");
+  const [binanceResult, coinbaseResult] = await Promise.allSettled([
+    fetchCryptoSnapshot(),
+    fetch(COINBASE_URL, { cache: "no-store", signal: AbortSignal.timeout(6000) }).then(async (res) => {
+      if (!res.ok) throw new Error(`Coinbase HTTP ${res.status}`);
+      const body = (await res.json()) as { data?: { rates?: Record<string, string> } };
+      if (!body.data?.rates) throw new Error("Coinbase returned no exchange rates");
+      return body.data.rates;
+    }),
+  ]);
+  if (binanceResult.status === "rejected" && coinbaseResult.status === "rejected") {
+    throw new Error("All crypto price providers are unavailable");
+  }
+  const rates = coinbaseResult.status === "fulfilled" ? coinbaseResult.value : {};
 
   const prices: Record<string, number> = {
     ...CALIBRATED_BASELINES,
@@ -267,6 +304,14 @@ async function fetchSnapshot(): Promise<PriceSnapshot> {
     if (r > 0 && Number.isFinite(r)) {
       prices[sym.toUpperCase()] = 1 / r;
       liveSymbols.add(sym.toUpperCase());
+    }
+  }
+
+  if (binanceResult.status === "fulfilled") {
+    for (const [sym, quote] of Object.entries(binanceResult.value)) {
+      prices[sym] = quote.price;
+      changes24h[sym] = quote.change24h;
+      liveSymbols.add(sym);
     }
   }
 
