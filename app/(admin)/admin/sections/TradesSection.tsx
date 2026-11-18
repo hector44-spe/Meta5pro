@@ -695,9 +695,9 @@ export default function TradesSection({
                 <X size={18} />
               </button>
             </div>
-            <div style={{ display: "grid", gap: "14px", marginTop: "12px", width: "100%" }}>
+            <div className="project-form-stack" style={{ display: "grid", gap: "14px", marginTop: "12px", width: "100%" }}>
               {!editTrade.id && (
-                <div>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
                     Select User
                   </label>
@@ -715,8 +715,8 @@ export default function TradesSection({
                 </div>
               )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
-                <div>
+              <div className="project-form-grid project-form-grid--three" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
                     Symbol
                   </label>
@@ -728,7 +728,7 @@ export default function TradesSection({
                     onChange={(e) => setEditTrade({ ...editTrade, symbol: e.target.value })}
                   />
                 </div>
-                <div>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
                     Funding asset / result row
                   </label>
@@ -741,7 +741,7 @@ export default function TradesSection({
                     placeholder="e.g. XRP"
                   />
                 </div>
-                <div>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
                     Type
                   </label>
@@ -757,8 +757,8 @@ export default function TradesSection({
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
-                <div>
+              <div className="project-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
                     Amount ($)
                   </label>
@@ -770,7 +770,7 @@ export default function TradesSection({
                     onChange={(e) => setEditTrade({ ...editTrade, amount: Number(e.target.value) })}
                   />
                 </div>
-                <div>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
                     PnL ($ Profit / Loss)
                   </label>
@@ -782,7 +782,7 @@ export default function TradesSection({
                     placeholder="e.g. 250 or -50"
                   />
                   {/* Preset quick buttons */}
-                  <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6, width: "100%" }}>
+                  <div className="project-preset-row" style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 6, width: "100%" }}>
                     {[50, 100, 250, 500, 1000].map((v) => (
                       <button
                         key={v}
@@ -846,7 +846,7 @@ export default function TradesSection({
                 </div>
               )}
 
-              <div>
+              <div className="project-form-group">
                 <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
                   Status
                 </label>

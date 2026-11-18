@@ -131,7 +131,7 @@ export default function NotificationsPanel({
                 {!n.read && <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4763f0", flexShrink: 0 }} />}
               </div>
               <div style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.65)", marginTop: "4px", lineHeight: 1.5, wordBreak: "break-word" }}>
-                {n.body}
+                {n.body.replace(/\s+after the position was closed by an? administrators?\.?/gi, ".")}
               </div>
               <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.4)", marginTop: "8px" }}>{timeAgo(n.createdAt)}</div>
             </div>

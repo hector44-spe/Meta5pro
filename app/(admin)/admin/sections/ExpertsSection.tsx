@@ -959,8 +959,8 @@ export default function ExpertsSection({
               </button>
             </div>
 
-            <div style={{ display: "grid", gap: 14, marginTop: 16 }}>
-              <div>
+            <div className="project-form-stack" style={{ display: "grid", gap: 14, marginTop: 16 }}>
+              <div className="project-form-group">
                 <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Market symbol</label>
                 <input
                   value={copyTrade.symbol}
@@ -969,7 +969,7 @@ export default function ExpertsSection({
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
                 />
               </div>
-              <div>
+              <div className="project-form-group">
                 <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Funding asset / result row</label>
                 <input
                   value={copyTrade.fundingAsset}
@@ -978,8 +978,8 @@ export default function ExpertsSection({
                   style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", textTransform: "uppercase" }}
                 />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
-                <div>
+              <div className="project-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Side</label>
                   <select
                     value={copyTrade.type}
@@ -990,7 +990,7 @@ export default function ExpertsSection({
                     <option value="SELL">Sell</option>
                   </select>
                 </div>
-                <div>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Notional per copier ($)</label>
                   <input
                     type="number"
@@ -1000,7 +1000,7 @@ export default function ExpertsSection({
                     style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
                   />
                 </div>
-                <div>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Leverage</label>
                   <input
                     type="number"
@@ -1011,7 +1011,7 @@ export default function ExpertsSection({
                     style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
                   />
                 </div>
-                <div>
+                <div className="project-form-group">
                   <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Starting P&amp;L ($)</label>
                   <input
                     type="number"
@@ -1021,8 +1021,8 @@ export default function ExpertsSection({
                   />
                 </div>
               </div>
-              <div className={styles.faint} style={{ fontSize: 12, lineHeight: 1.5 }}>
-                Required margin per copier: {usd(copyTrade.amount / Math.max(1, copyTrade.leverage))}. The batch is atomic: if any active copier cannot fund the margin, no positions are created.
+              <div className={`${styles.faint} project-form-note`} style={{ fontSize: 12, lineHeight: 1.5 }}>
+                Required margin per copier: {usd(copyTrade.amount / Math.max(1, copyTrade.leverage))}. Each copier is processed safely; accounts without enough available balance are skipped and reported.
               </div>
             </div>
 

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
+import { Check, X, Info } from "lucide-react";
 
 export interface CustomNotificationState {
   type: "success" | "error" | "info";
@@ -38,12 +38,27 @@ export default function CustomNotificationBar({
   const isSuccess = notification.type === "success";
   const isError = notification.type === "error";
 
-  const accentColor = isSuccess ? "#02B15A" : isError ? "#ff3b4e" : "#4F6BFF";
+  // Exact design replica from image 2:
+  // - Green mint pill for success / profit
+  // - Soft red pill for error / loss
+  // - Soft blue pill for info
   const bgColor = isSuccess
-    ? "rgba(2, 177, 90, 0.15)"
+    ? "#EBF9F1"
     : isError
-    ? "rgba(255, 59, 78, 0.15)"
-    : "rgba(79, 107, 255, 0.15)";
+    ? "#FEEFEF"
+    : "#EEF2FF";
+
+  const borderColor = isSuccess
+    ? "rgba(2, 177, 90, 0.28)"
+    : isError
+    ? "rgba(220, 38, 38, 0.28)"
+    : "rgba(79, 107, 255, 0.28)";
+
+  const textColor = isSuccess
+    ? "#028643"
+    : isError
+    ? "#dc2626"
+    : "#4763f0";
 
   const content = (
     <div
@@ -54,14 +69,14 @@ export default function CustomNotificationBar({
         top: "calc(76px + env(safe-area-inset-top, 0px))",
         left: "50%",
         transform: "translateX(-50%)",
-        zIndex: 1000000,
+        zIndex: 90000,
         width: "calc(100% - 32px)",
-        maxWidth: "480px",
-        backgroundColor: "#16181e",
-        border: `1px solid ${accentColor}55`,
-        boxShadow: `0 12px 36px rgba(0, 0, 0, 0.75), 0 0 20px ${accentColor}25`,
-        borderRadius: "12px",
-        padding: "14px 16px",
+        maxWidth: "460px",
+        backgroundColor: bgColor,
+        border: `1px solid ${borderColor}`,
+        boxShadow: "0 10px 30px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08)",
+        borderRadius: "14px",
+        padding: "12px 16px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -71,29 +86,62 @@ export default function CustomNotificationBar({
         pointerEvents: "auto",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            width: "32px",
-            height: "32px",
-            borderRadius: "50%",
-            backgroundColor: bgColor,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          {isSuccess && <CheckCircle2 size={18} color="#02B15A" />}
-          {isError && <AlertCircle size={18} color="#ff3b4e" />}
-          {!isSuccess && !isError && <Info size={18} color="#4F6BFF" />}
-        </div>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: 0 }}>
+        {isSuccess && (
+          <div
+            style={{
+              width: "22px",
+              height: "22px",
+              borderRadius: "50%",
+              backgroundColor: "#028643",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Check size={14} color="#ffffff" strokeWidth={3} />
+          </div>
+        )}
+        {isError && (
+          <div
+            style={{
+              width: "22px",
+              height: "22px",
+              borderRadius: "50%",
+              backgroundColor: "#dc2626",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <X size={13} color="#ffffff" strokeWidth={3} />
+          </div>
+        )}
+        {!isSuccess && !isError && (
+          <div
+            style={{
+              width: "22px",
+              height: "22px",
+              borderRadius: "50%",
+              backgroundColor: "#4763f0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Info size={13} color="#ffffff" strokeWidth={3} />
+          </div>
+        )}
+
         <p
           style={{
             margin: 0,
-            fontSize: "13.5px",
-            fontWeight: 500,
-            color: "#ffffff",
+            fontSize: "14px",
+            fontWeight: 600,
+            color: textColor,
             lineHeight: "1.4",
             wordBreak: "break-word",
             overflowWrap: "anywhere",
@@ -109,18 +157,20 @@ export default function CustomNotificationBar({
         style={{
           background: "transparent",
           border: "none",
-          color: "rgba(255, 255, 255, 0.6)",
+          color: textColor,
+          opacity: 0.75,
           cursor: "pointer",
-          padding: "6px",
+          padding: "4px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
           flexShrink: 0,
           borderRadius: "6px",
+          transition: "opacity 0.15s ease",
         }}
         aria-label="Close notification"
       >
-        <X size={18} />
+        <X size={16} />
       </button>
 
       <style jsx global>{`

@@ -160,7 +160,7 @@ export default function ReferralsDrawer({
 
       {/* Sliding Drawer */}
       <div
-        className="scrollbar-hide"
+        className="scrollbar-hide project-referrals-drawer"
         style={{
           position: "fixed",
           top: 0,

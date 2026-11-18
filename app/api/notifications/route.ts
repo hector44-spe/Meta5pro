@@ -17,7 +17,11 @@ export async function GET() {
     }),
     prisma.notification.count({ where: { userId: session.userId, read: false } }),
   ]);
-  return NextResponse.json({ success: true, notifications, unread });
+  const cleanedNotifications = notifications.map((n) => ({
+    ...n,
+    body: n.body.replace(/\s+after the position was closed by an? administrators?\.?/gi, "."),
+  }));
+  return NextResponse.json({ success: true, notifications: cleanedNotifications, unread });
 }
 
 /** Marks notifications as read: `{ ids: [...] }` for some, or `{ all: true }`. */

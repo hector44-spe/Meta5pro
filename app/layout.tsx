@@ -3,6 +3,7 @@ import "@/styles/metagold.css";
 import "@/styles/globals.css";
 import "@/styles/responsive-contract.css";
 import "@/styles/edit-modal-stability.css";
+import "@/styles/ui-layout-contract.css";
 import GoogleTranslateProvider from "@/components/GoogleTranslateProvider";
 import ViewportMetrics from "@/components/ViewportMetrics";
 

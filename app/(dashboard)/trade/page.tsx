@@ -508,6 +508,7 @@ function TradingContent() {
 
   return (
     <div
+      className="dashboard-trade-page"
       style={{
         width: "100%",
         maxWidth: "1400px",
@@ -1721,8 +1722,8 @@ function TradingContent() {
                         No open trades at the moment.
                       </div>
                     ) : (
-                      <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", minWidth: "750px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                      <div className="dashboard-trade-table-scroll" style={{ overflowX: "auto" }}>
+                        <table className="dashboard-trade-table" style={{ width: "100%", minWidth: "750px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
                           <thead>
                             <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
                               <th style={{ padding: "10px 14px", fontWeight: 500, whiteSpace: "nowrap" }}>Asset</th>
@@ -1873,8 +1874,8 @@ function TradingContent() {
                         No closed trades yet.
                       </div>
                     ) : (
-                      <div style={{ overflowX: "auto" }}>
-                        <table style={{ width: "100%", minWidth: "700px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+                      <div className="dashboard-trade-table-scroll" style={{ overflowX: "auto" }}>
+                        <table className="dashboard-trade-table" style={{ width: "100%", minWidth: "700px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
                           <thead>
                             <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
                               <th style={{ padding: "10px 14px", fontWeight: 500 }}>Asset</th>
@@ -1950,8 +1951,8 @@ function TradingContent() {
             <div style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255, 255, 255, 0.85)" }}>
               Swap ({swaps.length})
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", minWidth: "600px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
+            <div className="dashboard-trade-table-scroll" style={{ overflowX: "auto" }}>
+              <table className="dashboard-trade-table" style={{ width: "100%", minWidth: "600px", borderCollapse: "collapse", fontSize: "12px", textAlign: "left" }}>
                 <thead>
                   <tr style={{ color: "rgba(255, 255, 255, 0.4)", borderBottom: "1px solid rgba(255, 255, 255, 0.06)" }}>
                     <th style={{ padding: "10px 14px", fontWeight: 500 }}>Date</th>

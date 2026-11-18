@@ -94,7 +94,7 @@ export async function closePositionAndSettle({
         userId: pos.userId,
         kind: finalPnl >= 0 ? "trade_profit" : "trade_loss",
         title: `${signedPnl} ${outcome} made`,
-        body: `${signedPnl} ${outcome} made using ${fundingAsset} on ${pos.symbol}. ${fmtUsd(returnCapital)} returned to your trading balance${closedByAdmin ? " after the position was closed by an administrator" : ""}.`,
+        body: `${signedPnl} ${outcome} made using ${fundingAsset} on ${pos.symbol}. ${fmtUsd(returnCapital)} returned to your trading balance.`,
       },
     });
 

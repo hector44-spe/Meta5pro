@@ -116,7 +116,7 @@ export async function POST(req: Request) {
       }
       const activeSubscribers = await prisma.user.findMany({
         where: { id: { in: subscriberIds }, status: "ACTIVE" },
-        select: { id: true, wallet: { select: { mainBalance: true } } },
+        select: { id: true, email: true, wallet: { select: { mainBalance: true } } },
       });
       if (activeSubscribers.length === 0) {
         return NextResponse.json({ error: "This expert has no active copiers" }, { status: 409 });
@@ -125,24 +125,24 @@ export async function POST(req: Request) {
       if (!livePrice) return NextResponse.json({ error: "A recent verified market price is unavailable" }, { status: 503 });
       const requiredMargin = money(amount / leverage);
       const initialPnl = money(pnl ?? 0);
-      const accountsWithoutWallets = activeSubscribers.filter((user) => !user.wallet).length;
-      if (accountsWithoutWallets > 0) {
-        return NextResponse.json({
-          error: `${accountsWithoutWallets} active copier account${accountsWithoutWallets === 1 ? " has" : "s have"} no trading wallet. No trades were created.`,
-        }, { status: 409 });
-      }
-      const underfunded = activeSubscribers.filter((user) => Number(user.wallet?.mainBalance ?? 0) < requiredMargin).length;
-      if (underfunded > 0) {
-        return NextResponse.json({
-          error: `${underfunded} active copier${underfunded === 1 ? " has" : "s have"} insufficient margin. No trades were created.`,
-        }, { status: 400 });
-      }
+      const eligibleSubscribers = activeSubscribers.filter(
+        (user) => user.wallet && Number(user.wallet.mainBalance) >= requiredMargin,
+      );
+      const failed: Array<{ email: string; reason: string }> = activeSubscribers
+        .filter((user) => !user.wallet || Number(user.wallet.mainBalance) < requiredMargin)
+        .map((user) => ({
+          email: user.email,
+          reason: !user.wallet
+            ? "no trading wallet is available"
+            : `available balance is $${Number(user.wallet.mainBalance).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+        }));
 
-      let created;
-      try {
-        created = await prisma.$transaction(async (tx) => {
-          const positions = [];
-          for (const user of activeSubscribers) {
+      // Keep each copier atomic, but do not roll back successful copier accounts
+      // because a different account changed balance between validation and debit.
+      const created = [];
+      for (const user of eligibleSubscribers) {
+        try {
+          const position = await prisma.$transaction(async (tx) => {
             await debitMain(tx, user.id, requiredMargin, {
               referenceType: "COPY_TRADE_CREATE",
               referenceId: expertId,
@@ -167,15 +167,24 @@ export async function POST(req: Request) {
                 body: `${expert.name || "Your expert"} opened a ${type.toLowerCase()} position on ${marketSymbol}. Margin held: $${requiredMargin.toLocaleString("en-US", { minimumFractionDigits: 2 })}.`,
               },
             });
-            positions.push(position);
-          }
-          return positions;
-        }, { maxWait: 10_000, timeout: 120_000 });
-      } catch (error) {
-        if (error instanceof InsufficientFundsError) throw error;
-        console.error("Create copied trade batch error:", error);
+            return position;
+          }, { maxWait: 10_000, timeout: 30_000 });
+          created.push(position);
+        } catch (error) {
+          const reason = error instanceof InsufficientFundsError
+            ? `available balance is $${error.available.toLocaleString("en-US", { minimumFractionDigits: 2 })}`
+            : "the account could not be updated";
+          failed.push({ email: user.email, reason });
+          console.error("Create copied trade for copier failed:", { userId: user.id, expertId, error });
+        }
+      }
+
+      if (created.length === 0) {
+        const detail = failed[0]
+          ? ` ${failed[0].email}: ${failed[0].reason}.`
+          : "";
         return NextResponse.json({
-          error: "The copied-trade batch could not be completed. No copier accounts were charged; please try again.",
+          error: `No copied trades could be opened.${detail}`,
         }, { status: 409 });
       }
 
@@ -189,7 +198,11 @@ export async function POST(req: Request) {
         success: true,
         positions: created,
         createdCount: created.length,
-        message: `Trade opened for ${created.length} active copier${created.length === 1 ? "" : "s"}.`,
+        failedCount: failed.length,
+        failures: failed,
+        message: failed.length > 0
+          ? `Trade opened for ${created.length} copier${created.length === 1 ? "" : "s"}; ${failed.length} account${failed.length === 1 ? " was" : "s were"} skipped.`
+          : `Trade opened for ${created.length} active copier${created.length === 1 ? "" : "s"}.`,
       });
     }
 

@@ -1078,3 +1078,53 @@
     transform: translateY(0);
   }
 }
+
+/* Professional responsive redesign: the shell scrolls; this card never traps the
+   navbar, and tabs do not depend on a measured indicator after navigation. */
+.subscribe-page-wrapper { min-width: 0; height: auto; }
+.subscribe-content-card {
+  min-width: 0;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+  padding: clamp(16px, 2.5vw, 28px) !important;
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(255,255,255,.035), rgba(255,255,255,.012)) !important;
+}
+.subscription_bottom { margin-top: clamp(24px, 4vw, 40px); }
+.subscription-switcher { width: 100%; overflow: visible; }
+.subscription-switcher .switcher_wrapper_inner {
+  width: min(100%, 620px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 5px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.subscription-switcher .switcher_item {
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 12px;
+  border-radius: 9px;
+  white-space: normal;
+  line-height: 1.2;
+}
+.subscription-switcher .switcher_item.active {
+  background: linear-gradient(135deg, rgba(71,99,240,.35), rgba(71,99,240,.15));
+  box-shadow: inset 0 0 0 1px rgba(112,135,255,.45);
+}
+.subscription-switcher .switcher_indicator { display: none !important; }
+.subscription-cards-grid { grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); }
+
+@media (max-width: 600px) {
+  .subscribe-page-wrapper { padding-bottom: max(28px, env(safe-area-inset-bottom, 0px)); }
+  .subscribe-content-card { padding: 14px 12px 28px !important; }
+  .subscription-balance-box { align-items: flex-start; gap: 14px; }
+  .subscription-balance-box .user_balance { font-size: clamp(22px, 8vw, 30px); }
+  .subscription-deposit-btn { flex: 0 0 auto; padding: 9px 12px !important; }
+  .subscription-switcher .switcher_item { min-height: 48px; padding-inline: 6px; font-size: 12px; }
+  .subscription_plans_header { gap: 12px; flex-wrap: wrap; }
+  .subscribe_history_item { align-items: flex-start; gap: 12px; }
+}
