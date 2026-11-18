@@ -39,6 +39,7 @@ import {
   ArrowLeft,
   Cpu,
   UserPlus,
+  ChevronDown,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -95,6 +96,8 @@ interface AdminUser {
   status: string;
   createdAt: string;
   mainBalance: number;
+  portfolioBalance: number;
+  holdingsValue: number;
   interestBalance: number;
   totalDeposited: number;
   totalWithdrawn: number;
@@ -694,7 +697,7 @@ function Overview({
 }) {
   const sum = (list: AdminTx[]) => list.reduce((a, t) => a + Number(t.amount), 0);
   const investors = users.filter((u) => u.role !== "ADMIN");
-  const totalBalances = investors.reduce((a, u) => a + Number(u.mainBalance), 0);
+  const totalBalances = investors.reduce((a, u) => a + Number(u.portfolioBalance ?? u.mainBalance), 0);
   const waiting = [...pendingDeposits, ...pendingWithdrawals].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
@@ -1079,6 +1082,8 @@ function UsersSection({
   const [amount, setAmount] = useState("");
   const [action, setAction] = useState<"credit" | "debit">("credit");
   const [assetSymbol, setAssetSymbol] = useState("USD");
+  const [assetPickerOpen, setAssetPickerOpen] = useState(false);
+  const [assetSearch, setAssetSearch] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -1102,6 +1107,14 @@ function UsersSection({
       u.username.toLowerCase().includes(s)
     );
   });
+  const selectedAssetOption = ADMIN_ASSET_OPTIONS.find((asset) => asset.symbol === assetSymbol) || ADMIN_ASSET_OPTIONS[0];
+  const filteredAssetOptions = ADMIN_ASSET_OPTIONS.filter((asset) => {
+    const query = assetSearch.trim().toLowerCase();
+    return !query
+      || asset.symbol.toLowerCase().includes(query)
+      || asset.name.toLowerCase().includes(query)
+      || asset.type.toLowerCase().includes(query);
+  }).slice(0, 60);
 
   const openAdjust = (u: AdminUser) => {
     setSelected(u);
@@ -1109,6 +1122,8 @@ function UsersSection({
     setNote("");
     setAction("credit");
     setAssetSymbol("USD");
+    setAssetPickerOpen(false);
+    setAssetSearch("");
     setError("");
   };
 
@@ -1221,7 +1236,7 @@ function UsersSection({
                   <th style={{ minWidth: "190px" }}>User</th>
                   <th style={{ minWidth: "85px" }}>Role</th>
                   <th style={{ minWidth: "90px" }}>Status</th>
-                  <th className={styles.right} style={{ minWidth: "115px" }}>Balance</th>
+                  <th className={styles.right} style={{ minWidth: "125px" }}>Total balance</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
@@ -1262,7 +1277,7 @@ function UsersSection({
                   <th style={{ minWidth: "190px" }}>User</th>
                   <th style={{ minWidth: "85px" }}>Role</th>
                   <th style={{ minWidth: "90px" }}>Status</th>
-                  <th className={styles.right} style={{ minWidth: "115px" }}>Balance</th>
+                  <th className={styles.right} style={{ minWidth: "125px" }}>Total balance</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
@@ -1283,7 +1298,7 @@ function UsersSection({
                     </td>
                     <td>{u.role === "ADMIN" ? <span className={`${styles.pill} ${styles.pillBlue}`}>Admin</span> : "Investor"}</td>
                     <td><StatusPill status={u.status} /></td>
-                    <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>{usd(u.mainBalance)}</td>
+                    <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>{usd(u.portfolioBalance ?? u.mainBalance)}</td>
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalDeposited)}</td>
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalWithdrawn)}</td>
                     <td className={styles.muted}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
@@ -1333,8 +1348,8 @@ function UsersSection({
                 </div>
                 <div className={styles.itemMetaGrid}>
                   <div className={styles.itemMetaCol}>
-                    <span className={styles.itemMetaLabel}>Main Balance</span>
-                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(u.mainBalance)}</span>
+                    <span className={styles.itemMetaLabel}>Total Balance</span>
+                    <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(u.portfolioBalance ?? u.mainBalance)}</span>
                   </div>
                   <div className={styles.itemMetaCol}>
                     <span className={styles.itemMetaLabel}>Total Deposited</span>
@@ -1387,27 +1402,53 @@ function UsersSection({
             <dl className={styles.detailList}>
               <dt>User</dt>
               <dd>{selected.email}</dd>
-              <dt>Current balance</dt>
+              <dt>Total balance</dt>
+              <dd className={styles.mono}>{usd(selected.portfolioBalance ?? selected.mainBalance)}</dd>
+              <dt>Cash balance</dt>
               <dd className={styles.mono}>{usd(selected.mainBalance)}</dd>
             </dl>
             <div className={styles.segmented} role="radiogroup" aria-label="Adjustment type">
               <button type="button" role="radio" aria-checked={action === "credit"} className={action === "credit" ? styles.segActive : ""} onClick={() => setAction("credit")}>
                 Add funds
               </button>
-              <button type="button" role="radio" aria-checked={action === "debit"} className={action === "debit" ? styles.segActive : ""} onClick={() => { setAction("debit"); setAssetSymbol("USD"); }}>
+              <button type="button" role="radio" aria-checked={action === "debit"} className={action === "debit" ? styles.segActive : ""} onClick={() => { setAction("debit"); setAssetSymbol("USD"); setAssetPickerOpen(false); setAssetSearch(""); }}>
                 Remove funds
               </button>
             </div>
             {action === "credit" && (
               <label className={styles.field}>
                 <span>Asset to add</span>
-                <select className={styles.input} value={assetSymbol} onChange={(e) => setAssetSymbol(e.target.value)}>
-                  {ADMIN_ASSET_OPTIONS.map((asset) => (
-                    <option key={asset.symbol} value={asset.symbol}>
-                      {asset.name} ({asset.symbol}){asset.type && asset.type !== "Cash" ? ` · ${asset.type}` : ""}
-                    </option>
-                  ))}
-                </select>
+                <div className={styles.assetPicker}>
+                  <button type="button" className={styles.assetPickerTrigger} aria-haspopup="listbox" aria-expanded={assetPickerOpen} onClick={() => { setAssetPickerOpen((open) => !open); setAssetSearch(""); }}>
+                    <span><strong>{selectedAssetOption.symbol}</strong> · {selectedAssetOption.name}</span>
+                    <ChevronDown size={16} />
+                  </button>
+                  {assetPickerOpen && (
+                    <div className={styles.assetPickerMenu}>
+                      <div className={styles.assetPickerSearch}>
+                        <Search size={15} />
+                        <input autoFocus value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} placeholder="Search asset name or symbol" aria-label="Search assets" />
+                      </div>
+                      <div className={styles.assetPickerOptions} role="listbox" aria-label="Assets">
+                        {filteredAssetOptions.length === 0 ? (
+                          <div className={styles.assetPickerEmpty}>No matching asset</div>
+                        ) : filteredAssetOptions.map((asset) => (
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={asset.symbol === assetSymbol}
+                            className={`${styles.assetPickerOption} ${asset.symbol === assetSymbol ? styles.assetPickerOptionActive : ""}`}
+                            key={asset.symbol}
+                            onClick={() => { setAssetSymbol(asset.symbol); setAssetPickerOpen(false); setAssetSearch(""); }}
+                          >
+                            <span><strong>{asset.symbol}</strong><small>{asset.name}</small></span>
+                            <small>{asset.type}</small>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </label>
             )}
             <label className={styles.field}>
