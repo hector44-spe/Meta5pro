@@ -525,8 +525,8 @@ export default function SubscriptionsSection({
 
       {/* Edit / Add Modal */}
       {editPlan && (
-        <div className={styles.modalBackdrop} onClick={() => !submitting && setEditPlan(null)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditPlan(null)}>
+          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>{editPlan.id ? "Edit Subscription Plan" : "Add Subscription Plan"}</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setEditPlan(null)} aria-label="Close">

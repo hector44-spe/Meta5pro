@@ -924,11 +924,11 @@ export default function SignalPage() {
       {/* Admin Edit / Add Signal Modal */}
       {(editingSignal || isCreatingSignal) && (
         <div
-          className="admin_edit_modal_overlay signal-admin-modal"
+          className="admin_edit_modal_overlay signal-admin-modal project-edit-modal-overlay"
           onClick={() => !savingSignal && (setEditingSignal(null), setIsCreatingSignal(false))}
         >
           <div
-            className="admin_edit_modal_dialog signal-admin-modal-dialog"
+            className="admin_edit_modal_dialog signal-admin-modal-dialog project-edit-modal-dialog"
             role="dialog"
             aria-modal="true"
             aria-labelledby="signal-modal-title"

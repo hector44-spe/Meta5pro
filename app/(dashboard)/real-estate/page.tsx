@@ -1433,11 +1433,11 @@ export default function RealEstateDashboardPage() {
       {/* Admin Edit Estate Project Modal */}
       {editingProject && (
         <div
-          className="re_admin_modal_overlay"
+          className="re_admin_modal_overlay project-edit-modal-overlay"
           onClick={() => !isSavingProject && !isDeletingProject && handleCloseEditModal()}
         >
           <div
-            className="re_admin_modal"
+            className="re_admin_modal project-edit-modal-dialog"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="re_admin_modal_header">

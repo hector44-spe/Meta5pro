@@ -1400,7 +1400,18 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         {/* ===================== RIGHT MAIN WRAPPER ===================== */}
         <div className="dashboard-page-wrapper">
           {/* ===================== PINNED TOP HEADER BAR ===================== */}
-          <header className="dashboard-header-container">
+          <header
+            className="dashboard-header-container"
+            style={{
+              position: "sticky",
+              top: 0,
+              zIndex: 1000,
+              display: "block",
+              flex: "0 0 auto",
+              visibility: "visible",
+              opacity: 1,
+            }}
+          >
             <div className="dashboard-header-wrapper">
               {/* Breadcrumb / Mobile trigger */}
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>

@@ -361,8 +361,8 @@ export default function CardsSection({
 
       {/* Edit / Add Modal */}
       {editOption && (
-        <div className={styles.modalBackdrop} onClick={() => !submitting && setEditOption(null)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditOption(null)}>
+          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>{editOption.id ? "Edit Card Tier" : "Add New Card Tier"}</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setEditOption(null)} aria-label="Close">

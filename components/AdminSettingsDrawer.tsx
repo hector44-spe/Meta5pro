@@ -1478,6 +1478,7 @@ function LevelsSettingsView() {
       {/* Edit Level Modal */}
       {editingLevel && (
         <div
+          className="project-edit-modal-overlay"
           style={{
             position: "fixed",
             inset: 0,
@@ -1493,6 +1494,7 @@ function LevelsSettingsView() {
           onClick={() => setEditingLevel(null)}
         >
           <div
+            className="project-edit-modal-dialog"
             style={{
               width: "100%",
               maxWidth: "400px",

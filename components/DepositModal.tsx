@@ -525,7 +525,7 @@ export default function DepositModal({
             <div className="dm-payment-options">
               {allowCrypto && availableTokens.length > 0 && (
                 <button type="button" className={`dm-option-card ${paymentMethod === "CRYPTO" ? "selected" : ""}`} onClick={() => setPaymentMethod("CRYPTO")}>
-                  <span>Crypto</span><small>{availableTokens.length} available asset{availableTokens.length === 1 ? "" : "s"}</small>
+                  <span>Crypto</span>
                 </button>
               )}
               {bankDepositAvailable && (
@@ -829,7 +829,7 @@ export default function DepositModal({
                   ["Routing number", selectedBank.routingNumber], ["Bank name", selectedBank.bankName],
                   ["Bank address", selectedBank.bankAddress], ["Narration", selectedBank.narration],
                 ].filter(([, value]) => value).map(([label, value]) => (
-                  <div className="dm-detail-row" key={label}><span>{label}</span><strong>{value}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(value)}>Copy</button></div>
+                  <div className="dm-detail-row" key={label}><span>{label}</span><strong>{value}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(value)} aria-label={`Copy ${label}`} title={`Copy ${label}`}><Copy size={15} /></button></div>
                 ))}
               </div>
             )}
@@ -837,7 +837,7 @@ export default function DepositModal({
             {paymentMethod === "PAYPAL" && (
               <div className="dm-offline-details">
                 <div className="dm-detail-row"><span>Recipient name</span><strong>{paypalRecipientName}</strong></div>
-                <div className="dm-detail-row"><span>PayPal email</span><strong>{paypalEmail}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(paypalEmail)}>Copy</button></div>
+                <div className="dm-detail-row"><span>PayPal email</span><strong>{paypalEmail}</strong><button type="button" onClick={() => navigator.clipboard?.writeText(paypalEmail)} aria-label="Copy PayPal email" title="Copy PayPal email"><Copy size={15} /></button></div>
               </div>
             )}
 

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/metagold.css";
 import "@/styles/globals.css";
+import "@/styles/edit-modal-stability.css";
 import GoogleTranslateProvider from "@/components/GoogleTranslateProvider";
 
 export const viewport: Viewport = {

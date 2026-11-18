@@ -758,9 +758,9 @@ export default function ExpertsSection({
 
       {/* Edit / Add Modal */}
       {editModal && (
-        <div className={styles.modalBackdrop} onClick={() => !submitting && setEditModal(null)}>
+        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditModal(null)}>
           <div
-            className={styles.modal}
+            className={`${styles.modal} project-edit-modal-dialog`}
             style={{
               width: "100%",
               maxWidth: "520px",
@@ -930,9 +930,9 @@ export default function ExpertsSection({
 
       {/* Place one expert trade across every active copier account. */}
       {copyTrade && (
-        <div className={styles.modalBackdrop} onClick={() => !submitting && setCopyTrade(null)}>
+        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setCopyTrade(null)}>
           <div
-            className={styles.modal}
+            className={`${styles.modal} project-edit-modal-dialog`}
             style={{ width: "100%", maxWidth: "520px", maxHeight: "calc(100dvh - 24px)", overflowY: "auto", padding: "20px" }}
             onClick={(event) => event.stopPropagation()}
           >

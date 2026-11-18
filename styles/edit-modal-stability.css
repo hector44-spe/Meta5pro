@@ -1,0 +1,169 @@
+/*
+ * Edit-modal geometry must be present in the initial application stylesheet.
+ * Page-scoped imports can arrive in a different order during client navigation,
+ * which previously made dialogs look stretched until the browser was reloaded.
+ */
+html body :where(
+  .admin_edit_modal_overlay,
+  .project-edit-modal-overlay,
+  .signal-admin-modal,
+  .re_admin_modal_overlay,
+  .dep_modal_backdrop,
+  .meta-gold-modal-overlay,
+  [class*="modalBackdrop"],
+  [class*="modalOverlay"]
+) {
+  position: fixed !important;
+  inset: auto 0 auto 0 !important;
+  top: var(--visual-viewport-offset-top, 0px) !important;
+  width: 100vw !important;
+  height: var(--visual-viewport-height, 100dvh) !important;
+  min-height: 0 !important;
+  padding: clamp(10px, 2.5vw, 20px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  overscroll-behavior: contain;
+}
+
+html body :where(
+  .admin_edit_modal_overlay,
+  .project-edit-modal-overlay,
+  .signal-admin-modal,
+  .re_admin_modal_overlay,
+  .dep_modal_backdrop,
+  .meta-gold-modal-overlay,
+  [class*="modalBackdrop"],
+  [class*="modalOverlay"]
+) > :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .dep_modal,
+  .meta-gold-modal-dialog,
+  [class*="modal"]
+) {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  width: min(100%, 560px) !important;
+  min-width: 0 !important;
+  max-width: 560px !important;
+  height: auto !important;
+  max-height: calc(var(--visual-viewport-height, 100dvh) - clamp(20px, 5vw, 40px)) !important;
+  margin: auto !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain;
+  box-sizing: border-box !important;
+}
+
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .dep_modal,
+  .meta-gold-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"]
+) *,
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .dep_modal,
+  .meta-gold-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"]
+) *::before,
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .dep_modal,
+  .meta-gold-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"]
+) *::after {
+  box-sizing: border-box;
+}
+
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .dep_modal,
+  .meta-gold-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"]
+) :where(input, select, textarea) {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+@media (max-width: 560px) {
+  html body :where(
+    .admin_edit_modal_dialog,
+    .project-edit-modal-dialog,
+    .signal-admin-modal-dialog,
+    .re_admin_modal,
+    .dep_modal,
+    .meta-gold-modal-dialog,
+    [class*="modalBackdrop"] > [class*="modal"],
+    [class*="modalOverlay"] > [class*="modal"]
+  ) {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    border-radius: 14px !important;
+  }
+
+  html body :where(
+    .admin_edit_modal_dialog,
+    .project-edit-modal-dialog,
+    .signal-admin-modal-dialog,
+    .re_admin_modal,
+    .dep_modal,
+    .meta-gold-modal-dialog,
+    [class*="modalBackdrop"] > [class*="modal"],
+    [class*="modalOverlay"] > [class*="modal"]
+  ) :where(.admin_two_col, [style*="grid-template-columns: 1fr 1fr"]) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html body :where(.admin_modal_actions, .re_admin_modal_actions) {
+    flex-direction: column-reverse !important;
+  }
+
+  html body :where(.admin_modal_actions, .re_admin_modal_actions) > * {
+    width: 100% !important;
+  }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  html body :where(
+    .admin_edit_modal_overlay,
+    .project-edit-modal-overlay,
+    .signal-admin-modal,
+    .re_admin_modal_overlay,
+    .dep_modal_backdrop,
+    .meta-gold-modal-overlay,
+    [class*="modalBackdrop"],
+    [class*="modalOverlay"]
+  ) {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+  }
+}

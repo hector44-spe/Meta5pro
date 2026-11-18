@@ -227,8 +227,8 @@ export default function StakingSection() {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className={styles.modalBackdrop} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => setIsModalOpen(false)}>
+          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
             <div className={styles.modalHead}>
               <h2>{editingPool ? "Edit Pool" : "Add Pool"}</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setIsModalOpen(false)}>✕</button>

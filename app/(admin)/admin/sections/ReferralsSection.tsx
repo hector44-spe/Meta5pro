@@ -216,8 +216,8 @@ export default function ReferralsSection() {
 
       {/* Edit Balance Modal */}
       {isModalOpen && selectedUser && (
-        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles.modalOverlay} project-edit-modal-overlay`} onClick={() => setIsModalOpen(false)}>
+          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>
                 Edit Referral Balance for {selectedUser.username}

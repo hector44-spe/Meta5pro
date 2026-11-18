@@ -135,7 +135,7 @@ export default function AssetsPage() {
             {!hideBalance && balanceLoaded && summary.totalCostBasisUsd > 0 && (
               <div className={portfolioChangeUsd >= 0 ? "assets-change-positive" : "assets-change-negative"}>
                 {portfolioChangeUsd >= 0 ? "+" : "−"}{formatMoney(Math.abs(portfolioChangeUsd))}
-                {" "}({portfolioChangePercent >= 0 ? "+" : ""}{portfolioChangePercent.toFixed(2)}%) since acquisition
+                {" "}({portfolioChangePercent >= 0 ? "+" : ""}{portfolioChangePercent.toFixed(2)}%)
               </div>
             )}
           </div>

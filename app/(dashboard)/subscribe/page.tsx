@@ -886,11 +886,11 @@ export default function SubscribePage() {
       {/* Admin Edit / Add Subscription Plan Modal */}
       {(editingPlan || isCreatingPlan) && (
         <div
-          className="admin_edit_modal_overlay"
+          className="admin_edit_modal_overlay project-edit-modal-overlay"
           onClick={() => !savingPlan && (setEditingPlan(null), setIsCreatingPlan(false))}
         >
           <div
-            className="admin_edit_modal_dialog"
+            className="admin_edit_modal_dialog project-edit-modal-dialog"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="admin_edit_modal_header">

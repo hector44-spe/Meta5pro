@@ -500,8 +500,8 @@ export default function DepositAddressSection({
 
       {/* Add / Edit Deposit Address Modal (Image 3) */}
       {modalOpen && (
-        <div className="dep_modal_backdrop" onClick={() => !saving && setModalOpen(false)}>
-          <div className="dep_modal" onClick={(e) => e.stopPropagation()}>
+        <div className="dep_modal_backdrop project-edit-modal-overlay" onClick={() => !saving && setModalOpen(false)}>
+          <div className="dep_modal project-edit-modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="dep_modal_head">
               <h3>{editId ? "Edit Deposit Address" : "Add Deposit Address"}</h3>
               <button

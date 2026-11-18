@@ -1495,3 +1495,101 @@
     padding: 20px 16px !important;
   }
 }
+
+/* Final device-size contract for phones, tablets and short landscape screens. */
+.cold-storage-page-wrapper,
+.cold-storage-assets-view,
+.cold-storage-mobile-view,
+.cold-storage-mobile-wrapper,
+.cold-storage-mobile-wrapper .content_wrapper,
+.cold-storage-drawer,
+.cold-storage-drawer .drawer-content,
+.asset-details-container {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.cold-storage-asset-item .left,
+.cold-storage-asset-item .name,
+.cold-storage-mobile-wrapper .asset_left,
+.cold-storage-mobile-wrapper .asset_left > span {
+  min-width: 0;
+}
+
+.cold-storage-asset-item .name,
+.cold-storage-mobile-wrapper .asset_name,
+.cold-storage-mobile-wrapper .asset_value {
+  overflow-wrap: anywhere;
+}
+
+.asset-details-chart-container {
+  height: clamp(220px, 42dvh, 330px) !important;
+}
+
+.asset-details-balance-box {
+  flex-wrap: wrap;
+}
+
+.amount-input-card .amountbox_wrapper,
+.amount-input-card input {
+  min-width: 0;
+}
+
+@media screen and (max-width: 640px) {
+  .cold-storage-content-card {
+    padding: 14px 12px 28px !important;
+  }
+
+  .cold-storage-drawer {
+    top: var(--visual-viewport-offset-top, 0px) !important;
+    bottom: auto !important;
+    height: var(--visual-viewport-height, 100dvh) !important;
+    max-height: var(--visual-viewport-height, 100dvh) !important;
+  }
+
+  .cold-storage-search-input,
+  .amount-input-card input {
+    font-size: 16px !important;
+  }
+
+  .asset-details-actions {
+    position: sticky;
+    bottom: 0;
+    padding-top: 10px;
+    padding-bottom: max(4px, env(safe-area-inset-bottom, 0px));
+    background: var(--color-modal-background, #080c10);
+  }
+}
+
+@media screen and (max-width: 380px) {
+  .cold-storage-assets-header {
+    align-items: stretch;
+  }
+
+  .cold-storage-add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .asset-details-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .asset-details-btn-primary,
+  .asset-details-btn-secondary {
+    width: 100%;
+    min-height: 46px;
+  }
+}
+
+@media screen and (max-height: 560px) and (orientation: landscape) {
+  .cold-storage-drawer .drawer-content {
+    overflow-y: auto !important;
+  }
+
+  .asset-details-chart-container {
+    height: 200px !important;
+  }
+}

@@ -212,7 +212,7 @@ export default function AdminEditExpertModal({
 
   return (
     <div
-      className="meta-gold-modal-overlay"
+      className="meta-gold-modal-overlay project-edit-modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -228,7 +228,7 @@ export default function AdminEditExpertModal({
       onClick={onClose}
     >
       <div
-        className="meta-gold-modal-dialog"
+        className="meta-gold-modal-dialog project-edit-modal-dialog"
         style={{
           width: "100%",
           maxWidth: "480px",

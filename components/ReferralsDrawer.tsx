@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, X, Search, CheckCircle2, Loader2 } from "lucide-react";
+import { ChevronLeft, X, Search, CheckCircle2, Loader2, Copy } from "lucide-react";
 import { ReferralUser } from "@/lib/referralData";
 
 interface ReferralsDrawerProps {
@@ -357,23 +357,25 @@ export default function ReferralsDrawer({
               />
               <button
                 onClick={handleCopyCode}
+                type="button"
+                aria-label={copied ? "Referral code copied" : "Copy referral code"}
+                title={copied ? "Copied" : "Copy referral code"}
                 style={{
                   backgroundColor: "#4763f0",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "6px",
-                  padding: "8px 20px",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.5px",
+                  width: "36px",
+                  height: "36px",
+                  padding: 0,
                   cursor: "pointer",
                   display: "grid",
                   placeContent: "center",
+                  flexShrink: 0,
                   transition: "background-color 0.2s ease, transform 0.1s ease",
                 }}
               >
-                {copied ? "COPIED" : "COPY"}
+                {copied ? <CheckCircle2 size={17} /> : <Copy size={17} />}
               </button>
             </div>
           </div>
