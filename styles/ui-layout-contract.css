@@ -89,7 +89,11 @@ html body :where(
   visibility: visible !important;
 }
 
-.custom-notification-bar-root { z-index: 90000 !important; }
+.custom-notification-bar-root { z-index: 100000 !important; }
+.custom-notification-bar-root p,
+.custom-notification-bar-root .custom-notification-message {
+  color: inherit !important;
+}
 
 /* Standalone trade layout: use the available shell width instead of a narrow,
    centered column and keep all table columns on a shared alignment contract. */
