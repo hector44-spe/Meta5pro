@@ -200,7 +200,7 @@ export function sendPasswordResetEmail(to: string, resetUrl: string) {
 /** Welcome message sent once a newly registered account has been committed. */
 export function sendWelcomeEmail(to: string, firstName: string) {
   const safeName = escapeHtml(firstName.trim() || "Trader");
-  const currentAppName = appName();
+  const currentAppName = process.env.WELCOME_EMAIL_APP_NAME || "Meta Gold 5";
   const safeAppName = escapeHtml(currentAppName);
   const safeSupportEmail = escapeHtml(supportEmail());
   const dashboardUrl = appUrl() ? `${appUrl()}/dashboard` : "";
