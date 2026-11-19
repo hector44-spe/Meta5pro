@@ -1891,35 +1891,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           </main>
         </div>
 
-        {/* ===================== FLOATING LIVE SUPPORT CHAT BUTTON ===================== */}
-        <button
-          type="button"
-          data-fixed-bottom="hide"
-          onClick={() => openLiveSupport(() => setIsChatOpen(!isChatOpen))}
-          style={{
-            position: "fixed",
-            bottom: "24px",
-            right: "24px",
-            width: "52px",
-            height: "52px",
-            borderRadius: "50%",
-            backgroundColor: "#0084ff",
-            color: "#ffffff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            boxShadow: "0 6px 20px rgba(0, 132, 255, 0.4)",
-            border: "none",
-            cursor: "pointer",
-            zIndex: 9000,
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          }}
-          title="Live chat support"
-          aria-label="Open support chat"
-        >
-          <MessageSquare size={24} />
-        </button>
-
         {/* ===================== LIVE CHAT DIALOG ===================== */}
         {isChatOpen && (
           <div className="live-chat-panel" role="dialog" aria-modal="true" aria-label="Live support">
@@ -2642,33 +2613,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   }
                 />
               )}
-
-              {/* Floating Blue Chat Bubble at Bottom Right (Images 1 & 2) */}
-              <button
-                data-fixed-bottom="hide"
-                onClick={() => openLiveSupport(() => setIsChatOpen(true))}
-                style={{
-                  position: "fixed",
-                  bottom: "20px",
-                  right: "20px",
-                  width: "48px",
-                  height: "48px",
-                  borderRadius: "50%",
-                  backgroundColor: "#1d72fe",
-                  border: "none",
-                  color: "#ffffff",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  boxShadow: "0 4px 14px rgba(29, 114, 254, 0.4)",
-                  zIndex: 10000,
-                }}
-                title="Open live chat"
-                aria-label="Open live chat"
-              >
-                <MessageSquare size={22} fill="white" />
-              </button>
             </div>
           </div>
         )}

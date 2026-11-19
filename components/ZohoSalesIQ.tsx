@@ -93,9 +93,9 @@ export default function ZohoSalesIQ({ user }: ZohoSalesIQProps) {
       values: {},
       ready: function () {
         try {
-          // Hide Zoho's duplicate generic floating launcher so our branded button controls it
+          // Ensure Zoho's native floating launcher is visible
           if (window.$zoho?.salesiq?.floatbutton?.visible) {
-            window.$zoho.salesiq.floatbutton.visible("hide");
+            window.$zoho.salesiq.floatbutton.visible("show");
           }
 
           // Pass user details to Zoho agent console if user is logged in

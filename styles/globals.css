@@ -379,4 +379,23 @@ body {
   }
 }
 
+/* ==============================================================================
+   ZOHO SALESIQ LIVE CHAT BUTTON STYLING
+   Enforces Meta Gold 5 vibrant brand blue (#0084ff) on Zoho's floating button
+   ============================================================================== */
+#zsiq_float,
+.zsiq_float,
+.zsiq_flt_wrp,
+#siqflt_wrp,
+#zsiq_agt_btn,
+.zsiq_agt_btn,
+.zsiq-theme-bg,
+em#zsiq_flt_cnt,
+div[id^="zsiq"] .zsiq_flt_btn {
+  background-color: #0084ff !important;
+  background: #0084ff !important;
+  border-color: #0084ff !important;
+  box-shadow: 0 6px 20px rgba(0, 132, 255, 0.45) !important;
+}
+
 
