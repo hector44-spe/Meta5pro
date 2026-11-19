@@ -214,7 +214,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   // Display currency (Settings > Account); amounts are converted with live FX rates
   const { prices } = usePrices();
   const { summary: holdingsSummary } = useHoldings();
-  const realPortfolioBalance = Math.max(0, realBalance + (holdingsSummary.totalUsd || 0));
+  // Live portfolio equity: Cash balance plus net asset gain/loss (prevents double counting deposited crypto already credited to cash)
+  const assetEquityAdjustment = holdingsSummary.equityAdjustmentUsd ?? ((holdingsSummary.totalUsd || 0) - (holdingsSummary.externalBookUsd || 0));
+  const realPortfolioBalance = Math.max(0, realBalance + assetEquityAdjustment);
   const portfolioBalance = accountType === "real" ? realPortfolioBalance : demoBalance;
   const [displayCurrency, setDisplayCurrency] = useState("USD");
   const formatMoney = (usd: number) => {
