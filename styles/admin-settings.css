@@ -362,6 +362,34 @@
   letter-spacing: 0.5px;
   padding-left: 10px;
 }
+.as-text-input-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #25282e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0 16px;
+  height: 48px;
+  transition: border-color 0.15s ease;
+}
+.as-text-input-box:focus-within {
+  border-color: #4763f0;
+}
+.as-text-input-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 0;
+}
+.as-text-input-box input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  font-weight: 400;
+}
 .as-toggle-card {
   display: flex;
   align-items: center;

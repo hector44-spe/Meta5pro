@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { CheckCircle2, AlertCircle, Loader2, ShieldCheck, Copy, Check } from "lucide-react";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  ShieldCheck,
+  Copy,
+  Check,
+  Eye,
+  EyeOff,
+  KeyRound,
+  Lock,
+} from "lucide-react";
 import "@/styles/app-forms.css";
 
 export interface UserProfile {
@@ -19,12 +30,16 @@ function Notice({ kind, text }: { kind: "ok" | "error"; text: string }) {
       style={{
         display: "flex",
         gap: "8px",
-        alignItems: "flex-start",
-        fontSize: "12.5px",
-        color: ok ? "#01b28b" : "#ff5c6a",
+        alignItems: "center",
+        fontSize: "13px",
+        padding: "10px 14px",
+        borderRadius: "8px",
+        backgroundColor: ok ? "rgba(52, 211, 153, 0.1)" : "rgba(248, 73, 96, 0.1)",
+        border: ok ? "1px solid rgba(52, 211, 153, 0.25)" : "1px solid rgba(248, 73, 96, 0.25)",
+        color: ok ? "#34d399" : "#ff7a87",
       }}
     >
-      {ok ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
+      {ok ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
       <span>{text}</span>
     </div>
   );
@@ -74,29 +89,72 @@ export function ProfileSettings({
   };
 
   return (
-    <form onSubmit={save} className="app-form" style={{ padding: "0 18px 80px 18px" }}>
-      <div>
-        <label className="app-label" htmlFor="settings-fullname">Full name</label>
-        <input id="settings-fullname" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="name" required className="app-input" />
-      </div>
-      <div>
-        <label className="app-label" htmlFor="settings-email">Email address</label>
-        <input id="settings-email" type="email" value={profile?.email ?? ""} disabled className="app-input" />
-      </div>
-      <div>
-        <label className="app-label" htmlFor="settings-phone">Phone number</label>
-        <input id="settings-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" placeholder="+1 555 000 0000" className="app-input" />
-      </div>
-      <div>
-        <label className="app-label" htmlFor="settings-country">Country / region</label>
-        <input id="settings-country" type="text" value={country} onChange={(e) => setCountry(e.target.value)} autoComplete="country-name" placeholder="Country" className="app-input" />
-      </div>
-      {notice && <Notice kind={notice.kind} text={notice.text} />}
-      <button type="submit" disabled={busy || !profile} className="app-primary-btn">
-        {busy && <Loader2 size={15} className="animate-spin" />}
-        {busy ? "Saving…" : "Save changes"}
-      </button>
-    </form>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <form onSubmit={save} className="as-section-block">
+        <h3 className="as-block-title">Personal Information</h3>
+        <p className="as-block-sub">Manage your profile details and contact information</p>
+
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-fullname">Full name</label>
+          <div className="as-text-input-box">
+            <input
+              id="settings-fullname"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              autoComplete="name"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-email">Email address</label>
+          <div className="as-text-input-box" style={{ opacity: 0.7 }}>
+            <input
+              id="settings-email"
+              type="email"
+              value={profile?.email ?? ""}
+              disabled
+            />
+          </div>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-phone">Phone number</label>
+          <div className="as-text-input-box">
+            <input
+              id="settings-phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              autoComplete="tel"
+              placeholder="+1 555 000 0000"
+            />
+          </div>
+        </div>
+
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-country">Country / region</label>
+          <div className="as-text-input-box">
+            <input
+              id="settings-country"
+              type="text"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              autoComplete="country-name"
+              placeholder="Country"
+            />
+          </div>
+        </div>
+
+        {notice && <div style={{ marginTop: "6px" }}><Notice kind={notice.kind} text={notice.text} /></div>}
+
+        <button type="submit" disabled={busy || !profile} className="as-save" style={{ marginTop: "10px" }}>
+          {busy ? <Loader2 size={18} className="spin" /> : "Save changes"}
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -105,6 +163,8 @@ export function SecuritySettings({ email }: { email: string | null }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNext, setShowNext] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
@@ -217,240 +277,412 @@ export function SecuritySettings({ email }: { email: string | null }) {
   };
 
   return (
-    <div className="app-form" style={{ padding: "0 18px 80px 18px" }}>
-      <form onSubmit={change}>
-        <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>Change password</div>
-        <div style={{ marginTop: "12px" }}>
-          <label className="app-label" htmlFor="settings-current-pw">Current password</label>
-          <input id="settings-current-pw" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required className="app-input" />
+    <div style={{ display: "flex", flexDirection: "column", gap: "24px", paddingTop: "6px", paddingBottom: "36px" }}>
+      {/* 1. Change Password Section */}
+      <form onSubmit={change} className="as-section-block">
+        <h3 className="as-block-title">Password</h3>
+        <p className="as-block-sub">Update your account login password</p>
+
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-current-pw">Current password</label>
+          <div className="as-text-input-box">
+            <input
+              id="settings-current-pw"
+              type={showCurrent ? "text" : "password"}
+              value={current}
+              onChange={(e) => setCurrent(e.target.value)}
+              autoComplete="current-password"
+              placeholder="Enter current password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowCurrent(!showCurrent)}
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", padding: "4px" }}
+            >
+              {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </div>
-        <div>
-          <label className="app-label" htmlFor="settings-new-pw">New password</label>
-          <input id="settings-new-pw" type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" placeholder="At least 8 characters" required className="app-input" />
+
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-new-pw">New password</label>
+          <div className="as-text-input-box">
+            <input
+              id="settings-new-pw"
+              type={showNext ? "text" : "password"}
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+              autoComplete="new-password"
+              placeholder="At least 8 characters"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowNext(!showNext)}
+              style={{ background: "none", border: "none", color: "rgba(255,255,255,0.45)", cursor: "pointer", display: "flex", alignItems: "center", padding: "4px" }}
+            >
+              {showNext ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+          </div>
         </div>
-        <div>
-          <label className="app-label" htmlFor="settings-confirm-pw">Confirm new password</label>
-          <input id="settings-confirm-pw" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" required className="app-input" />
+
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-confirm-pw">Confirm new password</label>
+          <div className="as-text-input-box">
+            <input
+              id="settings-confirm-pw"
+              type={showNext ? "text" : "password"}
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
+              placeholder="Confirm new password"
+              required
+            />
+          </div>
         </div>
-        {notice && <Notice kind={notice.kind} text={notice.text} />}
-        <button type="submit" disabled={busy} className="app-primary-btn" style={{ marginTop: "12px" }}>
-          {busy && <Loader2 size={15} className="animate-spin" />}
-          {busy ? "Updating…" : "Update password"}
+
+        {notice && (
+          <div style={{ marginTop: "4px" }}>
+            <Notice kind={notice.kind} text={notice.text} />
+          </div>
+        )}
+
+        <button type="submit" disabled={busy} className="as-save" style={{ marginTop: "8px" }}>
+          {busy ? <Loader2 size={18} className="spin" /> : "Update password"}
         </button>
       </form>
 
-      {/* Two-Factor Authentication Section */}
-      <div style={{ marginTop: "28px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "20px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>Two-Factor Authentication (2FA)</div>
-            <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginTop: "2px" }}>
-              Secure your account using Google Authenticator, Microsoft Authenticator, or 1Password.
-            </div>
-          </div>
-          <span
-            style={{
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontSize: "11px",
-              fontWeight: 600,
-              backgroundColor: twoFactorEnabled ? "rgba(1, 178, 139, 0.15)" : "rgba(255, 255, 255, 0.08)",
-              color: twoFactorEnabled ? "#01b28b" : "#888",
-            }}
-          >
-            {twoFactorEnabled ? "Active" : "Disabled"}
-          </span>
-        </div>
+      {/* 2. Two-Factor Authentication Section */}
+      <div className="as-section-block">
+        <h3 className="as-block-title">Two-Factor Authentication (2FA)</h3>
+        <p className="as-block-sub">Add an extra layer of security using an authenticator app</p>
 
-        {twoFactorNotice && (
-          <div style={{ marginTop: "12px" }}>
-            <Notice kind={twoFactorNotice.kind} text={twoFactorNotice.text} />
-          </div>
-        )}
-
-        {setupStep === "idle" && (
-          <div style={{ marginTop: "14px" }}>
-            {twoFactorEnabled ? (
-              <button
-                type="button"
-                onClick={disable2FA}
-                disabled={twoFactorLoading}
-                className="app-primary-btn"
-                style={{ backgroundColor: "#ff5c6a", color: "#fff", borderColor: "#ff5c6a" }}
+        <div
+          style={{
+            background: "#25282e",
+            border: "1px solid rgba(255, 255, 255, 0.07)",
+            borderRadius: "10px",
+            padding: "18px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "14px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "8px",
+                  background: twoFactorEnabled ? "rgba(52, 211, 153, 0.12)" : "rgba(255, 255, 255, 0.05)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: twoFactorEnabled ? "#34d399" : "rgba(255, 255, 255, 0.6)",
+                  flexShrink: 0,
+                }}
               >
-                {twoFactorLoading ? <Loader2 size={15} className="animate-spin" /> : "Disable 2FA"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={start2FASetup}
-                disabled={twoFactorLoading}
-                className="app-primary-btn"
-              >
-                {twoFactorLoading ? <Loader2 size={15} className="animate-spin" /> : "Set up 2FA (Optional)"}
-              </button>
-            )}
-          </div>
-        )}
+                <KeyRound size={18} />
+              </div>
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>
+                  Authenticator Status
+                </div>
+                <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginTop: "2px" }}>
+                  {twoFactorEnabled ? "Active & Protected" : "Not configured (Optional)"}
+                </div>
+              </div>
+            </div>
 
-        {setupStep === "setup" && setupData && (
-          <div
-            style={{
-              marginTop: "16px",
-              padding: "16px",
-              borderRadius: "10px",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-            }}
-          >
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "8px" }}>
-              1. Scan this QR Code with Authenticator App
-            </div>
-            <div style={{ display: "flex", justifyContent: "center", margin: "12px 0" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={setupData.qrCode}
-                alt="2FA QR Code"
-                style={{ width: "160px", height: "160px", borderRadius: "8px", background: "#fff", padding: "8px" }}
-              />
-            </div>
-            <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)", textAlign: "center" }}>
-              Or enter manual key:
-            </div>
-            <div
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                margin: "6px 0 14px",
-                fontSize: "12px",
-                fontFamily: "monospace",
-                color: "#f59e0b",
+                padding: "4px 10px",
+                borderRadius: "16px",
+                fontSize: "11.5px",
+                fontWeight: 700,
+                letterSpacing: "0.3px",
+                backgroundColor: twoFactorEnabled ? "rgba(52, 211, 153, 0.15)" : "rgba(255, 255, 255, 0.08)",
+                color: twoFactorEnabled ? "#34d399" : "rgba(255, 255, 255, 0.5)",
+                border: twoFactorEnabled ? "1px solid rgba(52, 211, 153, 0.3)" : "1px solid rgba(255, 255, 255, 0.08)",
               }}
             >
-              <span>{setupData.secret}</span>
+              {twoFactorEnabled ? "Active" : "Disabled"}
+            </span>
+          </div>
+
+          <div style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.55)", lineHeight: 1.5 }}>
+            Protect your admin account with Google Authenticator, Microsoft Authenticator, or 1Password.
+          </div>
+
+          {twoFactorNotice && (
+            <div style={{ marginTop: "2px" }}>
+              <Notice kind={twoFactorNotice.kind} text={twoFactorNotice.text} />
+            </div>
+          )}
+
+          {setupStep === "idle" && (
+            <div style={{ marginTop: "4px" }}>
+              {twoFactorEnabled ? (
+                <button
+                  type="button"
+                  onClick={disable2FA}
+                  disabled={twoFactorLoading}
+                  style={{
+                    width: "100%",
+                    height: "44px",
+                    borderRadius: "8px",
+                    background: "rgba(248, 73, 96, 0.08)",
+                    border: "1px solid rgba(248, 73, 96, 0.25)",
+                    color: "#f84960",
+                    fontWeight: 600,
+                    fontSize: "13.5px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                >
+                  {twoFactorLoading ? <Loader2 size={16} className="spin" /> : "Disable 2FA"}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={start2FASetup}
+                  disabled={twoFactorLoading}
+                  style={{
+                    width: "100%",
+                    height: "44px",
+                    borderRadius: "8px",
+                    background: "rgba(71, 99, 240, 0.12)",
+                    border: "1px solid rgba(71, 99, 240, 0.35)",
+                    color: "#7b93ff",
+                    fontWeight: 600,
+                    fontSize: "13.5px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                  }}
+                >
+                  {twoFactorLoading ? (
+                    <Loader2 size={16} className="spin" />
+                  ) : (
+                    <>
+                      <ShieldCheck size={16} />
+                      <span>Set up 2FA (Optional)</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* QR Code Setup Step */}
+          {setupStep === "setup" && setupData && (
+            <div
+              style={{
+                marginTop: "4px",
+                padding: "16px",
+                borderRadius: "8px",
+                backgroundColor: "#1e2127",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "6px" }}>
+                1. Scan QR Code in Authenticator App
+              </div>
+              <div style={{ display: "flex", justifyContent: "center", margin: "14px 0" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={setupData.qrCode}
+                  alt="2FA QR Code"
+                  style={{ width: "150px", height: "150px", borderRadius: "8px", background: "#fff", padding: "6px" }}
+                />
+              </div>
+
+              <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)", textAlign: "center" }}>
+                Or enter this setup key manually:
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  margin: "6px 0 16px",
+                  fontSize: "12px",
+                  fontFamily: "monospace",
+                  color: "#f59e0b",
+                  background: "rgba(0,0,0,0.25)",
+                  padding: "6px 10px",
+                  borderRadius: "6px",
+                }}
+              >
+                <span>{setupData.secret}</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(setupData.secret);
+                    setCopiedKey(true);
+                    setTimeout(() => setCopiedKey(false), 2000);
+                  }}
+                  style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center" }}
+                  title="Copy Key"
+                >
+                  {copiedKey ? <Check size={14} color="#34d399" /> : <Copy size={14} />}
+                </button>
+              </div>
+
+              <form onSubmit={activate2FA}>
+                <label className="as-label" style={{ display: "block", marginBottom: "8px" }}>
+                  2. Enter 6-digit code from app
+                </label>
+                <div className="as-text-input-box" style={{ justifyContent: "center" }}>
+                  <input
+                    type="text"
+                    maxLength={6}
+                    value={totpCode}
+                    onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+                    placeholder="000000"
+                    style={{
+                      letterSpacing: "6px",
+                      fontSize: "18px",
+                      fontWeight: 700,
+                      textAlign: "center",
+                      width: "100%",
+                    }}
+                    required
+                  />
+                </div>
+                <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setSetupStep("idle")}
+                    style={{
+                      flex: 1,
+                      height: "44px",
+                      borderRadius: "8px",
+                      background: "transparent",
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      color: "rgba(255,255,255,0.7)",
+                      cursor: "pointer",
+                      fontWeight: 600,
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={twoFactorLoading}
+                    className="as-save"
+                    style={{ flex: 1.5, marginTop: 0, height: "44px" }}
+                  >
+                    {twoFactorLoading ? <Loader2 size={16} className="spin" /> : "Verify & Enable"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Backup codes step */}
+          {setupStep === "backup_codes" && (
+            <div
+              style={{
+                marginTop: "4px",
+                padding: "16px",
+                borderRadius: "8px",
+                backgroundColor: "#1e2127",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "4px" }}>
+                Emergency Recovery Codes
+              </div>
+              <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "12px", lineHeight: 1.4 }}>
+                Save these one-time codes in a safe place. You can use them if you lose access to your phone.
+              </div>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "6px",
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  marginBottom: "14px",
+                }}
+              >
+                {backupCodes.map((code, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      padding: "6px 8px",
+                      background: "rgba(0,0,0,0.3)",
+                      borderRadius: "4px",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      textAlign: "center",
+                      color: "#34d399",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {code}
+                  </div>
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={() => {
-                  navigator.clipboard.writeText(setupData.secret);
-                  setCopiedKey(true);
-                  setTimeout(() => setCopiedKey(false), 2000);
+                  navigator.clipboard.writeText(backupCodes.join("\n"));
+                  if (typeof window !== "undefined") window.alert("Backup codes copied to clipboard!");
+                  setSetupStep("idle");
                 }}
-                style={{ background: "none", border: "none", color: "#fff", cursor: "pointer" }}
+                className="as-save"
+                style={{ marginTop: 0, height: "44px" }}
               >
-                {copiedKey ? <Check size={14} /> : <Copy size={14} />}
+                Copy Codes & Finish
               </button>
             </div>
-
-            <form onSubmit={activate2FA}>
-              <label className="app-label">2. Enter 6-digit verification code</label>
-              <input
-                type="text"
-                maxLength={6}
-                value={totpCode}
-                onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
-                placeholder="000000"
-                style={{
-                  letterSpacing: "6px",
-                  fontSize: "18px",
-                  fontWeight: 700,
-                  textAlign: "center",
-                }}
-                className="app-input"
-                required
-              />
-              <div style={{ display: "flex", gap: "10px", marginTop: "12px" }}>
-                <button
-                  type="button"
-                  onClick={() => setSetupStep("idle")}
-                  className="app-primary-btn"
-                  style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)" }}
-                >
-                  Cancel
-                </button>
-                <button type="submit" disabled={twoFactorLoading} className="app-primary-btn">
-                  {twoFactorLoading ? <Loader2 size={15} className="animate-spin" /> : "Verify & Enable 2FA"}
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {setupStep === "backup_codes" && (
-          <div
-            style={{
-              marginTop: "16px",
-              padding: "16px",
-              borderRadius: "10px",
-              backgroundColor: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-            }}
-          >
-            <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff", marginBottom: "4px" }}>
-              Emergency Recovery Backup Codes
-            </div>
-            <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)", marginBottom: "12px" }}>
-              Save these one-time codes in a safe place. If you lose your phone, you can use these to sign in.
-            </div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "8px",
-                fontFamily: "monospace",
-                fontSize: "12px",
-                marginBottom: "14px",
-              }}
-            >
-              {backupCodes.map((code, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: "6px 10px",
-                    background: "rgba(0,0,0,0.3)",
-                    borderRadius: "4px",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    textAlign: "center",
-                    color: "#01b28b",
-                  }}
-                >
-                  {code}
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                navigator.clipboard.writeText(backupCodes.join("\n"));
-                if (typeof window !== "undefined") window.alert("Backup codes copied to clipboard!");
-                setSetupStep("idle");
-              }}
-              className="app-primary-btn"
-            >
-              Done — I have saved my codes
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
+      {/* 3. Withdrawal Security Notice Card */}
       <div
         style={{
-          display: "flex",
-          gap: "12px",
-          alignItems: "flex-start",
-          padding: "12px 14px",
-          borderRadius: "8px",
-          backgroundColor: "rgba(255, 255, 255, 0.03)",
+          background: "#25282e",
           border: "1px solid rgba(255, 255, 255, 0.06)",
-          marginTop: "24px",
+          borderRadius: "10px",
+          padding: "16px 18px",
+          display: "flex",
+          gap: "14px",
+          alignItems: "flex-start",
         }}
       >
-        <ShieldCheck size={18} color="#01b28b" style={{ flexShrink: 0, marginTop: "1px" }} />
+        <div
+          style={{
+            width: "34px",
+            height: "34px",
+            borderRadius: "8px",
+            background: "rgba(52, 211, 153, 0.1)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#34d399",
+            flexShrink: 0,
+            marginTop: "1px",
+          }}
+        >
+          <ShieldCheck size={18} />
+        </div>
         <div>
-          <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>Withdrawal confirmation</div>
-          <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)", marginTop: "2px", lineHeight: 1.5 }}>
-            Every withdrawal needs a one-time code sent to {email ?? "your email"}.
+          <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>
+            Withdrawal confirmation
+          </div>
+          <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.55)", marginTop: "3px", lineHeight: 1.45 }}>
+            Every withdrawal needs a one-time code sent to <span style={{ color: "#ffffff", fontWeight: 500 }}>{email ?? "your email"}</span>.
           </div>
         </div>
       </div>
@@ -495,62 +727,102 @@ export function AccountSettings({
   rateNote: string | null;
 }) {
   return (
-    <div className="app-form" style={{ padding: "0 18px 80px 18px" }}>
-      <div>
-        <label className="app-label" htmlFor="settings-language">Language</label>
-        <select id="settings-language" className="app-input" value={langCode} onChange={(e) => onLanguageChange(e.target.value)}>
-          {languages.map((l) => (
-            <option key={l.code} value={l.code}>
-              {l.label} ({l.code.toUpperCase()})
-            </option>
-          ))}
-        </select>
-        <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", marginTop: "6px" }}>
-          The page reloads to apply a new language.
-        </div>
-      </div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
+      <div className="as-section-block">
+        <h3 className="as-block-title">Preferences</h3>
+        <p className="as-block-sub">Customize your display language and account currency</p>
 
-      <div>
-        <label className="app-label" htmlFor="settings-currency">Display currency</label>
-        <select id="settings-currency" className="app-input" value={currency} onChange={(e) => onCurrencyChange(e.target.value)}>
-          {DISPLAY_CURRENCIES.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.code} · {c.label}
-            </option>
-          ))}
-        </select>
-        <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", marginTop: "6px", lineHeight: 1.5 }}>
-          Balances are shown in this currency using live exchange rates. Your account itself is held in US dollars.
-          {rateNote ? ` ${rateNote}` : ""}
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-language">Language</label>
+          <div className="as-text-input-box">
+            <select
+              id="settings-language"
+              value={langCode}
+              onChange={(e) => onLanguageChange(e.target.value)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#fff",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {languages.map((l) => (
+                <option key={l.code} value={l.code} style={{ background: "#25282e", color: "#fff" }}>
+                  {l.label} ({l.code.toUpperCase()})
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", marginTop: "4px" }}>
+            The page reloads to apply a new language.
+          </div>
         </div>
-      </div>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
-          padding: "12px 14px",
-          borderRadius: "8px",
-          backgroundColor: "rgba(255, 255, 255, 0.03)",
-          border: "1px solid rgba(255, 255, 255, 0.06)",
-        }}
-      >
-        <div>
-          <div style={{ fontSize: "13px", fontWeight: 600, color: "#fff" }}>Hide balances</div>
-          <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)" }}>Show ****** instead of amounts</div>
+        <div className="as-input-wrap">
+          <label className="as-label" htmlFor="settings-currency">Display currency</label>
+          <div className="as-text-input-box">
+            <select
+              id="settings-currency"
+              value={currency}
+              onChange={(e) => onCurrencyChange(e.target.value)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                outline: "none",
+                color: "#fff",
+                fontSize: "14px",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              {DISPLAY_CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code} style={{ background: "#25282e", color: "#fff" }}>
+                  {c.code} · {c.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div style={{ fontSize: "11.5px", color: "rgba(255,255,255,0.45)", marginTop: "4px", lineHeight: 1.4 }}>
+            Balances are shown in this currency using live exchange rates. Your account itself is held in US dollars.
+            {rateNote ? ` ${rateNote}` : ""}
+          </div>
         </div>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={hideBalance}
-          onClick={onToggleHideBalance}
-          className="app-switch"
-          data-on={hideBalance ? "true" : "false"}
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            padding: "14px 16px",
+            borderRadius: "8px",
+            backgroundColor: "#25282e",
+            border: "1px solid rgba(255, 255, 255, 0.06)",
+            marginTop: "6px",
+          }}
         >
-          <span />
-        </button>
+          <div>
+            <div style={{ fontSize: "13.5px", fontWeight: 600, color: "#fff" }}>Hide balances</div>
+            <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.5)", marginTop: "2px" }}>
+              Show ****** instead of amounts
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={hideBalance}
+            onClick={onToggleHideBalance}
+            className="app-switch"
+            data-on={hideBalance ? "true" : "false"}
+          >
+            <span />
+          </button>
+        </div>
       </div>
     </div>
   );
