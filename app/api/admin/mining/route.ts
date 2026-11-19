@@ -170,7 +170,7 @@ export async function POST(req: Request) {
     }
 
     if (action === "update_mining_status") {
-      if (!miningId || !miningStatus) {
+      if (!miningId || !["COMPLETED", "CANCELLED"].includes(miningStatus)) {
         return NextResponse.json({ error: "Mining contract ID and status are required" }, { status: 400 });
       }
 
@@ -184,17 +184,19 @@ export async function POST(req: Request) {
 
       const prevStatus = targetContract.status;
       const initialPrincipalUsd = Number(targetContract.usdValue);
-      const expectedReturnUsd = Number(targetContract.expectedReturnUsd);
-      const accruedProfitUsd = Number(targetContract.accruedProfitUsd);
-
-      await atomic(async (tx) => {
+      const changed = await atomic(async (tx) => {
+        const claimed = await tx.userMining.updateMany({
+          where: { id: miningId, status: "ACTIVE", settledAt: null },
+          data: { status: miningStatus, daysRemaining: miningStatus === "COMPLETED" ? 0 : targetContract.daysRemaining, settledAt: new Date() },
+        });
+        if (claimed.count !== 1) return false;
         if (miningStatus === "COMPLETED" && prevStatus === "ACTIVE") {
-          const payoutAmount = money(expectedReturnUsd > 0 ? expectedReturnUsd : initialPrincipalUsd + accruedProfitUsd);
-          await creditMain(tx, targetContract.userId, payoutAmount, {
-            referenceType: "MINING_PAYOUT",
-            referenceId: targetContract.id,
-            counterAccount: `MINING_POOL:${targetContract.poolId || "POOL"}`,
-          });
+          const payoutAmount = money(initialPrincipalUsd);
+          if (targetContract.fundingSource === "ASSET" && targetContract.symbol !== "USD") {
+            await tx.assetBalance.upsert({ where: { userId_symbol: { userId: targetContract.userId, symbol: targetContract.symbol } }, create: { userId: targetContract.userId, symbol: targetContract.symbol, amount: targetContract.amount }, update: { amount: { increment: targetContract.amount } } });
+          } else {
+            await creditMain(tx, targetContract.userId, payoutAmount, { referenceType: "MINING_PRINCIPAL_RETURN", referenceId: targetContract.id, counterAccount: `MINING_POOL:${targetContract.poolId || "POOL"}` });
+          }
           await insertTransaction(tx, {
             userId: targetContract.userId,
             type: "TRADE_CLOSE",
@@ -208,14 +210,15 @@ export async function POST(req: Request) {
             targetContract.userId,
             "balance",
             "Mining Contract Completed",
-            `Your mining contract on ${targetContract.poolName} has completed. Payout of ${fmtUsd(payoutAmount)} has been deposited into your balance.`
+            `Your mining contract on ${targetContract.poolName} has completed. Its principal was returned and accrued rewards remain in your interest balance.`,
+            tx,
           );
         } else if (miningStatus === "CANCELLED" && prevStatus === "ACTIVE" && refundUser) {
-          await creditMain(tx, targetContract.userId, initialPrincipalUsd, {
-            referenceType: "MINING_REFUND",
-            referenceId: targetContract.id,
-            counterAccount: `MINING_POOL:${targetContract.poolId || "POOL"}`,
-          });
+          if (targetContract.fundingSource === "ASSET" && targetContract.symbol !== "USD") {
+            await tx.assetBalance.upsert({ where: { userId_symbol: { userId: targetContract.userId, symbol: targetContract.symbol } }, create: { userId: targetContract.userId, symbol: targetContract.symbol, amount: targetContract.amount }, update: { amount: { increment: targetContract.amount } } });
+          } else {
+            await creditMain(tx, targetContract.userId, initialPrincipalUsd, { referenceType: "MINING_REFUND", referenceId: targetContract.id, counterAccount: `MINING_POOL:${targetContract.poolId || "POOL"}` });
+          }
           await insertTransaction(tx, {
             userId: targetContract.userId,
             type: "TRADE_CLOSE",
@@ -229,17 +232,10 @@ export async function POST(req: Request) {
             targetContract.userId,
             "balance",
             "Mining Contract Cancelled & Refunded",
-            `Your cloud mining contract on ${targetContract.poolName} was cancelled. Your initial principal of ${fmtUsd(initialPrincipalUsd)} was refunded to your wallet.`
+            `Your cloud mining contract on ${targetContract.poolName} was cancelled and its principal was returned.`,
+            tx,
           );
         }
-
-        await tx.userMining.update({
-          where: { id: miningId },
-          data: {
-            status: miningStatus,
-            daysRemaining: miningStatus === "COMPLETED" ? 0 : targetContract.daysRemaining,
-          },
-        });
 
         await audit(
           tx,
@@ -248,7 +244,10 @@ export async function POST(req: Request) {
           ip,
           `Admin ${session.email} updated mining contract ${miningId} (${targetContract.user.email}) status from ${prevStatus} to ${miningStatus}${refundUser ? " with refund" : ""}`
         );
+        return true;
       });
+
+      if (!changed) return NextResponse.json({ error: "Mining contract is already settled" }, { status: 409 });
 
       return NextResponse.json({
         success: true,

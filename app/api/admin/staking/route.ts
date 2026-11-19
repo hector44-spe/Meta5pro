@@ -158,7 +158,7 @@ export async function POST(req: Request) {
     }
 
     if (action === "update_stake_status") {
-      if (!stakeId || !stakeStatus) {
+      if (!stakeId || !["COMPLETED", "CANCELLED"].includes(stakeStatus)) {
         return NextResponse.json({ error: "Stake ID and status are required" }, { status: 400 });
       }
 
@@ -172,18 +172,20 @@ export async function POST(req: Request) {
 
       const prevStatus = targetStake.status;
       const initialPrincipalUsd = Number(targetStake.usdValue);
-      const expectedReturnUsd = Number(targetStake.expectedReturnUsd);
-      const accruedProfitUsd = Number(targetStake.accruedProfitUsd);
-
-      await atomic(async (tx) => {
+      const changed = await atomic(async (tx) => {
+        const claimed = await tx.userStake.updateMany({
+          where: { id: stakeId, status: "ACTIVE", settledAt: null },
+          data: { status: stakeStatus, daysRemaining: stakeStatus === "COMPLETED" ? 0 : targetStake.daysRemaining, settledAt: new Date() },
+        });
+        if (claimed.count !== 1) return false;
         // Handle settlement if completing or refunding
         if (stakeStatus === "COMPLETED" && prevStatus === "ACTIVE") {
-          const payoutAmount = money(expectedReturnUsd > 0 ? expectedReturnUsd : initialPrincipalUsd + accruedProfitUsd);
-          await creditMain(tx, targetStake.userId, payoutAmount, {
-            referenceType: "STAKING_PAYOUT",
-            referenceId: targetStake.id,
-            counterAccount: `STAKING_POOL:${targetStake.poolId || "POOL"}`,
-          });
+          const payoutAmount = money(initialPrincipalUsd);
+          if (targetStake.fundingSource === "ASSET" && targetStake.symbol !== "USD") {
+            await tx.assetBalance.upsert({ where: { userId_symbol: { userId: targetStake.userId, symbol: targetStake.symbol } }, create: { userId: targetStake.userId, symbol: targetStake.symbol, amount: targetStake.amount }, update: { amount: { increment: targetStake.amount } } });
+          } else {
+            await creditMain(tx, targetStake.userId, payoutAmount, { referenceType: "STAKING_PRINCIPAL_RETURN", referenceId: targetStake.id, counterAccount: `STAKING_POOL:${targetStake.poolId || "POOL"}` });
+          }
           await insertTransaction(tx, {
             userId: targetStake.userId,
             type: "TRADE_CLOSE",
@@ -197,14 +199,15 @@ export async function POST(req: Request) {
             targetStake.userId,
             "balance",
             "Staking Payout Completed",
-            `Your staking contract in ${targetStake.poolName} has concluded. Principal and yield totaling ${fmtUsd(payoutAmount)} have been credited to your balance.`
+            `Your staking contract in ${targetStake.poolName} has concluded. Your principal has been returned; accrued yield remains in your interest balance.`,
+            tx,
           );
         } else if (stakeStatus === "CANCELLED" && prevStatus === "ACTIVE" && refundUser) {
-          await creditMain(tx, targetStake.userId, initialPrincipalUsd, {
-            referenceType: "STAKING_REFUND",
-            referenceId: targetStake.id,
-            counterAccount: `STAKING_POOL:${targetStake.poolId || "POOL"}`,
-          });
+          if (targetStake.fundingSource === "ASSET" && targetStake.symbol !== "USD") {
+            await tx.assetBalance.upsert({ where: { userId_symbol: { userId: targetStake.userId, symbol: targetStake.symbol } }, create: { userId: targetStake.userId, symbol: targetStake.symbol, amount: targetStake.amount }, update: { amount: { increment: targetStake.amount } } });
+          } else {
+            await creditMain(tx, targetStake.userId, initialPrincipalUsd, { referenceType: "STAKING_REFUND", referenceId: targetStake.id, counterAccount: `STAKING_POOL:${targetStake.poolId || "POOL"}` });
+          }
           await insertTransaction(tx, {
             userId: targetStake.userId,
             type: "TRADE_CLOSE",
@@ -218,17 +221,10 @@ export async function POST(req: Request) {
             targetStake.userId,
             "balance",
             "Staking Cancelled & Refunded",
-            `Your stake in ${targetStake.poolName} was cancelled by support. Your initial investment of ${fmtUsd(initialPrincipalUsd)} has been refunded to your wallet.`
+            `Your stake in ${targetStake.poolName} was cancelled by support and its principal was returned.`,
+            tx,
           );
         }
-
-        await tx.userStake.update({
-          where: { id: stakeId },
-          data: {
-            status: stakeStatus,
-            daysRemaining: stakeStatus === "COMPLETED" ? 0 : targetStake.daysRemaining,
-          },
-        });
 
         await audit(
           tx,
@@ -237,7 +233,10 @@ export async function POST(req: Request) {
           ip,
           `Admin ${session.email} updated stake ${stakeId} (${targetStake.user.email}) status from ${prevStatus} to ${stakeStatus}${refundUser ? " with refund" : ""}`
         );
+        return true;
       });
+
+      if (!changed) return NextResponse.json({ error: "Stake is already settled" }, { status: 409 });
 
       return NextResponse.json({
         success: true,
