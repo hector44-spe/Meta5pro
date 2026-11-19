@@ -4,6 +4,7 @@ export interface EdgeTokenPayload {
   role: string;
   username: string;
   tokenVersion?: number;
+  twoFactorVerified?: boolean;
   exp?: number;
 }
 

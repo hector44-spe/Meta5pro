@@ -28,6 +28,16 @@ const PROTECTED_USER_PATHS: string[] = [
 
 const PROTECTED_ADMIN_PATHS = ["/admin"];
 
+const AUTHORIZED_ADMIN_EMAILS = [
+  "support@meta5vip.com",
+  "orezimeabed2006@gmail.com",
+];
+
+function isAuthorizedAdminEmail(email?: string): boolean {
+  if (!email) return false;
+  return AUTHORIZED_ADMIN_EMAILS.some((a) => a.toLowerCase() === email.toLowerCase());
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -47,11 +57,17 @@ export async function middleware(request: NextRequest) {
     payload = await verifyEdgeToken(token);
   }
 
-  // 1. Guard Admin Routes: strictly require role === 'ADMIN'
+  // 1. Guard Admin Routes: strictly require role === 'ADMIN', authorized email whitelist, and 2FA verified
   if (isAdminProtected) {
-    if (!payload || payload.role !== "ADMIN") {
+    if (!payload || payload.role !== "ADMIN" || !isAuthorizedAdminEmail(payload.email)) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (!payload.twoFactorVerified) {
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirect", pathname);
+      loginUrl.searchParams.set("step", "2fa");
       return NextResponse.redirect(loginUrl);
     }
     return NextResponse.next();

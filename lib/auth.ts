@@ -16,12 +16,52 @@ export function getJwtSecret(): string {
   return secret;
 }
 
+
+export const AUTH_COOKIE = COOKIE_NAME;
+
+export const AUTHORIZED_ADMIN_EMAILS = Object.freeze([
+  "support@meta5vip.com",
+  "orezimeabed2006@gmail.com",
+]);
+
+export function isAuthorizedAdminEmail(email?: string | null): boolean {
+  if (!email) return false;
+  return AUTHORIZED_ADMIN_EMAILS.some(
+    (allowed) => allowed.toLowerCase() === email.trim().toLowerCase()
+  );
+}
+
 export interface TokenPayload {
   userId: string;
   email: string;
   role: string;
   username: string;
   tokenVersion?: number;
+  twoFactorVerified?: boolean;
+}
+
+export interface TwoFactorTempPayload {
+  userId: string;
+  email: string;
+  role: string;
+  needsSetup?: boolean;
+  is2FaTemp: boolean;
+}
+
+export function sign2FaTempToken(payload: { userId: string; email: string; role: string; needsSetup?: boolean }): string {
+  return jwt.sign({ ...payload, is2FaTemp: true }, getJwtSecret(), { expiresIn: "10m", algorithm: "HS256" });
+}
+
+export function verify2FaTempToken(token: string): TwoFactorTempPayload | null {
+  try {
+    const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ["HS256"] }) as any;
+    if (decoded && decoded.is2FaTemp && decoded.userId) {
+      return decoded as TwoFactorTempPayload;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -69,7 +109,14 @@ export async function getSession(): Promise<TokenPayload | null> {
     if (payload.tokenVersion !== undefined && row.tokenVersion !== payload.tokenVersion) {
       return null;
     }
-    return { ...payload, role: row.role, tokenVersion: row.tokenVersion };
+    const isAuthorizedAdmin = row.role === "ADMIN" && isAuthorizedAdminEmail(payload.email);
+    const effectiveRole = isAuthorizedAdmin && payload.twoFactorVerified ? "ADMIN" : (row.role === "ADMIN" ? "INVESTOR" : row.role);
+    return {
+      ...payload,
+      role: effectiveRole,
+      tokenVersion: row.tokenVersion,
+      twoFactorVerified: !!payload.twoFactorVerified,
+    };
   } catch {
     return null;
   }
@@ -161,4 +208,3 @@ export function clientIp(req: Request): string {
   return candidate && isIP(candidate) ? candidate : "unknown";
 }
 
-export const AUTH_COOKIE = COOKIE_NAME;

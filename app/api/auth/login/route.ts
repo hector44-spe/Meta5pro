@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword, signToken, AUTH_COOKIE, rateLimited, clearRateLimit, clientIp } from "@/lib/auth";
+import {
+  verifyPassword,
+  signToken,
+  sign2FaTempToken,
+  AUTH_COOKIE,
+  isAuthorizedAdminEmail,
+  rateLimited,
+  clearRateLimit,
+  clientIp,
+} from "@/lib/auth";
 import { z } from "zod";
 
 export const dynamic = "force-dynamic";
@@ -61,12 +70,56 @@ export async function POST(req: Request) {
 
     clearRateLimit(limitKey);
 
+    // If account is an Admin, enforce Whitelist & 2FA Security Challenge
+    if (user.role === "ADMIN") {
+      const isAuthorized = isAuthorizedAdminEmail(user.email);
+      if (!isAuthorized) {
+        // Demote in database in background if unauthorized
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { role: "INVESTOR", tokenVersion: { increment: 1 } },
+        });
+      } else {
+        // Check 2FA status for authorized admin
+        if (user.twoFactorEnabled && user.twoFactorSecret) {
+          const tempToken = sign2FaTempToken({
+            userId: user.id,
+            email: user.email,
+            role: "ADMIN",
+            needsSetup: false,
+          });
+          return NextResponse.json({
+            success: true,
+            requires2FA: true,
+            tempToken,
+            message: "Two-Factor Authentication required.",
+          });
+        } else {
+          // Mandatory 2FA Onboarding for Admin
+          const tempToken = sign2FaTempToken({
+            userId: user.id,
+            email: user.email,
+            role: "ADMIN",
+            needsSetup: true,
+          });
+          return NextResponse.json({
+            success: true,
+            requires2FASetup: true,
+            tempToken,
+            message: "Admin security requires 2FA setup.",
+          });
+        }
+      }
+    }
+
+    // Standard Investor Session
     const token = signToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: user.role === "ADMIN" ? "INVESTOR" : user.role,
       username: user.username,
       tokenVersion: user.tokenVersion,
+      twoFactorVerified: false,
     });
 
     const response = NextResponse.json({
