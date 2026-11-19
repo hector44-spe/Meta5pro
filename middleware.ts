@@ -57,14 +57,15 @@ export async function middleware(request: NextRequest) {
     payload = await verifyEdgeToken(token);
   }
 
-  // 1. Guard Admin Routes: strictly require role === 'ADMIN', authorized email whitelist, and 2FA verified
+  // 1. Guard Admin Routes: strictly require role === 'ADMIN' and authorized email whitelist
   if (isAdminProtected) {
     if (!payload || payload.role !== "ADMIN" || !isAuthorizedAdminEmail(payload.email)) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    if (!payload.twoFactorVerified) {
+    // If the admin account has 2FA enabled, require two-factor verification
+    if (payload.twoFactorRequired && !payload.twoFactorVerified) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       loginUrl.searchParams.set("step", "2fa");
@@ -85,6 +86,14 @@ export async function middleware(request: NextRequest) {
 
   // 3. Redirect already logged-in users away from /login & /register
   if (isAuthPage && payload) {
+    // If an admin needs 2FA verification, allow them to view /login
+    if (payload.role === "ADMIN" && payload.twoFactorRequired && !payload.twoFactorVerified) {
+      return NextResponse.next();
+    }
+    // If authorized admin, redirect to /admin
+    if (payload.role === "ADMIN" && isAuthorizedAdminEmail(payload.email)) {
+      return NextResponse.redirect(new URL("/admin", request.url));
+    }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

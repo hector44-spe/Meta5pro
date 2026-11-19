@@ -5,6 +5,7 @@ export interface EdgeTokenPayload {
   username: string;
   tokenVersion?: number;
   twoFactorVerified?: boolean;
+  twoFactorRequired?: boolean;
   exp?: number;
 }
 

@@ -70,7 +70,7 @@ export async function POST(req: Request) {
 
     clearRateLimit(limitKey);
 
-    // If account is an Admin, enforce Whitelist & 2FA Security Challenge
+    // If account is an Admin, enforce Whitelist & check if 2FA is enabled
     if (user.role === "ADMIN") {
       const isAuthorized = isAuthorizedAdminEmail(user.email);
       if (!isAuthorized) {
@@ -79,46 +79,34 @@ export async function POST(req: Request) {
           where: { id: user.id },
           data: { role: "INVESTOR", tokenVersion: { increment: 1 } },
         });
-      } else {
-        // Check 2FA status for authorized admin
-        if (user.twoFactorEnabled && user.twoFactorSecret) {
-          const tempToken = sign2FaTempToken({
-            userId: user.id,
-            email: user.email,
-            role: "ADMIN",
-            needsSetup: false,
-          });
-          return NextResponse.json({
-            success: true,
-            requires2FA: true,
-            tempToken,
-            message: "Two-Factor Authentication required.",
-          });
-        } else {
-          // Mandatory 2FA Onboarding for Admin
-          const tempToken = sign2FaTempToken({
-            userId: user.id,
-            email: user.email,
-            role: "ADMIN",
-            needsSetup: true,
-          });
-          return NextResponse.json({
-            success: true,
-            requires2FASetup: true,
-            tempToken,
-            message: "Admin security requires 2FA setup.",
-          });
-        }
+      } else if (user.twoFactorEnabled && user.twoFactorSecret) {
+        // If admin has enabled 2FA, challenge for 6-digit TOTP code
+        const tempToken = sign2FaTempToken({
+          userId: user.id,
+          email: user.email,
+          role: "ADMIN",
+          needsSetup: false,
+        });
+        return NextResponse.json({
+          success: true,
+          requires2FA: true,
+          tempToken,
+          message: "Two-Factor Authentication required.",
+        });
       }
     }
 
-    // Standard Investor Session
+    // Standard User or Admin (with 2FA opt-in) Session
+    const isAdmin = user.role === "ADMIN" && isAuthorizedAdminEmail(user.email);
+    const effectiveRole = isAdmin ? "ADMIN" : (user.role === "ADMIN" ? "INVESTOR" : user.role);
+
     const token = signToken({
       userId: user.id,
       email: user.email,
-      role: user.role === "ADMIN" ? "INVESTOR" : user.role,
+      role: effectiveRole,
       username: user.username,
       tokenVersion: user.tokenVersion,
+      twoFactorRequired: !!user.twoFactorEnabled,
       twoFactorVerified: false,
     });
 
@@ -128,7 +116,7 @@ export async function POST(req: Request) {
         id: user.id,
         email: user.email,
         fullName: user.fullName,
-        role: user.role,
+        role: effectiveRole,
         wallet: user.wallet,
       },
     });

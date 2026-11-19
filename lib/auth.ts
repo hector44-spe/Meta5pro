@@ -38,6 +38,7 @@ export interface TokenPayload {
   username: string;
   tokenVersion?: number;
   twoFactorVerified?: boolean;
+  twoFactorRequired?: boolean;
 }
 
 export interface TwoFactorTempPayload {
@@ -103,18 +104,19 @@ export async function getSession(): Promise<TokenPayload | null> {
     if (!payload) return null;
     const row = await prisma.user.findUnique({
       where: { id: payload.userId },
-      select: { role: true, status: true, tokenVersion: true },
+      select: { role: true, status: true, tokenVersion: true, twoFactorEnabled: true },
     });
     if (!row || row.status !== "ACTIVE") return null;
     if (payload.tokenVersion !== undefined && row.tokenVersion !== payload.tokenVersion) {
       return null;
     }
     const isAuthorizedAdmin = row.role === "ADMIN" && isAuthorizedAdminEmail(payload.email);
-    const effectiveRole = isAuthorizedAdmin && payload.twoFactorVerified ? "ADMIN" : (row.role === "ADMIN" ? "INVESTOR" : row.role);
+    const effectiveRole = isAuthorizedAdmin ? "ADMIN" : (row.role === "ADMIN" ? "INVESTOR" : row.role);
     return {
       ...payload,
       role: effectiveRole,
       tokenVersion: row.tokenVersion,
+      twoFactorRequired: !!row.twoFactorEnabled,
       twoFactorVerified: !!payload.twoFactorVerified,
     };
   } catch {
