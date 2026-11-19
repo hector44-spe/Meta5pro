@@ -293,6 +293,28 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifLoading, setNotifLoading] = useState(true);
   const shownTradeResultIdsRef = useRef(new Set<string>());
+
+  const getSeenTradeResultIds = (): Set<string> => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const stored = localStorage.getItem("meta5_seen_trade_result_ids");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  };
+
+  const markTradeResultIdSeen = (id: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      const set = getSeenTradeResultIds();
+      set.add(id);
+      localStorage.setItem("meta5_seen_trade_result_ids", JSON.stringify(Array.from(set).slice(-200)));
+    } catch {
+      /* ignore */
+    }
+  };
+
   const fetchNotifications = async () => {
     try {
       const res = await fetch("/api/notifications", { cache: "no-store" });
@@ -301,16 +323,41 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         const nextNotifications: AppNotification[] = data.notifications || [];
         setNotifications(nextNotifications);
         setUnreadCount(data.unread || 0);
-        const result = nextNotifications.find(
-          (item) => !item.read && (item.kind === "trade_profit" || item.kind === "trade_loss"),
-        );
-        if (result && !shownTradeResultIdsRef.current.has(result.id)) {
-            shownTradeResultIdsRef.current.add(result.id);
-            setToastNotification({
-              type: result.kind === "trade_profit" ? "success" : "error",
-              message: result.title,
-              durationMs: 15_000,
-            });
+
+        const seenIds = getSeenTradeResultIds();
+        // Only show toast for fresh trade results (created within last 24h) that haven't been shown yet
+        const now = Date.now();
+        const result = nextNotifications.find((item) => {
+          if (item.read) return false;
+          if (item.kind !== "trade_profit" && item.kind !== "trade_loss") return false;
+          if (shownTradeResultIdsRef.current.has(item.id) || seenIds.has(item.id)) return false;
+          const createdTime = new Date(item.createdAt).getTime();
+          // Skip if older than 24 hours to avoid stale toasts on login
+          return !isNaN(createdTime) && now - createdTime < 24 * 60 * 60 * 1000;
+        });
+
+        if (result) {
+          shownTradeResultIdsRef.current.add(result.id);
+          markTradeResultIdSeen(result.id);
+
+          // Mark as read in the database immediately so it never shows again across logins or devices
+          void fetch("/api/notifications", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [result.id] }),
+          }).catch(() => {});
+
+          // Update local unread state
+          setNotifications((prev) =>
+            prev.map((n) => (n.id === result.id ? { ...n, read: true } : n))
+          );
+          setUnreadCount((prev) => Math.max(0, prev - 1));
+
+          setToastNotification({
+            type: result.kind === "trade_profit" ? "success" : "error",
+            message: result.title,
+            durationMs: 15_000,
+          });
         }
       }
     } catch {
