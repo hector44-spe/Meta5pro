@@ -229,13 +229,19 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     try {
       const visitor = (window as any).$zoho?.salesiq?.visitor;
       if (visitor) {
-        if (profile.fullName) visitor.name(profile.fullName);
-        if (profile.email) visitor.email(profile.email);
+        if (profile.fullName && typeof visitor.name === "function") visitor.name(profile.fullName);
+        if (profile.email && typeof visitor.email === "function") visitor.email(profile.email);
+        if (profile.phoneNumber && typeof visitor.contactnumber === "function") visitor.contactnumber(profile.phoneNumber);
+        if (typeof visitor.info === "function") {
+          visitor.info({
+            "Account Balance": `$${realBalance.toFixed(2)}`,
+          });
+        }
       }
     } catch {
       // ignore
     }
-  }, [profile]);
+  }, [profile, realBalance]);
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState("");

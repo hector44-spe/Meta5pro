@@ -21,20 +21,56 @@ interface ZohoSalesIQProps {
 export function openLiveSupport(fallback?: () => void) {
   if (typeof window === "undefined") return;
 
-  const zoho = window.$zoho?.salesiq;
-  if (zoho) {
-    try {
-      if (zoho.floatwindow?.visible) {
-        zoho.floatwindow.visible("show");
-        return;
+  const tryOpenZoho = () => {
+    const zoho = window.$zoho?.salesiq;
+    if (zoho) {
+      try {
+        if (typeof zoho.floatwindow?.visible === "function") {
+          zoho.floatwindow.visible("show");
+          return true;
+        }
+        if (typeof zoho.chatwindow?.visible === "function") {
+          zoho.chatwindow.visible("show");
+          return true;
+        }
+        const zsiq = (window as any).ZohoSalesIQ;
+        if (zsiq) {
+          if (typeof zsiq.present === "function") {
+            zsiq.present();
+            return true;
+          }
+          if (typeof zsiq.openNewChat === "function") {
+            zsiq.openNewChat();
+            return true;
+          }
+        }
+        if (typeof zoho.chat?.start === "function") {
+          zoho.chat.start();
+          return true;
+        }
+      } catch (err) {
+        console.warn("Could not open Zoho chat window:", err);
       }
-      if (zoho.chat?.start) {
-        zoho.chat.start();
-        return;
-      }
-    } catch (err) {
-      console.warn("Could not open Zoho chat window:", err);
     }
+    return false;
+  };
+
+  if (tryOpenZoho()) return;
+
+  // If Zoho script is injected but still initializing, retry briefly
+  const scriptEl = document.getElementById("zsiqscript");
+  if (scriptEl) {
+    let attempts = 0;
+    const interval = setInterval(() => {
+      attempts++;
+      if (tryOpenZoho()) {
+        clearInterval(interval);
+      } else if (attempts >= 10) {
+        clearInterval(interval);
+        if (fallback) fallback();
+      }
+    }, 200);
+    return;
   }
 
   // Fallback to internal chat if Zoho is unavailable
@@ -47,7 +83,7 @@ export default function ZohoSalesIQ({ user }: ZohoSalesIQProps) {
   useEffect(() => {
     const widgetCode =
       process.env.NEXT_PUBLIC_ZOHO_SALESIQ_WIDGET_CODE ||
-      "siq513c6505d2533af9b126785c07077fdf654c1f0926580539f03271bc7d08c35f";
+      "siq204029d34d78d2f47da12321a6b674a5a0b6216d2b6e3bc6760c7773daac2ff3";
 
     if (!widgetCode || typeof window === "undefined") return;
 
@@ -90,7 +126,7 @@ export default function ZohoSalesIQ({ user }: ZohoSalesIQProps) {
       script.type = "text/javascript";
       script.id = "zsiqscript";
       script.defer = true;
-      script.src = "https://salesiq.zohopublic.com/widget";
+      script.src = `https://salesiq.zohopublic.com/widget?wc=${encodeURIComponent(widgetCode)}`;
       document.body.appendChild(script);
     }
   }, [user]);
