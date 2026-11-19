@@ -1,4 +1,6 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import fs from "node:fs";
+import path from "node:path";
 import { prisma } from "@/lib/prisma";
 
 /**
@@ -69,8 +71,26 @@ ${table}${button}
 </div></body></html>`;
 }
 
+export interface MailAttachment {
+  filename: string;
+  path?: string;
+  content?: Buffer | string;
+  cid?: string;
+  contentType?: string;
+}
+
+export interface SendMailOptions {
+  attachments?: MailAttachment[];
+  from?: string;
+}
+
 /** Sends an email. Never throws: failures are logged so they can't break the request that triggered them. */
-export async function sendMail(to: string | string[], subject: string, html: string): Promise<boolean> {
+export async function sendMail(
+  to: string | string[],
+  subject: string,
+  html: string,
+  options?: SendMailOptions,
+): Promise<boolean> {
   if (!mailConfigured()) {
     if (process.env.NODE_ENV !== "production") {
       console.info(`[mail:dev] To: ${Array.isArray(to) ? to.join(", ") : to} | Subject: ${subject}\n${html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`);
@@ -81,10 +101,11 @@ export async function sendMail(to: string | string[], subject: string, html: str
   }
   try {
     await getTransporter().sendMail({
-      from: process.env.MAIL_FROM || `"${appName()}" <${process.env.ZOHO_SMTP_USER}>`,
+      from: options?.from || process.env.MAIL_FROM || `"${appName()}" <${process.env.ZOHO_SMTP_USER}>`,
       to,
       subject,
       html,
+      attachments: options?.attachments,
     });
     return true;
   } catch (err) {
@@ -210,6 +231,12 @@ export function sendWelcomeEmail(to: string, firstName: string) {
       </td></tr>`
     : "";
 
+  const logoFile = path.join(process.cwd(), "public", "images", "logo-gold.png");
+  const hasLocalLogo = fs.existsSync(logoFile);
+  const logoHtml = hasLocalLogo
+    ? `<img src="cid:metagold-logo" alt="${safeAppName}" width="44" height="52" style="display:block;width:44px;height:52px;max-width:44px;border:0;outline:none;text-decoration:none" />`
+    : `<div style="font-size:26px;font-weight:800;color:#f59e0b;letter-spacing:1px">${safeAppName}</div>`;
+
   const html = `<!doctype html>
 <html lang="en">
   <head>
@@ -224,10 +251,8 @@ export function sendWelcomeEmail(to: string, firstName: string) {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:580px;background:#1d2026;border:1px solid #2e323b;border-collapse:separate;border-spacing:0;border-radius:14px">
             <tr>
               <td style="padding:40px 42px 16px">
-                <!-- Meta Gold 5 / Meta5VIP Emblem -->
-                <svg width="44" height="52" viewBox="0 0 198 235" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M124.3 67.8262L101.678 107.02H124.3V215.589L73.6885 234.011V166.2H96.3213L73.6885 126.996V18.4219L124.3 0V67.8262ZM50.624 126.996L27.9902 166.2H50.624V189.263L0 207.685V59.9199L50.624 41.4854V126.996ZM197.986 174.091L147.375 192.525V107.02H170.009L147.375 67.8066V44.748L197.999 26.3262L197.986 174.091Z" fill="#F59E0B"/>
-                </svg>
+                <!-- Meta Gold 5 Emblem -->
+                ${logoHtml}
               </td>
             </tr>
             <tr>
@@ -251,7 +276,21 @@ export function sendWelcomeEmail(to: string, firstName: string) {
   </body>
 </html>`;
 
-  return sendMail(to, `Welcome to ${currentAppName}`, html);
+  const attachments: MailAttachment[] = hasLocalLogo
+    ? [
+        {
+          filename: "logo-gold.png",
+          path: logoFile,
+          cid: "metagold-logo",
+          contentType: "image/png",
+        },
+      ]
+    : [];
+
+  const senderName = process.env.MAIL_SENDER_NAME || currentAppName;
+  const from = `"${senderName}" <${process.env.ZOHO_SMTP_USER || "support@meta5vip.com"}>`;
+
+  return sendMail(to, `Welcome to ${currentAppName}`, html, { attachments, from });
 }
 
 export function sendWithdrawalCodeEmail(to: string, code: string, amountUsd: number | null) {
