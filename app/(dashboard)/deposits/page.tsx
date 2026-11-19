@@ -1,5 +1,5 @@
-import DepositPage from "../deposit/page";
+import { redirect } from "next/navigation";
 
 export default function DepositsAliasPage() {
-  return <DepositPage />;
+  redirect("/deposit");
 }

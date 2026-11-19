@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import StandaloneTradePage from "../trade/page";
-
-export default function TradesPage() {
-  return <StandaloneTradePage />;
+export default function TradesAliasPage() {
+  redirect("/trade");
 }

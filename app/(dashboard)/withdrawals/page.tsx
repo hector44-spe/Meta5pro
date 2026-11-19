@@ -1,5 +1,5 @@
-import WithdrawPage from "../withdraw/page";
+import { redirect } from "next/navigation";
 
 export default function WithdrawalsAliasPage() {
-  return <WithdrawPage />;
+  redirect("/withdraw");
 }

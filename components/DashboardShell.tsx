@@ -32,14 +32,10 @@ import {
   CandlestickChart,
   History,
   Wrench,
-  Copy,
-  CheckCircle2,
-  MessageSquare,
   LogOut,
   Key,
   User,
   SquareUser,
-  Send,
   Menu,
   SquarePlus,
   SquareMinus,
@@ -56,7 +52,7 @@ import StakeModal from "@/components/StakeModal";
 import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
 import CardsDrawer from "@/components/Cards/CardsDrawer";
 import ReferralsDrawer from "@/components/ReferralsDrawer";
-import { openLiveSupport } from "@/components/ZohoSalesIQ";
+import LiveChatPanel, { type LiveChatMessage } from "@/components/dashboard-shell/LiveChatPanel";
 import {
   ALL_LANGUAGES,
   getCurrentLanguageCode,
@@ -144,7 +140,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return () => window.removeEventListener("mg5-lang-changed", handleChanged);
   }, []);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Array<{ id?: string; sender: "support" | "user"; text: string; time: string }>>([
+  const [chatMessages, setChatMessages] = useState<LiveChatMessage[]>([
     {
       id: "welcome-init",
       sender: "support",
@@ -1940,156 +1936,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
         {/* ===================== LIVE CHAT DIALOG ===================== */}
         {isChatOpen && (
-          <div className="live-chat-panel" role="dialog" aria-modal="true" aria-label="Live support">
-            {/* Chat Header */}
-            <div
-              className="live-chat-header"
-              style={{
-                padding: "14px 16px",
-                backgroundColor: "#1e2126",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "50%",
-                    backgroundColor: "#0084ff",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#fff",
-                  }}
-                >
-                  <MessageSquare size={16} />
-                </div>
-                <div>
-                  <div style={{ fontSize: "14px", fontWeight: 600, color: "#fff" }}>
-                    Live support
-                  </div>
-                  <div style={{ fontSize: "11px", color: "#01b28b" }}>
-                    Online 24/7
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsChatOpen(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "rgba(255, 255, 255, 0.6)",
-                  cursor: "pointer",
-                  padding: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-                aria-label="Close live support"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Chat Messages */}
-            <div
-              className="live-chat-messages"
-              style={{
-                flex: 1,
-                padding: "16px",
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-                gap: "12px",
-              }}
-            >
-              {chatMessages.map((msg, index) => (
-                <div
-                  key={index}
-                  style={{
-                    alignSelf: msg.sender === "user" ? "flex-end" : "flex-start",
-                    maxWidth: "85%",
-                    backgroundColor:
-                      msg.sender === "user" ? "#4763f0" : "rgba(255, 255, 255, 0.08)",
-                    color: "#fff",
-                    padding: "11px 14px",
-                    borderRadius: "12px",
-                    fontSize: "13.5px",
-                    lineHeight: "1.45",
-                    wordBreak: "break-word",
-                  }}
-                >
-                  <div>{msg.text}</div>
-                  <div
-                    style={{
-                      fontSize: "10.5px",
-                      opacity: 0.6,
-                      marginTop: "5px",
-                      textAlign: "right",
-                    }}
-                  >
-                    {msg.time}
-                  </div>
-                </div>
-              ))}
-              <div ref={chatMessagesEndRef} aria-hidden="true" />
-            </div>
-
-            {/* Chat Input */}
-            <form
-              onSubmit={handleSendChatMessage}
-              className="live-chat-form"
-              style={{
-                padding: "12px 16px",
-                borderTop: "1px solid rgba(255, 255, 255, 0.08)",
-                display: "flex",
-                alignItems: "center",
-                gap: "10px",
-                backgroundColor: "#12141a",
-              }}
-            >
-              <input
-                type="text"
-                placeholder="Type your message..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                style={{
-                  flex: 1,
-                  background: "rgba(255, 255, 255, 0.07)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  borderRadius: "20px",
-                  padding: "10px 16px",
-                  color: "#fff",
-                  fontSize: "14px",
-                  outline: "none",
-                  minWidth: 0,
-                }}
-              />
-              <button
-                type="submit"
-                style={{
-                  background: "#4763f0",
-                  border: "none",
-                  borderRadius: "50%",
-                  width: "38px",
-                  height: "38px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: "#fff",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-                aria-label="Send message"
-              >
-                <Send size={16} />
-              </button>
-            </form>
-          </div>
+          <LiveChatPanel
+            messages={chatMessages}
+            input={chatInput}
+            onInputChange={setChatInput}
+            onClose={() => setIsChatOpen(false)}
+            onSubmit={handleSendChatMessage}
+            messagesEndRef={chatMessagesEndRef}
+          />
         )}
 
         {/* ===================== SHARED MODALS & DRAWERS ===================== */}
