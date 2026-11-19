@@ -558,7 +558,7 @@ export function SecuritySettings({ email }: { email: string | null }) {
                     required
                   />
                 </div>
-                <div style={{ display: "flex", gap: "10px", marginTop: "14px" }}>
+                <div style={{ display: "flex", gap: "10px", marginTop: "14px", alignItems: "center" }}>
                   <button
                     type="button"
                     onClick={() => setSetupStep("idle")}
@@ -571,6 +571,7 @@ export function SecuritySettings({ email }: { email: string | null }) {
                       color: "rgba(255,255,255,0.7)",
                       cursor: "pointer",
                       fontWeight: 600,
+                      margin: 0,
                     }}
                   >
                     Cancel
@@ -578,8 +579,24 @@ export function SecuritySettings({ email }: { email: string | null }) {
                   <button
                     type="submit"
                     disabled={twoFactorLoading}
-                    className="as-save"
-                    style={{ flex: 1.5, marginTop: 0, height: "44px" }}
+                    style={{
+                      flex: 1.5,
+                      height: "44px",
+                      borderRadius: "8px",
+                      background: "linear-gradient(180deg, #5a74ff 0%, #4763f0 100%)",
+                      color: "#ffffff",
+                      border: "none",
+                      fontSize: "15px",
+                      fontWeight: 600,
+                      cursor: twoFactorLoading ? "default" : "pointer",
+                      opacity: twoFactorLoading ? 0.6 : 1,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      margin: 0,
+                      padding: "0 16px",
+                    }}
                   >
                     {twoFactorLoading ? <Loader2 size={16} className="spin" /> : "Verify & Enable"}
                   </button>
@@ -639,8 +656,23 @@ export function SecuritySettings({ email }: { email: string | null }) {
                   if (typeof window !== "undefined") window.alert("Backup codes copied to clipboard!");
                   setSetupStep("idle");
                 }}
-                className="as-save"
-                style={{ marginTop: 0, height: "44px" }}
+                style={{
+                  width: "100%",
+                  height: "44px",
+                  borderRadius: "8px",
+                  background: "linear-gradient(180deg, #5a74ff 0%, #4763f0 100%)",
+                  color: "#ffffff",
+                  border: "none",
+                  fontSize: "15px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  margin: 0,
+                  padding: "0 16px",
+                }}
               >
                 Copy Codes & Finish
               </button>
