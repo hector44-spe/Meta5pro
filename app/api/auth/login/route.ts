@@ -19,6 +19,9 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+// A fixed bcrypt hash keeps unknown-account and wrong-password paths comparable.
+const DUMMY_PASSWORD_HASH = "$2b$12$ykv6QjM8AXN0gMvvh76JAO0.7ssJsxHq8O8HzzB1eSRZyp4edJq6G";
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -33,8 +36,15 @@ export async function POST(req: Request) {
 
     const { email, password } = parsed.data;
 
-    const limitKey = `login:${clientIp(req)}:${email.toLowerCase()}`;
-    if (await rateLimited(limitKey, 5)) {
+    const ip = clientIp(req);
+    const normalizedEmail = email.toLowerCase();
+    const limitKey = `login:${ip}:${normalizedEmail}`;
+    const limited = await Promise.all([
+      rateLimited(limitKey, 5),
+      rateLimited(`login-ip:${ip}`, 30),
+      rateLimited(`login-account:${normalizedEmail}`, 10),
+    ]);
+    if (limited.some(Boolean)) {
       return NextResponse.json(
         { error: "Too many login attempts. Please wait 15 minutes and try again." },
         { status: 429 },
@@ -42,26 +52,12 @@ export async function POST(req: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email: normalizedEmail },
       include: { wallet: true },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 },
-      );
-    }
-
-    if (user.status === "SUSPENDED") {
-      return NextResponse.json(
-        { error: "Account has been suspended. Please contact compliance." },
-        { status: 403 },
-      );
-    }
-
-    const valid = await verifyPassword(password, user.passwordHash);
-    if (!valid) {
+    const valid = await verifyPassword(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !valid || user.status !== "ACTIVE") {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 },
@@ -70,7 +66,7 @@ export async function POST(req: Request) {
 
     clearRateLimit(limitKey);
 
-    // If account is an Admin, enforce Whitelist & check if 2FA is enabled
+    // Authorized administrator accounts: challenge 2FA only if enabled
     if (user.role === "ADMIN") {
       const isAuthorized = isAuthorizedAdminEmail(user.email);
       if (!isAuthorized) {
@@ -80,7 +76,6 @@ export async function POST(req: Request) {
           data: { role: "INVESTOR", tokenVersion: { increment: 1 } },
         });
       } else if (user.twoFactorEnabled && user.twoFactorSecret) {
-        // If admin has enabled 2FA, challenge for 6-digit TOTP code
         const tempToken = sign2FaTempToken({
           userId: user.id,
           email: user.email,
@@ -96,7 +91,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Standard User or Admin (with 2FA opt-in) Session
     const isAdmin = user.role === "ADMIN" && isAuthorizedAdminEmail(user.email);
     const effectiveRole = isAdmin ? "ADMIN" : (user.role === "ADMIN" ? "INVESTOR" : user.role);
 

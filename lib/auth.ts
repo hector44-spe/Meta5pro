@@ -78,7 +78,10 @@ export async function verifyPassword(
 }
 
 export function signToken(payload: TokenPayload): string {
-  return jwt.sign(payload, getJwtSecret(), { expiresIn: "7d", algorithm: "HS256" });
+  return jwt.sign(payload, getJwtSecret(), {
+    expiresIn: payload.role === "ADMIN" ? "1h" : "7d",
+    algorithm: "HS256",
+  });
 }
 
 export function verifyToken(token: string): TokenPayload | null {
@@ -111,7 +114,9 @@ export async function getSession(): Promise<TokenPayload | null> {
       return null;
     }
     const isAuthorizedAdmin = row.role === "ADMIN" && isAuthorizedAdminEmail(payload.email);
-    const effectiveRole = isAuthorizedAdmin ? "ADMIN" : (row.role === "ADMIN" ? "INVESTOR" : row.role);
+    const effectiveRole = isAuthorizedAdmin && (!row.twoFactorEnabled || payload.twoFactorVerified)
+      ? "ADMIN"
+      : (row.role === "ADMIN" ? "INVESTOR" : row.role);
     return {
       ...payload,
       role: effectiveRole,
@@ -154,6 +159,11 @@ export async function rateLimited(key: string, max = 5, windowMs = 15 * 60 * 100
   const hashedKey = crypto.createHash("sha256").update(key).digest("hex");
   if (process.env.NODE_ENV === "test") return localRateLimited(hashedKey, max, windowMs);
   const now = new Date();
+
+  // Bound persistent limiter storage without adding cleanup work to every request.
+  if (crypto.randomInt(100) === 0) {
+    void prisma.authRateLimit.deleteMany({ where: { resetAt: { lt: now } } }).catch(() => {});
+  }
 
   for (let retry = 0; retry < 3; retry++) {
     try {

@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { getCatalogSignals } from "@/lib/relational-catalogs";
+import { atomic, settlePending } from "@/lib/ledger";
+import { notify } from "@/lib/notify";
 
 export interface AdminSignalPurchase {
   id: string;
@@ -99,18 +101,38 @@ export async function POST(req: Request) {
 
     // A. Update status of user signal purchase
     if (action === "updatePurchaseStatus") {
-      if (!purchaseId || !newStatus) {
+      if (!purchaseId || !["active", "rejected"].includes(newStatus)) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
-
-      const updated = await prisma.signalPurchase.updateMany({
-        where: { OR: [{ id: purchaseId }, { ref: purchaseId }] },
-        data: { status: newStatus },
-      });
-
-      if (updated.count === 0) {
+      const purchase = await prisma.signalPurchase.findFirst({ where: { OR: [{ id: purchaseId }, { ref: purchaseId }] } });
+      if (!purchase) {
         return NextResponse.json({ error: "Purchase not found" }, { status: 404 });
       }
+
+      const changed = await atomic(async (tx) => {
+        const claimed = await tx.signalPurchase.updateMany({
+          where: { id: purchase.id, status: "pending" },
+          data: { status: newStatus },
+        });
+        if (claimed.count !== 1) return false;
+        if (purchase.paymentTransactionId) {
+          const paymentStatus = newStatus === "active" ? "APPROVED" : "REJECTED";
+          if (!(await settlePending(tx, purchase.paymentTransactionId, paymentStatus))) {
+            throw new Error("The linked signal payment is already settled");
+          }
+        }
+        await notify(
+          purchase.userId,
+          "investment",
+          newStatus === "active" ? "Signal activated" : "Signal payment rejected",
+          newStatus === "active"
+            ? `${purchase.signalTitle} is now active on your account.`
+            : `The payment submitted for ${purchase.signalTitle} could not be verified.`,
+          tx,
+        );
+        return true;
+      });
+      if (!changed) return NextResponse.json({ error: "Purchase is already settled" }, { status: 409 });
 
       return NextResponse.json({ success: true });
     }

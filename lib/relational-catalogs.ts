@@ -80,7 +80,23 @@ export async function getCatalogExperts(): Promise<CatalogExpert[]> {
   const rows = await prisma.copyExpert.findMany({ include: { subscribers: { where: { active: true }, select: { userId: true } } }, orderBy: { createdAt: "asc" } });
   return normalizeExpertPictures(rows.map((row) => ({ id: row.id, ref: row.ref, name: row.name, username: row.username, picture: row.picture, bio: row.bio, winRate: Number(row.winRate), profitShare: Number(row.profitShare), wins: row.wins, losses: row.losses, tradesCount: row.tradesCount, minimumStartUp: Number(row.minimumStartUp), followers: row.followers, tickType: row.tickType as CatalogExpert["tickType"], subscriberList: row.subscribers.map((s) => s.userId) })));
 }
-export async function getCatalogPlans(): Promise<CatalogPlan[]> { await ensureRelationalCatalogs(); return (await prisma.subscriptionPlanConfig.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] })).map((p) => ({ id: p.id, name: p.name, title: p.title, minimum: Number(p.minimum), maximum: Number(p.maximum), duration: p.duration, roi: Number(p.roi), placeholder: Number(p.placeholder) })); }
+export async function getCatalogPlans(): Promise<CatalogPlan[]> {
+  await ensureRelationalCatalogs();
+  const rows = await prisma.plan.findMany({
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { minDeposit: "asc" }],
+  });
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    title: p.title || `${p.name} plan`,
+    minimum: Number(p.minDeposit),
+    maximum: Number(p.maxDeposit),
+    duration: p.durationDays,
+    roi: Number(p.dailyRoiPercentage) * p.durationDays,
+    placeholder: Number(p.placeholder ?? p.minDeposit),
+  }));
+}
 export async function getCatalogSignals(): Promise<CatalogSignal[]> { await ensureRelationalCatalogs(); return (await prisma.tradingSignalConfig.findMany({ where: { active: true }, orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }] })).map((s) => ({ id: s.id, name: s.name, title: s.title, price: Number(s.price), strength: s.strength, placeholder: Number(s.placeholder) })); }
 
 export async function saveCatalogExpert(expert: CatalogExpert): Promise<void> {

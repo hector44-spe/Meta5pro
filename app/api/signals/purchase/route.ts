@@ -1,137 +1,110 @@
+import crypto from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
+import { atomic } from "@/lib/ledger";
 import { notify, fmtUsd } from "@/lib/notify";
 
 export const dynamic = "force-dynamic";
 
+const RECEIPT_RE = /^\/api\/upload\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+function normalizeTxHash(raw: string): string | null {
+  const value = raw.trim();
+  if (/^(0x)?[0-9a-fA-F]{64}$/.test(value)) return value.toLowerCase().replace(/^0x/, "");
+  if (/^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(value)) return value;
+  return null;
+}
+
+const purchaseSchema = z.object({
+  signalId: z.string().trim().min(1).max(100),
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/),
+  network: z.string().trim().max(30).optional(),
+  txHash: z.string().trim().max(120).optional(),
+  receiptUrl: z.string().trim().max(200).optional(),
+  cryptoAddress: z.string().trim().max(160).optional(),
+}).strict();
+
+function historyItem(row: {
+  id: string; ref: string; signalTitle: string; price: Prisma.Decimal;
+  strength: number; status: string; createdAt: Date;
+}) {
+  return {
+    id: row.id, ref: row.ref, signal: row.signalTitle, signalTitle: row.signalTitle,
+    price: row.price.toNumber(), strength: row.strength, status: row.status,
+    date: row.createdAt.toISOString(),
+  };
+}
+
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session?.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rows = await prisma.signalPurchase.findMany({
-      where: { userId: session.userId },
-      orderBy: { createdAt: "desc" },
-    });
-
-    const history = rows.map((r) => ({
-      id: r.id,
-      ref: r.ref,
-      signal: r.signalTitle,
-      signalTitle: r.signalTitle,
-      price: r.price.toNumber(),
-      strength: r.strength,
-      status: r.status,
-      date: r.createdAt.toISOString(),
-    }));
-
-    const signalBalance = rows
-      .filter((r) => r.status !== "rejected" && r.status !== "cancelled")
-      .reduce((sum, r) => sum + r.price.toNumber(), 0);
-
-    return NextResponse.json({ success: true, history, signalBalance });
+    if (!session?.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const rows = await prisma.signalPurchase.findMany({ where: { userId: session.userId }, orderBy: { createdAt: "desc" } });
+    const signalBalance = rows.filter((row) => row.status === "active" || row.status === "approved").reduce((sum, row) => sum + row.price.toNumber(), 0);
+    return NextResponse.json({ success: true, history: rows.map(historyItem), signalBalance });
   } catch (error) {
     console.error("Fetch signal history error:", error);
-    return NextResponse.json({ success: true, history: [], signalBalance: 0 });
+    return NextResponse.json({ error: "Failed to load signal history" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session?.userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const parsed = purchaseSchema.safeParse(await req.json());
+    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid signal purchase" }, { status: 400 });
+    const { signalId, currency, receiptUrl, cryptoAddress } = parsed.data;
+    const signal = await prisma.tradingSignalConfig.findFirst({ where: { id: signalId, active: true } });
+    if (!signal) return NextResponse.json({ error: "Signal package is unavailable" }, { status: 404 });
+    if (!parsed.data.txHash && !receiptUrl) return NextResponse.json({ error: "Upload a payment proof or provide a transaction hash" }, { status: 400 });
+
+    let depositHash: string | null = null;
+    if (parsed.data.txHash) {
+      depositHash = normalizeTxHash(parsed.data.txHash);
+      if (!depositHash) return NextResponse.json({ error: "Enter a valid blockchain transaction hash" }, { status: 400 });
+    }
+    if (receiptUrl) {
+      const match = RECEIPT_RE.exec(receiptUrl);
+      const upload = match ? await prisma.proofUpload.findUnique({ where: { id: match[1] }, select: { userId: true } }) : null;
+      if (!upload || upload.userId !== session.userId) return NextResponse.json({ error: "Invalid payment proof" }, { status: 400 });
+      if (await prisma.transaction.findFirst({ where: { receiptUrl }, select: { id: true } })) {
+        return NextResponse.json({ error: "This payment proof has already been submitted" }, { status: 409 });
+      }
     }
 
-    const body = await req.json();
-    const { amount, signalTitle, strength, currency, network, txHash, receiptUrl, cryptoAddress } = body;
-    const signalPrice = money(Number(amount));
-
-    if (!signalPrice || signalPrice <= 0) {
-      return NextResponse.json({ error: "Please enter a valid signal amount" }, { status: 400 });
-    }
-
-    const ref = `SIG-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
-
-    try {
-      // Signals must be a fresh deposit and NOT deducted from user balance
-      const purchase = await prisma.signalPurchase.create({
+    const reference = `SIG-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
+    const purchase = await atomic(async (tx) => {
+      const payment = await tx.transaction.create({
         data: {
-          userId: session.userId,
-          ref,
-          signalTitle: signalTitle || "Trading Signal",
-          price: signalPrice,
-          strength: Number(strength) || 50,
-          status: "pending",
+          userId: session.userId, type: "SIGNAL_PURCHASE_PAYMENT", status: "PENDING",
+          amount: signal.price, currency,
+          txHash: parsed.data.txHash?.trim() || `SIGNAL_PROOF_${crypto.randomUUID()}`,
+          depositHash, receiptUrl: receiptUrl || null, cryptoAddress: cryptoAddress || null,
+          assetSymbol: currency,
         },
       });
-
-      // Record a dedicated fresh deposit transaction for this signal purchase
-      await prisma.transaction.create({
+      return tx.signalPurchase.create({
         data: {
-          userId: session.userId,
-          type: "DEPOSIT",
-          status: "PENDING",
-          amount: signalPrice,
-          currency: currency ? String(currency).toUpperCase() : "USDT",
-          txHash: txHash ? String(txHash).trim() : `SIG_${Date.now().toString(36).toUpperCase()}`,
-          receiptUrl: receiptUrl ? String(receiptUrl).trim() : undefined,
-          cryptoAddress: cryptoAddress ? String(cryptoAddress).trim() : undefined,
+          userId: session.userId, ref: reference, signalId: signal.id,
+          signalTitle: signal.title, price: signal.price, strength: signal.strength,
+          status: "pending", paymentTransactionId: payment.id,
         },
       });
+    });
 
-      await notify(
-        session.userId,
-        "deposit",
-        "Signal Deposit Submitted",
-        `Fresh deposit of ${fmtUsd(signalPrice)} submitted for ${signalTitle || "Signal"} (${strength || 50}% strength). Pending verification.`,
-      );
-
-      const allPurchases = await prisma.signalPurchase.findMany({
-        where: { userId: session.userId },
-        orderBy: { createdAt: "desc" },
-      });
-
-      const history = allPurchases.map((r) => ({
-        id: r.id,
-        ref: r.ref,
-        signal: r.signalTitle,
-        signalTitle: r.signalTitle,
-        price: r.price.toNumber(),
-        strength: r.strength,
-        status: r.status,
-        date: r.createdAt.toISOString(),
-      }));
-
-      const signalBalance = allPurchases
-        .filter((r) => r.status !== "rejected" && r.status !== "cancelled")
-        .reduce((sum, r) => sum + r.price.toNumber(), 0);
-
-      return NextResponse.json({
-        success: true,
-        message: `Fresh deposit of $${signalPrice.toLocaleString()} submitted for ${signalTitle || "Signal"}. Your signal will activate upon deposit confirmation!`,
-        signal: {
-          id: purchase.id,
-          ref: purchase.ref,
-          signal: purchase.signalTitle,
-          price: purchase.price.toNumber(),
-          strength: purchase.strength,
-          status: purchase.status,
-          date: purchase.createdAt.toISOString(),
-        },
-        history,
-        signalBalance,
-      });
-    } catch (err: any) {
-      console.error("Signal fresh deposit error:", err);
-      return NextResponse.json({ error: err.message || "Failed to process signal deposit." }, { status: 400 });
+    await notify(session.userId, "deposit", "Signal payment submitted", `Payment of ${fmtUsd(signal.price.toNumber())} was submitted for ${signal.title}. It will activate after verification.`);
+    const rows = await prisma.signalPurchase.findMany({ where: { userId: session.userId }, orderBy: { createdAt: "desc" } });
+    const signalBalance = rows.filter((row) => row.status === "active" || row.status === "approved").reduce((sum, row) => sum + row.price.toNumber(), 0);
+    return NextResponse.json({ success: true, message: `Payment submitted for ${signal.title}.`, signal: historyItem(purchase), history: rows.map(historyItem), signalBalance });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return NextResponse.json({ error: "This transaction hash has already been submitted" }, { status: 409 });
     }
-  } catch (error: any) {
     console.error("Purchase signal error:", error);
-    return NextResponse.json({ error: error.message || "Failed to purchase signal" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to submit signal payment" }, { status: 500 });
   }
 }

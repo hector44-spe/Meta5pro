@@ -37,8 +37,9 @@ function getTransporter(): Transporter {
   return transporter;
 }
 
-const appName = () => process.env.NEXT_PUBLIC_APP_NAME || "Meta Gold 5";
+const appName = () => process.env.NEXT_PUBLIC_APP_NAME || "Meta5VIP";
 const appUrl = () => (process.env.APP_URL || "").replace(/\/$/, "");
+const supportEmail = () => process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@meta5vip.com";
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -194,6 +195,63 @@ export function sendPasswordResetEmail(to: string, resetUrl: string) {
       { label: "Reset password", url: resetUrl },
     ),
   );
+}
+
+/** Welcome message sent once a newly registered account has been committed. */
+export function sendWelcomeEmail(to: string, firstName: string) {
+  const safeName = escapeHtml(firstName.trim() || "Trader");
+  const currentAppName = appName();
+  const safeAppName = escapeHtml(currentAppName);
+  const safeSupportEmail = escapeHtml(supportEmail());
+  const dashboardUrl = appUrl() ? `${appUrl()}/dashboard` : "";
+  const dashboardButton = dashboardUrl
+    ? `<tr><td style="padding:6px 0 28px">
+        <a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;background:#f59e0b;color:#111418;text-decoration:none;font-size:15px;font-weight:700;line-height:20px;padding:12px 24px;border-radius:8px">Open your dashboard</a>
+      </td></tr>`
+    : "";
+
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Welcome to ${safeAppName}</title>
+  </head>
+  <body style="margin:0;padding:0;background:#111318;color:#f7f7f8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background:#111318;border-collapse:collapse">
+      <tr>
+        <td align="center" style="padding:32px 14px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;max-width:580px;background:#1d2026;border:1px solid #2e323b;border-collapse:separate;border-spacing:0;border-radius:14px">
+            <tr>
+              <td style="padding:40px 42px 16px">
+                <!-- Meta Gold 5 / Meta5VIP Emblem -->
+                <svg width="44" height="52" viewBox="0 0 198 235" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M124.3 67.8262L101.678 107.02H124.3V215.589L73.6885 234.011V166.2H96.3213L73.6885 126.996V18.4219L124.3 0V67.8262ZM50.624 126.996L27.9902 166.2H50.624V189.263L0 207.685V59.9199L50.624 41.4854V126.996ZM197.986 174.091L147.375 192.525V107.02H170.009L147.375 67.8066V44.748L197.999 26.3262L197.986 174.091Z" fill="#F59E0B"/>
+                </svg>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:4px 42px 36px">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+                  <tr><td style="padding:0 0 24px;font-size:22px;font-weight:700;line-height:1.35;color:#ffffff">Hello ${safeName},</td></tr>
+                  <tr><td style="padding:0 0 26px;font-size:22px;font-weight:700;line-height:1.4;color:#ffffff">Thank you for signing up to<br>${safeAppName}</td></tr>
+                  <tr><td style="padding:0 0 26px;font-size:16px;line-height:1.65;color:#d1d5db">Our platform helps you navigate the intricate world of trading with ease and confidence. Whether you're a seasoned trader or just starting out, our intuitive interface, real-time data analytics, and dedicated support ensure that you're always in the best position to make informed decisions and maximize your earnings.</td></tr>
+                  <tr><td style="padding:0 0 26px;font-size:16px;line-height:1.65;color:#d1d5db">Dive in, and let us be your trusted partner in your trading journey.</td></tr>
+                  ${dashboardButton}
+                  <tr><td style="padding:0 0 26px;font-size:16px;line-height:1.65;color:#d1d5db">For enquiries, you can always reach us via email:<br><a href="mailto:${safeSupportEmail}" style="color:#60a5fa;text-decoration:underline">${safeSupportEmail}</a></td></tr>
+                  <tr><td style="font-size:16px;line-height:1.6;color:#ffffff">Thank you,<br>The ${safeAppName} team</td></tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+          <div style="padding:16px 8px 0;color:#717682;font-size:12px;line-height:1.5">This message was sent because an account was registered using this email address.</div>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`;
+
+  return sendMail(to, `Welcome to ${currentAppName}`, html);
 }
 
 export function sendWithdrawalCodeEmail(to: string, code: string, amountUsd: number | null) {

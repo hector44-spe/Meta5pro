@@ -66,6 +66,8 @@ model User {
   copySubscriptions     CopyExpertSubscription[]
   stakes                UserStake[]
   miningContracts       UserMining[]
+  backupCodes           TwoFactorBackupCode[]
+  supportConversation   SupportConversation?
 
   @@map("users")
 }
@@ -92,6 +94,9 @@ model Plan {
   durationDays       Int
   capitalRefund      Boolean      @default(true)
   isActive           Boolean      @default(true)
+  title              String?
+  placeholder        Decimal?     @db.Decimal(18, 2)
+  sortOrder           Int          @default(0)
   investments        Investment[]
 
   @@map("plans")
@@ -134,6 +139,7 @@ model Transaction {
   status        TxStatus  @default(PENDING)
   approvedAt    DateTime?
   createdAt     DateTime  @default(now())
+  signalPurchase SignalPurchase?
 
   @@index([userId, createdAt])
   @@index([status])
@@ -148,6 +154,7 @@ model ActivityLog {
   action    String
   ipAddress String?
   details   String?
+  targetUserId String?
   createdAt DateTime @default(now())
 
   @@index([userId])
@@ -337,6 +344,7 @@ model TradingSignalConfig {
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  purchases   SignalPurchase[]
 
   @@index([active, sortOrder])
   @@map("trading_signal_configs")
@@ -404,9 +412,14 @@ model SignalPurchase {
   price       Decimal  @db.Decimal(18, 2)
   strength    Int      @default(50)
   status      String   @default("active")
+  signalId    String?
+  signal      TradingSignalConfig? @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  paymentTransactionId String? @unique
+  paymentTransaction Transaction? @relation(fields: [paymentTransactionId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
 
   @@index([userId])
+  @@index([signalId])
   @@map("signal_purchases")
 }
 
@@ -513,6 +526,8 @@ model UserStake {
   accruedProfitUsd  Decimal      @default(0) @db.Decimal(18, 2)
   daysRemaining     Int
   status            String       @default("ACTIVE") // ACTIVE | COMPLETED | CANCELLED
+  fundingSource     String       @default("CASH")
+  settledAt         DateTime?
   lastPayoutAt      DateTime     @default(now())
   startDate         DateTime     @default(now())
   endDate           DateTime
@@ -559,6 +574,8 @@ model UserMining {
   accruedProfitUsd  Decimal     @default(0) @db.Decimal(18, 2)
   daysRemaining     Int
   status            String      @default("ACTIVE") // ACTIVE | COMPLETED | CANCELLED
+  fundingSource     String      @default("CASH")
+  settledAt         DateTime?
   lastPayoutAt      DateTime    @default(now())
   startDate         DateTime    @default(now())
   endDate           DateTime
@@ -567,4 +584,42 @@ model UserMining {
   @@index([userId])
   @@index([status, lastPayoutAt])
   @@map("user_minings")
+}
+
+model TwoFactorBackupCode {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String    @unique
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, usedAt])
+  @@map("two_factor_backup_codes")
+}
+
+model SupportConversation {
+  id        String           @id @default(uuid())
+  userId    String           @unique
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String           @default("OPEN")
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  messages  SupportMessage[]
+
+  @@index([status, updatedAt])
+  @@map("support_conversations")
+}
+
+model SupportMessage {
+  id             String              @id @default(uuid())
+  conversationId String
+  conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         String
+  body           String
+  readAt         DateTime?
+  createdAt      DateTime            @default(now())
+
+  @@index([conversationId, createdAt])
+  @@map("support_messages")
 }

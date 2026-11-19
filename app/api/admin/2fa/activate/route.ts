@@ -2,8 +2,9 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, verify2FaTempToken, isAuthorizedAdminEmail, signToken, AUTH_COOKIE, clientIp } from "@/lib/auth";
+import { getSession, verify2FaTempToken, isAuthorizedAdminEmail, signToken, AUTH_COOKIE, clientIp, rateLimited, clearRateLimit } from "@/lib/auth";
 import { verifyTotpCode, generateBackupCodes } from "@/lib/totp";
+import { decryptSecret } from "@/lib/secret-box";
 import { z } from "zod";
 
 const activateSchema = z.object({
@@ -43,6 +44,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized: Admin verification required" }, { status: 401 });
     }
 
+    const limitKey = `2fa-activate:${clientIp(req)}:${userId}`;
+    if (await rateLimited(limitKey, 5, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: "Too many verification attempts. Try again in 15 minutes." }, { status: 429 });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true, email: true, username: true, fullName: true, role: true, tokenVersion: true, twoFactorTempSecret: true },
@@ -53,7 +59,8 @@ export async function POST(req: Request) {
     }
 
     // Verify test TOTP code
-    const isValid = verifyTotpCode(code, user.twoFactorTempSecret);
+    const decryptedTempSecret = decryptSecret(user.twoFactorTempSecret);
+    const isValid = verifyTotpCode(code, decryptedTempSecret);
     if (!isValid) {
       return NextResponse.json({ error: "Incorrect 6-digit code. Please check your authenticator app and try again." }, { status: 400 });
     }
@@ -62,15 +69,24 @@ export async function POST(req: Request) {
     const { plainCodes, hashedCodes } = generateBackupCodes(8);
 
     // Commit 2FA activation to user record
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        twoFactorSecret: user.twoFactorTempSecret,
-        twoFactorTempSecret: null,
-        twoFactorEnabled: true,
-        twoFactorBackupCodes: hashedCodes,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.twoFactorBackupCode.deleteMany({ where: { userId: user.id } });
+      await tx.twoFactorBackupCode.createMany({
+        data: hashedCodes.map((codeHash) => ({ userId: user.id, codeHash })),
+      });
+      return tx.user.update({
+        where: { id: user.id },
+        data: {
+          twoFactorSecret: user.twoFactorTempSecret,
+          twoFactorTempSecret: null,
+          twoFactorEnabled: true,
+          twoFactorBackupCodes: [],
+          tokenVersion: { increment: 1 },
+        },
+        select: { tokenVersion: true },
+      });
     });
+    clearRateLimit(limitKey);
 
     // Issue verified admin session token
     const fullToken = signToken({
@@ -78,7 +94,8 @@ export async function POST(req: Request) {
       email: user.email,
       role: "ADMIN",
       username: user.username,
-      tokenVersion: user.tokenVersion,
+      tokenVersion: updated.tokenVersion,
+      twoFactorRequired: true,
       twoFactorVerified: true,
     });
 
@@ -101,7 +118,7 @@ export async function POST(req: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60,
       path: "/",
     });
 

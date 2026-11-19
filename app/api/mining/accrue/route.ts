@@ -46,6 +46,7 @@ export async function POST(req: Request) {
             accruedProfitUsd: { increment: dailyYield },
             daysRemaining: newDaysRemaining,
             status: isCompleted ? "COMPLETED" : "ACTIVE",
+            settledAt: isCompleted ? new Date() : null,
             lastPayoutAt: new Date(),
           },
         });
@@ -58,11 +59,19 @@ export async function POST(req: Request) {
         });
 
         if (isCompleted) {
-          await creditMain(tx, contract.userId, initialUsd, {
-            referenceType: "MINING_PRINCIPAL_RETURN",
-            referenceId: contract.id,
-            counterAccount: `MINING_POOL:${contract.poolId || "POOL"}`,
-          });
+          if (contract.fundingSource === "ASSET" && contract.symbol !== "USD") {
+            await tx.assetBalance.upsert({
+              where: { userId_symbol: { userId: contract.userId, symbol: contract.symbol } },
+              create: { userId: contract.userId, symbol: contract.symbol, amount: contract.amount },
+              update: { amount: { increment: contract.amount } },
+            });
+          } else {
+            await creditMain(tx, contract.userId, initialUsd, {
+              referenceType: "MINING_PRINCIPAL_RETURN",
+              referenceId: contract.id,
+              counterAccount: `MINING_POOL:${contract.poolId || "POOL"}`,
+            });
+          }
           await insertTransaction(tx, {
             userId: contract.userId,
             type: "TRADE_CLOSE",
@@ -76,7 +85,8 @@ export async function POST(req: Request) {
             contract.userId,
             "balance",
             "Cloud Mining Contract Completed",
-            `Your mining contract on ${contract.poolName} has concluded. Your initial principal of ${fmtUsd(initialUsd)} and all mining rewards have been paid out to your balance.`
+            `Your mining contract on ${contract.poolName} has concluded. Your principal has been returned and mining rewards remain in your interest balance.`,
+            tx,
           );
         }
 

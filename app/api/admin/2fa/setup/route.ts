@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession, verify2FaTempToken, isAuthorizedAdminEmail } from "@/lib/auth";
 import { generateTotpSecret, generateOtpAuthUri, generateQrCodeDataUrl } from "@/lib/totp";
+import { encryptSecret } from "@/lib/secret-box";
 
 export async function POST(req: Request) {
   try {
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
     // Save temporary secret to user record
     await prisma.user.update({
       where: { id: userId },
-      data: { twoFactorTempSecret: secret },
+      data: { twoFactorTempSecret: encryptSecret(secret) },
     });
 
     return NextResponse.json({

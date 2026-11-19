@@ -96,9 +96,10 @@ export async function PUT(req: Request) {
 
     if (action === "save") {
       if (!plan?.id || !plan?.name) return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
-      await prisma.subscriptionPlanConfig.upsert({ where: { id: plan.id }, update: { name: plan.name, title: plan.title, minimum: Number(plan.minimum), maximum: Number(plan.maximum), duration: Number(plan.duration), roi: Number(plan.roi), placeholder: Number(plan.placeholder ?? plan.minimum), active: true }, create: { id: plan.id, name: plan.name, title: plan.title, minimum: Number(plan.minimum), maximum: Number(plan.maximum), duration: Number(plan.duration), roi: Number(plan.roi), placeholder: Number(plan.placeholder ?? plan.minimum) } });
+      const duration = Math.max(1, Number(plan.duration));
+      await prisma.plan.upsert({ where: { id: plan.id }, update: { name: plan.name, title: plan.title, minDeposit: Number(plan.minimum), maxDeposit: Number(plan.maximum), durationDays: duration, dailyRoiPercentage: Number(plan.roi) / duration, placeholder: Number(plan.placeholder ?? plan.minimum), isActive: true }, create: { id: plan.id, name: plan.name, title: plan.title, minDeposit: Number(plan.minimum), maxDeposit: Number(plan.maximum), durationDays: duration, dailyRoiPercentage: Number(plan.roi) / duration, placeholder: Number(plan.placeholder ?? plan.minimum), isActive: true } });
     } else if (action === "delete") {
-      await prisma.subscriptionPlanConfig.updateMany({ where: { id: planId }, data: { active: false } });
+      await prisma.plan.updateMany({ where: { id: planId }, data: { isActive: false } });
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }

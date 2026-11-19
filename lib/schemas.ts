@@ -13,7 +13,7 @@ export const coldStorageTransferSchema = z.object({
 }).strict();
 
 export const subscriptionPurchaseSchema = z.object({
-  planId: z.string().uuid(),
+  planId: z.string().trim().min(1).max(100),
   amount: z.number().positive().max(100_000_000),
 }).strict();
 

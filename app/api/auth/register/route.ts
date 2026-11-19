@@ -5,6 +5,7 @@ import { z } from "zod";
 import { notify } from "@/lib/notify";
 import crypto from "node:crypto";
 import { Prisma } from "@prisma/client";
+import { sendWelcomeEmail } from "@/lib/mail";
 
 export const dynamic = "force-dynamic";
 
@@ -106,7 +107,13 @@ export async function POST(req: Request) {
       );
     }
 
-    await notify(user.id, "account", "Welcome to Meta Gold 5", "Your account is ready. Make a deposit to get started.");
+    // Email delivery must never roll back or invalidate an already-created account.
+    // Both helpers contain their own error handling; allSettled also keeps the
+    // registration response successful if either notification channel is unavailable.
+    await Promise.allSettled([
+      notify(user.id, "account", "Welcome to Meta5VIP", "Your account is ready. Make a deposit to get started."),
+      sendWelcomeEmail(user.email, firstName),
+    ]);
 
     // Sign session token including tokenVersion
     const token = signToken({

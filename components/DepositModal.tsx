@@ -354,9 +354,6 @@ export default function DepositModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             signalId: signal?.id,
-            signalTitle: signal?.title,
-            strength: signal?.strength,
-            amount: numAmount,
             currency: selectedToken?.symbol || "USDT",
             network: selectedNetwork,
             txHash: txHash.trim() || undefined,

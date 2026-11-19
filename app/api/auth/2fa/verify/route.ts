@@ -3,7 +3,9 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verify2FaTempToken, signToken, AUTH_COOKIE, isAuthorizedAdminEmail, rateLimited, clearRateLimit, clientIp } from "@/lib/auth";
-import { verifyTotpCode, verifyBackupCode } from "@/lib/totp";
+import { verifyTotpCode } from "@/lib/totp";
+import { decryptSecret, encryptSecret, isEncryptedSecret } from "@/lib/secret-box";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const verifySchema = z.object({
@@ -63,26 +65,52 @@ export async function POST(req: Request) {
     }
 
     // Try TOTP code first
-    const isTotpValid = verifyTotpCode(code, user.twoFactorSecret);
+    const decryptedSecret = decryptSecret(user.twoFactorSecret);
+    const isTotpValid = verifyTotpCode(code, decryptedSecret);
     let usedBackup = false;
-    let remainingCodes = user.twoFactorBackupCodes;
+    let remainingCodeCount = 0;
 
     if (!isTotpValid) {
-      // Check if it's an emergency backup recovery code
-      const backupResult = verifyBackupCode(code, user.twoFactorBackupCodes);
-      if (backupResult.valid) {
-        usedBackup = true;
-        remainingCodes = backupResult.remainingHashedCodes;
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { twoFactorBackupCodes: remainingCodes },
+      // Move legacy array codes into individually consumable rows once. A unique
+      // codeHash plus conditional usedAt update makes simultaneous use impossible.
+      if (user.twoFactorBackupCodes.length > 0) {
+        await prisma.$transaction(async (tx) => {
+          await tx.twoFactorBackupCode.createMany({
+            data: user.twoFactorBackupCodes.map((codeHash) => ({ userId: user.id, codeHash })),
+            skipDuplicates: true,
+          });
+          await tx.user.update({ where: { id: user.id }, data: { twoFactorBackupCodes: [] } });
         });
-      } else {
+      }
+      const availableCodes = await prisma.twoFactorBackupCode.findMany({
+        where: { userId: user.id, usedAt: null },
+        select: { id: true, codeHash: true },
+      });
+      let matchedId: string | null = null;
+      for (const candidate of availableCodes) {
+        if (await bcrypt.compare(code.trim().toUpperCase(), candidate.codeHash)) {
+          matchedId = candidate.id;
+          break;
+        }
+      }
+      const consumed = matchedId
+        ? await prisma.twoFactorBackupCode.updateMany({
+            where: { id: matchedId, userId: user.id, usedAt: null },
+            data: { usedAt: new Date() },
+          })
+        : { count: 0 };
+      if (consumed.count !== 1) {
         return NextResponse.json(
           { error: "Incorrect authentication code. Please check your app or recovery code." },
           { status: 400 }
         );
       }
+      usedBackup = true;
+    }
+
+    remainingCodeCount = await prisma.twoFactorBackupCode.count({ where: { userId: user.id, usedAt: null } });
+    if (isTotpValid && !isEncryptedSecret(user.twoFactorSecret)) {
+      await prisma.user.update({ where: { id: user.id }, data: { twoFactorSecret: encryptSecret(decryptedSecret) } });
     }
 
     clearRateLimit(limitKey);
@@ -94,13 +122,14 @@ export async function POST(req: Request) {
       role: "ADMIN",
       username: user.username,
       tokenVersion: user.tokenVersion,
+      twoFactorRequired: true,
       twoFactorVerified: true,
     });
 
     const response = NextResponse.json({
       success: true,
       usedBackupCode: usedBackup,
-      remainingBackupCodes: remainingCodes.length,
+      remainingBackupCodes: remainingCodeCount,
       user: {
         id: user.id,
         email: user.email,
@@ -115,7 +144,7 @@ export async function POST(req: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60,
       path: "/",
     });
 

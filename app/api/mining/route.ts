@@ -204,6 +204,7 @@ export async function POST(req: Request) {
           accruedProfitUsd: 0,
           daysRemaining: durationDays,
           status: "ACTIVE",
+          fundingSource,
           startDate: new Date(),
           endDate,
         },
