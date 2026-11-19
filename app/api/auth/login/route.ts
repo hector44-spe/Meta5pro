@@ -66,7 +66,7 @@ export async function POST(req: Request) {
 
     clearRateLimit(limitKey);
 
-    // Authorized administrator accounts: challenge 2FA only if enabled
+    // Authorized administrators must complete 2FA before receiving an admin session.
     if (user.role === "ADMIN") {
       const isAuthorized = isAuthorizedAdminEmail(user.email);
       if (!isAuthorized) {
@@ -88,11 +88,23 @@ export async function POST(req: Request) {
           tempToken,
           message: "Two-Factor Authentication required.",
         });
+      } else {
+        const tempToken = sign2FaTempToken({
+          userId: user.id,
+          email: user.email,
+          role: "ADMIN",
+          needsSetup: true,
+        });
+        return NextResponse.json({
+          success: true,
+          requires2FASetup: true,
+          tempToken,
+          message: "Two-Factor Authentication setup is required for administrators.",
+        });
       }
     }
 
-    const isAdmin = user.role === "ADMIN" && isAuthorizedAdminEmail(user.email);
-    const effectiveRole = isAdmin ? "ADMIN" : (user.role === "ADMIN" ? "INVESTOR" : user.role);
+    const effectiveRole = user.role === "ADMIN" ? "INVESTOR" : user.role;
 
     const token = signToken({
       userId: user.id,
@@ -100,7 +112,7 @@ export async function POST(req: Request) {
       role: effectiveRole,
       username: user.username,
       tokenVersion: user.tokenVersion,
-      twoFactorRequired: !!user.twoFactorEnabled,
+      twoFactorRequired: false,
       twoFactorVerified: false,
     });
 

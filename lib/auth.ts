@@ -114,14 +114,14 @@ export async function getSession(): Promise<TokenPayload | null> {
       return null;
     }
     const isAuthorizedAdmin = row.role === "ADMIN" && isAuthorizedAdminEmail(payload.email);
-    const effectiveRole = isAuthorizedAdmin && (!row.twoFactorEnabled || payload.twoFactorVerified)
+    const effectiveRole = isAuthorizedAdmin && payload.twoFactorVerified
       ? "ADMIN"
       : (row.role === "ADMIN" ? "INVESTOR" : row.role);
     return {
       ...payload,
       role: effectiveRole,
       tokenVersion: row.tokenVersion,
-      twoFactorRequired: !!row.twoFactorEnabled,
+      twoFactorRequired: row.role === "ADMIN" && isAuthorizedAdminEmail(payload.email),
       twoFactorVerified: !!payload.twoFactorVerified,
     };
   } catch {

@@ -84,8 +84,12 @@ describe("2FA TOTP Engine", () => {
     expect(invalidMatch.remainingHashedCodes).toHaveLength(8);
   });
 
-  it("encrypts and decrypts secrets with AES-256-GCM fallback without FIELD_ENCRYPTION_KEY", async () => {
+  it("requires a dedicated key and encrypts secrets with AES-256-GCM", async () => {
     const { encryptSecret, decryptSecret, isEncryptedSecret } = await import("../lib/secret-box");
+    const original = process.env.FIELD_ENCRYPTION_KEY;
+    delete process.env.FIELD_ENCRYPTION_KEY;
+    expect(() => encryptSecret("secret")).toThrow(/FIELD_ENCRYPTION_KEY/);
+    process.env.FIELD_ENCRYPTION_KEY = "11".repeat(32);
     const rawSecret = generateTotpSecret(20);
     const cipherText = encryptSecret(rawSecret);
     expect(cipherText).toMatch(/^v1:[^:]+:[^:]+:[^:]+$/);
@@ -93,5 +97,7 @@ describe("2FA TOTP Engine", () => {
 
     const decrypted = decryptSecret(cipherText);
     expect(decrypted).toBe(rawSecret);
+    if (original) process.env.FIELD_ENCRYPTION_KEY = original;
+    else delete process.env.FIELD_ENCRYPTION_KEY;
   });
 });

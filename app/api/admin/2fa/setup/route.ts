@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     if (tempToken) {
       const decoded = verify2FaTempToken(tempToken);
-      if (decoded && decoded.role === "ADMIN" && isAuthorizedAdminEmail(decoded.email)) {
+      if (decoded && decoded.role === "ADMIN" && decoded.needsSetup === true && isAuthorizedAdminEmail(decoded.email)) {
         userId = decoded.userId;
         email = decoded.email;
       }

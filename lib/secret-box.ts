@@ -2,19 +2,22 @@ import crypto from "node:crypto";
 
 const PREFIX = "v1";
 
-function fallbackKey(): Buffer {
-  const jwtSecret = process.env.JWT_SECRET || "default-broker-platform-secret-key-32";
+// Read-only compatibility for ciphertext created by the short-lived legacy
+// implementation. New secrets are never written with this derived key.
+function legacyFallbackKey(): Buffer {
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) throw new Error("Legacy encrypted secret cannot be opened without JWT_SECRET");
   return crypto.createHash("sha256").update(`field-enc:${jwtSecret}`).digest();
 }
 
 function key(): Buffer {
   const configured = process.env.FIELD_ENCRYPTION_KEY?.trim();
-  if (!configured) return fallbackKey();
+  if (!configured) throw new Error("FIELD_ENCRYPTION_KEY must be configured");
   const decoded = /^[0-9a-f]{64}$/i.test(configured)
     ? Buffer.from(configured, "hex")
     : Buffer.from(configured, "base64");
   if (decoded.length !== 32) {
-    return crypto.createHash("sha256").update(configured).digest();
+    throw new Error("FIELD_ENCRYPTION_KEY must be exactly 32 bytes (64 hex characters or base64)");
   }
   return decoded;
 }
@@ -37,23 +40,19 @@ export function decryptSecret(value: string): string {
   const tag = Buffer.from(tagText, "base64url");
   const ciphertext = Buffer.from(encryptedText, "base64url");
 
-  // Try primary configured key
-  try {
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key(), iv);
+  const decryptWith = (candidate: Buffer) => {
+    const decipher = crypto.createDecipheriv("aes-256-gcm", candidate, iv);
     decipher.setAuthTag(tag);
     return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
-  } catch (primaryErr) {
-    // If a primary key was configured but secret was created with fallback key, attempt fallback
-    if (process.env.FIELD_ENCRYPTION_KEY?.trim()) {
-      try {
-        const fallbackDecipher = crypto.createDecipheriv("aes-256-gcm", fallbackKey(), iv);
-        fallbackDecipher.setAuthTag(tag);
-        return Buffer.concat([fallbackDecipher.update(ciphertext), fallbackDecipher.final()]).toString("utf8");
-      } catch {
-        // rethrow primary error if fallback also fails
-      }
+  };
+  try {
+    return decryptWith(key());
+  } catch (primaryError) {
+    try {
+      return decryptWith(legacyFallbackKey());
+    } catch {
+      throw primaryError;
     }
-    throw primaryErr;
   }
 }
 

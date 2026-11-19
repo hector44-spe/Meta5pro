@@ -356,7 +356,7 @@ export function SecuritySettings({ email }: { email: string | null }) {
       {/* 2. Two-Factor Authentication Section */}
       <div className="as-section-block">
         <h3 className="as-block-title">Two-Factor Authentication (2FA)</h3>
-        <p className="as-block-sub">Add an extra layer of security using an authenticator app</p>
+        <p className="as-block-sub">Required administrator protection using an authenticator app</p>
 
         <div
           style={{
@@ -391,7 +391,7 @@ export function SecuritySettings({ email }: { email: string | null }) {
                   Authenticator Status
                 </div>
                 <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginTop: "2px" }}>
-                  {twoFactorEnabled ? "Active & Protected" : "Not configured (Optional)"}
+                  {twoFactorEnabled ? "Active & Protected" : "Setup required"}
                 </div>
               </div>
             </div>
@@ -408,12 +408,12 @@ export function SecuritySettings({ email }: { email: string | null }) {
                 border: twoFactorEnabled ? "1px solid rgba(52, 211, 153, 0.3)" : "1px solid rgba(255, 255, 255, 0.08)",
               }}
             >
-              {twoFactorEnabled ? "Active" : "Disabled"}
+              {twoFactorEnabled ? "Active" : "Required"}
             </span>
           </div>
 
           <div style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.55)", lineHeight: 1.5 }}>
-            Protect your admin account with Google Authenticator, Microsoft Authenticator, or 1Password.
+            Administrator access always requires Google Authenticator, Microsoft Authenticator, 1Password, or another TOTP app.
           </div>
 
           {twoFactorNotice && (
@@ -424,31 +424,7 @@ export function SecuritySettings({ email }: { email: string | null }) {
 
           {setupStep === "idle" && (
             <div style={{ marginTop: "4px" }}>
-              {twoFactorEnabled ? (
-                <button
-                  type="button"
-                  onClick={disable2FA}
-                  disabled={twoFactorLoading}
-                  style={{
-                    width: "100%",
-                    height: "44px",
-                    borderRadius: "8px",
-                    background: "rgba(248, 73, 96, 0.08)",
-                    border: "1px solid rgba(248, 73, 96, 0.25)",
-                    color: "#f84960",
-                    fontWeight: 600,
-                    fontSize: "13.5px",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                  }}
-                >
-                  {twoFactorLoading ? <Loader2 size={16} className="spin" /> : "Disable 2FA"}
-                </button>
-              ) : (
-                <button
+              <button
                   type="button"
                   onClick={start2FASetup}
                   disabled={twoFactorLoading}
@@ -473,11 +449,10 @@ export function SecuritySettings({ email }: { email: string | null }) {
                   ) : (
                     <>
                       <ShieldCheck size={16} />
-                      <span>Set up 2FA (Optional)</span>
+                      <span>{twoFactorEnabled ? "Rotate authenticator" : "Set up required 2FA"}</span>
                     </>
                   )}
                 </button>
-              )}
             </div>
           )}
 
