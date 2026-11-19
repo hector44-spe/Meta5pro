@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "@/styles/metagold.css";
 import "@/styles/globals.css";
 import "@/styles/responsive-contract.css";
@@ -60,6 +61,18 @@ export default function RootLayout({
         <meta name="MobileOptimized" content="width" />
       </head>
       <body suppressHydrationWarning className="inter_b65991a8-module__hDb0IG__variable mori_f26f32d3-module__KmV5nG__variable digitalnumbers_d8613293-module__O5KEpG__variable">
+        <Script
+          id="zsiqinit"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `window.$zoho=window.$zoho||{};$zoho.salesiq=$zoho.salesiq||{ready:function(){}};`,
+          }}
+        />
+        <Script
+          id="zsiqscript"
+          strategy="afterInteractive"
+          src={`https://salesiq.zohopublic.com/widget?wc=${encodeURIComponent(process.env.NEXT_PUBLIC_ZOHO_SALESIQ_WIDGET_CODE || "siq204029d34d78d2f47da12321a6b674a5a0b6216d2b6e3bc6760c7773daac2ff3")}`}
+        />
         <ViewportMetrics />
         <GoogleTranslateProvider />
         <ZohoSalesIQ />
