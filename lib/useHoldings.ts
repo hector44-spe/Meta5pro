@@ -74,18 +74,25 @@ export function useHoldings() {
 
   useEffect(() => {
     listeners.add(setState);
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        refreshHoldings();
+      }
+    };
     if (!timer) {
       refreshHoldings();
-      timer = setInterval(refreshHoldings, 15_000);
+      timer = setInterval(refreshHoldings, 5_000);
     } else {
       setState(shared);
     }
     window.addEventListener("focus", refreshHoldings);
+    document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("balance-changed", refreshHoldings);
     window.addEventListener("deposit-submitted", refreshHoldings);
     return () => {
       listeners.delete(setState);
       window.removeEventListener("focus", refreshHoldings);
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("balance-changed", refreshHoldings);
       window.removeEventListener("deposit-submitted", refreshHoldings);
       if (listeners.size === 0 && timer) {

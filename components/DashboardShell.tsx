@@ -303,6 +303,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       }
       if (walletRes.ok) {
         const walletData = await walletRes.json();
+        if (walletData.wallet?.mainBalance !== undefined) {
+          setRealBalance(Number(walletData.wallet.mainBalance));
+        }
         if (walletData.stats) {
           setAccountStats({
             totalDeposits: Number(walletData.stats.totalDeposits || 0),
@@ -330,7 +333,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     }
   }, []);
 
-  // Keep balance and notifications fresh (e.g. after an admin approves a deposit)
+  // Keep balance and notifications fresh (e.g. after an admin approves a deposit or adds funds)
   useEffect(() => {
     fetchNotifications();
     const handleRefresh = () => {
@@ -338,8 +341,15 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       fetchNotifications();
     };
 
-    const t = setInterval(handleRefresh, 30_000);
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        handleRefresh();
+      }
+    };
+
+    const t = setInterval(handleRefresh, 5_000);
     window.addEventListener("focus", handleRefresh);
+    document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("deposit-submitted", handleRefresh);
     window.addEventListener("balance-changed", handleRefresh);
     window.addEventListener("notifications-updated", handleRefresh);
@@ -347,6 +357,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return () => {
       clearInterval(t);
       window.removeEventListener("focus", handleRefresh);
+      document.removeEventListener("visibilitychange", handleVisibility);
       window.removeEventListener("deposit-submitted", handleRefresh);
       window.removeEventListener("balance-changed", handleRefresh);
       window.removeEventListener("notifications-updated", handleRefresh);

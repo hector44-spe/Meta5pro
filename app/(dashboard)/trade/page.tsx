@@ -96,7 +96,12 @@ function TradingContent() {
 
   const { accountType, realBalance, demoBalance, openModal, refreshBalance } = useDashboard();
   const { prices } = usePrices();
-  const { holdings, refresh: refreshHoldings } = useHoldings();
+  const { holdings, summary: holdingsSummary, refresh: refreshHoldings } = useHoldings();
+
+  useEffect(() => {
+    refreshBalance();
+    refreshHoldings();
+  }, [refreshBalance, refreshHoldings]);
 
   // Primary state
   const [orderTab, setOrderTab] = useState<"buy" | "sell" | "convert">("buy");
@@ -398,7 +403,7 @@ function TradingContent() {
       openModal("deposit");
       setNotification({
         type: "error",
-        message: "Insufficient real balance for this order. Please deposit.",
+        message: `Insufficient real balance for this order. Required margin: $${requiredMargin.toFixed(2)} USD, available cash: $${realBalance.toFixed(2)} USD. Please deposit.`,
       });
       return;
     }
@@ -1283,6 +1288,11 @@ function TradingContent() {
                     {orderTab === "sell"
                       ? `0 ${currency}`
                       : `$${currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`}
+                    {accountType === "real" && (holdingsSummary?.totalUsd ?? 0) > 0 && currentBalance === 0 && (
+                      <span style={{ color: "#3861fb", fontSize: "11px", marginLeft: "6px" }} title="Crypto asset portfolio value">
+                        (Portfolio: ${(holdingsSummary?.totalUsd ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
+                      </span>
+                    )}
                   </span>
                 </div>
                 <div

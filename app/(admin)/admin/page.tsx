@@ -104,7 +104,7 @@ interface AdminUser {
 }
 
 const ADMIN_ASSET_OPTIONS = [
-  { symbol: "USD", name: "US Dollar (cash balance)", type: "Cash" },
+  { symbol: "USD", name: "US Dollar (Cash trading & withdrawal wallet)", type: "Cash" },
   ...(assetsData as Array<{ symbol: string; name: string; type: string }>),
 ]
   .filter((asset, index, list) => list.findIndex((item) => item.symbol.toUpperCase() === asset.symbol.toUpperCase()) === index)
@@ -641,24 +641,26 @@ function AdminLoadingFallback() {
             <div className={styles.skeletonCell} style={{ width: 220, height: 14 }} />
           </div>
         </header>
-        <div className={styles.stats}>
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className={styles.statCard}>
-              <span className={styles.skeletonStatVal} />
-              <span className={styles.skeletonStatSub} />
-            </div>
-          ))}
-        </div>
-        <section className={styles.card}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-            <div className={styles.skeletonCell} style={{ width: 160, height: 20 }} />
-          </div>
-          <div className={styles.tableWrap} style={{ minHeight: 200 }}>
+        <div className={styles.sectionWrap}>
+          <div className={styles.stats}>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className={styles.skeletonCell} style={{ width: "100%", height: 38, marginBottom: 8 }} />
+              <div key={i} className={styles.statCard}>
+                <span className={styles.skeletonStatVal} />
+                <span className={styles.skeletonStatSub} />
+              </div>
             ))}
           </div>
-        </section>
+          <section className={styles.card}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+              <div className={styles.skeletonCell} style={{ width: 160, height: 20 }} />
+            </div>
+            <div className={styles.tableWrap} style={{ minHeight: 200 }}>
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={styles.skeletonCell} style={{ width: "100%", height: 38, marginBottom: 8 }} />
+              ))}
+            </div>
+          </section>
+        </div>
       </main>
     </div>
   );
@@ -1298,7 +1300,14 @@ function UsersSection({
                     </td>
                     <td>{u.role === "ADMIN" ? <span className={`${styles.pill} ${styles.pillBlue}`}>Admin</span> : "Investor"}</td>
                     <td><StatusPill status={u.status} /></td>
-                    <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>{usd(u.portfolioBalance ?? u.mainBalance)}</td>
+                    <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>
+                      <div>{usd(u.portfolioBalance ?? u.mainBalance)}</div>
+                      {Number(u.portfolioBalance ?? 0) !== Number(u.mainBalance ?? 0) && (
+                        <div style={{ fontSize: "11px", fontWeight: 400, color: "var(--a-muted)" }}>
+                          Cash: {usd(u.mainBalance)}
+                        </div>
+                      )}
+                    </td>
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalDeposited)}</td>
                     <td className={`${styles.right} ${styles.mono} ${styles.muted}`}>{usd(u.totalWithdrawn)}</td>
                     <td className={styles.muted}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
@@ -1350,6 +1359,9 @@ function UsersSection({
                   <div className={styles.itemMetaCol}>
                     <span className={styles.itemMetaLabel}>Total Balance</span>
                     <span className={styles.itemMetaValue} style={{ color: "#34d399" }}>{usd(u.portfolioBalance ?? u.mainBalance)}</span>
+                    {Number(u.portfolioBalance ?? 0) !== Number(u.mainBalance ?? 0) && (
+                      <span style={{ fontSize: "11px", color: "var(--a-muted)" }}>Cash: {usd(u.mainBalance)}</span>
+                    )}
                   </div>
                   <div className={styles.itemMetaCol}>
                     <span className={styles.itemMetaLabel}>Total Deposited</span>
@@ -1455,9 +1467,14 @@ function UsersSection({
               <span>{assetSymbol === "USD" ? "Amount (USD)" : "Acquisition value (USD)"}</span>
               <input className={styles.input} type="number" min="0" step="0.01" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
             </label>
+            {action === "credit" && assetSymbol === "USD" && (
+              <p className={styles.modalNote} style={{ color: "#34d399", borderColor: "rgba(52, 211, 153, 0.25)" }}>
+                USD Cash funds will be credited directly to the user&apos;s real trading wallet. The user will be able to place trades, invest, and request withdrawals immediately.
+              </p>
+            )}
             {action === "credit" && assetSymbol !== "USD" && (
               <p className={styles.modalNote}>
-                The USD value will be converted to {assetSymbol} with a verified live price. The resulting units will appear in the client&apos;s dashboard assets and will move with the market price.
+                The USD value will be converted to {assetSymbol} with a verified live price. The resulting units will appear in the client&apos;s dashboard assets and will move with the market price. (Note: margin trades fund from Cash balance).
               </p>
             )}
             <label className={styles.field}>
