@@ -30,7 +30,33 @@ import { useDashboard } from "@/components/DashboardShell";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/CustomNotificationBar";
 import AssetBrandIcon from "@/components/dashboard/AssetBrandIcon";
+import MobileTradingStats from "./MobileTradingStats";
 import "@/styles/dashboard.css";
+
+const FALLBACK_LIVE_PRICES: Record<string, number> = {
+  BTC: 86900.0,
+  ETH: 2710.0,
+  SOL: 188.0,
+  XRP: 1.48,
+  DOGE: 0.38,
+  BNB: 640.0,
+  ADA: 0.72,
+  EURUSD: 1.054,
+  GBPUSD: 1.261,
+  USDJPY: 154.2,
+  AUDUSD: 0.651,
+  AAPL: 228.0,
+  NVDA: 135.0,
+  TSLA: 320.0,
+  MSFT: 425.0,
+  GOOGL: 175.0,
+  GOLD: 2680.0,
+  XAUUSD: 2680.0,
+  SILVER: 31.2,
+  OIL: 68.5,
+  USDT: 1.0,
+  USDC: 1.0,
+};
 
 export default function DashboardPage() {
   const {
@@ -47,8 +73,6 @@ export default function DashboardPage() {
     refreshBalance,
     formatMoney,
     balanceLoaded,
-    notifications,
-    unreadCount,
   } = useDashboard();
 
   interface Position {
@@ -71,32 +95,6 @@ export default function DashboardPage() {
     isCustomPnl?: boolean;
   }
 
-  const livePrices: Record<string, number> = {
-    BTC: 86900.0,
-    ETH: 2710.0,
-    SOL: 188.0,
-    XRP: 1.48,
-    DOGE: 0.38,
-    BNB: 640.0,
-    ADA: 0.72,
-    EURUSD: 1.054,
-    GBPUSD: 1.261,
-    USDJPY: 154.2,
-    AUDUSD: 0.651,
-    AAPL: 228.0,
-    NVDA: 135.0,
-    TSLA: 320.0,
-    MSFT: 425.0,
-    GOOGL: 175.0,
-    GOLD: 2680.0,
-    XAUUSD: 2680.0,
-    SILVER: 31.2,
-    OIL: 68.5,
-    USDT: 1.0,
-    USDC: 1.0,
-  };
-
-  const [mounted, setMounted] = useState(false);
   const [positions, setPositions] = useState<Position[]>([]);
   const [closingPositionId, setClosingPositionId] = useState<string | null>(null);
 
@@ -195,7 +193,6 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    setMounted(true);
     fetchPositions();
     fetchSwaps();
   }, []);
@@ -265,12 +262,9 @@ export default function DashboardPage() {
   }, []);
 
   const [orderExecuting, setOrderExecuting] = useState(false);
-  const [orderFeedback, setOrderFeedback] = useState<string | null>(null);
-
   // Live prices (refresh every minute) and the user's real per-coin holdings
   const { prices } = usePrices();
   const { holdings, summary: holdingsSummary, loading: holdingsLoading } = useHoldings();
-  const btcPrice = prices[(currency || "BTC").toUpperCase()] ?? 0;
 
   const fmtUsdValue = (n: number) =>
     `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -413,8 +407,8 @@ export default function DashboardPage() {
   const activeAssetPrice = useMemo(() => {
     const sym = (currency || "BTC").toUpperCase();
     if (prices[sym]) return prices[sym];
-    return livePrices[sym] ?? 100.0;
-  }, [prices, currency, livePrices]);
+    return FALLBACK_LIVE_PRICES[sym] ?? 100.0;
+  }, [prices, currency]);
 
   // TradingView chart (official embed iframe, loaded lazily by the browser)
   // Live TradingView symbol for the asset selected in the trade panel.
@@ -543,7 +537,7 @@ export default function DashboardPage() {
         refreshBalance();
         fetchSwaps();
       }
-    } catch (err) {
+    } catch {
       setNotification({
         type: "error",
         message: "An unexpected error occurred while converting.",
@@ -567,7 +561,6 @@ export default function DashboardPage() {
   };
 
   const handleTradeAction = async () => {
-    setOrderFeedback(null);
     const parsedAmount = parseFloat(amount) || 0;
     if (parsedAmount <= 0) {
       setNotification({
@@ -1535,99 +1528,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ===================== MOBILE CARD 3: TRADING STATS ===================== */}
-      <div className="dashboard-mobile-trading-stats">
-        {/* Trading progress */}
-        <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "6px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "12.5px",
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                fontWeight: 500,
-              }}
-            >
-              Trading progress
-            </span>
-            <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#fff" }}>
-              0%
-            </span>
-          </div>
-          <div
-            style={{
-              width: "100%",
-              height: "5px",
-              borderRadius: "9999px",
-              backgroundColor: "rgba(255, 255, 255, 0.06)",
-              overflow: "hidden",
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                backgroundColor: "#01b28b",
-              }}
-            />
-          </div>
-        </div>
-
-        {/* Signal strength (15 red segments) */}
-        <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "6px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "12.5px",
-                color: "var(--color-text-secondary, rgba(255, 255, 255, 0.6))",
-                fontWeight: 500,
-              }}
-            >
-              Signal strength
-            </span>
-            <span
-              style={{
-                fontSize: "12.5px",
-                fontWeight: 600,
-                color: "#ff3344",
-              }}
-            >
-              0%
-            </span>
-          </div>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(15, 1fr)",
-              gap: "4px",
-              height: "7px",
-            }}
-          >
-            {Array.from({ length: 15 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  height: "100%",
-                  borderRadius: "2px",
-                  backgroundColor: "#ef4444",
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
+      <MobileTradingStats />
 
       {/* ===================== MID SECTION (TradingView Chart + Order Form) ===================== */}
       <div
