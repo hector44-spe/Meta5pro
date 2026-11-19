@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     const ip = clientIp(req);
 
     const decoded = verify2FaTempToken(tempToken);
-    if (!decoded || !decoded.userId || !isAuthorizedAdminEmail(decoded.email)) {
+    if (!decoded || decoded.role !== "ADMIN" || decoded.needsSetup === true || !decoded.userId || !isAuthorizedAdminEmail(decoded.email)) {
       return NextResponse.json(
         { error: "Session expired or invalid. Please log in again." },
         { status: 401 }
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       },
     });
 
-    if (!user || user.status !== "ACTIVE" || !isAuthorizedAdminEmail(user.email)) {
+    if (!user || user.role !== "ADMIN" || user.status !== "ACTIVE" || !isAuthorizedAdminEmail(user.email)) {
       return NextResponse.json({ error: "Access denied." }, { status: 403 });
     }
 
@@ -110,7 +110,13 @@ export async function POST(req: Request) {
 
     remainingCodeCount = await prisma.twoFactorBackupCode.count({ where: { userId: user.id, usedAt: null } });
     if (isTotpValid && !isEncryptedSecret(user.twoFactorSecret)) {
-      await prisma.user.update({ where: { id: user.id }, data: { twoFactorSecret: encryptSecret(decryptedSecret) } });
+      try {
+        await prisma.user.update({ where: { id: user.id }, data: { twoFactorSecret: encryptSecret(decryptedSecret) } });
+      } catch (error) {
+        // Do not lock an existing administrator out while deployment configuration
+        // is being corrected. New setup and card issuance still fail closed.
+        console.error("Legacy 2FA secret could not be re-encrypted", error);
+      }
     }
 
     clearRateLimit(limitKey);

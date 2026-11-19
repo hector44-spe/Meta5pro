@@ -5,6 +5,7 @@ import { getSession, hashPassword } from "@/lib/auth";
 import { atomic, debitMain, insertTransaction, InsufficientFundsError } from "@/lib/ledger";
 import { getSettings } from "@/lib/appSettings";
 import { cardPinSchema, cardRequestSchema, cardStatusSchema, cardTopupSchema } from "@/lib/schemas";
+import { encryptSecret } from "@/lib/secret-box";
 
 export const dynamic = "force-dynamic";
 
@@ -40,18 +41,18 @@ export interface UserCard {
 function generateCardNumber(prefix = "4242"): string {
   let rest = "";
   for (let i = 0; i < 12; i++) {
-    rest += Math.floor(Math.random() * 10).toString();
+    rest += crypto.randomInt(10).toString();
   }
   return prefix + rest;
 }
 
 function generateCVV(): string {
-  return Math.floor(100 + Math.random() * 900).toString();
+  return crypto.randomInt(100, 1000).toString();
 }
 
 function generateExpiry(): string {
   const futureYear = new Date().getFullYear() + 4;
-  const month = String(Math.floor(Math.random() * 12) + 1).padStart(2, "0");
+  const month = String(crypto.randomInt(1, 13)).padStart(2, "0");
   return `${month}/${String(futureYear).slice(-2)}`;
 }
 
@@ -152,7 +153,8 @@ export async function POST(req: Request) {
       const rawNumber = generateCardNumber();
       const last4 = rawNumber.slice(-4);
       const masked = `${rawNumber.slice(0, 4)} **** **** ${last4}`;
-      const ref = `CRD-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
+      const ref = `CRD-${Date.now().toString().slice(-6)}-${crypto.randomInt(100, 1000)}`;
+      const cvv = generateCVV();
       const pinHash = await hashPassword(cardPin);
       const cardSettings = await getSettings("cards");
       const issuanceFee = cardSettings.issuanceFee;
@@ -167,6 +169,7 @@ export async function POST(req: Request) {
             cardNumber: masked,
             last4,
             expiryDate: generateExpiry(),
+            cvvEncrypted: encryptSecret(cvv),
             pinHash,
             status: "pending",
             balance: 0,
@@ -197,7 +200,7 @@ export async function POST(req: Request) {
         cardNumber: card.cardNumber,
         last4: card.last4,
         expiryDate: card.expiryDate,
-        cvv: generateCVV(),
+        cvv,
         status: card.status as "active" | "pending" | "blocked",
         balance: card.balance.toNumber(),
         issuanceFee: card.issuanceFee.toNumber(),

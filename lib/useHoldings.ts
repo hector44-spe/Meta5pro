@@ -81,7 +81,7 @@ export function useHoldings() {
     };
     if (!timer) {
       refreshHoldings();
-      timer = setInterval(refreshHoldings, 5_000);
+      timer = setInterval(refreshHoldings, 15_000);
     } else {
       setState(shared);
     }

@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     if (tempToken) {
       const decoded = verify2FaTempToken(tempToken);
-      if (decoded && isAuthorizedAdminEmail(decoded.email)) {
+      if (decoded && decoded.role === "ADMIN" && isAuthorizedAdminEmail(decoded.email)) {
         userId = decoded.userId;
         email = decoded.email;
       }
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     if (!userId) {
       const session = await getSession();
-      if (session && isAuthorizedAdminEmail(session.email)) {
+      if (session?.role === "ADMIN" && isAuthorizedAdminEmail(session.email)) {
         userId = session.userId;
         email = session.email;
       }
@@ -51,10 +51,10 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, email: true, username: true, fullName: true, role: true, tokenVersion: true, twoFactorTempSecret: true },
+      select: { id: true, email: true, username: true, fullName: true, role: true, status: true, tokenVersion: true, twoFactorTempSecret: true },
     });
 
-    if (!user || !user.twoFactorTempSecret) {
+    if (!user || user.role !== "ADMIN" || user.status !== "ACTIVE" || !isAuthorizedAdminEmail(user.email) || !user.twoFactorTempSecret) {
       return NextResponse.json({ error: "No pending 2FA setup found. Please restart setup." }, { status: 400 });
     }
 

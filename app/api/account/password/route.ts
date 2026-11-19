@@ -39,19 +39,22 @@ export async function POST(req: Request) {
         passwordHash: await hashPassword(parsed.data.newPassword),
         tokenVersion: { increment: 1 },
       },
-      select: { id: true, email: true, role: true, username: true, tokenVersion: true },
+      select: { id: true, email: true, role: true, username: true, tokenVersion: true, twoFactorEnabled: true },
     });
 
     await notify(session.userId, "security", "Password changed", "Your password was changed. If this wasn't you, reset your password immediately and contact support.");
 
     // Issue new cookie with updated tokenVersion so current device stays authenticated,
     // while all other sessions/tokens are immediately revoked!
+    const is2faActive = !!updatedUser.twoFactorEnabled;
     const newToken = signToken({
       userId: updatedUser.id,
       email: updatedUser.email,
-      role: updatedUser.role,
+      role: session.role,
       username: updatedUser.username,
       tokenVersion: updatedUser.tokenVersion,
+      twoFactorRequired: is2faActive,
+      twoFactorVerified: is2faActive ? !!session.twoFactorVerified : false,
     });
 
     const response = NextResponse.json({ success: true, message: "Password changed" });
@@ -61,7 +64,7 @@ export async function POST(req: Request) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: session.role === "ADMIN" ? 60 * 60 : 60 * 60 * 24 * 7,
       path: "/",
     });
     return response;

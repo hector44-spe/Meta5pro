@@ -440,7 +440,26 @@ export async function getVerifiedPrice(symbol: string, maxAgeMs = 5 * 60_000): P
     snapshot.liveSymbols?.includes(sym) &&
     typeof snapshot.prices[sym] === "number"
   ) {
-    return snapshot.prices[sym];
+    const primary = snapshot.prices[sym];
+    if (!CRYPTO_SYMBOLS.has(sym)) return primary;
+
+    // Balance-changing crypto operations require agreement from an independent
+    // provider. A compromised/stale primary quote must not mint or debit the
+    // wrong quantity of an asset.
+    try {
+      const response = await fetch(`https://api.coinbase.com/v2/prices/${encodeURIComponent(sym)}-USD/spot`, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (!response.ok) return null;
+      const payload = await response.json() as { data?: { amount?: string } };
+      const secondary = Number(payload.data?.amount);
+      if (!(secondary > 0) || !Number.isFinite(secondary)) return null;
+      const deviation = Math.abs(primary - secondary) / Math.max(primary, secondary);
+      return deviation <= 0.03 ? (primary + secondary) / 2 : null;
+    } catch {
+      return null;
+    }
   }
 
   // Only the platform's explicit equity/commodity allowlist may use Yahoo. This prevents a

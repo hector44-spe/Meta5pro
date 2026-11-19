@@ -17,7 +17,7 @@ export async function POST(req: Request) {
 
     if (tempToken) {
       const decoded = verify2FaTempToken(tempToken);
-      if (decoded && isAuthorizedAdminEmail(decoded.email)) {
+      if (decoded && decoded.role === "ADMIN" && isAuthorizedAdminEmail(decoded.email)) {
         userId = decoded.userId;
         email = decoded.email;
       }
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
 
     if (!userId) {
       const session = await getSession();
-      if (session && isAuthorizedAdminEmail(session.email)) {
+      if (session?.role === "ADMIN" && isAuthorizedAdminEmail(session.email)) {
         userId = session.userId;
         email = session.email;
       }
@@ -33,6 +33,14 @@ export async function POST(req: Request) {
 
     if (!userId || !email) {
       return NextResponse.json({ error: "Unauthorized: Admin verification required" }, { status: 401 });
+    }
+
+    const admin = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, role: true, status: true },
+    });
+    if (!admin || admin.role !== "ADMIN" || admin.status !== "ACTIVE" || admin.email.toLowerCase() !== email.toLowerCase()) {
+      return NextResponse.json({ error: "Unauthorized: Active administrator required" }, { status: 401 });
     }
 
     // Generate new secret & QR code

@@ -311,14 +311,14 @@ export default function DashboardPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Poll positions every 4s if there are open positions to capture admin changes & auto-settlement
+  // Poll open positions without continuously saturating the API and database.
   useEffect(() => {
     const hasOpen = positions.some((p) => p.status === "OPEN");
     if (!hasOpen) return;
     const interval = setInterval(() => {
       fetchPositions();
       refreshBalance();
-    }, 4000);
+    }, 10_000);
     return () => clearInterval(interval);
   }, [positions]);
 

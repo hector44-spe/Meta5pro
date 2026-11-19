@@ -30,22 +30,22 @@ enum TxStatus {
 }
 
 model User {
-  id           String     @id @default(uuid())
-  email        String     @unique
-  username     String     @unique
-  fullName     String?
-  phoneNumber  String?
-  country      String?
-  passwordHash String
-  role         Role       @default(INVESTOR)
-  status       UserStatus @default(ACTIVE)
-  tokenVersion Int        @default(1)
+  id                   String     @id @default(uuid())
+  email                String     @unique
+  username             String     @unique
+  fullName             String?
+  phoneNumber          String?
+  country              String?
+  passwordHash         String
+  role                 Role       @default(INVESTOR)
+  status               UserStatus @default(ACTIVE)
+  tokenVersion         Int        @default(1)
   twoFactorSecret      String?
   twoFactorEnabled     Boolean    @default(false)
   twoFactorBackupCodes String[]   @default([])
   twoFactorTempSecret  String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 
   wallet                Wallet?
   investments           Investment[]
@@ -96,7 +96,7 @@ model Plan {
   isActive           Boolean      @default(true)
   title              String?
   placeholder        Decimal?     @db.Decimal(18, 2)
-  sortOrder           Int          @default(0)
+  sortOrder          Int          @default(0)
   investments        Investment[]
 
   @@map("plans")
@@ -121,24 +121,24 @@ model Investment {
 }
 
 model Transaction {
-  id            String    @id @default(uuid())
-  userId        String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type          String // DEPOSIT | WITHDRAWAL | INVESTMENT_SUBSCRIBE | TRADE_BUY | TRADE_SELL | TRADE_CONVERT | TRADE_CLOSE
-  amount        Decimal   @db.Decimal(18, 2)
-  currency      String
-  cryptoAddress String?
-  txHash        String?
+  id             String          @id @default(uuid())
+  userId         String
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           String // DEPOSIT | WITHDRAWAL | INVESTMENT_SUBSCRIBE | TRADE_BUY | TRADE_SELL | TRADE_CONVERT | TRADE_CLOSE
+  amount         Decimal         @db.Decimal(18, 2)
+  currency       String
+  cryptoAddress  String?
+  txHash         String?
   // Normalized on-chain hash a user submitted with a deposit. Unique, so the same
   // blockchain transaction can't be claimed twice.
-  depositHash   String?   @unique
-  receiptUrl    String?
+  depositHash    String?         @unique
+  receiptUrl     String?
   // The crypto asset and quantity involved (deposits / withdrawals), e.g. BTC 0.015
-  assetSymbol   String?
-  assetAmount   Decimal?  @db.Decimal(28, 10)
-  status        TxStatus  @default(PENDING)
-  approvedAt    DateTime?
-  createdAt     DateTime  @default(now())
+  assetSymbol    String?
+  assetAmount    Decimal?        @db.Decimal(28, 10)
+  status         TxStatus        @default(PENDING)
+  approvedAt     DateTime?
+  createdAt      DateTime        @default(now())
   signalPurchase SignalPurchase?
 
   @@index([userId, createdAt])
@@ -148,14 +148,14 @@ model Transaction {
 }
 
 model ActivityLog {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  action    String
-  ipAddress String?
-  details   String?
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action       String
+  ipAddress    String?
+  details      String?
   targetUserId String?
-  createdAt DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   @@index([userId])
   @@map("activity_logs")
@@ -334,16 +334,16 @@ model SubscriptionPlanConfig {
 }
 
 model TradingSignalConfig {
-  id          String   @id
+  id          String           @id
   name        String
   title       String
-  price       Decimal  @db.Decimal(18, 2)
+  price       Decimal          @db.Decimal(18, 2)
   strength    Int
-  placeholder Decimal  @db.Decimal(18, 2)
-  sortOrder   Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  placeholder Decimal          @db.Decimal(18, 2)
+  sortOrder   Int              @default(0)
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
   purchases   SignalPurchase[]
 
   @@index([active, sortOrder])
@@ -404,19 +404,19 @@ model Card {
 }
 
 model SignalPurchase {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ref         String   @unique
-  signalTitle String
-  price       Decimal  @db.Decimal(18, 2)
-  strength    Int      @default(50)
-  status      String   @default("active")
-  signalId    String?
-  signal      TradingSignalConfig? @relation(fields: [signalId], references: [id], onDelete: SetNull)
-  paymentTransactionId String? @unique
-  paymentTransaction Transaction? @relation(fields: [paymentTransactionId], references: [id], onDelete: SetNull)
-  createdAt   DateTime @default(now())
+  id                   String               @id @default(uuid())
+  userId               String
+  user                 User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ref                  String               @unique
+  signalTitle          String
+  price                Decimal              @db.Decimal(18, 2)
+  strength             Int                  @default(50)
+  status               String               @default("active")
+  signalId             String?
+  signal               TradingSignalConfig? @relation(fields: [signalId], references: [id], onDelete: SetNull)
+  paymentTransactionId String?              @unique
+  paymentTransaction   Transaction?         @relation(fields: [paymentTransactionId], references: [id], onDelete: SetNull)
+  createdAt            DateTime             @default(now())
 
   @@index([userId])
   @@index([signalId])

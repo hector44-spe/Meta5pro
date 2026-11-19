@@ -81,10 +81,11 @@ export async function PATCH(
         });
         await audit(
           tx,
-          userId,
+          session.userId,
           "ADMIN_ASSET_CREDIT",
           ip,
           `Admin ${session.userId} (${session.email}) credited ${fmtUnits(assetAmount, assetSymbol)} at ${fmtUsd(price)} per unit (${fmtUsd(amount)} acquisition value). Note: ${note || "Manual asset credit"}`,
+          userId,
         );
         return { balance, transaction };
       });
@@ -117,10 +118,11 @@ export async function PATCH(
           : await debitMain(tx, userId, amount);
         await audit(
           tx,
-          userId,
+          session.userId,
           `ADMIN_BALANCE_${action.toUpperCase()}`,
           ip,
           `Admin ${session.userId} (${session.email}) ${action}ed $${amount}. Note: ${note || "Manual balance correction"}`,
+          userId,
         );
         return balance;
       });

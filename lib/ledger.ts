@@ -149,6 +149,6 @@ export async function settlePending(
   return res.count === 1;
 }
 
-export function audit(tx: Tx, userId: string, action: string, ip: string, details: string) {
-  return tx.activityLog.create({ data: { userId, action, ipAddress: ip, details } });
+export function audit(tx: Tx, userId: string, action: string, ip: string, details: string, targetUserId?: string) {
+  return tx.activityLog.create({ data: { userId, targetUserId, action, ipAddress: ip, details } });
 }

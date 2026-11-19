@@ -1,0 +1,22 @@
+.layout { display: grid; grid-template-columns: minmax(240px, 340px) minmax(0, 1fr); min-height: 560px; border: 1px solid #252c37; border-radius: 16px; overflow: hidden; background: #10141a; }
+.list { border-right: 1px solid #252c37; overflow: auto; }
+.heading { padding: 18px; border-bottom: 1px solid #252c37; }
+.heading h2 { margin: 0; font-size: 17px; }
+.heading p { margin: 5px 0 0; color: #87909d; font-size: 13px; }
+.conversation { width: 100%; padding: 14px 18px; border: 0; border-bottom: 1px solid #202630; background: transparent; color: #e9edf3; text-align: left; cursor: pointer; }
+.conversation:hover, .active { background: #18202b; }
+.conversation strong, .conversation span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conversation span { margin-top: 4px; color: #87909d; font-size: 12px; }
+.chat { display: flex; min-width: 0; flex-direction: column; }
+.chatHead { padding: 16px 20px; border-bottom: 1px solid #252c37; }
+.chatHead strong, .chatHead span { display: block; }
+.chatHead span { color: #87909d; font-size: 12px; margin-top: 3px; }
+.messages { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+.message { max-width: min(76%, 620px); padding: 11px 13px; border-radius: 14px; background: #202733; white-space: pre-wrap; overflow-wrap: anywhere; }
+.admin { align-self: flex-end; background: #315cf4; }
+.message small { display: block; opacity: .65; margin-top: 5px; }
+.composer { display: flex; gap: 10px; padding: 16px; border-top: 1px solid #252c37; }
+.composer textarea { flex: 1; min-height: 48px; max-height: 130px; resize: vertical; padding: 12px; border: 1px solid #303947; border-radius: 10px; background: #171c24; color: white; }
+.composer button { align-self: end; min-height: 48px; padding: 0 18px; border: 0; border-radius: 10px; background: #315cf4; color: white; font-weight: 700; cursor: pointer; }
+.empty { margin: auto; padding: 30px; color: #87909d; text-align: center; }
+@media (max-width: 760px) { .layout { grid-template-columns: 1fr; min-height: 680px; } .list { max-height: 220px; border-right: 0; border-bottom: 1px solid #252c37; } .message { max-width: 90%; } }

@@ -143,13 +143,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return () => window.removeEventListener("mg5-lang-changed", handleChanged);
   }, []);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: "support" | "user"; text: string; time: string }>>([
-    {
-      sender: "support",
-      text: "Hello! Welcome to Meta Gold Support. How can we assist you with your trades or account today?",
-      time: "Just now",
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<Array<{ id?: string; sender: "support" | "user"; text: string; time: string }>>([]);
   const [chatInput, setChatInput] = useState("");
   const chatMessagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -157,6 +151,33 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     if (!isChatOpen) return;
     chatMessagesEndRef.current?.scrollIntoView({ block: "end", behavior: "smooth" });
   }, [chatMessages, isChatOpen]);
+
+  useEffect(() => {
+    if (!isChatOpen) return;
+    let active = true;
+    const loadMessages = async () => {
+      try {
+        const response = await fetch("/api/support", { cache: "no-store" });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!active) return;
+        setChatMessages((data.messages || []).map((message: { id: string; sender: "support" | "user"; text: string; createdAt: string }) => ({
+          id: message.id,
+          sender: message.sender,
+          text: message.text,
+          time: new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        })));
+      } catch {
+        // Keep the current conversation visible during transient network failures.
+      }
+    };
+    loadMessages();
+    const timer = window.setInterval(loadMessages, 15_000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [isChatOpen]);
 
   // Modal specific states
   const [copied, setCopied] = useState(false);
@@ -349,7 +370,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       }
     };
 
-    const t = setInterval(handleRefresh, 5_000);
+    const t = setInterval(handleRefresh, 15_000);
     window.addEventListener("focus", handleRefresh);
     document.addEventListener("visibilitychange", handleVisibility);
     window.addEventListener("deposit-submitted", handleRefresh);
@@ -394,7 +415,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSendChatMessage = (e: React.FormEvent) => {
+  const handleSendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
     const userMsg = {
@@ -404,16 +425,19 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     };
     setChatMessages((prev) => [...prev, userMsg]);
     setChatInput("");
-    setTimeout(() => {
-      setChatMessages((prev) => [
-        ...prev,
-        {
-          sender: "support",
-          text: "An agent will review your inquiry shortly. Thank you for your patience.",
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
-    }, 1000);
+    try {
+      const response = await fetch("/api/support", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMsg.text }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Message could not be sent");
+      setChatMessages((prev) => prev.map((message) => message === userMsg ? { ...message, id: data.message?.id } : message));
+    } catch (error) {
+      setChatMessages((prev) => prev.filter((message) => message !== userMsg));
+      setToastNotification({ type: "error", message: error instanceof Error ? error.message : "Message could not be sent" });
+    }
   };
 
 

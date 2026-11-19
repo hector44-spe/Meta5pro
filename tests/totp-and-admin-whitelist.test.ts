@@ -83,4 +83,15 @@ describe("2FA TOTP Engine", () => {
     expect(invalidMatch.valid).toBe(false);
     expect(invalidMatch.remainingHashedCodes).toHaveLength(8);
   });
+
+  it("encrypts and decrypts secrets with AES-256-GCM fallback without FIELD_ENCRYPTION_KEY", async () => {
+    const { encryptSecret, decryptSecret, isEncryptedSecret } = await import("../lib/secret-box");
+    const rawSecret = generateTotpSecret(20);
+    const cipherText = encryptSecret(rawSecret);
+    expect(cipherText).toMatch(/^v1:[^:]+:[^:]+:[^:]+$/);
+    expect(isEncryptedSecret(cipherText)).toBe(true);
+
+    const decrypted = decryptSecret(cipherText);
+    expect(decrypted).toBe(rawSecret);
+  });
 });

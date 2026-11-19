@@ -40,6 +40,7 @@ import {
   Cpu,
   UserPlus,
   ChevronDown,
+  MessageSquare,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -54,6 +55,7 @@ import CardRequestsSection from "./sections/CardRequestsSection";
 import CardsSection from "./sections/CardsSection";
 import SubscriptionsSection from "./sections/SubscriptionsSection";
 import DepositAddressSection from "./sections/DepositAddressSection";
+import SupportSection from "./sections/SupportSection";
 import assetsData from "@/data/assetsData.json";
 
 /* ------------------------------------------------------------------ */
@@ -125,6 +127,7 @@ type Section =
   | "cards"
   | "subscriptions"
   | "addresses"
+  | "support"
   | "transactions";
 
 /* ------------------------------------------------------------------ */
@@ -188,6 +191,7 @@ function AdminContent() {
       "cards",
       "subscriptions",
       "addresses",
+      "support",
       "transactions",
     ],
     []
@@ -345,6 +349,7 @@ function AdminContent() {
     { id: "cards", label: "Cards", icon: <Layers size={18} /> },
     { id: "subscriptions", label: "Subscription", icon: <Sparkles size={18} /> },
     { id: "addresses", label: "Deposit addresses", icon: <Wallet size={18} /> },
+    { id: "support", label: "Live support", icon: <MessageSquare size={18} /> },
   ];
 
   const titles: Record<Section, [string, string]> = {
@@ -362,6 +367,7 @@ function AdminContent() {
     cards: ["Cards", "Manage card products and settings"],
     subscriptions: ["Subscriptions", "Investment plans and subscribers"],
     addresses: ["Deposit Addresses", "Manage deposit wallet addresses"],
+    support: ["Live Support", "View and reply to customer conversations"],
     transactions: ["Transactions", "Platform transaction logs"],
   };
 
@@ -508,6 +514,8 @@ function AdminContent() {
           {section === "subscriptions" && <SubscriptionsSection flash={flash} />}
 
           {section === "addresses" && <DepositAddressSection flash={flash} />}
+
+          {section === "support" && <SupportSection flash={flash} />}
         </div>
       </main>
 

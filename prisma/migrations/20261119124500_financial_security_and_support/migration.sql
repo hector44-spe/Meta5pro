@@ -112,6 +112,11 @@ ALTER TABLE "plans" ADD COLUMN IF NOT EXISTS "placeholder" DECIMAL(18,2);
 ALTER TABLE "plans" ADD COLUMN IF NOT EXISTS "sortOrder" INTEGER NOT NULL DEFAULT 0;
 
 -- Copy the legacy presentation catalog into the canonical purchasable plans.
+UPDATE "plans" p
+SET "isActive" = false
+WHERE EXISTS (SELECT 1 FROM "subscription_plan_configs")
+  AND NOT EXISTS (SELECT 1 FROM "subscription_plan_configs" c WHERE c."id" = p."id");
+
 INSERT INTO "plans" ("id", "name", "minDeposit", "maxDeposit", "dailyRoiPercentage", "durationDays", "capitalRefund", "isActive", "title", "placeholder", "sortOrder")
 SELECT c."id", c."name", c."minimum", c."maximum",
        CASE WHEN c."duration" > 0 THEN c."roi" / c."duration" ELSE c."roi" END,

@@ -115,7 +115,10 @@ function LoginFormContent() {
       if (data.user?.role === "ADMIN") {
         router.push("/admin");
       } else {
-        router.push(redirectTarget.startsWith("/") ? redirectTarget : "/dashboard");
+        const safeRedirect = redirectTarget.startsWith("/")
+          && !redirectTarget.startsWith("//")
+          && !redirectTarget.includes("\\");
+        router.push(safeRedirect ? redirectTarget : "/dashboard");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
