@@ -6,6 +6,7 @@ import "@/styles/edit-modal-stability.css";
 import "@/styles/ui-layout-contract.css";
 import GoogleTranslateProvider from "@/components/GoogleTranslateProvider";
 import ViewportMetrics from "@/components/ViewportMetrics";
+import ZohoSalesIQ from "@/components/ZohoSalesIQ";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -61,6 +62,7 @@ export default function RootLayout({
       <body suppressHydrationWarning className="inter_b65991a8-module__hDb0IG__variable mori_f26f32d3-module__KmV5nG__variable digitalnumbers_d8613293-module__O5KEpG__variable">
         <ViewportMetrics />
         <GoogleTranslateProvider />
+        <ZohoSalesIQ />
         {children}
       </body>
     </html>

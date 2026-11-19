@@ -56,6 +56,7 @@ import StakeModal from "@/components/StakeModal";
 import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
 import CardsDrawer from "@/components/Cards/CardsDrawer";
 import ReferralsDrawer from "@/components/ReferralsDrawer";
+import { openLiveSupport } from "@/components/ZohoSalesIQ";
 import {
   ALL_LANGUAGES,
   getCurrentLanguageCode,
@@ -143,7 +144,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return () => window.removeEventListener("mg5-lang-changed", handleChanged);
   }, []);
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Array<{ id?: string; sender: "support" | "user"; text: string; time: string }>>([]);
+  const [chatMessages, setChatMessages] = useState<Array<{ id?: string; sender: "support" | "user"; text: string; time: string }>>([
+    {
+      id: "welcome-init",
+      sender: "support",
+      text: "Hello! Welcome to Meta Gold 5 Live Support. How can we assist your account or trading today?",
+      time: "Just now",
+    },
+  ]);
   const [chatInput, setChatInput] = useState("");
   const chatMessagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -161,12 +169,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         if (!response.ok) return;
         const data = await response.json();
         if (!active) return;
-        setChatMessages((data.messages || []).map((message: { id: string; sender: "support" | "user"; text: string; createdAt: string }) => ({
-          id: message.id,
-          sender: message.sender,
-          text: message.text,
-          time: new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        })));
+        if (data.messages && data.messages.length > 0) {
+          setChatMessages(data.messages.map((message: { id: string; sender: "support" | "user"; text: string; createdAt: string }) => ({
+            id: message.id,
+            sender: message.sender,
+            text: message.text,
+            time: new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          })));
+        }
       } catch {
         // Keep the current conversation visible during transient network failures.
       }
@@ -212,6 +222,21 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [realBalance, setRealBalance] = useState<number>(0);
   const [userRefCode, setUserRefCode] = useState<string>("vip-trader");
   const [profile, setProfile] = useState<UserProfile | null>(null);
+
+  // Sync authenticated trader profile to Zoho SalesIQ
+  useEffect(() => {
+    if (!profile || typeof window === "undefined") return;
+    try {
+      const visitor = (window as any).$zoho?.salesiq?.visitor;
+      if (visitor) {
+        if (profile.fullName) visitor.name(profile.fullName);
+        if (profile.email) visitor.email(profile.email);
+      }
+    } catch {
+      // ignore
+    }
+  }, [profile]);
+
   const [isAdmin, setIsAdmin] = useState(false);
   const [siteOrigin, setSiteOrigin] = useState("");
   const displayName = profile?.fullName?.trim() || profile?.email?.split("@")[0] || "";
@@ -1864,7 +1889,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         <button
           type="button"
           data-fixed-bottom="hide"
-          onClick={() => setIsChatOpen(!isChatOpen)}
+          onClick={() => openLiveSupport(() => setIsChatOpen(!isChatOpen))}
           style={{
             position: "fixed",
             bottom: "24px",
@@ -2615,7 +2640,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               {/* Floating Blue Chat Bubble at Bottom Right (Images 1 & 2) */}
               <button
                 data-fixed-bottom="hide"
-                onClick={() => setIsChatOpen(true)}
+                onClick={() => openLiveSupport(() => setIsChatOpen(true))}
                 style={{
                   position: "fixed",
                   bottom: "20px",
