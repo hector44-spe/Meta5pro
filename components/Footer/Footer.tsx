@@ -61,7 +61,7 @@ export default function Footer() {
                 <li className="four-module__98-FTG__footerLinksItem">
                   <Link
                     className="four-module__98-FTG__footerLink"
-                    href="/stake"
+                    href="/staking"
                   >
                     Staking
                   </Link>
@@ -69,7 +69,7 @@ export default function Footer() {
                 <li className="four-module__98-FTG__footerLinksItem">
                   <Link
                     className="four-module__98-FTG__footerLink"
-                    href="/markets"
+                    href="/market-overview"
                   >
                     Markets
                   </Link>
@@ -77,7 +77,7 @@ export default function Footer() {
                 <li className="four-module__98-FTG__footerLinksItem">
                   <Link
                     className="four-module__98-FTG__footerLink"
-                    href="/real-estate"
+                    href="/explore/real-estate"
                   >
                     Real Estate
                   </Link>
@@ -139,7 +139,7 @@ export default function Footer() {
                 <li className="four-module__98-FTG__footerLinksItem">
                   <Link
                     className="four-module__98-FTG__footerLink"
-                    href="/copy-trading"
+                    href="/explore/copy-trading"
                   >
                     Copy Trading
                   </Link>
