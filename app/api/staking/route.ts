@@ -1,70 +1,114 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { DEFAULT_STAKING_POOLS, StakingPool, UserStakeRecord } from "@/lib/stakingData";
-import { atomic, debitMain, InsufficientFundsError } from "@/lib/ledger";
-import crypto from "node:crypto";
+import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
+import { getVerifiedPrice } from "@/lib/prices";
+import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
+import { z } from "zod";
+
+const stakeSchema = z.object({
+  poolId: z.string().min(1, "Pool ID is required"),
+  amount: z.coerce.number().positive("Stake amount must be greater than 0"),
+  durationDays: z.coerce.number().int().min(1).max(3650).default(1),
+  fundingSource: z.enum(["CASH", "ASSET"]).default("CASH"),
+});
 
 export async function GET() {
   try {
     const session = await getSession();
     const isAdmin = session?.role === "ADMIN";
 
-    // Load pools from appSetting
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "staking_pools" },
+    const pools = await prisma.stakingPool.findMany({
+      where: { status: "ACTIVE" },
+      orderBy: { createdAt: "asc" },
     });
 
-    let pools: StakingPool[] = DEFAULT_STAKING_POOLS;
-    if (poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0) {
-      pools = poolsSetting.value as unknown as StakingPool[];
-    }
+    let userStakes: any[] = [];
+    let userBalances: { cash: number; assets: Record<string, number> } = {
+      cash: 0,
+      assets: {},
+    };
 
-    // Load user stakes
-    let userStakes: UserStakeRecord[] = [];
     if (session?.userId) {
-      const stakesSetting = await prisma.appSetting.findUnique({
-        where: { key: `user_stakes_${session.userId}` },
-      });
-      if (stakesSetting && Array.isArray(stakesSetting.value)) {
-        userStakes = stakesSetting.value as unknown as UserStakeRecord[];
+      const [stakes, wallet, assetBalances] = await Promise.all([
+        prisma.userStake.findMany({
+          where: { userId: session.userId },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.wallet.findUnique({
+          where: { userId: session.userId },
+          select: { mainBalance: true },
+        }),
+        prisma.assetBalance.findMany({
+          where: { userId: session.userId },
+        }),
+      ]);
+
+      userStakes = stakes.map((s) => ({
+        id: s.id,
+        userId: s.userId,
+        poolId: s.poolId,
+        poolName: s.poolName,
+        symbol: s.symbol,
+        amount: Number(s.amount),
+        usdValue: Number(s.usdValue),
+        durationDays: s.durationDays,
+        roi: Number(s.roi),
+        expectedReturnUsd: Number(s.expectedReturnUsd),
+        accruedProfitUsd: Number(s.accruedProfitUsd),
+        daysRemaining: s.daysRemaining,
+        status: s.status,
+        startDate: s.startDate.toISOString(),
+        endDate: s.endDate.toISOString(),
+      }));
+
+      const assetsMap: Record<string, number> = {};
+      for (const a of assetBalances) {
+        assetsMap[a.symbol.toUpperCase()] = Number(a.amount);
       }
+
+      userBalances = {
+        cash: Number(wallet?.mainBalance || 0),
+        assets: assetsMap,
+      };
     }
 
-    const totalStaked = userStakes.reduce((acc, s) => acc + s.amount, 0);
+    const totalStakedUsd = userStakes.reduce((acc, s) => acc + s.usdValue, 0);
     const activeStakes = userStakes.filter((s) => s.status === "ACTIVE");
-    const closedStakes = userStakes.filter((s) => s.status === "COMPLETED" || s.status === "CANCELLED");
+    const activeStakedUsd = activeStakes.reduce((acc, s) => acc + s.usdValue, 0);
+    const closedStakes = userStakes.filter((s) => s.status !== "ACTIVE");
+    const closedStakedUsd = closedStakes.reduce((acc, s) => acc + s.usdValue, 0);
 
     return NextResponse.json({
       success: true,
-      pools,
+      pools: pools.map((p) => ({
+        id: p.id,
+        name: p.name,
+        symbol: p.symbol,
+        icon: p.icon,
+        min: Number(p.min),
+        max: Number(p.max),
+        cycle: p.cycle,
+        roi: Number(p.roi),
+        status: p.status,
+      })),
       userStakes,
+      userBalances,
       stats: {
-        totalStaked,
+        totalStaked: totalStakedUsd,
         totalCount: userStakes.length,
-        activeStaked: activeStakes.reduce((acc, s) => acc + s.amount, 0),
+        activeStaked: activeStakedUsd,
         activeCount: activeStakes.length,
-        closedStaked: closedStakes.reduce((acc, s) => acc + s.amount, 0),
+        closedStaked: closedStakedUsd,
         closedCount: closedStakes.length,
       },
       isAdmin,
     });
   } catch (error) {
     console.error("Fetch staking error:", error);
-    return NextResponse.json({
-      success: true,
-      pools: DEFAULT_STAKING_POOLS,
-      userStakes: [],
-      stats: {
-        totalStaked: 0,
-        totalCount: 0,
-        activeStaked: 0,
-        activeCount: 0,
-        closedStaked: 0,
-        closedCount: 0,
-      },
-      isAdmin: false,
-    });
+    return NextResponse.json({ error: "Failed to load staking data" }, { status: 500 });
   }
 }
 
@@ -75,88 +119,118 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { poolId, amount, durationDays } = body;
-
-    if (!poolId || !amount || amount <= 0) {
-      return NextResponse.json({ error: "Invalid stake amount" }, { status: 400 });
-    }
-
-    // Fetch pools
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "staking_pools" },
-    });
-    const pools: StakingPool[] =
-      poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0
-        ? (poolsSetting.value as unknown as StakingPool[])
-        : DEFAULT_STAKING_POOLS;
-
-    const pool = pools.find((p) => p.id === poolId);
-    if (!pool) {
-      return NextResponse.json({ error: "Pool not found" }, { status: 404 });
-    }
-
-    if (amount < pool.min || amount > pool.max) {
+    const parsed = stakeSchema.safeParse(await req.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: `Amount must be between ${pool.min} and ${pool.max} ${pool.symbol}` },
+        { error: parsed.error.issues[0]?.message || "Invalid staking parameters" },
         { status: 400 }
       );
     }
 
-    const stakeCost = Number(amount);
-    const duration = Math.max(1, Math.min(3650, Number(durationDays) || 1));
-    const expectedReturn = amount + (amount * (pool.roi / 100) * duration) / 365;
+    const { poolId, amount, durationDays, fundingSource } = parsed.data;
 
-    const newStake: UserStakeRecord = {
-      id: `stake-${crypto.randomUUID()}`,
-      userId: session.userId,
-      userEmail: session.email || "",
-      poolId: pool.id,
-      poolName: pool.name,
-      symbol: pool.symbol,
-      amount,
-      durationDays: duration,
-      roi: pool.roi,
-      expectedReturn,
-      status: "ACTIVE",
-      startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + duration * 86400000).toISOString(),
-    };
+    const pool = await prisma.stakingPool.findUnique({ where: { id: poolId } });
+    if (!pool || pool.status !== "ACTIVE") {
+      return NextResponse.json({ error: "Staking pool not found or inactive" }, { status: 404 });
+    }
 
-    await atomic(async (tx) => {
-      await debitMain(tx, session.userId, stakeCost, {
-        referenceType: "STAKING_SUBSCRIBE",
-        referenceId: newStake.id,
-        counterAccount: `STAKING_POOL:${pool.id}`,
+    const minAmount = Number(pool.min);
+    const maxAmount = Number(pool.max);
+    if (amount < minAmount || amount > maxAmount) {
+      return NextResponse.json(
+        { error: `Amount must be between ${minAmount} and ${maxAmount} ${pool.symbol}` },
+        { status: 400 }
+      );
+    }
+
+    // Determine verified price of the asset in USD
+    const symbol = pool.symbol.toUpperCase();
+    const livePrice = symbol === "USDT" || symbol === "USD" ? 1 : await getVerifiedPrice(symbol);
+    if (!livePrice || livePrice <= 0) {
+      return NextResponse.json(
+        { error: `A verified live price for ${symbol} is temporarily unavailable. Try again shortly.` },
+        { status: 503 }
+      );
+    }
+
+    const usdCost = money(amount * livePrice);
+    const roiNum = Number(pool.roi);
+    const expectedYieldUsd = (usdCost * (roiNum / 100) * durationDays) / 365;
+    const expectedReturnUsd = money(usdCost + expectedYieldUsd);
+    const endDate = new Date(Date.now() + durationDays * 86400000);
+
+    const stake = await atomic(async (tx) => {
+      if (fundingSource === "ASSET" && symbol !== "USD") {
+        const userAsset = await tx.assetBalance.findUnique({
+          where: { userId_symbol: { userId: session.userId, symbol } },
+        });
+        const currentUnits = Number(userAsset?.amount || 0);
+        if (currentUnits < amount) {
+          throw new InsufficientFundsError(currentUnits);
+        }
+        await tx.assetBalance.update({
+          where: { userId_symbol: { userId: session.userId, symbol } },
+          data: { amount: { decrement: amount } },
+        });
+      } else {
+        // Fund using Cash USD Wallet (default)
+        await debitMain(tx, session.userId, usdCost, {
+          referenceType: "STAKING_SUBSCRIBE",
+          counterAccount: `STAKING_POOL:${pool.id}`,
+        });
+      }
+
+      const newStake = await tx.userStake.create({
+        data: {
+          userId: session.userId,
+          poolId: pool.id,
+          poolName: pool.name,
+          symbol,
+          amount,
+          usdValue: usdCost,
+          durationDays,
+          roi: roiNum,
+          expectedReturnUsd,
+          accruedProfitUsd: 0,
+          daysRemaining: durationDays,
+          status: "ACTIVE",
+          startDate: new Date(),
+          endDate,
+        },
       });
-      const userStakesKey = `user_stakes_${session.userId}`;
-      const allStakesKey = "all_user_stakes";
-      const [curSetting, allSetting] = await Promise.all([
-        tx.appSetting.findUnique({ where: { key: userStakesKey } }),
-        tx.appSetting.findUnique({ where: { key: allStakesKey } }),
-      ]);
-      const curStakes = (curSetting && Array.isArray(curSetting.value) ? curSetting.value : []) as unknown as UserStakeRecord[];
-      const allStakes = (allSetting && Array.isArray(allSetting.value) ? allSetting.value : []) as unknown as UserStakeRecord[];
-      await tx.appSetting.upsert({
-        where: { key: userStakesKey },
-        update: { value: [newStake, ...curStakes] as any },
-        create: { key: userStakesKey, value: [newStake, ...curStakes] as any },
+
+      await insertTransaction(tx, {
+        userId: session.userId,
+        type: "INVESTMENT_SUBSCRIBE",
+        amount: usdCost,
+        currency: "USD",
+        assetSymbol: symbol,
+        assetAmount: amount,
+        txHash: `STK_${newStake.id.slice(0, 8).toUpperCase()}`,
+        status: "APPROVED",
       });
-      await tx.appSetting.upsert({
-        where: { key: allStakesKey },
-        update: { value: [newStake, ...allStakes] as any },
-        create: { key: allStakesKey, value: [newStake, ...allStakes] as any },
-      });
+
+      return newStake;
     });
+
+    await notify(
+      session.userId,
+      "balance",
+      `Staked ${fmtUnits(amount, symbol)}`,
+      `Your stake of ${fmtUnits(amount, symbol)} (${fmtUsd(usdCost)}) in ${pool.name} has been activated. Expected return: ${fmtUsd(expectedReturnUsd)}.`
+    );
 
     return NextResponse.json({
       success: true,
-      stake: newStake,
-      message: `Successfully staked ${amount} ${pool.symbol}!`,
+      stake,
+      message: `Successfully staked ${amount} ${symbol} (${fmtUsd(usdCost)})!`,
     });
   } catch (error) {
     if (error instanceof InsufficientFundsError) {
-      return NextResponse.json({ error: `Insufficient balance. Available: $${error.available.toFixed(2)}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Insufficient balance to complete stake. Required: $${error.available.toFixed(2)}` },
+        { status: 400 }
+      );
     }
     console.error("Stake error:", error);
     return NextResponse.json({ error: "Failed to create stake" }, { status: 500 });

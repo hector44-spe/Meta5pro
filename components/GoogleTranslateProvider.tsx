@@ -33,6 +33,35 @@ export default function GoogleTranslateProvider() {
   useEffect(() => {
     patchDomForGoogleTranslate();
 
+    // Prevent Google Translate from injecting top: 40px on body which shifts navbars down
+    const lockBodyTop = () => {
+      if (document.body) {
+        if (document.body.style.top && document.body.style.top !== "0px") {
+          document.body.style.top = "0px";
+        }
+        if (document.body.style.position && document.body.style.position !== "static") {
+          document.body.style.position = "static";
+        }
+      }
+      if (document.documentElement) {
+        if (document.documentElement.style.top && document.documentElement.style.top !== "0px") {
+          document.documentElement.style.top = "0px";
+        }
+      }
+    };
+
+    const observer = new MutationObserver(lockBodyTop);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["style", "class"],
+    });
+    if (document.body) {
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ["style", "class"],
+      });
+    }
+
     // Define Google Translate initialization function
     (window as any).googleTranslateElementInit = function () {
       if ((window as any).google && (window as any).google.translate) {
@@ -47,12 +76,17 @@ export default function GoogleTranslateProvider() {
           "google_translate_element"
         );
       }
+      lockBodyTop();
     };
 
     // If script is already loaded
     if ((window as any).google && (window as any).google.translate) {
       (window as any).googleTranslateElementInit();
     }
+
+    return () => {
+      observer.disconnect();
+    };
   }, []);
 
   return (

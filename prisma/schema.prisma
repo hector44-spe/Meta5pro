@@ -60,6 +60,8 @@ model User {
   portfolioAssets       AssetBalance[]
   closedTradeResults    ClosedTradeResult[]
   copySubscriptions     CopyExpertSubscription[]
+  stakes                UserStake[]
+  miningContracts       UserMining[]
 
   @@map("users")
 }
@@ -472,4 +474,93 @@ model LedgerEntry {
   @@index([userId, createdAt])
   @@index([account, createdAt])
   @@map("ledger_entries")
+}
+
+model StakingPool {
+  id        String      @id @default(uuid())
+  name      String
+  symbol    String
+  icon      String?
+  min       Decimal     @db.Decimal(18, 4)
+  max       Decimal     @db.Decimal(18, 4)
+  cycle     String      @default("Daily")
+  roi       Decimal     @db.Decimal(6, 2)
+  status    String      @default("ACTIVE")
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  stakes    UserStake[]
+
+  @@map("staking_pools")
+}
+
+model UserStake {
+  id                String       @id @default(uuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poolId            String?
+  pool              StakingPool? @relation(fields: [poolId], references: [id], onDelete: SetNull)
+  poolName          String
+  symbol            String
+  amount            Decimal      @db.Decimal(28, 10)
+  usdValue          Decimal      @db.Decimal(18, 2)
+  durationDays      Int
+  roi               Decimal      @db.Decimal(6, 2)
+  expectedReturnUsd Decimal      @db.Decimal(18, 2)
+  accruedProfitUsd  Decimal      @default(0) @db.Decimal(18, 2)
+  daysRemaining     Int
+  status            String       @default("ACTIVE") // ACTIVE | COMPLETED | CANCELLED
+  lastPayoutAt      DateTime     @default(now())
+  startDate         DateTime     @default(now())
+  endDate           DateTime
+  createdAt         DateTime     @default(now())
+
+  @@index([userId])
+  @@index([status, lastPayoutAt])
+  @@map("user_stakes")
+}
+
+model MiningPool {
+  id            String       @id @default(uuid())
+  name          String
+  symbol        String
+  badge         String
+  icon          String?
+  hardwareImage String?
+  min           Decimal      @db.Decimal(18, 4)
+  max           Decimal      @db.Decimal(18, 4)
+  roi           Decimal      @db.Decimal(6, 2)
+  cycle         String       @default("Daily")
+  hashrate      String
+  status        String       @default("ACTIVE")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  contracts     UserMining[]
+
+  @@map("mining_pools")
+}
+
+model UserMining {
+  id                String      @id @default(uuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poolId            String?
+  pool              MiningPool? @relation(fields: [poolId], references: [id], onDelete: SetNull)
+  poolName          String
+  symbol            String
+  amount            Decimal     @db.Decimal(28, 10)
+  usdValue          Decimal     @db.Decimal(18, 2)
+  durationDays      Int
+  roi               Decimal     @db.Decimal(6, 2)
+  expectedReturnUsd Decimal     @db.Decimal(18, 2)
+  accruedProfitUsd  Decimal     @default(0) @db.Decimal(18, 2)
+  daysRemaining     Int
+  status            String      @default("ACTIVE") // ACTIVE | COMPLETED | CANCELLED
+  lastPayoutAt      DateTime    @default(now())
+  startDate         DateTime    @default(now())
+  endDate           DateTime
+  createdAt         DateTime    @default(now())
+
+  @@index([userId])
+  @@index([status, lastPayoutAt])
+  @@map("user_minings")
 }

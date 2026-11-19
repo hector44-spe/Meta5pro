@@ -2,13 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Loader2, CheckCircle2, ChevronDown, Layers, HelpCircle, History } from "lucide-react";
+import { Plus, X, Loader2, CheckCircle2, ChevronDown, Layers, HelpCircle, History, Wallet, DollarSign, ArrowRight } from "lucide-react";
 import { StakingPool, UserStakeRecord } from "@/lib/stakingData";
 import { useDashboard } from "@/components/DashboardShell";
+import { usePrices } from "@/lib/usePrices";
+import { useHoldings } from "@/lib/useHoldings";
 
 export default function StakePage() {
   const router = useRouter();
-  const { currentBalance, formatMoney } = useDashboard();
+  const { currentBalance, realBalance, formatMoney, refreshBalance } = useDashboard();
+  const { prices } = usePrices();
+  const { holdings, refresh: refreshHoldings } = useHoldings();
 
   const [activeTab, setActiveTab] = useState<"pools" | "history" | "how">("pools");
   const [pools, setPools] = useState<StakingPool[]>([]);
@@ -25,10 +29,11 @@ export default function StakePage() {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // User Stake Modal State (Image 10)
+  // User Stake Modal State
   const [selectedPoolForStake, setSelectedPoolForStake] = useState<StakingPool | null>(null);
   const [stakeAmount, setStakeAmount] = useState<string>("");
-  const [stakeDuration, setStakeDuration] = useState<number>(1);
+  const [stakeDuration, setStakeDuration] = useState<number>(30);
+  const [fundingSource, setFundingSource] = useState<"CASH" | "COIN">("CASH");
   const [stakingSubmitting, setStakingSubmitting] = useState(false);
   const [stakeSuccessMessage, setStakeSuccessMessage] = useState<string | null>(null);
   const [stakeErrorMessage, setStakeErrorMessage] = useState<string | null>(null);
@@ -85,18 +90,46 @@ export default function StakePage() {
     }
     setSelectedPoolForStake(pool);
     setStakeAmount(String(pool.min));
-    setStakeDuration(1);
+    setStakeDuration(30);
+    setFundingSource("CASH");
     setStakeErrorMessage(null);
     setStakeSuccessMessage(null);
   };
 
+  // Live calculations for the selected modal
+  const activePoolSymbol = selectedPoolForStake?.symbol?.toUpperCase() || "USDT";
+  const livePrice = prices[activePoolSymbol] || (activePoolSymbol === "USDT" || activePoolSymbol === "USDC" ? 1.0 : 0);
+  const userCashBalance = Number(realBalance ?? currentBalance ?? 0);
+  const userCoinHolding = Number(holdings.find((h) => h.symbol.toUpperCase() === activePoolSymbol)?.units ?? 0);
+
+  const amountNum = parseFloat(stakeAmount) || 0;
+  const estimatedUsdCost = livePrice > 0 ? amountNum * livePrice : amountNum;
+  const dailyYieldCoin = selectedPoolForStake ? (amountNum * (selectedPoolForStake.roi / 100)) / 365 : 0;
+  const totalYieldCoin = dailyYieldCoin * stakeDuration;
+  const totalReturnCoin = amountNum + totalYieldCoin;
+  const totalYieldUsd = livePrice > 0 ? totalYieldCoin * livePrice : totalYieldCoin;
+  const totalReturnUsd = livePrice > 0 ? totalReturnCoin * livePrice : totalReturnCoin;
+
   // Submit stake
   const handleConfirmStake = async () => {
     if (!selectedPoolForStake) return;
-    const amountNum = parseFloat(stakeAmount);
     if (!amountNum || isNaN(amountNum) || amountNum < selectedPoolForStake.min || amountNum > selectedPoolForStake.max) {
       setStakeErrorMessage(
         `Amount must be between ${selectedPoolForStake.min} and ${selectedPoolForStake.max} ${selectedPoolForStake.symbol}`
+      );
+      return;
+    }
+
+    if (fundingSource === "COIN" && userCoinHolding < amountNum) {
+      setStakeErrorMessage(
+        `Insufficient ${selectedPoolForStake.symbol} coin balance. You have ${userCoinHolding} ${selectedPoolForStake.symbol}. Switch to Pay with USD Cash or deposit.`
+      );
+      return;
+    }
+
+    if (fundingSource === "CASH" && userCashBalance < estimatedUsdCost) {
+      setStakeErrorMessage(
+        `Insufficient USD Cash balance. Required: $${estimatedUsdCost.toFixed(2)}, Available: $${userCashBalance.toFixed(2)}. Please deposit funds.`
       );
       return;
     }
@@ -111,6 +144,7 @@ export default function StakePage() {
           poolId: selectedPoolForStake.id,
           amount: amountNum,
           durationDays: stakeDuration,
+          fundingSource,
         }),
       });
       const data = await res.json();
@@ -118,10 +152,12 @@ export default function StakePage() {
 
       setStakeSuccessMessage(`Successfully staked ${amountNum} ${selectedPoolForStake.symbol}!`);
       loadData();
+      refreshBalance();
+      refreshHoldings();
       setTimeout(() => {
         setSelectedPoolForStake(null);
         setStakeSuccessMessage(null);
-      }, 1500);
+      }, 1600);
     } catch (err: any) {
       setStakeErrorMessage(err.message || "Failed to stake");
     } finally {
@@ -188,7 +224,7 @@ export default function StakePage() {
         <h1 style={{ fontSize: "16px", fontWeight: 600, margin: 0, color: "#ffffff" }}>Stake</h1>
       </div>
 
-      {/* Top 3 Stat Cards (Matches Images 1 & 8) */}
+      {/* Top 3 Stat Cards */}
       <div
         style={{
           display: "grid",
@@ -206,13 +242,13 @@ export default function StakePage() {
           }}
         >
           <div style={{ fontSize: "28px", fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>
-            ${stats.totalStaked.toLocaleString()}
+            ${stats.totalStaked.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.5)", marginTop: "6px" }}>
-            Total stakings
+            Total value staked
           </div>
           <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)", marginTop: "2px" }}>
-            {stats.totalCount} Stakings
+            {stats.totalCount} Positions
           </div>
         </div>
 
@@ -224,14 +260,14 @@ export default function StakePage() {
             padding: "20px 24px",
           }}
         >
-          <div style={{ fontSize: "28px", fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>
-            ${stats.activeStaked.toLocaleString()}
+          <div style={{ fontSize: "28px", fontWeight: 700, color: "#34d399", lineHeight: 1.1 }}>
+            ${stats.activeStaked.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.5)", marginTop: "6px" }}>
             Active stakings
           </div>
           <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)", marginTop: "2px" }}>
-            {stats.activeCount} Stakings
+            {stats.activeCount} Active contracts
           </div>
         </div>
 
@@ -244,18 +280,18 @@ export default function StakePage() {
           }}
         >
           <div style={{ fontSize: "28px", fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>
-            ${stats.closedStaked.toLocaleString()}
+            ${stats.closedStaked.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: "13.5px", color: "rgba(255, 255, 255, 0.5)", marginTop: "6px" }}>
-            Closed stakings
+            Matured & settled
           </div>
           <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.4)", marginTop: "2px" }}>
-            {stats.closedCount} Stakings
+            {stats.closedCount} Closed
           </div>
         </div>
       </div>
 
-      {/* Switcher Tabs (Matches Images 1 & 8) */}
+      {/* Switcher Tabs */}
       <div style={{ display: "flex", gap: "8px", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", paddingBottom: "12px", marginBottom: "24px" }}>
         <button
           onClick={() => setActiveTab("pools")}
@@ -285,7 +321,7 @@ export default function StakePage() {
             cursor: "pointer",
           }}
         >
-          Your history
+          Your history ({userStakes.length})
         </button>
         <button
           onClick={() => setActiveTab("how")}
@@ -307,9 +343,8 @@ export default function StakePage() {
       {/* TAB 1: POOLS */}
       {activeTab === "pools" && (
         <>
-          {/* Pools Subheader with Admin "+ Add pool" button */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-            <h2 style={{ fontSize: "16px", fontWeight: 600, margin: 0 }}>Pools</h2>
+            <h2 style={{ fontSize: "16px", fontWeight: 600, margin: 0 }}>Staking Pools</h2>
             {isAdmin && (
               <button
                 onClick={() => {
@@ -335,7 +370,6 @@ export default function StakePage() {
             )}
           </div>
 
-          {/* Staking Pools Grid (Matches Images 1, 2, 8, 9) */}
           <div
             style={{
               display: "grid",
@@ -343,37 +377,96 @@ export default function StakePage() {
               gap: "20px",
             }}
           >
-            {pools.map((pool) => (
-              <div
-                key={pool.id}
-                style={{
-                  backgroundColor: "rgba(255, 255, 255, 0.025)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
-                  borderRadius: "14px",
-                  padding: "20px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                }}
-              >
-                <div>
-                  {/* Card Top: Coin Icon & Name, Admin Edit button */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      <img
-                        src={pool.icon || `/assets/coins/${pool.symbol}.svg`}
-                        alt={pool.symbol}
-                        style={{ width: "36px", height: "36px", objectFit: "contain" }}
-                        onError={(e) => {
-                          (e.target as HTMLElement).style.display = "none";
-                        }}
-                      />
-                      <div>
-                        <div style={{ fontSize: "14.5px", fontWeight: 600, color: "#fff" }}>{pool.name}</div>
-                        <div style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.5)" }}>{pool.symbol}</div>
+            {pools.map((pool) => {
+              const poolPrice = prices[pool.symbol.toUpperCase()] || 0;
+              return (
+                <div
+                  key={pool.id}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.025)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    borderRadius: "14px",
+                    padding: "20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <div>
+                    {/* Card Top */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                        <img
+                          src={pool.icon || `/dashboard_files/${pool.symbol.toUpperCase()}.svg`}
+                          alt={pool.symbol}
+                          style={{ width: "36px", height: "36px", objectFit: "contain" }}
+                          onError={(e) => {
+                            (e.target as HTMLElement).style.display = "none";
+                          }}
+                        />
+                        <div>
+                          <div style={{ fontSize: "14.5px", fontWeight: 600, color: "#fff" }}>{pool.name}</div>
+                          <div style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.5)" }}>
+                            {pool.symbol}
+                            {poolPrice > 0 && (
+                              <span style={{ color: "#34d399", marginLeft: "6px" }}>
+                                (${poolPrice.toLocaleString()})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: "right" }}>
+                        <span style={{ fontSize: "14px", fontWeight: 700, color: "#34d399" }}>
+                          +{pool.roi}%
+                        </span>
+                        <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.45)" }}>Annual ROI</div>
                       </div>
                     </div>
 
+                    {/* Card Details: Min, Max, Cycle */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px" }}>
+                        <span style={{ color: "rgba(255, 255, 255, 0.5)" }}>Minimum Deposit</span>
+                        <span style={{ fontWeight: 600, color: "#fff" }}>
+                          {pool.min} {pool.symbol}
+                          {poolPrice > 0 && ` (~$${(pool.min * poolPrice).toLocaleString()})`}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px" }}>
+                        <span style={{ color: "rgba(255, 255, 255, 0.5)" }}>Maximum Deposit</span>
+                        <span style={{ fontWeight: 600, color: "#fff" }}>
+                          {pool.max} {pool.symbol}
+                          {poolPrice > 0 && ` (~$${(pool.max * poolPrice).toLocaleString()})`}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px" }}>
+                        <span style={{ color: "rgba(255, 255, 255, 0.5)" }}>Payout Cycle</span>
+                        <span style={{ fontWeight: 600, color: "#fff" }}>{pool.cycle} Accrual</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer: Stake Button */}
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      onClick={() => handleOpenStake(pool)}
+                      style={{
+                        flex: 1,
+                        height: "44px",
+                        backgroundColor: "#3861fb",
+                        color: "#ffffff",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        transition: "background 0.15s ease",
+                      }}
+                    >
+                      Stake Now
+                    </button>
                     {isAdmin && (
                       <button
                         onClick={() => {
@@ -388,61 +481,23 @@ export default function StakePage() {
                           });
                         }}
                         style={{
-                          background: "none",
-                          border: "none",
-                          color: "#3861fb",
+                          height: "44px",
+                          padding: "0 14px",
+                          background: "rgba(255, 255, 255, 0.05)",
+                          border: "1px solid rgba(255, 255, 255, 0.1)",
+                          borderRadius: "8px",
+                          color: "#fff",
                           fontSize: "13px",
-                          fontWeight: 600,
                           cursor: "pointer",
-                          padding: "4px 8px",
                         }}
                       >
                         Edit
                       </button>
                     )}
                   </div>
-
-                  {/* Card Details: Min, Max, Cycle */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "24px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px" }}>
-                      <span style={{ color: "rgba(255, 255, 255, 0.5)" }}>Minimum</span>
-                      <span style={{ fontWeight: 600, color: "#fff" }}>
-                        {pool.min} {pool.symbol}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px" }}>
-                      <span style={{ color: "rgba(255, 255, 255, 0.5)" }}>Maximum</span>
-                      <span style={{ fontWeight: 600, color: "#fff" }}>
-                        {pool.max} {pool.symbol}
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13.5px" }}>
-                      <span style={{ color: "rgba(255, 255, 255, 0.5)" }}>Cycle</span>
-                      <span style={{ fontWeight: 600, color: "#fff" }}>{pool.cycle}</span>
-                    </div>
-                  </div>
                 </div>
-
-                {/* Card Footer: Stake Button (Blue) */}
-                <button
-                  onClick={() => handleOpenStake(pool)}
-                  style={{
-                    width: "100%",
-                    height: "44px",
-                    backgroundColor: "#3861fb",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "8px",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                    transition: "background 0.15s ease",
-                  }}
-                >
-                  Stake
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
@@ -460,8 +515,9 @@ export default function StakePage() {
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", color: "rgba(255, 255, 255, 0.5)", textAlign: "left" }}>
                   <th style={{ padding: "14px 16px" }}>Pool</th>
-                  <th style={{ padding: "14px 16px" }}>Amount</th>
-                  <th style={{ padding: "14px 16px" }}>ROI (%)</th>
+                  <th style={{ padding: "14px 16px" }}>Staked Amount</th>
+                  <th style={{ padding: "14px 16px" }}>Expected Return</th>
+                  <th style={{ padding: "14px 16px" }}>Accrued Profit</th>
                   <th style={{ padding: "14px 16px" }}>Duration</th>
                   <th style={{ padding: "14px 16px" }}>Status</th>
                   <th style={{ padding: "14px 16px" }}>Start Date</th>
@@ -471,18 +527,44 @@ export default function StakePage() {
                 {userStakes.map((s) => (
                   <tr key={s.id} style={{ borderBottom: "1px solid rgba(255, 255, 255, 0.04)" }}>
                     <td style={{ padding: "14px 16px", fontWeight: 600 }}>{s.poolName} ({s.symbol})</td>
-                    <td style={{ padding: "14px 16px" }}>{s.amount} {s.symbol}</td>
-                    <td style={{ padding: "14px 16px", color: "#34d399" }}>+{s.roi}%</td>
-                    <td style={{ padding: "14px 16px" }}>{s.durationDays} days</td>
+                    <td style={{ padding: "14px 16px" }}>
+                      <div style={{ fontWeight: 600 }}>{s.amount} {s.symbol}</div>
+                      <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.45)" }}>
+                        ~${s.usdValue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                      </div>
+                    </td>
+                    <td style={{ padding: "14px 16px", color: "#34d399", fontWeight: 600 }}>
+                      ${s.expectedReturnUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.45)" }}>+{s.roi}% ROI</div>
+                    </td>
+                    <td style={{ padding: "14px 16px", color: "#34d399", fontWeight: 600 }}>
+                      +${s.accruedProfitUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td style={{ padding: "14px 16px" }}>
+                      <div>{s.durationDays} days</div>
+                      <div style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.45)" }}>
+                        {s.daysRemaining}d left
+                      </div>
+                    </td>
                     <td style={{ padding: "14px 16px" }}>
                       <span
                         style={{
                           fontSize: "11px",
                           fontWeight: 600,
-                          padding: "2px 8px",
+                          padding: "3px 8px",
                           borderRadius: "4px",
-                          backgroundColor: s.status === "ACTIVE" ? "rgba(52, 211, 153, 0.15)" : "rgba(255, 255, 255, 0.1)",
-                          color: s.status === "ACTIVE" ? "#34d399" : "rgba(255, 255, 255, 0.7)",
+                          backgroundColor:
+                            s.status === "ACTIVE"
+                              ? "rgba(52, 211, 153, 0.15)"
+                              : s.status === "COMPLETED"
+                              ? "rgba(56, 97, 251, 0.15)"
+                              : "rgba(255, 255, 255, 0.08)",
+                          color:
+                            s.status === "ACTIVE"
+                              ? "#34d399"
+                              : s.status === "COMPLETED"
+                              ? "#3861fb"
+                              : "rgba(255, 255, 255, 0.6)",
                         }}
                       >
                         {s.status}
@@ -513,18 +595,18 @@ export default function StakePage() {
               <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)" }}>Choose from verified assets like AVAX, ETH, MATIC, SOL, or USDT.</div>
             </div>
             <div style={{ padding: "16px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.03)" }}>
-              <div style={{ fontWeight: 600, marginBottom: "6px" }}>2. Specify Amount</div>
-              <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)" }}>Enter an amount between the pool&apos;s minimum and maximum limit.</div>
+              <div style={{ fontWeight: 600, marginBottom: "6px" }}>2. Specify Amount & Duration</div>
+              <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)" }}>Pay with USD Cash or with your crypto balance directly.</div>
             </div>
             <div style={{ padding: "16px", borderRadius: "10px", background: "rgba(255, 255, 255, 0.03)" }}>
-              <div style={{ fontWeight: 600, marginBottom: "6px" }}>3. Receive Yield</div>
-              <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)" }}>Daily returns are calculated and deposited directly to your portfolio.</div>
+              <div style={{ fontWeight: 600, marginBottom: "6px" }}>3. Receive Yield & Principal</div>
+              <div style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.5)" }}>Daily profit accrues automatically, and your principal is refunded at maturity.</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===================== USER STAKE MODAL (Matches Image 10) ===================== */}
+      {/* ===================== USER STAKE MODAL ===================== */}
       {selectedPoolForStake && (
         <div
           style={{
@@ -544,7 +626,7 @@ export default function StakePage() {
           <div
             style={{
               width: "100%",
-              maxWidth: "420px",
+              maxWidth: "460px",
               backgroundColor: "#16181d",
               border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "14px",
@@ -556,7 +638,17 @@ export default function StakePage() {
           >
             {/* Modal Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <h3 style={{ fontSize: "16px", fontWeight: 600, margin: 0 }}>Stake {selectedPoolForStake.symbol}</h3>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <img
+                  src={selectedPoolForStake.icon || `/dashboard_files/${selectedPoolForStake.symbol.toUpperCase()}.svg`}
+                  alt={selectedPoolForStake.symbol}
+                  style={{ width: "26px", height: "26px", objectFit: "contain" }}
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+                <h3 style={{ fontSize: "16px", fontWeight: 600, margin: 0 }}>Stake {selectedPoolForStake.name}</h3>
+              </div>
               <button
                 onClick={() => setSelectedPoolForStake(null)}
                 style={{ background: "none", border: "none", color: "rgba(255, 255, 255, 0.5)", cursor: "pointer", padding: "4px" }}
@@ -576,12 +668,63 @@ export default function StakePage() {
               </div>
             )}
 
+            {/* Funding Source Selector */}
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "6px" }}>
+                Funding Source:
+              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={() => setFundingSource("CASH")}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: fundingSource === "CASH" ? "1px solid #3861fb" : "1px solid rgba(255, 255, 255, 0.08)",
+                    backgroundColor: fundingSource === "CASH" ? "rgba(56, 97, 251, 0.15)" : "rgba(255, 255, 255, 0.02)",
+                    color: "#fff",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ fontSize: "12px", fontWeight: 600 }}>USD Cash</div>
+                  <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
+                    ${userCashBalance.toFixed(2)}
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFundingSource("COIN")}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: fundingSource === "COIN" ? "1px solid #3861fb" : "1px solid rgba(255, 255, 255, 0.08)",
+                    backgroundColor: fundingSource === "COIN" ? "rgba(56, 97, 251, 0.15)" : "rgba(255, 255, 255, 0.02)",
+                    color: "#fff",
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ fontSize: "12px", fontWeight: 600 }}>{selectedPoolForStake.symbol} Holding</div>
+                  <div style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.5)" }}>
+                    {userCoinHolding} {selectedPoolForStake.symbol}
+                  </div>
+                </button>
+              </div>
+            </div>
+
             {/* Field 1: Amount */}
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "6px" }}>Amount:</label>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                <label style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)" }}>Amount to Stake:</label>
+                <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.45)" }}>
+                  {livePrice > 0 ? `1 ${selectedPoolForStake.symbol} = $${livePrice.toLocaleString()}` : ""}
+                </span>
+              </div>
               <div style={{ position: "relative" }}>
                 <input
                   type="number"
+                  step="any"
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(e.target.value)}
                   style={{
@@ -612,14 +755,17 @@ export default function StakePage() {
                   {selectedPoolForStake.symbol}
                 </span>
               </div>
-              <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginTop: "6px" }}>
-                Current {selectedPoolForStake.symbol} balance: 0 {selectedPoolForStake.symbol}
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", marginTop: "6px" }}>
+                <span>Min: {selectedPoolForStake.min} | Max: {selectedPoolForStake.max}</span>
+                <span style={{ color: "#3861fb", fontWeight: 600 }}>
+                  Est. Cost: ${estimatedUsdCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD
+                </span>
               </div>
             </div>
 
             {/* Field 2: Duration Dropdown */}
             <div style={{ marginBottom: "16px" }}>
-              <label style={{ display: "block", fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "6px" }}>Duration:</label>
+              <label style={{ display: "block", fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "6px" }}>Lock Duration:</label>
               <select
                 value={stakeDuration}
                 onChange={(e) => setStakeDuration(Number(e.target.value))}
@@ -638,49 +784,50 @@ export default function StakePage() {
                   boxSizing: "border-box",
                 }}
               >
-                <option value={1} style={{ background: "#16181d", color: "#fff" }}>1 day</option>
-                <option value={7} style={{ background: "#16181d", color: "#fff" }}>7 days</option>
-                <option value={14} style={{ background: "#16181d", color: "#fff" }}>14 days</option>
-                <option value={30} style={{ background: "#16181d", color: "#fff" }}>30 days</option>
-                <option value={60} style={{ background: "#16181d", color: "#fff" }}>60 days</option>
-                <option value={90} style={{ background: "#16181d", color: "#fff" }}>90 days</option>
+                <option value={1} style={{ background: "#16181d", color: "#fff" }}>1 day (Quick test)</option>
+                <option value={7} style={{ background: "#16181d", color: "#fff" }}>7 days (1 week)</option>
+                <option value={14} style={{ background: "#16181d", color: "#fff" }}>14 days (2 weeks)</option>
+                <option value={30} style={{ background: "#16181d", color: "#fff" }}>30 days (1 month)</option>
+                <option value={60} style={{ background: "#16181d", color: "#fff" }}>60 days (2 months)</option>
+                <option value={90} style={{ background: "#16181d", color: "#fff" }}>90 days (3 months)</option>
+                <option value={180} style={{ background: "#16181d", color: "#fff" }}>180 days (6 months)</option>
+                <option value={365} style={{ background: "#16181d", color: "#fff" }}>365 days (1 year)</option>
               </select>
             </div>
 
-            {/* Field 3: ROI */}
-            <div style={{ marginBottom: "24px" }}>
-              <label style={{ display: "block", fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "6px" }}>ROI:</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type="text"
-                  readOnly
-                  value={`${selectedPoolForStake.roi}`}
-                  style={{
-                    width: "100%",
-                    height: "44px",
-                    backgroundColor: "rgba(255, 255, 255, 0.02)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                    borderRadius: "8px",
-                    padding: "0 34px 0 14px",
-                    color: "rgba(255, 255, 255, 0.7)",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    outline: "none",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <span
-                  style={{
-                    position: "absolute",
-                    right: "14px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    fontSize: "14px",
-                    fontWeight: 600,
-                    color: "rgba(255, 255, 255, 0.5)",
-                  }}
-                >
-                  %
+            {/* Expected Yield Summary Card */}
+            <div
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+                borderRadius: "10px",
+                padding: "14px 16px",
+                marginBottom: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
+                <span style={{ color: "rgba(255, 255, 255, 0.55)" }}>Annualized ROI:</span>
+                <span style={{ color: "#34d399", fontWeight: 700 }}>+{selectedPoolForStake.roi}%</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
+                <span style={{ color: "rgba(255, 255, 255, 0.55)" }}>Est. Daily Profit:</span>
+                <span style={{ color: "#34d399", fontWeight: 600 }}>
+                  +{dailyYieldCoin.toFixed(6)} {selectedPoolForStake.symbol}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "12.5px" }}>
+                <span style={{ color: "rgba(255, 255, 255, 0.55)" }}>Total Yield ({stakeDuration}d):</span>
+                <span style={{ color: "#34d399", fontWeight: 700 }}>
+                  +${totalYieldUsd.toFixed(2)} USD
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "13px", borderTop: "1px solid rgba(255, 255, 255, 0.06)", paddingTop: "8px", marginTop: "2px" }}>
+                <span style={{ fontWeight: 600, color: "#fff" }}>Total Return at Maturity:</span>
+                <span style={{ color: "#fff", fontWeight: 700 }}>
+                  ${totalReturnUsd.toFixed(2)} USD ({totalReturnCoin.toFixed(4)} {selectedPoolForStake.symbol})
                 </span>
               </div>
             </div>
@@ -705,7 +852,7 @@ export default function StakePage() {
                 gap: "8px",
               }}
             >
-              {stakingSubmitting ? <Loader2 size={16} className="animate-spin" /> : "Stake"}
+              {stakingSubmitting ? <Loader2 size={16} className="animate-spin" /> : "Confirm Staking"}
             </button>
           </div>
         </div>
@@ -766,7 +913,7 @@ export default function StakePage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Avalanche"
+                  placeholder="e.g. Ethereum PoS"
                   value={poolFormData.name}
                   onChange={(e) => setPoolFormData({ ...poolFormData, name: e.target.value })}
                   style={{
@@ -790,7 +937,7 @@ export default function StakePage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. AVAX"
+                  placeholder="e.g. ETH"
                   value={poolFormData.symbol}
                   onChange={(e) => setPoolFormData({ ...poolFormData, symbol: e.target.value.toUpperCase() })}
                   style={{
@@ -811,12 +958,12 @@ export default function StakePage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "4px" }}>
-                    Minimum:
+                    Min:
                   </label>
                   <input
                     type="number"
                     value={poolFormData.min}
-                    onChange={(e) => setPoolFormData({ ...poolFormData, min: Number(e.target.value) })}
+                    onChange={(e) => setPoolFormData({ ...poolFormData, min: parseFloat(e.target.value) || 0 })}
                     style={{
                       width: "100%",
                       height: "40px",
@@ -833,12 +980,12 @@ export default function StakePage() {
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "4px" }}>
-                    Maximum:
+                    Max:
                   </label>
                   <input
                     type="number"
                     value={poolFormData.max}
-                    onChange={(e) => setPoolFormData({ ...poolFormData, max: Number(e.target.value) })}
+                    onChange={(e) => setPoolFormData({ ...poolFormData, max: parseFloat(e.target.value) || 0 })}
                     style={{
                       width: "100%",
                       height: "40px",
@@ -856,6 +1003,28 @@ export default function StakePage() {
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "4px" }}>
+                    Annual ROI (%):
+                  </label>
+                  <input
+                    type="number"
+                    value={poolFormData.roi}
+                    onChange={(e) => setPoolFormData({ ...poolFormData, roi: parseFloat(e.target.value) || 0 })}
+                    style={{
+                      width: "100%",
+                      height: "40px",
+                      backgroundColor: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "8px",
+                      padding: "0 12px",
+                      color: "#fff",
+                      fontSize: "13.5px",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "4px" }}>
                     Cycle:
@@ -878,95 +1047,50 @@ export default function StakePage() {
                     }}
                   />
                 </div>
-                <div>
-                  <label style={{ display: "block", fontSize: "12.5px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "4px" }}>
-                    ROI (%):
-                  </label>
-                  <input
-                    type="number"
-                    value={poolFormData.roi}
-                    onChange={(e) => setPoolFormData({ ...poolFormData, roi: Number(e.target.value) })}
-                    style={{
-                      width: "100%",
-                      height: "40px",
-                      backgroundColor: "rgba(255, 255, 255, 0.04)",
-                      border: "1px solid rgba(255, 255, 255, 0.1)",
-                      borderRadius: "8px",
-                      padding: "0 12px",
-                      color: "#fff",
-                      fontSize: "13.5px",
-                      outline: "none",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
               </div>
             </div>
 
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px" }}>
               {editingPool && (
                 <button
-                  type="button"
                   onClick={() => handleDeletePool(editingPool.id)}
                   disabled={adminSaving}
                   style={{
-                    height: "40px",
-                    padding: "0 14px",
-                    backgroundColor: "rgba(255, 59, 78, 0.12)",
-                    border: "1px solid rgba(255, 59, 78, 0.25)",
-                    borderRadius: "8px",
+                    height: "42px",
+                    padding: "0 16px",
+                    backgroundColor: "rgba(255, 59, 78, 0.15)",
                     color: "#ff3b4e",
-                    fontSize: "13px",
+                    border: "1px solid rgba(255, 59, 78, 0.3)",
+                    borderRadius: "8px",
+                    fontSize: "13.5px",
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
-                  Delete pool
+                  Delete
                 </button>
               )}
-              <div style={{ display: "flex", gap: "10px", marginLeft: "auto" }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddPoolOpen(false);
-                    setEditingPool(null);
-                  }}
-                  style={{
-                    height: "40px",
-                    padding: "0 14px",
-                    background: "none",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    borderRadius: "8px",
-                    color: "rgba(255, 255, 255, 0.7)",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSavePool}
-                  disabled={adminSaving}
-                  style={{
-                    height: "40px",
-                    padding: "0 18px",
-                    backgroundColor: "#3861fb",
-                    border: "none",
-                    borderRadius: "8px",
-                    color: "#fff",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    cursor: adminSaving ? "not-allowed" : "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                  }}
-                >
-                  {adminSaving ? <Loader2 size={14} className="animate-spin" /> : "Save pool"}
-                </button>
-              </div>
+              <button
+                onClick={handleSavePool}
+                disabled={adminSaving}
+                style={{
+                  flex: 1,
+                  height: "42px",
+                  backgroundColor: "#3861fb",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "13.5px",
+                  fontWeight: 600,
+                  cursor: adminSaving ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                }}
+              >
+                {adminSaving ? <Loader2 size={16} className="animate-spin" /> : "Save Pool"}
+              </button>
             </div>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Loader2, Layers, Search, CheckCircle2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Loader2, Layers, Search, CheckCircle2, RefreshCw, XCircle, DollarSign, Calendar } from "lucide-react";
 import styles from "../page.module.css";
 import { StakingPool, UserStakeRecord } from "@/lib/stakingData";
 
@@ -10,6 +10,8 @@ export default function StakingSection() {
   const [stakes, setStakes] = useState<UserStakeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [accruing, setAccruing] = useState(false);
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
 
   // Edit / Add modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -101,10 +103,73 @@ export default function StakingSection() {
     }
   };
 
+  const handleCompleteStake = async (stakeId: string) => {
+    if (!confirm("Complete this stake now? This will payout the principal plus accrued return directly to the user's cash balance.")) return;
+    setActionBusy(stakeId);
+    try {
+      const res = await fetch("/api/admin/staking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "complete_stake", stakeId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to complete stake");
+      alert(data.message || "Stake completed and paid out successfully.");
+      loadData();
+    } catch (err: any) {
+      alert(err.message || "Failed to complete stake");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const handleCancelStake = async (stakeId: string) => {
+    if (!confirm("Cancel this stake and refund the user's principal? Accrued yield will be forfeited.")) return;
+    setActionBusy(stakeId);
+    try {
+      const res = await fetch("/api/admin/staking", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "cancel_stake", stakeId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to cancel stake");
+      alert(data.message || "Stake cancelled and refunded successfully.");
+      loadData();
+    } catch (err: any) {
+      alert(err.message || "Failed to cancel stake");
+    } finally {
+      setActionBusy(null);
+    }
+  };
+
+  const handleTriggerAccrual = async () => {
+    setAccruing(true);
+    try {
+      const res = await fetch("/api/staking/accrue", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Accrual failed");
+      alert(`Accrual Complete!\nProcessed: ${data.processed} stakes\nAccrued Profit: $${data.totalAccruedProfitUsd?.toFixed(2)}\nMatured & Settled: ${data.settled}`);
+      loadData();
+    } catch (err: any) {
+      alert(err.message || "Accrual failed");
+    } finally {
+      setAccruing(false);
+    }
+  };
+
   const filteredPools = pools.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const filteredStakes = stakes.filter(
+    (s) =>
+      s.userEmail?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.poolName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.symbol?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.status?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -115,9 +180,21 @@ export default function StakingSection() {
             <h2><Layers size={17} /> Staking Pools Management</h2>
             <span className={styles.countChip}>{pools.length}</span>
           </div>
-          <button type="button" className={styles.btnPrimarySm} onClick={handleOpenAdd}>
-            <Plus size={15} /> Add Pool
-          </button>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              type="button"
+              className={styles.btnSecondarySm}
+              onClick={handleTriggerAccrual}
+              disabled={accruing}
+              title="Calculate and credit daily staking profits for all active users"
+            >
+              {accruing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              <span>Run Daily Accrual</span>
+            </button>
+            <button type="button" className={styles.btnPrimarySm} onClick={handleOpenAdd}>
+              <Plus size={15} /> Add Pool
+            </button>
+          </div>
         </div>
 
         <div className={styles.tableWrap}>
@@ -176,47 +253,127 @@ export default function StakingSection() {
       {/* User Stakes Table */}
       <section className={styles.card}>
         <div className={styles.cardHead}>
-          <h2>User Active & Closed Stakes</h2>
+          <div>
+            <h2>User Active & Closed Stakes</h2>
+            <div style={{ fontSize: "12.5px", color: "var(--a-muted)", marginTop: "2px" }}>
+              Settlement returns original principal plus accrued yield to user wallet upon maturity or manual settlement.
+            </div>
+          </div>
           <span className={styles.countChip}>{stakes.length}</span>
         </div>
+
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--a-line)" }}>
+          <div style={{ position: "relative", maxWidth: "320px" }}>
+            <Search size={14} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "var(--a-muted)" }} />
+            <input
+              type="text"
+              placeholder="Search user email or pool..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.input}
+              style={{ paddingLeft: "30px", height: "34px", fontSize: "12.5px" }}
+            />
+          </div>
+        </div>
+
         <div className={styles.tableWrap}>
-          <table className={styles.table} style={{ minWidth: "850px" }}>
+          <table className={styles.table} style={{ minWidth: "980px" }}>
             <thead>
               <tr>
-                <th style={{ minWidth: "180px" }}>User</th>
-                <th style={{ minWidth: "140px" }}>Pool</th>
-                <th style={{ minWidth: "120px" }}>Amount</th>
+                <th style={{ minWidth: "170px" }}>User</th>
+                <th style={{ minWidth: "130px" }}>Pool</th>
+                <th style={{ minWidth: "130px" }}>Staked (USD)</th>
                 <th style={{ minWidth: "100px" }}>ROI</th>
-                <th style={{ minWidth: "100px" }}>Duration</th>
-                <th style={{ minWidth: "110px" }}>Status</th>
-                <th style={{ minWidth: "130px" }}>Date</th>
+                <th style={{ minWidth: "130px" }}>Expected Return</th>
+                <th style={{ minWidth: "130px" }}>Accrued Profit</th>
+                <th style={{ minWidth: "110px" }}>Duration</th>
+                <th style={{ minWidth: "100px" }}>Status</th>
+                <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {stakes.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: "30px", color: "var(--a-muted)" }}>
+                  <td colSpan={9} style={{ textAlign: "center", padding: "30px", color: "var(--a-muted)" }}>
                     No user stakes recorded yet.
                   </td>
                 </tr>
               ) : (
-                stakes.map((s) => (
+                filteredStakes.map((s) => (
                   <tr key={s.id}>
                     <td>
                       <div className={styles.userCell}>
+                        <div style={{ fontWeight: 600 }}>{s.userFullName || s.userEmail?.split("@")[0] || "User"}</div>
                         <small>{s.userEmail || s.userId}</small>
                       </div>
                     </td>
-                    <td style={{ fontWeight: 600 }}>{s.poolName}</td>
-                    <td>{s.amount} {s.symbol}</td>
-                    <td style={{ color: "#34d399", fontWeight: 600 }}>+{s.roi}%</td>
-                    <td>{s.durationDays} days</td>
+                    <td style={{ fontWeight: 600 }}>{s.poolName} ({s.symbol})</td>
                     <td>
-                      <span className={`${styles.pill} ${s.status === "ACTIVE" ? styles.pillGreen : styles.pillAmber}`}>
+                      <div style={{ fontWeight: 600 }}>${s.usdValue?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+                      <small style={{ color: "var(--a-muted)" }}>{s.amount} {s.symbol}</small>
+                    </td>
+                    <td style={{ color: "#34d399", fontWeight: 600 }}>+{s.roi}%</td>
+                    <td>
+                      <div style={{ color: "#34d399", fontWeight: 600 }}>
+                        ${s.expectedReturnUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <small style={{ color: "var(--a-muted)" }}>Principal + Yield</small>
+                    </td>
+                    <td>
+                      <div style={{ color: "#34d399", fontWeight: 600 }}>
+                        +${s.accruedProfitUsd?.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </div>
+                      <small style={{ color: "var(--a-muted)" }}>Accrued to date</small>
+                    </td>
+                    <td>
+                      <div>{s.durationDays}d</div>
+                      <small style={{ color: s.daysRemaining <= 0 ? "#34d399" : "var(--a-muted)" }}>
+                        {s.daysRemaining}d left
+                      </small>
+                    </td>
+                    <td>
+                      <span
+                        className={`${styles.pill} ${
+                          s.status === "ACTIVE"
+                            ? styles.pillGreen
+                            : s.status === "COMPLETED"
+                            ? styles.pillCyan
+                            : styles.pillAmber
+                        }`}
+                      >
                         {s.status}
                       </span>
                     </td>
-                    <td className={styles.muted}>{new Date(s.startDate).toLocaleDateString()}</td>
+                    <td style={{ textAlign: "right" }}>
+                      {s.status === "ACTIVE" ? (
+                        <div style={{ display: "inline-flex", gap: "6px" }}>
+                          <button
+                            type="button"
+                            className={styles.btnSuccessSm}
+                            onClick={() => handleCompleteStake(s.id)}
+                            disabled={actionBusy === s.id}
+                            title="Complete and payout full return"
+                          >
+                            {actionBusy === s.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle2 size={12} />}
+                            <span>Complete</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.btnDangerSm}
+                            onClick={() => handleCancelStake(s.id)}
+                            disabled={actionBusy === s.id}
+                            title="Cancel contract and refund principal"
+                          >
+                            <XCircle size={12} />
+                            <span>Cancel</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "12px", color: "var(--a-muted)" }}>
+                          {s.status === "COMPLETED" ? "Paid Out" : "Refunded"}
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
@@ -255,25 +412,34 @@ export default function StakingSection() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   <div>
-                    <label className={styles.label}>Min</label>
+                    <label className={styles.label}>Min Deposit</label>
                     <input
                       type="number"
                       className={styles.input}
                       value={formData.min}
-                      onChange={(e) => setFormData({ ...formData, min: Number(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, min: parseFloat(e.target.value) || 0 })}
                     />
                   </div>
                   <div>
-                    <label className={styles.label}>Max</label>
+                    <label className={styles.label}>Max Deposit</label>
                     <input
                       type="number"
                       className={styles.input}
                       value={formData.max}
-                      onChange={(e) => setFormData({ ...formData, max: Number(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, max: parseFloat(e.target.value) || 0 })}
                     />
                   </div>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  <div>
+                    <label className={styles.label}>Annual ROI (%)</label>
+                    <input
+                      type="number"
+                      className={styles.input}
+                      value={formData.roi}
+                      onChange={(e) => setFormData({ ...formData, roi: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
                   <div>
                     <label className={styles.label}>Cycle</label>
                     <input
@@ -283,20 +449,11 @@ export default function StakingSection() {
                       onChange={(e) => setFormData({ ...formData, cycle: e.target.value })}
                     />
                   </div>
-                  <div>
-                    <label className={styles.label}>ROI (%)</label>
-                    <input
-                      type="number"
-                      className={styles.input}
-                      value={formData.roi}
-                      onChange={(e) => setFormData({ ...formData, roi: Number(e.target.value) })}
-                    />
-                  </div>
                 </div>
               </div>
             </div>
             <div className={styles.modalFoot}>
-              <button type="button" className={styles.btnSecondary} onClick={() => setIsModalOpen(false)}>Cancel</button>
+              <button type="button" className={styles.btnGhost} onClick={() => setIsModalOpen(false)}>Cancel</button>
               <button type="button" className={styles.btnPrimary} onClick={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save Pool"}
               </button>

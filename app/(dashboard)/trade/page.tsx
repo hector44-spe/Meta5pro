@@ -400,6 +400,14 @@ function TradingContent() {
 
     const requiredMargin = parsedAmount / (leverage || 5);
     if (accountType === "real" && realBalance < requiredMargin) {
+      if ((holdingsSummary?.totalUsd ?? 0) >= requiredMargin) {
+        setOrderTab("convert");
+        setNotification({
+          type: "error",
+          message: `Insufficient USD Cash margin ($${realBalance.toFixed(2)} USD). You have $${(holdingsSummary?.totalUsd ?? 0).toFixed(2)} in crypto holdings. Switched to Convert tab to exchange crypto to cash for trading.`,
+        });
+        return;
+      }
       openModal("deposit");
       setNotification({
         type: "error",
@@ -1286,9 +1294,9 @@ function TradingContent() {
                   <span>{orderTab === "sell" ? `Current ${currency} balance:` : "Current USD balance:"}</span>
                   <span style={{ fontWeight: 600, color: "#fff" }}>
                     {orderTab === "sell"
-                      ? `0 ${currency}`
+                      ? `${(holdings.find((h) => h.symbol.toUpperCase() === (currency || "").toUpperCase())?.units ?? 0)} ${currency}`
                       : `$${currentBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`}
-                    {accountType === "real" && (holdingsSummary?.totalUsd ?? 0) > 0 && currentBalance === 0 && (
+                    {accountType === "real" && (holdingsSummary?.totalUsd ?? 0) > 0 && (
                       <span style={{ color: "#3861fb", fontSize: "11px", marginLeft: "6px" }} title="Crypto asset portfolio value">
                         (Portfolio: ${(holdingsSummary?.totalUsd ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })})
                       </span>

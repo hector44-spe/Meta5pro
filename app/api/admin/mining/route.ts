@@ -1,37 +1,83 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { DEFAULT_MINING_POOLS, MiningPool, UserMiningRecord } from "@/lib/miningData";
+import { getSession, clientIp } from "@/lib/auth";
+import { atomic, audit, creditMain, insertTransaction, money } from "@/lib/ledger";
+import { notify, fmtUsd } from "@/lib/notify";
+import { z } from "zod";
+
+const poolSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2, "Name is required"),
+  symbol: z.string().trim().toUpperCase().min(2, "Symbol is required"),
+  badge: z.string().min(1, "Badge is required"),
+  icon: z.string().optional().nullable(),
+  hardwareImage: z.string().optional().nullable(),
+  min: z.coerce.number().positive("Min must be positive"),
+  max: z.coerce.number().positive("Max must be positive"),
+  roi: z.coerce.number().min(0, "ROI cannot be negative"),
+  cycle: z.string().default("Daily"),
+  hashrate: z.string().min(1, "Hashrate is required"),
+}).refine((data) => data.min <= data.max, {
+  message: "Minimum deposit cannot exceed maximum deposit",
+  path: ["min"],
+});
 
 export async function GET() {
   try {
     const session = await getSession();
     if (!session || session.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "mining_pools" },
-    });
+    const [pools, rawContracts] = await Promise.all([
+      prisma.miningPool.findMany({ orderBy: { createdAt: "asc" } }),
+      prisma.userMining.findMany({
+        include: {
+          user: { select: { email: true, username: true, fullName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
-    const pools: MiningPool[] =
-      poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0
-        ? (poolsSetting.value as unknown as MiningPool[])
-        : DEFAULT_MINING_POOLS;
-
-    const allMiningsSetting = await prisma.appSetting.findUnique({
-      where: { key: "all_user_minings" },
-    });
-
-    const allMinings: UserMiningRecord[] =
-      allMiningsSetting && Array.isArray(allMiningsSetting.value)
-        ? (allMiningsSetting.value as unknown as UserMiningRecord[])
-        : [];
+    const minings = rawContracts.map((m) => ({
+      id: m.id,
+      userId: m.userId,
+      userEmail: m.user?.email || m.userId,
+      userFullName: m.user?.fullName,
+      poolId: m.poolId,
+      poolName: m.poolName,
+      symbol: m.symbol,
+      amount: Number(m.amount),
+      usdValue: Number(m.usdValue),
+      durationDays: m.durationDays,
+      roi: Number(m.roi),
+      expectedReturnUsd: Number(m.expectedReturnUsd),
+      accruedProfitUsd: Number(m.accruedProfitUsd),
+      daysRemaining: m.daysRemaining,
+      status: m.status,
+      startDate: m.startDate.toISOString(),
+      endDate: m.endDate.toISOString(),
+    }));
 
     return NextResponse.json({
       success: true,
-      pools,
-      minings: allMinings,
+      pools: pools.map((p) => ({
+        id: p.id,
+        name: p.name,
+        symbol: p.symbol,
+        badge: p.badge,
+        icon: p.icon,
+        hardwareImage: p.hardwareImage,
+        min: Number(p.min),
+        max: Number(p.max),
+        roi: Number(p.roi),
+        cycle: p.cycle,
+        hashrate: p.hashrate,
+        status: p.status,
+      })),
+      minings,
     });
   } catch (error: any) {
     console.error("Admin mining GET error:", error);
@@ -47,51 +93,59 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, pool, poolId, miningId, miningStatus } = body;
-
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "mining_pools" },
-    });
-    let currentPools: MiningPool[] =
-      poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0
-        ? (poolsSetting.value as unknown as MiningPool[])
-        : [...DEFAULT_MINING_POOLS];
+    const { action, pool, poolId, miningId, miningStatus, refundUser } = body;
+    const ip = clientIp(req);
 
     if (action === "save_pool") {
-      if (!pool || !pool.name || !pool.symbol) {
-        return NextResponse.json({ error: "Pool name and symbol are required" }, { status: 400 });
+      const parsed = poolSchema.safeParse(pool);
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.issues[0]?.message || "Validation failed" }, { status: 400 });
       }
 
-      const poolData: MiningPool = {
-        id: pool.id || "mine-" + pool.name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now().toString(36),
-        name: pool.name,
-        symbol: pool.symbol.toUpperCase(),
-        badge: pool.badge || `${pool.symbol.toUpperCase()} Pool`,
-        icon: pool.icon || `/assets/coins/${pool.symbol.toUpperCase()}.svg`,
-        hardwareImage: pool.hardwareImage || "/assets/coins/l9.png",
-        min: Number(pool.min) || 0.1,
-        max: Number(pool.max) || 10,
-        roi: Number(pool.roi) || 100,
-        cycle: pool.cycle || "Daily",
-        hashrate: pool.hashrate || "18,036,473 GH/s",
-      };
+      const data = parsed.data;
+      const saved = await atomic(async (tx) => {
+        const res = await tx.miningPool.upsert({
+          where: { id: data.id || "new-pool" },
+          update: {
+            name: data.name,
+            symbol: data.symbol,
+            badge: data.badge,
+            icon: data.icon || `/assets/coins/${data.symbol}.svg`,
+            hardwareImage: data.hardwareImage || "/assets/coins/l9.png",
+            min: data.min,
+            max: data.max,
+            roi: data.roi,
+            cycle: data.cycle,
+            hashrate: data.hashrate,
+          },
+          create: {
+            name: data.name,
+            symbol: data.symbol,
+            badge: data.badge,
+            icon: data.icon || `/assets/coins/${data.symbol}.svg`,
+            hardwareImage: data.hardwareImage || "/assets/coins/l9.png",
+            min: data.min,
+            max: data.max,
+            roi: data.roi,
+            cycle: data.cycle,
+            hashrate: data.hashrate,
+          },
+        });
 
-      const existingIndex = currentPools.findIndex((p) => p.id === poolData.id);
-      if (existingIndex !== -1) {
-        currentPools[existingIndex] = poolData;
-      } else {
-        currentPools.push(poolData);
-      }
+        await audit(
+          tx,
+          session.userId,
+          "ADMIN_MINING_POOL_SAVED",
+          ip,
+          `Admin ${session.email} saved cloud mining pool ${data.name} (${data.symbol})`
+        );
 
-      await prisma.appSetting.upsert({
-        where: { key: "mining_pools" },
-        update: { value: currentPools as any },
-        create: { key: "mining_pools", value: currentPools as any },
+        return res;
       });
 
       return NextResponse.json({
         success: true,
-        pools: currentPools,
+        pool: saved,
         message: "Mining pool saved successfully",
       });
     }
@@ -101,62 +155,104 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Pool ID required" }, { status: 400 });
       }
 
-      currentPools = currentPools.filter((p) => p.id !== poolId);
-
-      await prisma.appSetting.upsert({
-        where: { key: "mining_pools" },
-        update: { value: currentPools as any },
-        create: { key: "mining_pools", value: currentPools as any },
+      await atomic(async (tx) => {
+        await tx.miningPool.update({
+          where: { id: poolId },
+          data: { status: "INACTIVE" },
+        });
+        await audit(tx, session.userId, "ADMIN_MINING_POOL_DELETED", ip, `Admin ${session.email} archived mining pool ${poolId}`);
       });
 
       return NextResponse.json({
         success: true,
-        pools: currentPools,
-        message: "Mining pool deleted successfully",
+        message: "Mining pool archived successfully",
       });
     }
 
     if (action === "update_mining_status") {
       if (!miningId || !miningStatus) {
-        return NextResponse.json({ error: "Mining ID and status are required" }, { status: 400 });
+        return NextResponse.json({ error: "Mining contract ID and status are required" }, { status: 400 });
       }
 
-      const allMiningsSetting = await prisma.appSetting.findUnique({
-        where: { key: "all_user_minings" },
+      const targetContract = await prisma.userMining.findUnique({
+        where: { id: miningId },
+        include: { user: true },
       });
-      const allMinings: UserMiningRecord[] =
-        allMiningsSetting && Array.isArray(allMiningsSetting.value)
-          ? (allMiningsSetting.value as unknown as UserMiningRecord[])
-          : [];
+      if (!targetContract) {
+        return NextResponse.json({ error: "Contract not found" }, { status: 404 });
+      }
 
-      const targetIndex = allMinings.findIndex((m) => m.id === miningId);
-      if (targetIndex !== -1) {
-        allMinings[targetIndex].status = miningStatus;
-        await prisma.appSetting.upsert({
-          where: { key: "all_user_minings" },
-          update: { value: allMinings as any },
-          create: { key: "all_user_minings", value: allMinings as any },
+      const prevStatus = targetContract.status;
+      const initialPrincipalUsd = Number(targetContract.usdValue);
+      const expectedReturnUsd = Number(targetContract.expectedReturnUsd);
+      const accruedProfitUsd = Number(targetContract.accruedProfitUsd);
+
+      await atomic(async (tx) => {
+        if (miningStatus === "COMPLETED" && prevStatus === "ACTIVE") {
+          const payoutAmount = money(expectedReturnUsd > 0 ? expectedReturnUsd : initialPrincipalUsd + accruedProfitUsd);
+          await creditMain(tx, targetContract.userId, payoutAmount, {
+            referenceType: "MINING_PAYOUT",
+            referenceId: targetContract.id,
+            counterAccount: `MINING_POOL:${targetContract.poolId || "POOL"}`,
+          });
+          await insertTransaction(tx, {
+            userId: targetContract.userId,
+            type: "TRADE_CLOSE",
+            amount: payoutAmount,
+            currency: "USD",
+            assetSymbol: targetContract.symbol,
+            txHash: `MIN_PAY_${targetContract.id.slice(0, 8).toUpperCase()}`,
+            status: "APPROVED",
+          });
+          await notify(
+            targetContract.userId,
+            "balance",
+            "Mining Contract Completed",
+            `Your mining contract on ${targetContract.poolName} has completed. Payout of ${fmtUsd(payoutAmount)} has been deposited into your balance.`
+          );
+        } else if (miningStatus === "CANCELLED" && prevStatus === "ACTIVE" && refundUser) {
+          await creditMain(tx, targetContract.userId, initialPrincipalUsd, {
+            referenceType: "MINING_REFUND",
+            referenceId: targetContract.id,
+            counterAccount: `MINING_POOL:${targetContract.poolId || "POOL"}`,
+          });
+          await insertTransaction(tx, {
+            userId: targetContract.userId,
+            type: "TRADE_CLOSE",
+            amount: initialPrincipalUsd,
+            currency: "USD",
+            assetSymbol: targetContract.symbol,
+            txHash: `MIN_REF_${targetContract.id.slice(0, 8).toUpperCase()}`,
+            status: "APPROVED",
+          });
+          await notify(
+            targetContract.userId,
+            "balance",
+            "Mining Contract Cancelled & Refunded",
+            `Your cloud mining contract on ${targetContract.poolName} was cancelled. Your initial principal of ${fmtUsd(initialPrincipalUsd)} was refunded to your wallet.`
+          );
+        }
+
+        await tx.userMining.update({
+          where: { id: miningId },
+          data: {
+            status: miningStatus,
+            daysRemaining: miningStatus === "COMPLETED" ? 0 : targetContract.daysRemaining,
+          },
         });
 
-        const userId = allMinings[targetIndex].userId;
-        const uKey = `user_minings_${userId}`;
-        const uSetting = await prisma.appSetting.findUnique({ where: { key: uKey } });
-        if (uSetting && Array.isArray(uSetting.value)) {
-          const uMinings = (uSetting.value as unknown as UserMiningRecord[]).map((m) =>
-            m.id === miningId ? { ...m, status: miningStatus } : m
-          );
-          await prisma.appSetting.upsert({
-            where: { key: uKey },
-            update: { value: uMinings as any },
-            create: { key: uKey, value: uMinings as any },
-          });
-        }
-      }
+        await audit(
+          tx,
+          session.userId,
+          "ADMIN_MINING_STATUS_UPDATE",
+          ip,
+          `Admin ${session.email} updated mining contract ${miningId} (${targetContract.user.email}) status from ${prevStatus} to ${miningStatus}${refundUser ? " with refund" : ""}`
+        );
+      });
 
       return NextResponse.json({
         success: true,
-        minings: allMinings,
-        message: "Mining status updated successfully",
+        message: `Mining contract status updated to ${miningStatus} successfully`,
       });
     }
 

@@ -1,37 +1,77 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
-import { DEFAULT_STAKING_POOLS, StakingPool, UserStakeRecord } from "@/lib/stakingData";
+import { getSession, clientIp } from "@/lib/auth";
+import { atomic, audit, creditMain, insertTransaction, money } from "@/lib/ledger";
+import { notify, fmtUsd } from "@/lib/notify";
+import { z } from "zod";
+
+const poolSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2, "Name is required"),
+  symbol: z.string().trim().toUpperCase().min(2, "Symbol is required"),
+  icon: z.string().optional().nullable(),
+  min: z.coerce.number().positive("Min must be positive"),
+  max: z.coerce.number().positive("Max must be positive"),
+  cycle: z.string().default("Daily"),
+  roi: z.coerce.number().min(0, "ROI cannot be negative"),
+}).refine((data) => data.min <= data.max, {
+  message: "Minimum deposit cannot exceed maximum deposit",
+  path: ["min"],
+});
 
 export async function GET() {
   try {
     const session = await getSession();
     if (!session || session.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden: Admin access required" }, { status: 403 });
     }
 
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "staking_pools" },
-    });
+    const [pools, rawStakes] = await Promise.all([
+      prisma.stakingPool.findMany({ orderBy: { createdAt: "asc" } }),
+      prisma.userStake.findMany({
+        include: {
+          user: { select: { email: true, username: true, fullName: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
 
-    const pools: StakingPool[] =
-      poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0
-        ? (poolsSetting.value as unknown as StakingPool[])
-        : DEFAULT_STAKING_POOLS;
-
-    const allStakesSetting = await prisma.appSetting.findUnique({
-      where: { key: "all_user_stakes" },
-    });
-
-    const allStakes: UserStakeRecord[] =
-      allStakesSetting && Array.isArray(allStakesSetting.value)
-        ? (allStakesSetting.value as unknown as UserStakeRecord[])
-        : [];
+    const stakes = rawStakes.map((s) => ({
+      id: s.id,
+      userId: s.userId,
+      userEmail: s.user?.email || s.userId,
+      userFullName: s.user?.fullName,
+      poolId: s.poolId,
+      poolName: s.poolName,
+      symbol: s.symbol,
+      amount: Number(s.amount),
+      usdValue: Number(s.usdValue),
+      durationDays: s.durationDays,
+      roi: Number(s.roi),
+      expectedReturnUsd: Number(s.expectedReturnUsd),
+      accruedProfitUsd: Number(s.accruedProfitUsd),
+      daysRemaining: s.daysRemaining,
+      status: s.status,
+      startDate: s.startDate.toISOString(),
+      endDate: s.endDate.toISOString(),
+    }));
 
     return NextResponse.json({
       success: true,
-      pools,
-      stakes: allStakes,
+      pools: pools.map((p) => ({
+        id: p.id,
+        name: p.name,
+        symbol: p.symbol,
+        icon: p.icon,
+        min: Number(p.min),
+        max: Number(p.max),
+        cycle: p.cycle,
+        roi: Number(p.roi),
+        status: p.status,
+      })),
+      stakes,
     });
   } catch (error: any) {
     console.error("Admin staking GET error:", error);
@@ -47,48 +87,53 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { action, pool, poolId, stakeId, stakeStatus } = body;
-
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "staking_pools" },
-    });
-    let currentPools: StakingPool[] =
-      poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0
-        ? (poolsSetting.value as unknown as StakingPool[])
-        : [...DEFAULT_STAKING_POOLS];
+    const { action, pool, poolId, stakeId, stakeStatus, refundUser } = body;
+    const ip = clientIp(req);
 
     if (action === "save_pool") {
-      if (!pool || !pool.name || !pool.symbol) {
-        return NextResponse.json({ error: "Pool name and symbol are required" }, { status: 400 });
+      const parsed = poolSchema.safeParse(pool);
+      if (!parsed.success) {
+        return NextResponse.json({ error: parsed.error.issues[0]?.message || "Validation failed" }, { status: 400 });
       }
 
-      const poolData: StakingPool = {
-        id: pool.id || "pool-" + pool.symbol.toLowerCase() + "-" + Date.now().toString(36),
-        name: pool.name,
-        symbol: pool.symbol.toUpperCase(),
-        icon: pool.icon || `/assets/coins/${pool.symbol.toUpperCase()}.svg`,
-        min: Number(pool.min) || 1,
-        max: Number(pool.max) || 1000,
-        cycle: pool.cycle || "Daily",
-        roi: Number(pool.roi) || 84,
-      };
+      const data = parsed.data;
+      const saved = await atomic(async (tx) => {
+        const res = await tx.stakingPool.upsert({
+          where: { id: data.id || "new-pool" },
+          update: {
+            name: data.name,
+            symbol: data.symbol,
+            icon: data.icon || `/assets/coins/${data.symbol}.svg`,
+            min: data.min,
+            max: data.max,
+            cycle: data.cycle,
+            roi: data.roi,
+          },
+          create: {
+            name: data.name,
+            symbol: data.symbol,
+            icon: data.icon || `/assets/coins/${data.symbol}.svg`,
+            min: data.min,
+            max: data.max,
+            cycle: data.cycle,
+            roi: data.roi,
+          },
+        });
 
-      const existingIndex = currentPools.findIndex((p) => p.id === poolData.id);
-      if (existingIndex !== -1) {
-        currentPools[existingIndex] = poolData;
-      } else {
-        currentPools.push(poolData);
-      }
+        await audit(
+          tx,
+          session.userId,
+          "ADMIN_STAKING_POOL_SAVED",
+          ip,
+          `Admin ${session.email} saved staking pool ${data.name} (${data.symbol})`
+        );
 
-      await prisma.appSetting.upsert({
-        where: { key: "staking_pools" },
-        update: { value: currentPools as any },
-        create: { key: "staking_pools", value: currentPools as any },
+        return res;
       });
 
       return NextResponse.json({
         success: true,
-        pools: currentPools,
+        pool: saved,
         message: "Staking pool saved successfully",
       });
     }
@@ -98,18 +143,17 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Pool ID required" }, { status: 400 });
       }
 
-      currentPools = currentPools.filter((p) => p.id !== poolId);
-
-      await prisma.appSetting.upsert({
-        where: { key: "staking_pools" },
-        update: { value: currentPools as any },
-        create: { key: "staking_pools", value: currentPools as any },
+      await atomic(async (tx) => {
+        await tx.stakingPool.update({
+          where: { id: poolId },
+          data: { status: "INACTIVE" },
+        });
+        await audit(tx, session.userId, "ADMIN_STAKING_POOL_DELETED", ip, `Admin ${session.email} archived staking pool ${poolId}`);
       });
 
       return NextResponse.json({
         success: true,
-        pools: currentPools,
-        message: "Staking pool deleted successfully",
+        message: "Staking pool archived successfully",
       });
     }
 
@@ -118,43 +162,86 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Stake ID and status are required" }, { status: 400 });
       }
 
-      const allStakesSetting = await prisma.appSetting.findUnique({
-        where: { key: "all_user_stakes" },
+      const targetStake = await prisma.userStake.findUnique({
+        where: { id: stakeId },
+        include: { user: true },
       });
-      const allStakes: UserStakeRecord[] =
-        allStakesSetting && Array.isArray(allStakesSetting.value)
-          ? (allStakesSetting.value as unknown as UserStakeRecord[])
-          : [];
+      if (!targetStake) {
+        return NextResponse.json({ error: "Stake not found" }, { status: 404 });
+      }
 
-      const targetIndex = allStakes.findIndex((s) => s.id === stakeId);
-      if (targetIndex !== -1) {
-        allStakes[targetIndex].status = stakeStatus;
-        await prisma.appSetting.upsert({
-          where: { key: "all_user_stakes" },
-          update: { value: allStakes as any },
-          create: { key: "all_user_stakes", value: allStakes as any },
+      const prevStatus = targetStake.status;
+      const initialPrincipalUsd = Number(targetStake.usdValue);
+      const expectedReturnUsd = Number(targetStake.expectedReturnUsd);
+      const accruedProfitUsd = Number(targetStake.accruedProfitUsd);
+
+      await atomic(async (tx) => {
+        // Handle settlement if completing or refunding
+        if (stakeStatus === "COMPLETED" && prevStatus === "ACTIVE") {
+          const payoutAmount = money(expectedReturnUsd > 0 ? expectedReturnUsd : initialPrincipalUsd + accruedProfitUsd);
+          await creditMain(tx, targetStake.userId, payoutAmount, {
+            referenceType: "STAKING_PAYOUT",
+            referenceId: targetStake.id,
+            counterAccount: `STAKING_POOL:${targetStake.poolId || "POOL"}`,
+          });
+          await insertTransaction(tx, {
+            userId: targetStake.userId,
+            type: "TRADE_CLOSE",
+            amount: payoutAmount,
+            currency: "USD",
+            assetSymbol: targetStake.symbol,
+            txHash: `STK_PAY_${targetStake.id.slice(0, 8).toUpperCase()}`,
+            status: "APPROVED",
+          });
+          await notify(
+            targetStake.userId,
+            "balance",
+            "Staking Payout Completed",
+            `Your staking contract in ${targetStake.poolName} has concluded. Principal and yield totaling ${fmtUsd(payoutAmount)} have been credited to your balance.`
+          );
+        } else if (stakeStatus === "CANCELLED" && prevStatus === "ACTIVE" && refundUser) {
+          await creditMain(tx, targetStake.userId, initialPrincipalUsd, {
+            referenceType: "STAKING_REFUND",
+            referenceId: targetStake.id,
+            counterAccount: `STAKING_POOL:${targetStake.poolId || "POOL"}`,
+          });
+          await insertTransaction(tx, {
+            userId: targetStake.userId,
+            type: "TRADE_CLOSE",
+            amount: initialPrincipalUsd,
+            currency: "USD",
+            assetSymbol: targetStake.symbol,
+            txHash: `STK_REF_${targetStake.id.slice(0, 8).toUpperCase()}`,
+            status: "APPROVED",
+          });
+          await notify(
+            targetStake.userId,
+            "balance",
+            "Staking Cancelled & Refunded",
+            `Your stake in ${targetStake.poolName} was cancelled by support. Your initial investment of ${fmtUsd(initialPrincipalUsd)} has been refunded to your wallet.`
+          );
+        }
+
+        await tx.userStake.update({
+          where: { id: stakeId },
+          data: {
+            status: stakeStatus,
+            daysRemaining: stakeStatus === "COMPLETED" ? 0 : targetStake.daysRemaining,
+          },
         });
 
-        // Also update in user-specific key
-        const userId = allStakes[targetIndex].userId;
-        const uKey = `user_stakes_${userId}`;
-        const uSetting = await prisma.appSetting.findUnique({ where: { key: uKey } });
-        if (uSetting && Array.isArray(uSetting.value)) {
-          const uStakes = (uSetting.value as unknown as UserStakeRecord[]).map((s) =>
-            s.id === stakeId ? { ...s, status: stakeStatus } : s
-          );
-          await prisma.appSetting.upsert({
-            where: { key: uKey },
-            update: { value: uStakes as any },
-            create: { key: uKey, value: uStakes as any },
-          });
-        }
-      }
+        await audit(
+          tx,
+          session.userId,
+          "ADMIN_STAKE_STATUS_UPDATE",
+          ip,
+          `Admin ${session.email} updated stake ${stakeId} (${targetStake.user.email}) status from ${prevStatus} to ${stakeStatus}${refundUser ? " with refund" : ""}`
+        );
+      });
 
       return NextResponse.json({
         success: true,
-        stakes: allStakes,
-        message: "Stake status updated successfully",
+        message: `Stake status updated to ${stakeStatus} successfully`,
       });
     }
 

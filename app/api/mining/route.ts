@@ -1,48 +1,118 @@
+export const dynamic = "force-dynamic";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
-import { DEFAULT_MINING_POOLS, MiningPool, UserMiningRecord } from "@/lib/miningData";
-import { atomic, debitMain, InsufficientFundsError } from "@/lib/ledger";
-import crypto from "node:crypto";
+import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
+import { getVerifiedPrice } from "@/lib/prices";
+import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
+import { z } from "zod";
+
+const mineSchema = z.object({
+  poolId: z.string().min(1, "Pool ID is required"),
+  amount: z.coerce.number().positive("Mining amount must be greater than 0"),
+  durationDays: z.coerce.number().int().min(1).max(3650).default(30),
+  fundingSource: z.enum(["CASH", "ASSET"]).default("CASH"),
+});
 
 export async function GET() {
   try {
     const session = await getSession();
     const isAdmin = session?.role === "ADMIN";
 
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "mining_pools" },
-    });
+    const [pools, miningSettings] = await Promise.all([
+      prisma.miningPool.findMany({
+        where: { status: "ACTIVE" },
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.appSetting.findUnique({ where: { key: "mining_settings" } }).catch(() => null),
+    ]);
 
-    let pools: MiningPool[] = DEFAULT_MINING_POOLS;
-    if (poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0) {
-      pools = poolsSetting.value as unknown as MiningPool[];
-    }
+    const useMinerPictures = miningSettings?.value && typeof (miningSettings.value as any).useMinerPictures === "boolean"
+      ? (miningSettings.value as any).useMinerPictures
+      : true;
 
-    let userMinings: UserMiningRecord[] = [];
+    let userMinings: any[] = [];
+    let userBalances: { cash: number; assets: Record<string, number> } = {
+      cash: 0,
+      assets: {},
+    };
+
     if (session?.userId) {
-      const miningsSetting = await prisma.appSetting.findUnique({
-        where: { key: `user_minings_${session.userId}` },
-      });
-      if (miningsSetting && Array.isArray(miningsSetting.value)) {
-        userMinings = miningsSetting.value as unknown as UserMiningRecord[];
+      const [contracts, wallet, assetBalances] = await Promise.all([
+        prisma.userMining.findMany({
+          where: { userId: session.userId },
+          orderBy: { createdAt: "desc" },
+        }),
+        prisma.wallet.findUnique({
+          where: { userId: session.userId },
+          select: { mainBalance: true },
+        }),
+        prisma.assetBalance.findMany({
+          where: { userId: session.userId },
+        }),
+      ]);
+
+      userMinings = contracts.map((m) => ({
+        id: m.id,
+        userId: m.userId,
+        poolId: m.poolId,
+        poolName: m.poolName,
+        symbol: m.symbol,
+        amount: Number(m.amount),
+        usdValue: Number(m.usdValue),
+        durationDays: m.durationDays,
+        roi: Number(m.roi),
+        expectedReturnUsd: Number(m.expectedReturnUsd),
+        accruedProfitUsd: Number(m.accruedProfitUsd),
+        daysRemaining: m.daysRemaining,
+        status: m.status,
+        startDate: m.startDate.toISOString(),
+        endDate: m.endDate.toISOString(),
+      }));
+
+      const assetsMap: Record<string, number> = {};
+      for (const a of assetBalances) {
+        assetsMap[a.symbol.toUpperCase()] = Number(a.amount);
       }
+
+      userBalances = {
+        cash: Number(wallet?.mainBalance || 0),
+        assets: assetsMap,
+      };
     }
 
-    const totalMined = userMinings.reduce((acc, m) => acc + m.amount, 0);
+    const totalMinedUsd = userMinings.reduce((acc, m) => acc + m.usdValue, 0);
     const activeMinings = userMinings.filter((m) => m.status === "ACTIVE");
-    const closedMinings = userMinings.filter((m) => m.status === "COMPLETED" || m.status === "CANCELLED");
+    const activeMinedUsd = activeMinings.reduce((acc, m) => acc + m.usdValue, 0);
+    const closedMinings = userMinings.filter((m) => m.status !== "ACTIVE");
+    const closedMinedUsd = closedMinings.reduce((acc, m) => acc + m.usdValue, 0);
 
     return NextResponse.json({
       success: true,
-      pools,
+      pools: pools.map((p) => ({
+        id: p.id,
+        name: p.name,
+        symbol: p.symbol,
+        badge: p.badge,
+        icon: p.icon,
+        hardwareImage: p.hardwareImage,
+        min: Number(p.min),
+        max: Number(p.max),
+        roi: Number(p.roi),
+        cycle: p.cycle,
+        hashrate: p.hashrate,
+        status: p.status,
+      })),
       userMinings,
+      userBalances,
+      useMinerPictures,
       stats: {
-        totalMined,
+        totalMined: totalMinedUsd,
         totalCount: userMinings.length,
-        activeMined: activeMinings.reduce((acc, m) => acc + m.amount, 0),
+        activeMined: activeMinedUsd,
         activeCount: activeMinings.length,
-        closedMined: closedMinings.reduce((acc, m) => acc + m.amount, 0),
+        closedMined: closedMinedUsd,
         closedCount: closedMinings.length,
         totalHashrate: "18,036,473 GH/s",
       },
@@ -50,21 +120,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Fetch mining error:", error);
-    return NextResponse.json({
-      success: true,
-      pools: DEFAULT_MINING_POOLS,
-      userMinings: [],
-      stats: {
-        totalMined: 0,
-        totalCount: 0,
-        activeMined: 0,
-        activeCount: 0,
-        closedMined: 0,
-        closedCount: 0,
-        totalHashrate: "18,036,473 GH/s",
-      },
-      isAdmin: false,
-    });
+    return NextResponse.json({ error: "Failed to load mining data" }, { status: 500 });
   }
 }
 
@@ -75,87 +131,116 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { poolId, amount, durationDays } = body;
-
-    if (!poolId || !amount || amount <= 0) {
-      return NextResponse.json({ error: "Invalid mining amount" }, { status: 400 });
-    }
-
-    const poolsSetting = await prisma.appSetting.findUnique({
-      where: { key: "mining_pools" },
-    });
-    const pools: MiningPool[] =
-      poolsSetting && Array.isArray(poolsSetting.value) && poolsSetting.value.length > 0
-        ? (poolsSetting.value as unknown as MiningPool[])
-        : DEFAULT_MINING_POOLS;
-
-    const pool = pools.find((p) => p.id === poolId);
-    if (!pool) {
-      return NextResponse.json({ error: "Mining pool not found" }, { status: 404 });
-    }
-
-    if (amount < pool.min || amount > pool.max) {
+    const parsed = mineSchema.safeParse(await req.json());
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: `Amount must be between ${pool.min} and ${pool.max} ${pool.symbol}` },
+        { error: parsed.error.issues[0]?.message || "Invalid mining parameters" },
         { status: 400 }
       );
     }
 
-    const miningCost = Number(amount);
-    const duration = Math.max(1, Math.min(3650, Number(durationDays) || 1));
-    const expectedReturn = amount + (amount * (pool.roi / 100) * duration) / 365;
+    const { poolId, amount, durationDays, fundingSource } = parsed.data;
 
-    const newMining: UserMiningRecord = {
-      id: `mine-${crypto.randomUUID()}`,
-      userId: session.userId,
-      userEmail: session.email || "",
-      poolId: pool.id,
-      poolName: pool.name,
-      symbol: pool.symbol,
-      amount,
-      durationDays: duration,
-      roi: pool.roi,
-      expectedReturn,
-      status: "ACTIVE",
-      startDate: new Date().toISOString(),
-      endDate: new Date(Date.now() + duration * 86400000).toISOString(),
-    };
+    const pool = await prisma.miningPool.findUnique({ where: { id: poolId } });
+    if (!pool || pool.status !== "ACTIVE") {
+      return NextResponse.json({ error: "Mining pool not found or inactive" }, { status: 404 });
+    }
 
-    await atomic(async (tx) => {
-      await debitMain(tx, session.userId, miningCost, {
-        referenceType: "MINING_SUBSCRIBE",
-        referenceId: newMining.id,
-        counterAccount: `MINING_POOL:${pool.id}`,
+    const minAmount = Number(pool.min);
+    const maxAmount = Number(pool.max);
+    if (amount < minAmount || amount > maxAmount) {
+      return NextResponse.json(
+        { error: `Amount must be between ${minAmount} and ${maxAmount} ${pool.symbol}` },
+        { status: 400 }
+      );
+    }
+
+    const symbol = pool.symbol.toUpperCase();
+    const livePrice = symbol === "USDT" || symbol === "USD" ? 1 : await getVerifiedPrice(symbol);
+    if (!livePrice || livePrice <= 0) {
+      return NextResponse.json(
+        { error: `A verified live price for ${symbol} is temporarily unavailable. Try again shortly.` },
+        { status: 503 }
+      );
+    }
+
+    const usdCost = money(amount * livePrice);
+    const roiNum = Number(pool.roi);
+    const expectedYieldUsd = (usdCost * (roiNum / 100) * durationDays) / 365;
+    const expectedReturnUsd = money(usdCost + expectedYieldUsd);
+    const endDate = new Date(Date.now() + durationDays * 86400000);
+
+    const contract = await atomic(async (tx) => {
+      if (fundingSource === "ASSET" && symbol !== "USD") {
+        const userAsset = await tx.assetBalance.findUnique({
+          where: { userId_symbol: { userId: session.userId, symbol } },
+        });
+        const currentUnits = Number(userAsset?.amount || 0);
+        if (currentUnits < amount) {
+          throw new InsufficientFundsError(currentUnits);
+        }
+        await tx.assetBalance.update({
+          where: { userId_symbol: { userId: session.userId, symbol } },
+          data: { amount: { decrement: amount } },
+        });
+      } else {
+        await debitMain(tx, session.userId, usdCost, {
+          referenceType: "MINING_SUBSCRIBE",
+          counterAccount: `MINING_POOL:${pool.id}`,
+        });
+      }
+
+      const newContract = await tx.userMining.create({
+        data: {
+          userId: session.userId,
+          poolId: pool.id,
+          poolName: pool.name,
+          symbol,
+          amount,
+          usdValue: usdCost,
+          durationDays,
+          roi: roiNum,
+          expectedReturnUsd,
+          accruedProfitUsd: 0,
+          daysRemaining: durationDays,
+          status: "ACTIVE",
+          startDate: new Date(),
+          endDate,
+        },
       });
-      const userMiningsKey = `user_minings_${session.userId}`;
-      const allMiningsKey = "all_user_minings";
-      const [curSetting, allSetting] = await Promise.all([
-        tx.appSetting.findUnique({ where: { key: userMiningsKey } }),
-        tx.appSetting.findUnique({ where: { key: allMiningsKey } }),
-      ]);
-      const curMinings = (curSetting && Array.isArray(curSetting.value) ? curSetting.value : []) as unknown as UserMiningRecord[];
-      const allMinings = (allSetting && Array.isArray(allSetting.value) ? allSetting.value : []) as unknown as UserMiningRecord[];
-      await tx.appSetting.upsert({
-        where: { key: userMiningsKey },
-        update: { value: [newMining, ...curMinings] as any },
-        create: { key: userMiningsKey, value: [newMining, ...curMinings] as any },
+
+      await insertTransaction(tx, {
+        userId: session.userId,
+        type: "INVESTMENT_SUBSCRIBE",
+        amount: usdCost,
+        currency: "USD",
+        assetSymbol: symbol,
+        assetAmount: amount,
+        txHash: `MIN_${newContract.id.slice(0, 8).toUpperCase()}`,
+        status: "APPROVED",
       });
-      await tx.appSetting.upsert({
-        where: { key: allMiningsKey },
-        update: { value: [newMining, ...allMinings] as any },
-        create: { key: allMiningsKey, value: [newMining, ...allMinings] as any },
-      });
+
+      return newContract;
     });
+
+    await notify(
+      session.userId,
+      "balance",
+      `Mining Contract Started: ${pool.name}`,
+      `Your cloud mining contract for ${fmtUnits(amount, symbol)} (${fmtUsd(usdCost)}) on ${pool.name} is now active. Expected return: ${fmtUsd(expectedReturnUsd)}.`
+    );
 
     return NextResponse.json({
       success: true,
-      mining: newMining,
-      message: `Successfully joined ${pool.name} with ${amount} ${pool.symbol}!`,
+      mining: contract,
+      message: `Successfully started mining with ${amount} ${symbol} (${fmtUsd(usdCost)})!`,
     });
   } catch (error) {
     if (error instanceof InsufficientFundsError) {
-      return NextResponse.json({ error: `Insufficient balance. Available: $${error.available.toFixed(2)}` }, { status: 400 });
+      return NextResponse.json(
+        { error: `Insufficient balance to start mining. Required: $${error.available.toFixed(2)}` },
+        { status: 400 }
+      );
     }
     console.error("Mining error:", error);
     return NextResponse.json({ error: "Failed to start mining" }, { status: 500 });

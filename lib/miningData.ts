@@ -3,8 +3,8 @@ export interface MiningPool {
   name: string;
   symbol: string;
   badge: string;
-  icon: string;
-  hardwareImage: string;
+  icon?: string | null;
+  hardwareImage?: string | null;
   min: number;
   max: number;
   roi: number; // percentage
@@ -17,13 +17,18 @@ export interface UserMiningRecord {
   id: string;
   userId: string;
   userEmail?: string;
-  poolId: string;
+  userFullName?: string | null;
+  username?: string | null;
+  poolId?: string | null;
   poolName: string;
   symbol: string;
   amount: number;
+  usdValue: number;
   durationDays: number;
   roi: number;
-  expectedReturn: number;
+  expectedReturnUsd: number;
+  accruedProfitUsd: number;
+  daysRemaining: number;
   status: "ACTIVE" | "COMPLETED" | "CANCELLED";
   startDate: string;
   endDate: string;

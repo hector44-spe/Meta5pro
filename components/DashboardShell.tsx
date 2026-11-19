@@ -214,7 +214,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   // Display currency (Settings > Account); amounts are converted with live FX rates
   const { prices } = usePrices();
   const { summary: holdingsSummary } = useHoldings();
-  const realPortfolioBalance = Math.max(0, realBalance + holdingsSummary.equityAdjustmentUsd);
+  const realPortfolioBalance = Math.max(0, realBalance + (holdingsSummary.totalUsd || 0));
   const portfolioBalance = accountType === "real" ? realPortfolioBalance : demoBalance;
   const [displayCurrency, setDisplayCurrency] = useState("USD");
   const formatMoney = (usd: number) => {
@@ -371,7 +371,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       const params = new URLSearchParams(window.location.search);
       const action = params.get("action") || params.get("drawer") || params.get("open");
       if (action === "stake") {
-        setActiveModal("stake");
+        router.push("/stake");
       } else if (action === "deposit") {
         setActiveModal("deposit");
       } else if (action === "withdraw") {
