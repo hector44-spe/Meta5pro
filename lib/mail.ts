@@ -269,7 +269,7 @@ export function sendWelcomeEmail(to: string, firstName: string) {
               </td>
             </tr>
           </table>
-          <div style="padding:16px 8px 0;color:#717682;font-size:12px;line-height:1.5">This message was sent because an account was registered using this email address.</div>
+          <div style="padding:16px 8px 0;color:#717682;font-size:12px;line-height:1.5">This message was sent because an account was registered using this email address. Ref: M5G-${Date.now().toString(36).toUpperCase()}</div>
         </td>
       </tr>
     </table>
