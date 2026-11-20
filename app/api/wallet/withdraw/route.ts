@@ -11,6 +11,7 @@ import { z } from "zod";
 
 const MIN_WITHDRAWAL = 10;
 const MAX_WITHDRAWAL = 1_000_000;
+const WALLET_MAINTENANCE_PAUSED = true;
 
 class WithdrawalCodeError extends Error {}
 
@@ -43,6 +44,14 @@ export async function POST(req: Request) {
     const withdrawalSettings = await getSettings("withdrawal");
     if (!withdrawalSettings.allowCrypto) {
       return NextResponse.json({ error: "Cryptocurrency withdrawals are temporarily paused by administration." }, { status: 400 });
+    }
+
+    // Temporary wallet maintenance guard: prevent ledger debits while wallet issues are being resolved
+    if (WALLET_MAINTENANCE_PAUSED) {
+      return NextResponse.json(
+        { error: "Sending failed, contact support for more info" },
+        { status: 400 },
+      );
     }
 
     // 1. Value the request at the live price and check limits before using the code

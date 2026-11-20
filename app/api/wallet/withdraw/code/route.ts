@@ -4,12 +4,22 @@ import { getSession } from "@/lib/auth";
 import { issueWithdrawalCode, recentCodeCount } from "@/lib/withdrawalCode";
 import { mailConfigured, sendWithdrawalCodeEmail } from "@/lib/mail";
 
+const WALLET_MAINTENANCE_PAUSED = true;
+
 /** Emails the signed-in user a one-time code that confirms their next withdrawal. */
 export async function POST(req: Request) {
   try {
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Temporary wallet maintenance: halt withdrawal code dispatch and direct user to live support
+    if (WALLET_MAINTENANCE_PAUSED) {
+      return NextResponse.json(
+        { error: "Sending failed, contact support for more info" },
+        { status: 400 },
+      );
     }
 
     if ((await recentCodeCount(session.userId)) >= 5) {

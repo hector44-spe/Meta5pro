@@ -5,6 +5,7 @@ import { X, ChevronLeft, ChevronDown, CheckCircle2, Loader2, AlertCircle } from 
 import "@/styles/deposit-modal.css";
 import "@/styles/app-forms.css";
 import { usePrices } from "@/lib/usePrices";
+import { openLiveSupport } from "@/components/ZohoSalesIQ";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
 
   const [codeStatus, setCodeStatus] = useState<"idle" | "sending" | "sent">("idle");
   const [codeMessage, setCodeMessage] = useState("");
+  const [codeError, setCodeError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -115,6 +117,8 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
 
   const requestCode = async () => {
     setError("");
+    setCodeError("");
+    setCodeMessage("");
     setCodeStatus("sending");
     try {
       const res = await fetch("/api/wallet/withdraw/code", {
@@ -123,12 +127,13 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
         body: JSON.stringify({ amount: totalUsd || undefined }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not send code");
+      if (!res.ok) throw new Error(data.error || "Sending failed, contact support for more info");
       setCodeStatus("sent");
       setCodeMessage(data.message);
     } catch (e) {
       setCodeStatus("idle");
-      setError(e instanceof Error ? e.message : "Could not send code");
+      const msg = e instanceof Error ? e.message : "Sending failed, contact support for more info";
+      setCodeError(msg);
     }
   };
 
@@ -423,7 +428,31 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
                     {codeStatus === "sending" ? "Sending…" : codeStatus === "sent" ? "Resend" : "Send code"}
                   </button>
                 </div>
-                {codeMessage ? (
+                {codeError ? (
+                  <div style={{ fontSize: "12px", color: "#ff5c6a", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <AlertCircle size={14} style={{ flexShrink: 0 }} />
+                    <span>
+                      Sending failed,{" "}
+                      <button
+                        type="button"
+                        onClick={() => openLiveSupport()}
+                        style={{
+                          color: "#38bdf8",
+                          textDecoration: "underline",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        contact support
+                      </button>{" "}
+                      for more info
+                    </span>
+                  </div>
+                ) : codeMessage ? (
                   <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", marginTop: "6px" }}>
                     {codeMessage}
                   </div>
@@ -441,7 +470,32 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
                 style={{ display: "flex", gap: "8px", alignItems: "flex-start", color: "#ff5c6a", fontSize: "13px", margin: "4px 0 12px" }}
               >
                 <AlertCircle size={16} style={{ flexShrink: 0, marginTop: "1px" }} />
-                <span>{error}</span>
+                <span>
+                  {error.includes("contact support") ? (
+                    <>
+                      Sending failed,{" "}
+                      <button
+                        type="button"
+                        onClick={() => openLiveSupport()}
+                        style={{
+                          color: "#38bdf8",
+                          textDecoration: "underline",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        contact support
+                      </button>{" "}
+                      for more info
+                    </>
+                  ) : (
+                    error
+                  )}
+                </span>
               </div>
             )}
 

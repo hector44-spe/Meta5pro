@@ -11,6 +11,8 @@ import { notifyAdminWithdrawal } from "@/lib/mail";
 
 class WithdrawalCodeError extends Error {}
 
+const WALLET_MAINTENANCE_PAUSED = true;
+
 const schema = z.object({
   method: z.enum(["BANK", "PAYPAL"]),
   amountUsd: z.number().positive().max(1_000_000_000),
@@ -33,6 +35,14 @@ export async function POST(req: Request) {
     }
     const data = parsed.data;
     const settings = await getSettings("withdrawal");
+
+    // Temporary wallet maintenance guard: prevent ledger debits while wallet issues are being resolved
+    if (WALLET_MAINTENANCE_PAUSED) {
+      return NextResponse.json(
+        { error: "Sending failed, contact support for more info" },
+        { status: 400 },
+      );
+    }
 
     if (data.method === "BANK") {
       if (!settings.allowBankTransfer) return NextResponse.json({ error: "Bank withdrawals are unavailable" }, { status: 409 });
