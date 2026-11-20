@@ -18,7 +18,20 @@ export async function GET(
   if (!UUID_RE.test(file)) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const upload = await prisma.proofUpload.findUnique({ where: { id: file } });
-  if (!upload || (session.role !== "ADMIN" && upload.userId !== session.userId)) {
+  if (!upload) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  let isConfiguredDepositQr = false;
+  if (session.role !== "ADMIN" && upload.userId !== session.userId) {
+    const settings = await prisma.appSetting.findMany({
+      where: { key: { in: ["deposit_address_qrs", "signal_deposit_addresses"] } },
+      select: { value: true },
+    });
+    const uploadUrl = `/api/upload/${file}`;
+    isConfiguredDepositQr = settings.some(({ value }) => JSON.stringify(value).includes(`"${uploadUrl}"`));
+  }
+  if (session.role !== "ADMIN" && upload.userId !== session.userId && !isConfiguredDepositQr) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 

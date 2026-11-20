@@ -53,6 +53,7 @@ import ConnectWalletDrawer from "@/components/ConnectWalletDrawer";
 import CardsDrawer from "@/components/Cards/CardsDrawer";
 import ReferralsDrawer from "@/components/ReferralsDrawer";
 import LiveChatPanel, { type LiveChatMessage } from "@/components/dashboard-shell/LiveChatPanel";
+import VerificationModal from "@/components/verification/VerificationModal";
 import {
   ALL_LANGUAGES,
   getCurrentLanguageCode,
@@ -2585,106 +2586,10 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
         {/* Verification Modal */}
         {activeModal === "verify" && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0, 0, 0, 0.75)",
-              backdropFilter: "blur(8px)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 9999,
-              padding: "20px",
-            }}
-            onClick={() => setActiveModal(null)}
-          >
-            <div
-              style={{
-                width: "100%",
-                maxWidth: "460px",
-                backgroundColor: "#16181d",
-                borderRadius: "14px",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-                padding: "24px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                boxSizing: "border-box",
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ fontSize: "17px", fontWeight: 700, color: "#fff" }}>
-                  Account verification
-                </div>
-                <button
-                  onClick={() => setActiveModal(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "#fff",
-                    cursor: "pointer",
-                  }}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div
-                style={{
-                  fontSize: "12.5px",
-                  color: "rgba(255, 255, 255, 0.7)",
-                  lineHeight: "1.5",
-                }}
-              >
-                Verify your identity to increase withdrawal limits and unlock all advanced trading features on Meta Gold 5.
-              </div>
-              <div
-                style={{
-                  padding: "12px",
-                  backgroundColor: "rgba(255, 255, 255, 0.04)",
-                  borderRadius: "8px",
-                  fontSize: "12.5px",
-                  color: "#fff",
-                }}
-              >
-                Status:{" "}
-                <strong style={{ color: "#ffaa00" }}>
-                  Pending verification (tier 1)
-                </strong>
-              </div>
-              <button
-                onClick={() => {
-                  setToastNotification({
-                    type: "info",
-                    message: "Verification document upload initiated. Please prepare your government-issued ID.",
-                  });
-                  setActiveModal(null);
-                }}
-                style={{
-                  padding: "11px",
-                  borderRadius: "8px",
-                  backgroundColor: "#01b28b",
-                  color: "#fff",
-                  border: "none",
-                  fontWeight: 600,
-                  fontSize: "13.5px",
-                  cursor: "pointer",
-                }}
-              >
-                Upload identity documents
-              </button>
-            </div>
-          </div>
+          <VerificationModal
+            onClose={() => setActiveModal(null)}
+            onSubmitted={(message) => setToastNotification({ type: "success", message })}
+          />
         )}
 
         {/* Connect Wallet Drawer */}

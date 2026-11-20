@@ -212,7 +212,10 @@
 /* Modal styles (Image 3) */
 .dep_modal_backdrop {
   position: fixed;
-  inset: 0;
+  inset: auto 0 auto 0;
+  top: var(--visual-viewport-offset-top, 0px);
+  width: 100vw;
+  height: var(--visual-viewport-height, 100dvh);
   background: rgba(0, 0, 0, 0.82);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -222,13 +225,14 @@
   justify-content: center;
   padding: 16px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .dep_modal {
   width: 100%;
   max-width: 460px;
-  max-height: min(92vh, calc(100dvh - 24px));
+  max-height: calc(var(--visual-viewport-height, 100dvh) - 24px);
   background: #171a21;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -452,8 +456,8 @@
     align-items: flex-start !important;
   }
   .dep_modal {
-    max-height: calc(100dvh - 20px) !important;
-    margin: auto 0 !important;
+    max-height: calc(var(--visual-viewport-height, 100dvh) - 20px) !important;
+    margin: 0 auto !important;
     border-radius: 14px !important;
   }
   .dep_modal_head {

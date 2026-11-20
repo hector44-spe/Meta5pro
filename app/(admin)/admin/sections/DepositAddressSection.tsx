@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { X, Loader2, Save, Trash2 } from "lucide-react";
 import "@/styles/deposit-addresses.css";
 import { FullAddressItem } from "@/app/api/admin/settings/addresses/route";
@@ -30,8 +31,25 @@ export const NETWORK_OPTIONS = [
   "USDC",
 ];
 
+const COIN_ICON_PATHS: Record<string, string> = {
+  BTC: "/dashboard_files/BTC.svg",
+  ETH: "/dashboard_files/ETH.svg",
+  USDT: "/dashboard_files/USDT.svg",
+  SOL: "/dashboard_files/SOL.svg",
+  XRP: "/dashboard_files/XRP.svg",
+  USDC: "/dashboard_files/USDC.svg",
+  DOGE: "/dashboard_files/DOGE.svg",
+  BNB: "/dashboard_files/binance.svg",
+  LTC: "/dashboard_files/LTC.svg",
+  TRX: "/dashboard_files/TRX.svg",
+};
+
 export function CoinIcon({ symbol }: { symbol: string }) {
   const s = symbol.toUpperCase();
+  const iconPath = COIN_ICON_PATHS[s];
+  if (iconPath) {
+    return <Image src={iconPath} alt={`${s} logo`} width={32} height={32} />;
+  }
   if (s === "BTC" || s === "BITCOIN") {
     return (
       <svg viewBox="0 0 32 32" width="32" height="32">
@@ -500,10 +518,10 @@ export default function DepositAddressSection({
 
       {/* Add / Edit Deposit Address Modal (Image 3) */}
       {modalOpen && (
-        <div className="dep_modal_backdrop project-edit-modal-overlay" onClick={() => !saving && setModalOpen(false)}>
-          <div className="dep_modal project-edit-modal-dialog" onClick={(e) => e.stopPropagation()}>
+        <div className="dep_modal_backdrop" onClick={() => !saving && setModalOpen(false)}>
+          <div className="dep_modal" role="dialog" aria-modal="true" aria-labelledby="deposit-address-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="dep_modal_head">
-              <h3>{editId ? "Edit Deposit Address" : "Add Deposit Address"}</h3>
+              <h3 id="deposit-address-modal-title">{editId ? "Edit Deposit Address" : "Add Deposit Address"}</h3>
               <button
                 type="button"
                 className="dep_modal_close"
