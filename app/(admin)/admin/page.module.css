@@ -679,14 +679,17 @@
 .pillAmber { background: rgba(245, 165, 36, 0.14); color: #fbbf24; }
 .pillRed { background: rgba(255, 77, 94, 0.14); color: #ff7a87; }
 .pillBlue { background: rgba(71, 99, 240, 0.16); color: #9fb0ff; }
+.pillCyan { background: rgba(56, 189, 248, 0.14); color: #38bdf8; }
 
 /* ---------------- Buttons ---------------- */
 .btnGhost,
 .btnSuccess,
 .btnDanger,
+.btnIce,
 .btnGhostSm,
 .btnSuccessSm,
 .btnDangerSm,
+.btnIceSm,
 .btnPrimarySm {
   display: inline-flex;
   align-items: center;
@@ -700,7 +703,8 @@
 }
 .btnGhost,
 .btnSuccess,
-.btnDanger {
+.btnDanger,
+.btnIce {
   height: 40px;
   padding: 0 16px;
   font-size: 13.5px;
@@ -708,6 +712,7 @@
 .btnGhostSm,
 .btnSuccessSm,
 .btnDangerSm,
+.btnIceSm,
 .btnPrimarySm {
   height: 32px;
   padding: 0 11px;
@@ -742,6 +747,16 @@
 .btnDanger:hover,
 .btnDangerSm:hover {
   background: rgba(255, 77, 94, 0.2);
+}
+.btnIce,
+.btnIceSm {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.32);
+  color: #38bdf8;
+}
+.btnIce:hover,
+.btnIceSm:hover {
+  background: rgba(56, 189, 248, 0.22);
 }
 .btnPrimarySm {
   background: var(--a-accent);

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { X, ChevronLeft, ChevronDown, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { X, ChevronLeft, ChevronDown, CheckCircle2, Loader2, AlertCircle, Snowflake } from "lucide-react";
 import "@/styles/deposit-modal.css";
 import "@/styles/app-forms.css";
 import { usePrices } from "@/lib/usePrices";
@@ -11,6 +11,7 @@ interface WithdrawModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  isFrozen?: boolean;
 }
 
 
@@ -27,7 +28,7 @@ const fmtUsd = (n: number) =>
   `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const fmtUnits = (n: number) => n.toFixed(8);
 
-export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawModalProps) {
+export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = false }: WithdrawModalProps) {
   const [step, setStep] = useState<"METHOD" | "FORM" | "MANUAL" | "SUCCESS">("METHOD");
   const [paymentMethod, setPaymentMethod] = useState<"CRYPTO" | "BANK" | "PAYPAL">("CRYPTO");
 
@@ -138,6 +139,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
   };
 
   const validate = (): string | null => {
+    if (isFrozen) return "Your account is frozen. Withdrawals are disabled. Deposits remain available.";
     if (paymentMethod === "BANK") {
       if (!allowBankTransfer) return "Bank withdrawals are temporarily unavailable.";
       if (!recipientName.trim() || !bankName.trim() || !accountNumber.trim()) return "Enter the required bank account details.";
@@ -235,6 +237,28 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
               To make a withdrawal, choose your preferred method, and click on the continue button.
             </p>
 
+            {isFrozen && (
+              <div
+                style={{
+                  margin: "8px 0 16px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  background: "rgba(56, 189, 248, 0.12)",
+                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                  color: "#e0f2fe",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "13px",
+                }}
+              >
+                <Snowflake size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Account Frozen:</strong> Withdrawals are currently restricted on your account. You can continue depositing funds.
+                </span>
+              </div>
+            )}
+
             <div className="dm-section-label">Available methods</div>
             <div className="dm-payment-options">
               {allowCrypto && <button type="button" className={`dm-option-card ${paymentMethod === "CRYPTO" ? "selected" : ""}`} onClick={() => setPaymentMethod("CRYPTO")}><span>Crypto</span><small>Withdraw to a wallet</small></button>}
@@ -256,8 +280,13 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
               </div>
             </div>
 
-            <button type="button" className="dm-primary-btn" disabled={!allowCrypto && !allowBankTransfer && !allowPayPal} onClick={() => setStep(paymentMethod === "CRYPTO" ? "FORM" : "MANUAL")}>
-              Continue
+            <button
+              type="button"
+              className="dm-primary-btn"
+              disabled={isFrozen || (!allowCrypto && !allowBankTransfer && !allowPayPal)}
+              onClick={() => setStep(paymentMethod === "CRYPTO" ? "FORM" : "MANUAL")}
+            >
+              {isFrozen ? "Account Frozen (Withdrawals Restricted)" : "Continue"}
             </button>
           </div>
         )}
@@ -269,6 +298,27 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
               <button type="button" className="dm-close-btn" onClick={onClose}><X size={19} /></button>
             </div>
             <p className="dm-subtitle">Enter the receiving account details. Your request will remain pending until reviewed.</p>
+            {isFrozen && (
+              <div
+                style={{
+                  margin: "8px 0 16px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  background: "rgba(56, 189, 248, 0.12)",
+                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                  color: "#e0f2fe",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "13px",
+                }}
+              >
+                <Snowflake size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Account Frozen:</strong> Withdrawals are currently restricted on your account. You can continue depositing funds.
+                </span>
+              </div>
+            )}
             {error && <div className="dm-error"><AlertCircle size={15} /><span>{error}</span></div>}
             <label><span className="app-label">Amount (USD)</span><input className="app-input" type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" /></label>
             <label><span className="app-label">Recipient name</span><input className="app-input" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="Full legal name" /></label>
@@ -285,7 +335,9 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
               <div><span className="app-label">Withdrawal code</span><div className="dm-code-row"><input className="app-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="6-digit code" /><button type="button" className="app-side-btn" onClick={requestCode} disabled={codeStatus === "sending"}>{codeStatus === "sending" ? "Sending…" : codeStatus === "sent" ? "Resend" : "Send code"}</button></div>{codeMessage && <div style={{ color: "#10b981", fontSize: 12, marginTop: 6 }}>{codeMessage}</div>}</div>
             )}
             <div className="dm-limits-box"><div className="dm-limit-row"><span className="dm-limit-label">Available balance</span><span className="dm-limit-dots"/><span className="dm-limit-val">{fmtUsd(balanceUsd)}</span></div><div className="dm-limit-row"><span className="dm-limit-label">Requested</span><span className="dm-limit-dots"/><span className="dm-limit-val">{fmtUsd(totalUsd)}</span></div></div>
-            <button type="submit" className="dm-primary-btn" disabled={submitting}>{submitting ? <Loader2 size={16} className="animate-spin" /> : "Request withdrawal"}</button>
+            <button type="submit" className="dm-primary-btn" disabled={isFrozen || submitting}>
+              {isFrozen ? "Account Frozen" : submitting ? <Loader2 size={16} className="animate-spin" /> : "Request withdrawal"}
+            </button>
           </form>
         )}
 
@@ -306,6 +358,28 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
             <p className="dm-subtitle">
               To proceed, select your token, enter your address, amount and click on the button below
             </p>
+
+            {isFrozen && (
+              <div
+                style={{
+                  margin: "8px 0 16px",
+                  padding: "10px 14px",
+                  borderRadius: "8px",
+                  background: "rgba(56, 189, 248, 0.12)",
+                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                  color: "#e0f2fe",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "13px",
+                }}
+              >
+                <Snowflake size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+                <span>
+                  <strong>Account Frozen:</strong> Withdrawals are currently restricted on your account. You can continue depositing funds.
+                </span>
+              </div>
+            )}
 
             {/* Asset */}
             <div className="dm-form-group" style={{ position: "relative" }}>
@@ -507,10 +581,12 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess }: WithdrawMo
             <button
               type="submit"
               className="dm-primary-btn"
-              disabled={submitting}
-              style={{ backgroundColor: submitting ? "#2563eb" : undefined }}
+              disabled={isFrozen || submitting}
+              style={{ backgroundColor: isFrozen ? "rgba(255, 255, 255, 0.12)" : submitting ? "#2563eb" : undefined }}
             >
-              {submitting ? (
+              {isFrozen ? (
+                "Account Frozen"
+              ) : submitting ? (
                 <>
                   <Loader2 size={16} className="animate-spin" />
                   <span>Submitting…</span>

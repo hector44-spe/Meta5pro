@@ -17,6 +17,12 @@ export async function POST(req: Request) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.status === "FROZEN") {
+      return NextResponse.json(
+        { error: "Your account is frozen. Investment subscriptions are disabled." },
+        { status: 403 }
+      );
+    }
 
     const parsed = subscribeSchema.safeParse(await req.json());
     if (!parsed.success) {

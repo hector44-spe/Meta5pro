@@ -36,7 +36,13 @@ export default function VerificationSection({ flash }: { flash: (kind: "ok" | "e
     if (!silent) setLoading(true);
     try {
       const response = await fetch("/api/admin/verifications", { cache: "no-store" });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(response.ok ? "Invalid server response." : `Server error (${response.status})`);
+      }
       if (!response.ok) throw new Error(data.error || "Failed to load verification submissions.");
       setRows(data.submissions || []);
     } catch (error) {
@@ -65,7 +71,13 @@ export default function VerificationSection({ flash }: { flash: (kind: "ok" | "e
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, reason: action === "reject" ? reason : undefined }),
       });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(response.ok ? "Invalid server response." : `Server error (${response.status})`);
+      }
       if (!response.ok) throw new Error(data.error || "Review failed.");
       flash("ok", action === "approve" ? "Investor account verified and notified." : "Verification rejected and investor notified.");
       setRejectingId(null);

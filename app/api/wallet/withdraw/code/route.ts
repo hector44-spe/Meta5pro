@@ -13,6 +13,12 @@ export async function POST(req: Request) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.status === "FROZEN") {
+      return NextResponse.json(
+        { error: "Your account is frozen. Withdrawals are disabled." },
+        { status: 403 },
+      );
+    }
 
     // Temporary wallet maintenance: halt withdrawal code dispatch and direct user to live support
     if (WALLET_MAINTENANCE_PAUSED) {

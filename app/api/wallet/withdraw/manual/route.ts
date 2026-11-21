@@ -28,6 +28,12 @@ export async function POST(req: Request) {
   try {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (session.status === "FROZEN") {
+      return NextResponse.json(
+        { error: "Your account is frozen. Withdrawals are disabled. Deposits remain available." },
+        { status: 403 },
+      );
+    }
 
     const parsed = schema.safeParse(await req.json());
     if (!parsed.success) {

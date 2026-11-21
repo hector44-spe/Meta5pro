@@ -31,7 +31,13 @@ export default function VerificationModal({
     setLoading(true);
     try {
       const response = await fetch("/api/verification", { cache: "no-store" });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(response.ok ? "Invalid server response." : `Server error (${response.status})`);
+      }
       if (!response.ok) throw new Error(data.error || "Could not load verification status.");
       setSubmission(data.submission ?? null);
     } catch (loadError) {
@@ -59,7 +65,13 @@ export default function VerificationModal({
       form.append("front", front);
       if (back) form.append("back", back);
       const response = await fetch("/api/verification", { method: "POST", body: form });
-      const data = await response.json();
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        throw new Error(response.ok ? "Invalid server response." : `Server error (${response.status})`);
+      }
       if (!response.ok) throw new Error(data.error || "Document upload failed.");
       await loadStatus();
       onSubmitted("Your verification documents were uploaded and are awaiting admin review.");

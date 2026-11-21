@@ -98,6 +98,8 @@ interface DashboardContextType {
   notifications: AppNotification[];
   unreadCount: number;
   refreshNotifications: () => void;
+  isFrozen: boolean;
+  userStatus: string;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -127,6 +129,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   // Balances & Modals state
   const [accountType, setAccountType] = useState<"real" | "demo">("real");
   const [hideBalance, setHideBalance] = useState(false);
+  const [userStatus, setUserStatus] = useState<string>("ACTIVE");
+  const isFrozen = userStatus === "FROZEN";
   const [activeModal, setActiveModal] = useState<ActiveModalType>(null);
   const [toastNotification, setToastNotification] = useState<CustomNotificationState | null>(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
@@ -388,6 +392,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         if (data.user?.wallet?.mainBalance !== undefined) {
           setRealBalance(Number(data.user.wallet.mainBalance));
         }
+        if (data.user?.status) {
+          setUserStatus(data.user.status);
+        }
         if (data.user?.id) {
           setUserRefCode(data.user.id.slice(0, 8));
           setIsAdmin(data.user.role === "ADMIN");
@@ -539,6 +546,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     notifications,
     unreadCount,
     refreshNotifications: fetchNotifications,
+    isFrozen,
+    userStatus,
   };
 
   return (
@@ -1931,6 +1940,49 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
           {/* ===================== MAIN CONTENT ===================== */}
           <main className="dashboard-page-content scrollbar-hide">
+            {isFrozen && (
+              <div
+                style={{
+                  margin: "12px 16px 4px",
+                  padding: "12px 16px",
+                  borderRadius: "10px",
+                  background: "linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.08) 100%)",
+                  border: "1px solid rgba(56, 189, 248, 0.28)",
+                  color: "#e0f2fe",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap",
+                  fontSize: "13.5px",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: "1 1 280px" }}>
+                  <Snowflake size={20} color="#38bdf8" style={{ flexShrink: 0 }} />
+                  <span>
+                    <strong style={{ color: "#38bdf8" }}>Account Frozen:</strong> Trading and withdrawals are restricted on your account. You can continue to deposit funds. Contact support if you need assistance.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsChatOpen(true)}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "6px",
+                    background: "rgba(56, 189, 248, 0.2)",
+                    border: "1px solid rgba(56, 189, 248, 0.4)",
+                    color: "#38bdf8",
+                    fontWeight: 600,
+                    fontSize: "12.5px",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Contact Support
+                </button>
+              </div>
+            )}
             {children}
           </main>
         </div>
@@ -1972,6 +2024,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           isOpen={activeModal === "withdraw"}
           onClose={() => setActiveModal(null)}
           onSuccess={() => fetchBalance()}
+          isFrozen={isFrozen}
         />
 
         {/* Settings Drawer (Matches Image 1 on Mobile & Image 2 on Desktop) */}

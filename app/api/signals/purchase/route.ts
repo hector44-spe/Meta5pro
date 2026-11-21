@@ -55,6 +55,9 @@ export async function POST(req: Request) {
   try {
     const session = await getSession();
     if (!session?.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (session.status === "FROZEN") {
+      return NextResponse.json({ error: "Your account is frozen. Signal purchases are disabled." }, { status: 403 });
+    }
     const parsed = purchaseSchema.safeParse(await req.json());
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid signal purchase" }, { status: 400 });
     const { signalId, currency, receiptUrl, cryptoAddress } = parsed.data;

@@ -42,6 +42,7 @@ import {
   ChevronDown,
   MessageSquare,
   ScanFace,
+  Snowflake,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -163,10 +164,12 @@ function StatusPill({ status }: { status: string }) {
   const cls =
     status === "APPROVED" || status === "ACTIVE"
       ? styles.pillGreen
-      : status === "PENDING"
-        ? styles.pillAmber
-        : styles.pillRed;
-  const label = status.charAt(0) + status.slice(1).toLowerCase();
+      : status === "FROZEN"
+        ? styles.pillCyan
+        : status === "PENDING"
+          ? styles.pillAmber
+          : styles.pillRed;
+  const label = status === "FROZEN" ? "Frozen" : status.charAt(0) + status.slice(1).toLowerCase();
   return <span className={`${styles.pill} ${cls}`}>{label}</span>;
 }
 
@@ -750,7 +753,18 @@ function Overview({
             {loading ? <span className={styles.skeletonStatVal} /> : investors.length}
           </span>
           <span className={styles.statSub}>
-            {loading ? <span className={styles.skeletonStatSub} /> : `${investors.filter((u) => u.status === "SUSPENDED").length} suspended`}
+            {loading ? (
+              <span className={styles.skeletonStatSub} />
+            ) : (
+              (() => {
+                const susp = investors.filter((u) => u.status === "SUSPENDED").length;
+                const froz = investors.filter((u) => u.status === "FROZEN").length;
+                const parts: string[] = [];
+                if (susp > 0) parts.push(`${susp} suspended`);
+                if (froz > 0) parts.push(`${froz} frozen`);
+                return parts.length > 0 ? parts.join(" · ") : `${investors.length} active`;
+              })()
+            )}
           </span>
         </button>
         <button type="button" className={styles.statCard} onClick={() => onGo("users")}>
@@ -1106,6 +1120,7 @@ function UsersSection({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [statusBusy, setStatusBusy] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
 
   // Notify user modal state
@@ -1117,6 +1132,7 @@ function UsersSection({
   const [notifyError, setNotifyError] = useState("");
 
   const rows = users.filter((u) => {
+    if (statusFilter !== "all" && u.status !== statusFilter) return false;
     const s = q.trim().toLowerCase();
     return (
       !s ||
@@ -1171,13 +1187,21 @@ function UsersSection({
     }
   };
 
-  const toggleStatus = (u: AdminUser) => {
-    const next = u.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
+  const changeStatus = (u: AdminUser, next: "ACTIVE" | "FROZEN" | "SUSPENDED") => {
+    const isFreeze = next === "FROZEN";
+    const isSuspend = next === "SUSPENDED";
+    const actionLabel = isFreeze ? "Freeze" : isSuspend ? "Suspend" : (u.status === "FROZEN" ? "Unfreeze" : "Reactivate");
+    const message = isFreeze
+      ? `Freezing ${u.email} will disable their trading, conversions, and withdrawals. The user will still be able to log in and make deposits.`
+      : isSuspend
+        ? `Are you sure you want to suspend ${u.email}? The user will be immediately logged out and blocked from logging in.`
+        : `Are you sure you want to restore full active access for ${u.email}?`;
+
     setConfirmState({
-      title: `${next === "SUSPENDED" ? "Suspend" : "Reactivate"} ${u.email}?`,
-      message: `Are you sure you want to ${next === "SUSPENDED" ? "suspend" : "reactivate"} this user account?`,
-      confirmText: next === "SUSPENDED" ? "Suspend" : "Reactivate",
-      danger: next === "SUSPENDED",
+      title: `${actionLabel} ${u.email}?`,
+      message,
+      confirmText: actionLabel,
+      danger: isSuspend,
       onConfirm: async () => {
         setStatusBusy(u.id);
         try {
@@ -1244,6 +1268,17 @@ function UsersSection({
             <Search size={16} />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or username" />
           </label>
+          <select
+            className={styles.select}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter by Status"
+          >
+            <option value="all">All statuses</option>
+            <option value="ACTIVE">Active</option>
+            <option value="FROZEN">Frozen</option>
+            <option value="SUSPENDED">Suspended</option>
+          </select>
           <span className={styles.muted}>{rows.length} of {users.length}</span>
         </div>
         {loading ? (
@@ -1336,15 +1371,63 @@ function UsersSection({
                           <DollarSign size={14} /> Balance
                         </button>
                         {u.role !== "ADMIN" && (
-                          <button
-                            type="button"
-                            className={u.status === "ACTIVE" ? styles.btnDangerSm : styles.btnSuccessSm}
-                            onClick={() => toggleStatus(u)}
-                            disabled={statusBusy === u.id}
-                          >
-                            {u.status === "ACTIVE" ? <UserX size={14} /> : <UserCheck size={14} />}
-                            {u.status === "ACTIVE" ? "Suspend" : "Reactivate"}
-                          </button>
+                          <>
+                            {u.status === "ACTIVE" && (
+                              <>
+                                <button
+                                  type="button"
+                                  className={styles.btnIceSm}
+                                  onClick={() => changeStatus(u, "FROZEN")}
+                                  disabled={statusBusy === u.id}
+                                  title="Freeze account (Deposits allowed, trading and withdrawals restricted)"
+                                >
+                                  <Snowflake size={14} /> Freeze
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.btnDangerSm}
+                                  onClick={() => changeStatus(u, "SUSPENDED")}
+                                  disabled={statusBusy === u.id}
+                                  title="Suspend account"
+                                >
+                                  <UserX size={14} /> Suspend
+                                </button>
+                              </>
+                            )}
+                            {u.status === "FROZEN" && (
+                              <>
+                                <button
+                                  type="button"
+                                  className={styles.btnSuccessSm}
+                                  onClick={() => changeStatus(u, "ACTIVE")}
+                                  disabled={statusBusy === u.id}
+                                  title="Unfreeze account"
+                                >
+                                  <UserCheck size={14} /> Unfreeze
+                                </button>
+                                <button
+                                  type="button"
+                                  className={styles.btnDangerSm}
+                                  onClick={() => changeStatus(u, "SUSPENDED")}
+                                  disabled={statusBusy === u.id}
+                                  title="Suspend account"
+                                >
+                                  <UserX size={14} /> Suspend
+                                </button>
+                              </>
+                            )}
+                            {u.status === "SUSPENDED" && (
+                              <button
+                                type="button"
+                                className={styles.btnSuccessSm}
+                                onClick={() => changeStatus(u, "ACTIVE")}
+                                disabled={statusBusy === u.id}
+                                title="Reactivate account"
+                              >
+                                <UserCheck size={14} /> Reactivate
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>
@@ -1400,16 +1483,68 @@ function UsersSection({
                     <DollarSign size={13} /> Balance
                   </button>
                   {u.role !== "ADMIN" && (
-                    <button
-                      type="button"
-                      className={u.status === "ACTIVE" ? styles.btnDangerSm : styles.btnSuccessSm}
-                      onClick={() => toggleStatus(u)}
-                      disabled={statusBusy === u.id}
-                      style={{ height: "32px", fontSize: "12px", marginLeft: "auto" }}
-                    >
-                      {u.status === "ACTIVE" ? <UserX size={13} /> : <UserCheck size={13} />}
-                      {u.status === "ACTIVE" ? "Suspend" : "Reactivate"}
-                    </button>
+                    <div style={{ display: "flex", gap: "6px", marginLeft: "auto", flexWrap: "wrap" }}>
+                      {u.status === "ACTIVE" && (
+                        <>
+                          <button
+                            type="button"
+                            className={styles.btnIceSm}
+                            onClick={() => changeStatus(u, "FROZEN")}
+                            disabled={statusBusy === u.id}
+                            style={{ height: "32px", fontSize: "12px" }}
+                            title="Freeze account (Deposits allowed, trading and withdrawals restricted)"
+                          >
+                            <Snowflake size={13} /> Freeze
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.btnDangerSm}
+                            onClick={() => changeStatus(u, "SUSPENDED")}
+                            disabled={statusBusy === u.id}
+                            style={{ height: "32px", fontSize: "12px" }}
+                            title="Suspend account"
+                          >
+                            <UserX size={13} /> Suspend
+                          </button>
+                        </>
+                      )}
+                      {u.status === "FROZEN" && (
+                        <>
+                          <button
+                            type="button"
+                            className={styles.btnSuccessSm}
+                            onClick={() => changeStatus(u, "ACTIVE")}
+                            disabled={statusBusy === u.id}
+                            style={{ height: "32px", fontSize: "12px" }}
+                            title="Unfreeze account"
+                          >
+                            <UserCheck size={13} /> Unfreeze
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.btnDangerSm}
+                            onClick={() => changeStatus(u, "SUSPENDED")}
+                            disabled={statusBusy === u.id}
+                            style={{ height: "32px", fontSize: "12px" }}
+                            title="Suspend account"
+                          >
+                            <UserX size={13} /> Suspend
+                          </button>
+                        </>
+                      )}
+                      {u.status === "SUSPENDED" && (
+                        <button
+                          type="button"
+                          className={styles.btnSuccessSm}
+                          onClick={() => changeStatus(u, "ACTIVE")}
+                          disabled={statusBusy === u.id}
+                          style={{ height: "32px", fontSize: "12px" }}
+                          title="Reactivate account"
+                        >
+                          <UserCheck size={13} /> Reactivate
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </li>

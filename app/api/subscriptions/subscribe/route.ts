@@ -47,6 +47,12 @@ export async function POST(req: Request) {
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.status === "FROZEN") {
+      return NextResponse.json(
+        { error: "Your account is frozen. Subscriptions are disabled." },
+        { status: 403 },
+      );
+    }
 
     const parsed = subscriptionPurchaseSchema.safeParse(await req.json());
     if (!parsed.success) {

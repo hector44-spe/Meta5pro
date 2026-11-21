@@ -10,6 +10,7 @@ import {
   Check,
   TrendingUp,
   ArrowUpDown,
+  Snowflake,
 } from "lucide-react";
 import { useDashboard } from "@/components/DashboardShell";
 import { usePrices } from "@/lib/usePrices";
@@ -94,7 +95,7 @@ function TradingContent() {
   const initialSymbol = searchParams.get("symbol") || "BTC";
   const initialType = searchParams.get("type") || "Crypto";
 
-  const { accountType, realBalance, demoBalance, openModal, refreshBalance } = useDashboard();
+  const { accountType, realBalance, demoBalance, openModal, refreshBalance, isFrozen } = useDashboard();
   const { prices } = usePrices();
   const { holdings, summary: holdingsSummary, refresh: refreshHoldings } = useHoldings();
 

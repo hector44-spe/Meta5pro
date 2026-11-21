@@ -13,6 +13,12 @@ export async function POST(
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.status === "FROZEN") {
+      return NextResponse.json(
+        { error: "Your account is frozen. Position management is disabled." },
+        { status: 403 },
+      );
+    }
 
     const { id: positionId } = await params;
 

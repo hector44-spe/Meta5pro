@@ -37,6 +37,12 @@ export async function POST(req: Request) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.status === "FROZEN") {
+      return NextResponse.json(
+        { error: "Your account is frozen. Trading is disabled on your account. Please contact support." },
+        { status: 403 },
+      );
+    }
 
     const parsed = orderSchema.safeParse(await req.json());
     if (!parsed.success) {
