@@ -769,20 +769,20 @@ function TradingContent() {
           {isFrozen && (
             <div
               style={{
-                padding: "9px 12px",
+                padding: "8px 12px",
                 borderRadius: "8px",
                 background: "rgba(56, 189, 248, 0.12)",
                 border: "1px solid rgba(56, 189, 248, 0.28)",
-                color: "#e0f2fe",
-                fontSize: "12px",
-                lineHeight: "1.4",
+                color: "#38bdf8",
+                fontSize: "12.5px",
+                fontWeight: 600,
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
               }}
             >
               <Snowflake size={16} color="#38bdf8" style={{ flexShrink: 0 }} />
-              <span>Account Frozen: Trading and asset conversions are restricted. Deposits remain active.</span>
+              <span>Account Frozen</span>
             </div>
           )}
 

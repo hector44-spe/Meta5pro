@@ -236,6 +236,7 @@ function AdminContent() {
   const [addresses, setAddresses] = useState<AddressItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [adminEmail, setAdminEmail] = useState("");
+  const [pendingVerifications, setPendingVerifications] = useState(0);
 
   // Approve / reject confirmation
   const [confirmTx, setConfirmTx] = useState<{ tx: AdminTx; action: "approve" | "reject" } | null>(null);
@@ -262,16 +263,22 @@ function AdminContent() {
           Pragma: "no-cache",
         },
       };
-      const [txRes, userRes, addrRes, meRes] = await Promise.all([
+      const [txRes, userRes, addrRes, meRes, verifRes] = await Promise.all([
         fetch("/api/admin/transactions", fetchOpts),
         fetch("/api/admin/users", fetchOpts),
         fetch("/api/settings/addresses", fetchOpts),
         fetch("/api/auth/me", fetchOpts),
+        fetch("/api/admin/verifications", fetchOpts),
       ]);
       if (txRes.ok) setTransactions((await txRes.json()).transactions || []);
       if (userRes.ok) setUsers((await userRes.json()).users || []);
       if (addrRes.ok) setAddresses((await addrRes.json()).addresses || []);
       if (meRes.ok) setAdminEmail((await meRes.json()).user?.email || "");
+      if (verifRes.ok) {
+        const vData = await verifRes.json();
+        const pending = (vData.submissions || []).filter((s: { status: string }) => s.status === "PENDING").length;
+        setPendingVerifications(pending);
+      }
     } catch {
       if (!silent) flash("error", "Could not load data. Check your connection and refresh.");
     } finally {
@@ -356,7 +363,7 @@ function AdminContent() {
     { id: "cards", label: "Cards", icon: <Layers size={18} /> },
     { id: "subscriptions", label: "Subscription", icon: <Sparkles size={18} /> },
     { id: "addresses", label: "Deposit addresses", icon: <Wallet size={18} /> },
-    { id: "verifications", label: "Verification", icon: <ScanFace size={18} /> },
+    { id: "verifications", label: "Verification", icon: <ScanFace size={18} />, count: pendingVerifications },
     { id: "support", label: "Live support", icon: <MessageSquare size={18} /> },
   ];
 

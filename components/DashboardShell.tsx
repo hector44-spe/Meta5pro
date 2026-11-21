@@ -1965,40 +1965,41 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             {isFrozen && (
               <div
                 style={{
-                  margin: "12px 16px 4px",
-                  padding: "12px 16px",
+                  margin: "10px 16px 2px",
+                  padding: "10px 14px",
                   borderRadius: "10px",
-                  background: "linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.08) 100%)",
+                  background: "linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.06) 100%)",
                   border: "1px solid rgba(56, 189, 248, 0.28)",
                   color: "#e0f2fe",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                  fontSize: "13.5px",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+                  gap: "10px",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.18)",
+                  boxSizing: "border-box",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: "1 1 280px" }}>
-                  <Snowflake size={20} color="#38bdf8" style={{ flexShrink: 0 }} />
-                  <span>
-                    <strong style={{ color: "#38bdf8" }}>Account Frozen:</strong> Trading and withdrawals are restricted on your account. You can continue to deposit funds. Contact support if you need assistance.
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                  <Snowflake size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
+                  <span style={{ fontWeight: 600, fontSize: "14px", color: "#38bdf8", whiteSpace: "nowrap" }}>
+                    Account Frozen
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsChatOpen(true)}
                   style={{
-                    padding: "6px 14px",
+                    padding: "6px 12px",
                     borderRadius: "6px",
-                    background: "rgba(56, 189, 248, 0.2)",
-                    border: "1px solid rgba(56, 189, 248, 0.4)",
+                    background: "rgba(56, 189, 248, 0.18)",
+                    border: "1px solid rgba(56, 189, 248, 0.38)",
                     color: "#38bdf8",
                     fontWeight: 600,
-                    fontSize: "12.5px",
+                    fontSize: "12px",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    transition: "all 0.15s ease",
                   }}
                 >
                   Contact Support

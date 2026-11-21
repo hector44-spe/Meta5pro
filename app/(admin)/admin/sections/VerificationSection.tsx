@@ -24,7 +24,13 @@ const documentLabel = (type: string) => ({
   birth_certificate: "Birth certificate",
 }[type] || type);
 
-export default function VerificationSection({ flash }: { flash: (kind: "ok" | "error", text: string) => void }) {
+export default function VerificationSection({
+  flash,
+  onCountChange,
+}: {
+  flash: (kind: "ok" | "error", text: string) => void;
+  onCountChange?: (count: number) => void;
+}) {
   const [rows, setRows] = useState<VerificationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
@@ -44,13 +50,16 @@ export default function VerificationSection({ flash }: { flash: (kind: "ok" | "e
         throw new Error(response.ok ? "Invalid server response." : `Server error (${response.status})`);
       }
       if (!response.ok) throw new Error(data.error || "Failed to load verification submissions.");
-      setRows(data.submissions || []);
+      const subs: VerificationRow[] = data.submissions || [];
+      setRows(subs);
+      const pendingCount = subs.filter((r) => r.status === "PENDING").length;
+      onCountChange?.(pendingCount);
     } catch (error) {
       if (!silent) flash("error", error instanceof Error ? error.message : "Failed to load verification submissions.");
     } finally {
       setLoading(false);
     }
-  }, [flash]);
+  }, [flash, onCountChange]);
 
   useEffect(() => {
     load();
