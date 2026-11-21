@@ -54,9 +54,9 @@ export async function PATCH(
     if (status === "FROZEN") {
       await notify(
         userId,
-        "security",
-        "Account Notice: Account Frozen",
-        "Your account has been frozen by administration. You can continue to make deposits, but trading and withdrawals are restricted. Contact support for details."
+        "frozen",
+        "Your account is frozen, contact support for more info",
+        "Your account is frozen, contact support for more info"
       );
     } else if (status === "ACTIVE") {
       await notify(

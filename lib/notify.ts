@@ -12,6 +12,7 @@ export type NotificationKind =
   | "admin"
   | "alert"
   | "system"
+  | "frozen"
   | "general";
 
 /**

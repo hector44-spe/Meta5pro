@@ -404,6 +404,28 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             phoneNumber: data.user.phoneNumber ?? null,
             country: data.user.country ?? null,
           });
+
+          // Show smooth animated red popup notification (like trade loss) that stays for 10s just once after logging in when account is frozen
+          if (data.user.status === "FROZEN" && data.user.role !== "ADMIN") {
+            const sessionKey = `mg5_frozen_toast_shown_${data.user.id}`;
+            try {
+              const alreadyShown = sessionStorage.getItem(sessionKey);
+              if (!alreadyShown) {
+                sessionStorage.setItem(sessionKey, "true");
+                setToastNotification({
+                  type: "error",
+                  message: "Your account is frozen, contact support for more info",
+                  durationMs: 10_000,
+                });
+              }
+            } catch {
+              /* ignore storage error */
+            }
+          } else if (data.user.status === "ACTIVE") {
+            try {
+              sessionStorage.removeItem(`mg5_frozen_toast_shown_${data.user.id}`);
+            } catch {}
+          }
         }
       }
       if (walletRes.ok) {

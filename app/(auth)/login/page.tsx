@@ -112,6 +112,11 @@ function LoginFormContent() {
       }
 
       // Normal Login Success
+      try {
+        if (data.user?.id) {
+          sessionStorage.removeItem(`mg5_frozen_toast_shown_${data.user.id}`);
+        }
+      } catch {}
       if (data.user?.role === "ADMIN") {
         router.push("/admin");
       } else {

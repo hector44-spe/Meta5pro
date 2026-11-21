@@ -31,6 +31,7 @@ const ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   trade: { icon: <LineChart size={16} />, color: "#a78bfa" },
   trade_profit: { icon: <LineChart size={16} />, color: "#01b28b" },
   trade_loss: { icon: <LineChart size={16} />, color: "#f84960" },
+  frozen: { icon: <ShieldCheck size={16} />, color: "#f84960" },
   investment: { icon: <Layers size={16} />, color: "#38bdf8" },
   custom: { icon: <Bell size={16} />, color: "#4F6BFF" },
   admin: { icon: <ShieldCheck size={16} />, color: "#f5a524" },
@@ -97,7 +98,7 @@ export default function NotificationsPanel({
 
       {items.map((n) => {
         const meta = ICONS[n.kind] ?? ICONS.account;
-        const resultColor = n.kind === "trade_profit" ? "#01b28b" : n.kind === "trade_loss" ? "#f84960" : "#fff";
+        const resultColor = n.kind === "trade_profit" ? "#01b28b" : (n.kind === "trade_loss" || n.kind === "frozen") ? "#f84960" : "#fff";
         return (
           <div
             key={n.id}

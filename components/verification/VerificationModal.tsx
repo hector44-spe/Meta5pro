@@ -74,7 +74,7 @@ export default function VerificationModal({
       }
       if (!response.ok) throw new Error(data.error || "Document upload failed.");
       await loadStatus();
-      onSubmitted("Your verification documents were uploaded and are awaiting admin review.");
+      onSubmitted("Your verification documents were uploaded and are awaiting review.");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Document upload failed.");
     } finally {
@@ -98,7 +98,7 @@ export default function VerificationModal({
           </button>
         </header>
         <div className={styles.body}>
-          <p className={styles.intro}>Upload a clear government-issued identity document. Files are stored privately and are only available to you and authorized administrators.</p>
+          <p className={styles.intro}>Upload a clear government-issued identity document. Files are stored privately and are only available to you and authorized reviewers.</p>
           <div className={styles.status}>
             {loading ? "Checking verification status…" : submission ? (
               <>Status: <strong className={statusClass}>{submission.status === "APPROVED" ? "Verified" : submission.status === "REJECTED" ? "Rejected" : "Pending review"}</strong>
