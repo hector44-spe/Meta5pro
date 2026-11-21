@@ -18,6 +18,13 @@ export const COIN_OPTIONS = [
   { symbol: "BNB", name: "Binance Coin", defaultNetwork: "BEP-20" },
   { symbol: "LTC", name: "Litecoin", defaultNetwork: "Default" },
   { symbol: "TRX", name: "Tron", defaultNetwork: "TRC-20" },
+  { symbol: "ADA", name: "Cardano", defaultNetwork: "Default" },
+  { symbol: "AVAX", name: "Avalanche", defaultNetwork: "Default" },
+  { symbol: "DOT", name: "Polkadot", defaultNetwork: "Default" },
+  { symbol: "LINK", name: "Chainlink", defaultNetwork: "ERC-20" },
+  { symbol: "MATIC", name: "Polygon", defaultNetwork: "Polygon" },
+  { symbol: "SHIB", name: "Shiba Inu", defaultNetwork: "ERC-20" },
+  { symbol: "TON", name: "Toncoin", defaultNetwork: "Default" },
 ];
 
 export const NETWORK_OPTIONS = [
@@ -33,22 +40,53 @@ export const NETWORK_OPTIONS = [
 
 const COIN_ICON_PATHS: Record<string, string> = {
   BTC: "/dashboard_files/BTC.svg",
+  BITCOIN: "/dashboard_files/BTC.svg",
   ETH: "/dashboard_files/ETH.svg",
+  ETHEREUM: "/dashboard_files/ETH.svg",
   USDT: "/dashboard_files/USDT.svg",
+  TETHER: "/dashboard_files/USDT.svg",
   SOL: "/dashboard_files/SOL.svg",
+  SOLANA: "/dashboard_files/SOL.svg",
   XRP: "/dashboard_files/XRP.svg",
+  RIPPLE: "/dashboard_files/XRP.svg",
   USDC: "/dashboard_files/USDC.svg",
   DOGE: "/dashboard_files/DOGE.svg",
+  DOGECOIN: "/dashboard_files/DOGE.svg",
   BNB: "/dashboard_files/binance.svg",
+  BINANCE: "/dashboard_files/binance.svg",
   LTC: "/dashboard_files/LTC.svg",
+  LITECOIN: "/dashboard_files/LTC.svg",
   TRX: "/dashboard_files/TRX.svg",
+  TRON: "/dashboard_files/TRX.svg",
+  ADA: "/dashboard_files/ADA.svg",
+  CARDANO: "/dashboard_files/ADA.svg",
+  AVAX: "/dashboard_files/AVAX.svg",
+  AVALANCHE: "/dashboard_files/AVAX.svg",
+  BCH: "/dashboard_files/BCH.svg",
+  DOT: "/dashboard_files/DOT.svg",
+  POLKADOT: "/dashboard_files/DOT.svg",
+  LINK: "/dashboard_files/LINK.svg",
+  MATIC: "/dashboard_files/MATIC.svg",
+  POLYGON: "/dashboard_files/MATIC.svg",
+  SHIB: "/dashboard_files/SHIB.svg",
+  SHIBA: "/dashboard_files/SHIB.svg",
+  TON: "/dashboard_files/TON.svg",
+  UNI: "/dashboard_files/UNI.svg",
+  UNISWAP: "/dashboard_files/UNI.svg",
+  XLM: "/dashboard_files/XLM.svg",
+  STELLAR: "/dashboard_files/XLM.svg",
+  XMR: "/dashboard_files/XMR.svg",
+  MONERO: "/dashboard_files/XMR.svg",
+  DASH: "/dashboard_files/DASH.svg",
+  ETC: "/dashboard_files/ETC.svg",
+  ZEC: "/dashboard_files/ZEC.svg",
 };
 
 export function CoinIcon({ symbol }: { symbol: string }) {
   const s = symbol.toUpperCase();
   const iconPath = COIN_ICON_PATHS[s];
   if (iconPath) {
-    return <Image src={iconPath} alt={`${s} logo`} width={32} height={32} />;
+    return <Image src={iconPath} alt={`${s} logo`} width={32} height={32} unoptimized />;
   }
   if (s === "BTC" || s === "BITCOIN") {
     return (

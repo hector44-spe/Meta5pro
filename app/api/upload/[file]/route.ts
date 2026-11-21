@@ -28,8 +28,9 @@ export async function GET(
       where: { key: { in: ["deposit_address_qrs", "signal_deposit_addresses"] } },
       select: { value: true },
     });
-    const uploadUrl = `/api/upload/${file}`;
-    isConfiguredDepositQr = settings.some(({ value }) => JSON.stringify(value).includes(`"${uploadUrl}"`));
+    isConfiguredDepositQr = settings.some(({ value }) =>
+      value ? JSON.stringify(value).includes(file) : false
+    );
   }
   if (session.role !== "ADMIN" && upload.userId !== session.userId && !isConfiguredDepositQr) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -349,3 +349,29 @@ export function sendDepositReceivedEmail(
     ),
   );
 }
+
+export function sendVerificationStatusEmail(
+  to: string,
+  approved: boolean,
+  reason?: string,
+) {
+  const currentAppName = appName();
+  const rows: [string, string][] = [["Status", approved ? "Verified" : "Rejected"]];
+  if (reason && !approved) {
+    rows.push(["Reason", reason]);
+  }
+  return sendMail(
+    to,
+    approved
+      ? `Your ${currentAppName} account has been verified`
+      : `Your ${currentAppName} verification update`,
+    layout(
+      approved ? "Account verified" : "Verification update",
+      approved
+        ? `Congratulations! Your identity documents have been approved and your account is now verified. You have unlocked higher withdrawal limits and all advanced trading features.`
+        : `Your identity verification submission could not be approved${reason ? `: ${reason}` : "."} You can submit new verification documents at any time from your account settings.`,
+      rows,
+      appUrl() ? { label: "Go to Dashboard", url: `${appUrl()}/dashboard` } : undefined,
+    ),
+  );
+}

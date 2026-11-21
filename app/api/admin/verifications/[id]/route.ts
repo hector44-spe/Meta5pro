@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getSession, isAuthorizedAdminEmail } from "@/lib/auth";
+import { sendVerificationStatusEmail } from "@/lib/mail";
 import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
 
@@ -22,7 +23,10 @@ export async function PATCH(
     return NextResponse.json({ error: "Provide a rejection reason." }, { status: 400 });
   }
 
-  const existing = await prisma.verificationSubmission.findUnique({ where: { id } });
+  const existing = await prisma.verificationSubmission.findUnique({
+    where: { id },
+    include: { user: { select: { email: true } } },
+  });
   if (!existing) return NextResponse.json({ error: "Submission not found" }, { status: 404 });
   if (existing.status !== "PENDING") {
     return NextResponse.json({ error: "This submission has already been reviewed." }, { status: 409 });
@@ -49,6 +53,16 @@ export async function PATCH(
       tx,
     );
   });
+
+  if (existing.user?.email) {
+    sendVerificationStatusEmail(
+      existing.user.email,
+      action === "approve",
+      action === "reject" ? reason : undefined,
+    ).catch((err) => {
+      console.warn("[mail] Failed to send verification email:", err);
+    });
+  }
 
   return NextResponse.json({ success: true, status });
 }

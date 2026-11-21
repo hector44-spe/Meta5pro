@@ -244,6 +244,8 @@ export default function DashboardPage() {
     fullName: string | null;
     role: string;
     status: string;
+    isVerified?: boolean;
+    verificationStatus?: string;
     wallet?: {
       mainBalance: number;
       interestBalance: number;
@@ -1433,13 +1435,27 @@ export default function DashboardPage() {
                   style={{
                     fontSize: "12px",
                     fontWeight: 600,
-                    color: userProfile?.status === "ACTIVE" ? "#01b28b" : "#ff3344",
-                    backgroundColor: userProfile?.status === "ACTIVE" ? "rgba(1, 178, 139, 0.15)" : "rgba(255, 51, 68, 0.15)",
+                    color:
+                      userProfile?.isVerified || userProfile?.verificationStatus === "APPROVED"
+                        ? "#01b28b"
+                        : userProfile?.verificationStatus === "PENDING"
+                        ? "#ffaa00"
+                        : "#ff3344",
+                    backgroundColor:
+                      userProfile?.isVerified || userProfile?.verificationStatus === "APPROVED"
+                        ? "rgba(1, 178, 139, 0.15)"
+                        : userProfile?.verificationStatus === "PENDING"
+                        ? "rgba(255, 170, 0, 0.15)"
+                        : "rgba(255, 51, 68, 0.15)",
                     padding: "3px 10px",
                     borderRadius: "20px",
                   }}
                 >
-                  {userProfile?.status === "ACTIVE" ? "Verified" : "Unverified"}
+                  {userProfile?.isVerified || userProfile?.verificationStatus === "APPROVED"
+                    ? "Verified"
+                    : userProfile?.verificationStatus === "PENDING"
+                    ? "Pending"
+                    : "Unverified"}
                 </span>
               </div>
             </div>

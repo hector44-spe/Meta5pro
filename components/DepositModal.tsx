@@ -48,6 +48,31 @@ export interface DepositModalProps {
 
 type TokenOption = { name: string; symbol: string; networks: string[] };
 type PaymentMethod = "CRYPTO" | "BANK" | "PAYPAL";
+
+const TOKEN_ICONS: Record<string, string> = {
+  BTC: "/dashboard_files/BTC.svg",
+  ETH: "/dashboard_files/ETH.svg",
+  USDT: "/dashboard_files/USDT.svg",
+  SOL: "/dashboard_files/SOL.svg",
+  XRP: "/dashboard_files/XRP.svg",
+  USDC: "/dashboard_files/USDC.svg",
+  DOGE: "/dashboard_files/DOGE.svg",
+  BNB: "/dashboard_files/binance.svg",
+  LTC: "/dashboard_files/LTC.svg",
+  TRX: "/dashboard_files/TRX.svg",
+  ADA: "/dashboard_files/ADA.svg",
+  AVAX: "/dashboard_files/AVAX.svg",
+  BCH: "/dashboard_files/BCH.svg",
+  DOT: "/dashboard_files/DOT.svg",
+  LINK: "/dashboard_files/LINK.svg",
+  MATIC: "/dashboard_files/MATIC.svg",
+  SHIB: "/dashboard_files/SHIB.svg",
+  TON: "/dashboard_files/TON.svg",
+  UNI: "/dashboard_files/UNI.svg",
+  XLM: "/dashboard_files/XLM.svg",
+  XMR: "/dashboard_files/XMR.svg",
+  DASH: "/dashboard_files/DASH.svg",
+};
 type BankDetails = {
   id: string; country: string; recipientName: string; recipientAddress: string;
   accountType: string; accountNumber: string; routingNumber: string;
@@ -611,7 +636,15 @@ export default function DepositModal({
                     onClick={() => setTokenDropdownOpen(!tokenDropdownOpen)}
                   >
                     {selectedToken ? (
-                      <span className="dm-tag-badge">
+                      <span className="dm-tag-badge" style={{ display: "inline-flex", alignItems: "center" }}>
+                        {TOKEN_ICONS[selectedToken.symbol.toUpperCase()] && (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img
+                            src={TOKEN_ICONS[selectedToken.symbol.toUpperCase()]}
+                            alt={selectedToken.symbol}
+                            style={{ width: 18, height: 18, borderRadius: "50%", marginRight: 6, flexShrink: 0 }}
+                          />
+                        )}
                         <span>{selectedToken.name}</span>
                         <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.45)", marginLeft: "4px" }}>
                           ({selectedToken.symbol})
@@ -634,8 +667,19 @@ export default function DepositModal({
                             setSelectedNetwork(t.networks[0]);
                             setTokenDropdownOpen(false);
                           }}
+                          style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
                         >
-                          <span style={{ fontWeight: 500 }}>{t.name}</span>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            {TOKEN_ICONS[t.symbol.toUpperCase()] && (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                src={TOKEN_ICONS[t.symbol.toUpperCase()]}
+                                alt={t.symbol}
+                                style={{ width: 18, height: 18, borderRadius: "50%", flexShrink: 0 }}
+                              />
+                            )}
+                            <span style={{ fontWeight: 500 }}>{t.name}</span>
+                          </div>
                           <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)" }}>
                             {t.symbol}
                           </span>
