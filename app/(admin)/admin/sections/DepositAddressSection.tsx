@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { X, Loader2, Save, Trash2 } from "lucide-react";
 import "@/styles/deposit-addresses.css";
@@ -212,6 +213,21 @@ export default function DepositAddressSection({
   const [uploadingQr, setUploadingQr] = useState(false);
   const [saving, setSaving] = useState(false);
   const [confirmState, setConfirmState] = useState<CustomConfirmState | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (modalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [modalOpen]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -555,7 +571,7 @@ export default function DepositAddressSection({
       </div>
 
       {/* Add / Edit Deposit Address Modal (Image 3) */}
-      {modalOpen && (
+      {mounted && modalOpen && createPortal(
         <div className="dep_modal_backdrop" onClick={() => !saving && setModalOpen(false)}>
           <div className="dep_modal" role="dialog" aria-modal="true" aria-labelledby="deposit-address-modal-title" onClick={(e) => e.stopPropagation()}>
             <div className="dep_modal_head">
@@ -700,7 +716,8 @@ export default function DepositAddressSection({
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <CustomConfirmModal

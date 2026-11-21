@@ -57,7 +57,21 @@ export async function POST(req: Request) {
     });
 
     const valid = await verifyPassword(password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
-    if (!user || !valid || user.status !== "ACTIVE") {
+    if (!user || !valid) {
+      return NextResponse.json(
+        { error: "Invalid email or password" },
+        { status: 401 },
+      );
+    }
+
+    if (user.status === "SUSPENDED") {
+      return NextResponse.json(
+        { error: "This account has been suspended. Please contact support." },
+        { status: 403 },
+      );
+    }
+
+    if (user.status !== "ACTIVE" && user.status !== "FROZEN") {
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 },
@@ -111,6 +125,7 @@ export async function POST(req: Request) {
       email: user.email,
       role: effectiveRole,
       username: user.username,
+      status: user.status as "ACTIVE" | "SUSPENDED" | "FROZEN",
       tokenVersion: user.tokenVersion,
       twoFactorRequired: false,
       twoFactorVerified: false,
@@ -123,6 +138,7 @@ export async function POST(req: Request) {
         email: user.email,
         fullName: user.fullName,
         role: effectiveRole,
+        status: user.status,
         wallet: user.wallet,
       },
     });

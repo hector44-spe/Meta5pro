@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { createPortal } from "react-dom";
 import { AlertCircle, HelpCircle, Check, X, Loader2 } from "lucide-react";
 
 export interface CustomConfirmState {
@@ -27,7 +28,7 @@ export default function CustomConfirmModal({
 
   const isDanger = state.danger !== false;
 
-  return (
+  const modalContent = (
     <div
       style={{
         position: "fixed",
@@ -182,4 +183,6 @@ export default function CustomConfirmModal({
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(modalContent, document.body) : null;
 }

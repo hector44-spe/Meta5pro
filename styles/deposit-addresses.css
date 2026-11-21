@@ -211,38 +211,46 @@
 
 /* Modal styles (Image 3) */
 .dep_modal_backdrop {
-  position: fixed;
-  inset: 0;
-  top: var(--visual-viewport-offset-top, 0px);
-  width: 100vw;
-  height: var(--visual-viewport-height, 100dvh);
-  background: rgba(0, 0, 0, 0.82);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 10000;
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100% !important;
+  min-height: 100dvh !important;
+  background: rgba(0, 0, 0, 0.82) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 1000000 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 16px;
+  padding: 16px !important;
   overflow-y: auto !important;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  box-sizing: border-box;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+  box-sizing: border-box !important;
 }
 
 .dep_modal {
-  width: 100%;
-  max-width: 460px;
-  max-height: calc(var(--visual-viewport-height, 100dvh) - 24px);
-  background: #171a21;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+  width: 100% !important;
+  max-width: 480px !important;
+  max-height: min(92dvh, calc(100dvh - 32px)) !important;
+  background: #171a21 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7) !important;
   display: flex !important;
   flex-direction: column !important;
-  overflow: hidden !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
   margin: auto !important;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
   animation: depModalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -258,12 +266,16 @@
 }
 
 .dep_modal_head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 24px 14px;
-  flex-shrink: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 18px 24px 14px !important;
+  flex-shrink: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+  background: #171a21 !important;
 }
 
 .dep_modal_head h3 {
@@ -292,16 +304,13 @@
 }
 
 .dep_modal_body {
-  padding: 16px 24px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto !important;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  flex: 1 1 auto;
-  min-height: 0;
-  box-sizing: border-box;
+  padding: 16px 24px 24px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  overflow: visible !important;
+  flex: 1 1 auto !important;
+  box-sizing: border-box !important;
 }
 
 .dep_field {
@@ -454,34 +463,39 @@
   text-decoration: underline;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 560px) {
   .dep_modal_backdrop {
-    padding: 10px 8px !important;
+    padding: 8px 8px calc(24px + env(safe-area-inset-bottom, 16px)) !important;
     align-items: flex-start !important;
+    overscroll-behavior-y: contain !important;
   }
   .dep_modal {
-    max-height: calc(var(--visual-viewport-height, 100dvh) - 20px) !important;
-    margin: 0 auto !important;
+    max-height: min(94dvh, calc(100dvh - 16px)) !important;
+    margin: 4px auto !important;
     border-radius: 14px !important;
   }
   .dep_modal_head {
     padding: 14px 16px 12px !important;
   }
   .dep_modal_body {
-    padding: 12px 16px 20px !important;
-    gap: 13px !important;
+    padding: 14px 16px max(24px, calc(16px + env(safe-area-inset-bottom, 16px))) !important;
+    gap: 14px !important;
   }
   .dep_input,
   .dep_select {
+    font-size: 16px !important; /* 16px prevents iOS Safari auto-zoom crop */
+    padding: 11px 13px !important;
+    min-height: 44px !important;
+  }
+  .dep_field_label {
     font-size: 13px !important;
-    padding: 10px 12px !important;
   }
   .dep_qr_box {
-    min-height: 95px !important;
-    padding: 12px !important;
+    min-height: 100px !important;
+    padding: 14px !important;
   }
   .dep_modal_save {
-    height: 44px !important;
-    font-size: 14px !important;
+    min-height: 48px !important;
+    font-size: 15px !important;
   }
 }
