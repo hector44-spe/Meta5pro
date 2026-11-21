@@ -531,7 +531,7 @@ function AdminContent() {
 
           {section === "addresses" && <DepositAddressSection flash={flash} />}
 
-          {section === "verifications" && <VerificationSection flash={flash} />}
+          {section === "verifications" && <VerificationSection flash={flash} onCountChange={setPendingVerifications} />}
 
           {section === "support" && <SupportSection flash={flash} />}
         </div>
