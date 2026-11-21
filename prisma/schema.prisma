@@ -21,6 +21,7 @@ enum Role {
 enum UserStatus {
   ACTIVE
   SUSPENDED
+  FROZEN
 }
 
 enum TxStatus {

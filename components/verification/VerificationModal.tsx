@@ -103,6 +103,7 @@ export default function VerificationModal({
                   <option value="passport">Passport</option>
                   <option value="drivers_license">Driver&apos;s licence</option>
                   <option value="national_id">National identity card</option>
+                  <option value="birth_certificate">Birth certificate</option>
                 </select>
               </label>
               <label className={styles.field}>

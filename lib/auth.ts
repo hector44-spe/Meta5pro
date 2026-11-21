@@ -36,6 +36,7 @@ export interface TokenPayload {
   email: string;
   role: string;
   username: string;
+  status?: "ACTIVE" | "SUSPENDED" | "FROZEN";
   tokenVersion?: number;
   twoFactorVerified?: boolean;
   twoFactorRequired?: boolean;
@@ -109,7 +110,7 @@ export async function getSession(): Promise<TokenPayload | null> {
       where: { id: payload.userId },
       select: { role: true, status: true, tokenVersion: true, twoFactorEnabled: true },
     });
-    if (!row || row.status !== "ACTIVE") return null;
+    if (!row || (row.status !== "ACTIVE" && row.status !== "FROZEN")) return null;
     if (payload.tokenVersion !== undefined && row.tokenVersion !== payload.tokenVersion) {
       return null;
     }
@@ -120,6 +121,7 @@ export async function getSession(): Promise<TokenPayload | null> {
     return {
       ...payload,
       role: effectiveRole,
+      status: row.status as "ACTIVE" | "SUSPENDED" | "FROZEN",
       tokenVersion: row.tokenVersion,
       twoFactorRequired: row.role === "ADMIN" && isAuthorizedAdminEmail(payload.email),
       twoFactorVerified: !!payload.twoFactorVerified,
@@ -127,6 +129,10 @@ export async function getSession(): Promise<TokenPayload | null> {
   } catch {
     return null;
   }
+}
+
+export function isAccountFrozen(session: { status?: string } | null | undefined): boolean {
+  return session?.status === "FROZEN";
 }
 
 /* Database-backed limiter; the local map is only a fail-safe for tests/startup outages. */

@@ -11,7 +11,7 @@ import {
   sniffVerificationFile,
 } from "@/lib/verification-file";
 
-const DOCUMENT_TYPES = new Set(["passport", "drivers_license", "national_id"]);
+const DOCUMENT_TYPES = new Set(["passport", "drivers_license", "national_id", "birth_certificate"]);
 
 export async function GET() {
   const session = await getSession();

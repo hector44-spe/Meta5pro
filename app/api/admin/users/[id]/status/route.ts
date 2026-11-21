@@ -2,10 +2,11 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { notify } from "@/lib/notify";
 import { z } from "zod";
 
 const statusSchema = z.object({
-  status: z.enum(["ACTIVE", "SUSPENDED"]),
+  status: z.enum(["ACTIVE", "SUSPENDED", "FROZEN"]),
 });
 
 export async function PATCH(
@@ -37,12 +38,34 @@ export async function PATCH(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Do not allow suspending the super admin
-    if (user.role === "ADMIN" && status === "SUSPENDED") {
-      return NextResponse.json({ error: "Cannot suspend a Super Admin account" }, { status: 400 });
+    // Do not allow suspending or freezing the super admin
+    if (user.role === "ADMIN" && (status === "SUSPENDED" || status === "FROZEN")) {
+      return NextResponse.json({ error: "Cannot suspend or freeze a Super Admin account" }, { status: 400 });
     }
 
-    await prisma.user.update({ where: { id: userId }, data: { status } });
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        status,
+        ...(status === "SUSPENDED" ? { tokenVersion: { increment: 1 } } : {}),
+      },
+    });
+
+    if (status === "FROZEN") {
+      await notify(
+        userId,
+        "security",
+        "Account Notice: Account Frozen",
+        "Your account has been frozen by administration. You can continue to make deposits, but trading and withdrawals are restricted. Contact support for details."
+      );
+    } else if (status === "ACTIVE") {
+      await notify(
+        userId,
+        "security",
+        "Account Notice: Account Active",
+        "Your account is active. All trading and account features are fully accessible."
+      );
+    }
 
     return NextResponse.json({
       success: true,

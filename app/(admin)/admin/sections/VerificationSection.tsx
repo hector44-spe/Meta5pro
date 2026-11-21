@@ -21,6 +21,7 @@ const documentLabel = (type: string) => ({
   passport: "Passport",
   drivers_license: "Driver's licence",
   national_id: "National identity card",
+  birth_certificate: "Birth certificate",
 }[type] || type);
 
 export default function VerificationSection({ flash }: { flash: (kind: "ok" | "error", text: string) => void }) {
