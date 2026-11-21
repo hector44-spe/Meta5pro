@@ -282,6 +282,13 @@ function TradingContent() {
   };
 
   const handleExecuteConvert = async () => {
+    if (isFrozen) {
+      setNotification({
+        type: "error",
+        message: "Your account is frozen. Asset conversions are disabled. Please contact support.",
+      });
+      return;
+    }
     const num = parseFloat(convertFromAmount);
     if (isNaN(num) || num <= 0) {
       setNotification({
@@ -389,6 +396,13 @@ function TradingContent() {
 
   // Trade action handler (Sell or Buy)
   const handleTradeAction = async () => {
+    if (isFrozen) {
+      setNotification({
+        type: "error",
+        message: "Your account is frozen. Trading is disabled on your account. Please contact support.",
+      });
+      return;
+    }
     setOrderFeedback(null);
     const parsedAmount = parseFloat(amount) || 0;
     if (parsedAmount <= 0) {
@@ -475,6 +489,13 @@ function TradingContent() {
   };
 
   const handleClosePosition = (pos: Position) => {
+    if (isFrozen) {
+      setNotification({
+        type: "error",
+        message: "Your account is frozen. Position management is disabled. Please contact support.",
+      });
+      return;
+    }
     setConfirmState({
       title: `Close Position on ${pos.symbol}?`,
       message: `Are you sure you want to close this ${pos.side} position? Any unrealized profit or loss will be credited/debited immediately.`,
@@ -744,6 +765,26 @@ function TradingContent() {
               Convert
             </button>
           </div>
+
+          {isFrozen && (
+            <div
+              style={{
+                padding: "9px 12px",
+                borderRadius: "8px",
+                background: "rgba(56, 189, 248, 0.12)",
+                border: "1px solid rgba(56, 189, 248, 0.28)",
+                color: "#e0f2fe",
+                fontSize: "12px",
+                lineHeight: "1.4",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Snowflake size={16} color="#38bdf8" style={{ flexShrink: 0 }} />
+              <span>Account Frozen: Trading and asset conversions are restricted. Deposits remain active.</span>
+            </div>
+          )}
 
           {/* ===================== CONVERT TAB CONTENT (Matching Image 2) ===================== */}
           {orderTab === "convert" ? (
@@ -1032,22 +1073,27 @@ function TradingContent() {
               <button
                 type="button"
                 onClick={handleExecuteConvert}
-                disabled={convertSubmitting || !parseFloat(convertFromAmount)}
+                disabled={convertSubmitting || !parseFloat(convertFromAmount) || isFrozen}
                 style={{
                   width: "100%",
                   padding: "13px",
                   borderRadius: "8px",
-                  backgroundColor: parseFloat(convertFromAmount) > 0 ? "#3b82f6" : "rgba(255, 255, 255, 0.12)",
+                  backgroundColor: isFrozen
+                    ? "rgba(255, 255, 255, 0.12)"
+                    : parseFloat(convertFromAmount) > 0
+                      ? "#3b82f6"
+                      : "rgba(255, 255, 255, 0.12)",
                   color: "#ffffff",
                   border: "none",
                   fontSize: "14px",
                   fontWeight: 600,
-                  cursor: parseFloat(convertFromAmount) > 0 ? "pointer" : "not-allowed",
+                  cursor: isFrozen || !parseFloat(convertFromAmount) ? "not-allowed" : "pointer",
                   transition: "all 0.15s ease",
                   marginTop: "6px",
+                  opacity: isFrozen ? 0.65 : 1,
                 }}
               >
-                {convertSubmitting ? "Converting..." : "Convert"}
+                {isFrozen ? "Account Frozen" : convertSubmitting ? "Converting..." : "Convert"}
               </button>
             </div>
           ) : (
@@ -1581,23 +1627,27 @@ function TradingContent() {
               {/* Action Button (Sell or Buy) */}
               <button
                 onClick={handleTradeAction}
-                disabled={orderExecuting}
+                disabled={orderExecuting || isFrozen}
                 style={{
                   width: "100%",
                   padding: "13px",
                   borderRadius: "8px",
-                  backgroundColor: orderTab === "sell" ? "#f84960" : "#01b28b",
+                  backgroundColor: isFrozen
+                    ? "rgba(255, 255, 255, 0.12)"
+                    : orderTab === "sell"
+                      ? "#f84960"
+                      : "#01b28b",
                   color: "#ffffff",
                   border: "none",
                   fontSize: "14px",
                   fontWeight: 600,
-                  cursor: "pointer",
+                  cursor: isFrozen ? "not-allowed" : "pointer",
                   transition: "all 0.15s ease",
-                  opacity: orderExecuting ? 0.7 : 1,
+                  opacity: orderExecuting || isFrozen ? 0.7 : 1,
                   marginTop: "6px",
                 }}
               >
-                {orderExecuting ? "Executing..." : orderTab === "sell" ? "Sell" : "Buy"}
+                {isFrozen ? "Account Frozen (Trading Restricted)" : orderExecuting ? "Executing..." : orderTab === "sell" ? "Sell" : "Buy"}
               </button>
             </>
           )}
@@ -1813,17 +1863,18 @@ function TradingContent() {
                                   <td style={{ padding: "12px 14px", textAlign: "right", whiteSpace: "nowrap" }}>
                                     <button
                                       onClick={() => handleClosePosition(pos)}
-                                      disabled={closingPositionId === pos.id}
+                                      disabled={closingPositionId === pos.id || isFrozen}
                                       style={{
                                         padding: "4px 12px",
                                         borderRadius: "4px",
-                                        backgroundColor: "rgba(248, 73, 96, 0.15)",
-                                        border: "1px solid rgba(248, 73, 96, 0.3)",
-                                        color: "#f84960",
+                                        backgroundColor: isFrozen ? "rgba(255, 255, 255, 0.08)" : "rgba(248, 73, 96, 0.15)",
+                                        border: isFrozen ? "1px solid rgba(255, 255, 255, 0.15)" : "1px solid rgba(248, 73, 96, 0.3)",
+                                        color: isFrozen ? "rgba(255, 255, 255, 0.4)" : "#f84960",
                                         fontSize: "11.5px",
                                         fontWeight: 600,
-                                        cursor: "pointer",
+                                        cursor: isFrozen ? "not-allowed" : "pointer",
                                       }}
+                                      title={isFrozen ? "Account frozen" : undefined}
                                     >
                                       {closingPositionId === pos.id ? "Closing..." : "Close"}
                                     </button>
