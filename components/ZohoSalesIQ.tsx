@@ -33,6 +33,14 @@ export function openLiveSupport(fallback?: () => void) {
           zoho.chatwindow.visible("show");
           return true;
         }
+        if (typeof zoho.chat?.open === "function") {
+          zoho.chat.open();
+          return true;
+        }
+        if (typeof zoho.chat?.start === "function") {
+          zoho.chat.start();
+          return true;
+        }
         const zsiq = (window as any).ZohoSalesIQ;
         if (zsiq) {
           if (typeof zsiq.present === "function") {
@@ -44,14 +52,23 @@ export function openLiveSupport(fallback?: () => void) {
             return true;
           }
         }
-        if (typeof zoho.chat?.start === "function") {
-          zoho.chat.start();
-          return true;
-        }
       } catch (err) {
         console.warn("Could not open Zoho chat window:", err);
       }
     }
+
+    // Try finding and triggering the floating launcher button in the DOM
+    const zohoLauncher = (document.getElementById("zsiq_float") ||
+      document.querySelector("#zsiq_float, .zsiq_float, #zsiq_mwt, [id^='zsiq']")) as HTMLElement | null;
+    if (zohoLauncher) {
+      try {
+        zohoLauncher.click();
+        return true;
+      } catch (err) {
+        console.warn("Could not click Zoho launcher element:", err);
+      }
+    }
+
     return false;
   };
 

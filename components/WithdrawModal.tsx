@@ -139,7 +139,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
   };
 
   const validate = (): string | null => {
-    if (isFrozen) return "Your account is frozen. Withdrawals are disabled. Deposits remain available.";
+    if (isFrozen) return "Withdrawals are currently restricted on your account.";
     if (paymentMethod === "BANK") {
       if (!allowBankTransfer) return "Bank withdrawals are temporarily unavailable.";
       if (!recipientName.trim() || !bankName.trim() || !accountNumber.trim()) return "Enter the required bank account details.";
@@ -243,18 +243,21 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                   margin: "8px 0 16px",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(56, 189, 248, 0.12)",
-                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                  background: "linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.06) 100%)",
+                  border: "1px solid rgba(56, 189, 248, 0.28)",
                   color: "#e0f2fe",
                   display: "flex",
                   alignItems: "center",
                   gap: "10px",
                   fontSize: "13px",
+                  lineHeight: "1.4",
+                  boxSizing: "border-box",
+                  width: "100%",
                 }}
               >
                 <Snowflake size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
-                <span>
-                  <strong>Account Frozen:</strong> Withdrawals are currently restricted on your account. You can continue depositing funds.
+                <span style={{ fontSize: "13px", color: "#e0f2fe", fontWeight: 500 }}>
+                  Withdrawals are currently restricted on your account.
                 </span>
               </div>
             )}
@@ -304,18 +307,21 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                   margin: "8px 0 16px",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(56, 189, 248, 0.12)",
-                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                  background: "linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.06) 100%)",
+                  border: "1px solid rgba(56, 189, 248, 0.28)",
                   color: "#e0f2fe",
                   display: "flex",
                   alignItems: "center",
                   gap: "10px",
                   fontSize: "13px",
+                  lineHeight: "1.4",
+                  boxSizing: "border-box",
+                  width: "100%",
                 }}
               >
                 <Snowflake size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
-                <span>
-                  <strong>Account Frozen:</strong> Withdrawals are currently restricted on your account. You can continue depositing funds.
+                <span style={{ fontSize: "13px", color: "#e0f2fe", fontWeight: 500 }}>
+                  Withdrawals are currently restricted on your account.
                 </span>
               </div>
             )}
@@ -365,18 +371,21 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                   margin: "8px 0 16px",
                   padding: "10px 14px",
                   borderRadius: "8px",
-                  background: "rgba(56, 189, 248, 0.12)",
-                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                  background: "linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(14, 165, 233, 0.06) 100%)",
+                  border: "1px solid rgba(56, 189, 248, 0.28)",
                   color: "#e0f2fe",
                   display: "flex",
                   alignItems: "center",
                   gap: "10px",
                   fontSize: "13px",
+                  lineHeight: "1.4",
+                  boxSizing: "border-box",
+                  width: "100%",
                 }}
               >
                 <Snowflake size={18} color="#38bdf8" style={{ flexShrink: 0 }} />
-                <span>
-                  <strong>Account Frozen:</strong> Withdrawals are currently restricted on your account. You can continue depositing funds.
+                <span style={{ fontSize: "13px", color: "#e0f2fe", fontWeight: 500 }}>
+                  Withdrawals are currently restricted on your account.
                 </span>
               </div>
             )}

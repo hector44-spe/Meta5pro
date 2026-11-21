@@ -54,6 +54,7 @@ import CardsDrawer from "@/components/Cards/CardsDrawer";
 import ReferralsDrawer from "@/components/ReferralsDrawer";
 import LiveChatPanel, { type LiveChatMessage } from "@/components/dashboard-shell/LiveChatPanel";
 import VerificationModal from "@/components/verification/VerificationModal";
+import { openLiveSupport } from "@/components/ZohoSalesIQ";
 import {
   ALL_LANGUAGES,
   getCurrentLanguageCode,
@@ -1987,7 +1988,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsChatOpen(true)}
+                  onClick={() => openLiveSupport()}
                   style={{
                     padding: "6px 12px",
                     borderRadius: "6px",
