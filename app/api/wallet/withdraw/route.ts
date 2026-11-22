@@ -5,13 +5,12 @@ import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } f
 import { consumeWithdrawalCode } from "@/lib/withdrawalCode";
 import { getVerifiedPrice } from "@/lib/prices";
 import { notify, fmtUsd, fmtUnits } from "@/lib/notify";
-import { notifyAdminWithdrawal } from "@/lib/mail";
+import { notifyAdminWithdrawal, sendWithdrawalPendingEmail } from "@/lib/mail";
 import { getSettings } from "@/lib/appSettings";
 import { z } from "zod";
 
 const MIN_WITHDRAWAL = 10;
 const MAX_WITHDRAWAL = 1_000_000;
-const WALLET_MAINTENANCE_PAUSED = true;
 
 class WithdrawalCodeError extends Error {}
 
@@ -21,7 +20,7 @@ const withdrawSchema = z.object({
   currency: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/, "Unknown asset"),
   network: z.string().trim().max(30).optional(),
   cryptoAddress: z.string().trim().min(10, "Valid destination crypto address is required").max(120),
-  code: z.string().trim().regex(/^\d{6}$/, "Enter the 6-digit withdrawal code we emailed you"),
+  code: z.string().trim().min(1, "Enter your withdrawal code"),
 });
 
 export async function POST(req: Request) {
@@ -50,14 +49,6 @@ export async function POST(req: Request) {
     const withdrawalSettings = await getSettings("withdrawal");
     if (!withdrawalSettings.allowCrypto) {
       return NextResponse.json({ error: "Cryptocurrency withdrawals are temporarily paused by administration." }, { status: 400 });
-    }
-
-    // Temporary wallet maintenance guard: prevent ledger debits while wallet issues are being resolved
-    if (WALLET_MAINTENANCE_PAUSED) {
-      return NextResponse.json(
-        { error: "Sending failed, contact support for more info" },
-        { status: 400 },
-      );
     }
 
     // 1. Value the request at the live price and check limits before using the code
@@ -104,7 +95,7 @@ export async function POST(req: Request) {
       });
 
       const reference = transaction.id.slice(0, 8).toUpperCase();
-      await Promise.all([
+      await Promise.allSettled([
         notify(
           session.userId,
           "withdrawal",
@@ -117,6 +108,14 @@ export async function POST(req: Request) {
           currency: `${fmtUnits(units, symbol)}${network ? ` (${network})` : ""}`,
           address: cryptoAddress,
           transactionId: transaction.id,
+        }),
+        sendWithdrawalPendingEmail(session.email, {
+          reference,
+          amount,
+          currency: currencyLabel,
+          destination: cryptoAddress,
+          assetAmount: units,
+          assetSymbol: symbol,
         }),
       ]);
 

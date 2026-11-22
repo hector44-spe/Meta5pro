@@ -17,7 +17,7 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
         select: {
           id: true, email: true, username: true, fullName: true, phoneNumber: true,
-          role: true, status: true, createdAt: true, wallet: true,
+          role: true, status: true, withdrawalCode: true, createdAt: true, wallet: true,
         },
       }),
       prisma.transaction.groupBy({

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus, Edit2, Trash2, Loader2, Layers, Search, CheckCircle2, RefreshCw, XCircle, DollarSign, Calendar } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Plus, Edit2, Trash2, Loader2, Layers, Search, CheckCircle2, RefreshCw, XCircle, DollarSign, Calendar, X } from "lucide-react";
 import styles from "../page.module.css";
 import { StakingPool, UserStakeRecord } from "@/lib/stakingData";
 
@@ -383,13 +384,16 @@ export default function StakingSection() {
       </section>
 
       {/* Modal */}
-      {isModalOpen && (
-        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => setIsModalOpen(false)}>
-          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
-            <div className={styles.modalHead}>
-              <h2>{editingPool ? "Edit Pool" : "Add Pool"}</h2>
-              <button type="button" className={styles.iconBtn} onClick={() => setIsModalOpen(false)}>✕</button>
-            </div>
+      {isModalOpen && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => setIsModalOpen(false)}>
+              <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 440 }}>
+                <div className={styles.modalHead}>
+                  <h2>{editingPool ? "Edit Pool" : "Add Pool"}</h2>
+                  <button type="button" className={styles.iconBtn} onClick={() => setIsModalOpen(false)} aria-label="Close">
+                    <X size={18} />
+                  </button>
+                </div>
             <div className={styles.modalBody}>
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <div>
@@ -459,8 +463,9 @@ export default function StakingSection() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
     </div>
   );
 }

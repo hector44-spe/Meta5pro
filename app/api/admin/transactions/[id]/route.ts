@@ -19,6 +19,7 @@ export async function PATCH(
     const { id } = await params;
     const body = await req.json();
     const action = body.action as "approve" | "reject";
+    const reason = typeof body.reason === "string" ? body.reason.trim() : undefined;
 
     if (action !== "approve" && action !== "reject") {
       return NextResponse.json({ error: "Action must be 'approve' or 'reject'" }, { status: 400 });
@@ -43,10 +44,10 @@ export async function PATCH(
     const notification = tx.type === "DEPOSIT"
       ? status === "APPROVED"
         ? ["Deposit confirmed", `Your deposit of ${what} has been confirmed and ${fmtUsd(amount)} was added to your balance. Reference ${ref}.`]
-        : ["Deposit not approved", `Your deposit of ${what} could not be confirmed. Reference ${ref}. Contact support if you believe this is a mistake.`]
+        : ["Deposit not approved", `Your deposit of ${what} could not be confirmed.${reason ? ` Reason: ${reason}.` : ""} Reference ${ref}. Contact support if you believe this is a mistake.`]
       : status === "APPROVED"
         ? ["Withdrawal sent", `Your withdrawal of ${what} has been approved and sent to ${tx.cryptoAddress ?? "your address"}. Reference ${ref}.`]
-        : ["Withdrawal rejected", `Your withdrawal of ${what} was rejected and ${fmtUsd(amount)} was returned to your balance. Reference ${ref}.`];
+        : ["Withdrawal rejected", `Your withdrawal of ${what} was rejected${reason ? ` (${reason})` : ""} and ${fmtUsd(amount)} was returned to your balance. Reference ${ref}.`];
 
     const settled = await atomic(async (t) => {
       // Only one request can move PENDING -> final, so a deposit can't be credited twice.
@@ -90,7 +91,13 @@ export async function PATCH(
     if (tx.type === "DEPOSIT" || tx.type === "WITHDRAWAL") {
       const owner = await prisma.user.findUnique({ where: { id: tx.userId }, select: { email: true } });
       if (owner) {
-        void sendTransactionStatusEmail(owner.email, { type: tx.type, status, amount, currency: tx.currency }).catch((err) =>
+        void sendTransactionStatusEmail(owner.email, {
+          type: tx.type,
+          status,
+          amount,
+          currency: tx.currency,
+          reason,
+        }).catch((err) =>
           console.error("Async email status error:", err)
         );
       }

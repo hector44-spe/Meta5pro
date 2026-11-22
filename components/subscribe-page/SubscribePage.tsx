@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Eye,
   EyeOff,
@@ -884,11 +885,12 @@ export default function SubscribePage() {
       </div>
 
       {/* Admin Edit / Add Subscription Plan Modal */}
-      {(editingPlan || isCreatingPlan) && (
-        <div
-          className="admin_edit_modal_overlay project-edit-modal-overlay"
-          onClick={() => !savingPlan && (setEditingPlan(null), setIsCreatingPlan(false))}
-        >
+      {(editingPlan || isCreatingPlan) && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="admin_edit_modal_overlay project-edit-modal-overlay"
+              onClick={() => !savingPlan && (setEditingPlan(null), setIsCreatingPlan(false))}
+            >
           <div
             className="admin_edit_modal_dialog project-edit-modal-dialog"
             onClick={(e) => e.stopPropagation()}
@@ -997,8 +999,10 @@ export default function SubscribePage() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+    : null}
 
       <CustomConfirmModal
         state={confirmState}

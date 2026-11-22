@@ -1,47 +1,84 @@
 /*
- * Edit-modal geometry must be present in the initial application stylesheet.
- * Page-scoped imports can arrive in a different order during client navigation,
- * which previously made dialogs look stretched until the browser was reloaded.
+ * Edit-modal stability and geometry contract.
+ * Loaded in the root layout so every modal/dialog in the project renders
+ * with guaranteed responsiveness and zero cropping when the mobile keyboard opens.
  */
+
+/* 1. Modal Backdrops / Overlays: Pinned to full viewport, scrollable, starting from top */
 html body :where(
   .admin_edit_modal_overlay,
   .project-edit-modal-overlay,
   .signal-admin-modal,
   .re_admin_modal_overlay,
   .meta-gold-modal-overlay,
+  .dm-backdrop,
+  .request-card-modal-overlay,
   [class*="modalBackdrop"],
-  [class*="modalOverlay"]
+  [class*="modalOverlay"],
+  [class*="backdrop"]
 ) {
   position: fixed !important;
-  inset: auto 0 auto 0 !important;
-  top: var(--visual-viewport-offset-top, 0px) !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   width: 100vw !important;
-  height: var(--visual-viewport-height, 100dvh) !important;
-  min-height: 0 !important;
-  padding: clamp(10px, 2.5vw, 20px) !important;
+  height: 100% !important;
+  min-height: 100% !important;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(32px, env(safe-area-inset-bottom, 0px)) !important;
   display: flex !important;
+  flex-direction: column !important;
   align-items: center !important;
-  justify-content: center !important;
-  overflow: hidden !important;
+  justify-content: flex-start !important; /* Prevents top cutoff / negative scroll area */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
   box-sizing: border-box !important;
-  overscroll-behavior: contain;
+  overscroll-behavior: contain !important;
+  z-index: 100000 !important;
 }
 
+/* Center vertically on tall desktop displays when plenty of screen room exists */
+@media (min-height: 740px) and (min-width: 641px) {
+  html body :where(
+    .admin_edit_modal_overlay,
+    .project-edit-modal-overlay,
+    .signal-admin-modal,
+    .re_admin_modal_overlay,
+    .meta-gold-modal-overlay,
+    .dm-backdrop,
+    .request-card-modal-overlay,
+    [class*="modalBackdrop"],
+    [class*="modalOverlay"],
+    [class*="backdrop"]
+  ) {
+    justify-content: center !important;
+  }
+}
+
+/* 2. Modal Dialog Cards */
 html body :where(
   .admin_edit_modal_overlay,
   .project-edit-modal-overlay,
   .signal-admin-modal,
   .re_admin_modal_overlay,
   .meta-gold-modal-overlay,
+  .dm-backdrop,
+  .request-card-modal-overlay,
   [class*="modalBackdrop"],
-  [class*="modalOverlay"]
+  [class*="modalOverlay"],
+  [class*="backdrop"]
 ) > :where(
   .admin_edit_modal_dialog,
   .project-edit-modal-dialog,
   .signal-admin-modal-dialog,
   .re_admin_modal,
   .meta-gold-modal-dialog,
-  [class*="modal"]
+  .dm-card,
+  .request-card-modal-dialog,
+  [class*="modal"],
+  [class*="dialog"]
 ) {
   position: relative !important;
   inset: auto !important;
@@ -50,43 +87,140 @@ html body :where(
   min-width: 0 !important;
   max-width: 560px !important;
   height: auto !important;
-  max-height: calc(var(--visual-viewport-height, 100dvh) - clamp(20px, 5vw, 40px)) !important;
-  margin: auto !important;
+  max-height: calc(100dvh - 32px) !important;
+  margin: 0 auto !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
   -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior: contain;
+  overscroll-behavior: contain !important;
   box-sizing: border-box !important;
 }
 
+/* 3. Mobile Viewport & Virtual Keyboard: Let overlay scroll full dialog without height clipping */
+@media (max-height: 640px) {
+  html body :where(
+    .admin_edit_modal_overlay,
+    .project-edit-modal-overlay,
+    .signal-admin-modal,
+    .re_admin_modal_overlay,
+    .meta-gold-modal-overlay,
+    .dm-backdrop,
+    .request-card-modal-overlay,
+    [class*="modalBackdrop"],
+    [class*="modalOverlay"],
+    [class*="backdrop"]
+  ) {
+    justify-content: flex-start !important;
+    padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  html body :where(
+    .admin_edit_modal_overlay,
+    .project-edit-modal-overlay,
+    .signal-admin-modal,
+    .re_admin_modal_overlay,
+    .meta-gold-modal-overlay,
+    .dm-backdrop,
+    .request-card-modal-overlay,
+    [class*="modalBackdrop"],
+    [class*="modalOverlay"],
+    [class*="backdrop"]
+  ) > :where(
+    .admin_edit_modal_dialog,
+    .project-edit-modal-dialog,
+    .signal-admin-modal-dialog,
+    .re_admin_modal,
+    .meta-gold-modal-dialog,
+    .dm-card,
+    .request-card-modal-dialog,
+    [class*="modal"],
+    [class*="dialog"]
+  ) {
+    max-height: none !important;
+    margin: 0 auto !important;
+  }
+}
+
+/* 4. Sticky Modal Header: Always visible at the top of the dialog card */
 html body :where(
   .admin_edit_modal_dialog,
   .project-edit-modal-dialog,
   .signal-admin-modal-dialog,
   .re_admin_modal,
   .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
   [class*="modalBackdrop"] > [class*="modal"],
-  [class*="modalOverlay"] > [class*="modal"]
-) *,
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="modal"],
+  [class*="dialog"]
+) :where(
+  .modalHead,
+  .admin_edit_modal_header,
+  .re_admin_modal_header,
+  .dm-header,
+  [class*="modalHead"],
+  [class*="modalHeader"],
+  [class*="modal_head"],
+  [class*="modal-head"]
+) {
+  position: sticky !important;
+  top: -1px !important;
+  z-index: 50 !important;
+  background: inherit !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  margin-top: 0 !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 5. Accessible, High-Contrast Close / Cancel (X) Buttons */
 html body :where(
   .admin_edit_modal_dialog,
   .project-edit-modal-dialog,
   .signal-admin-modal-dialog,
   .re_admin_modal,
   .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
   [class*="modalBackdrop"] > [class*="modal"],
-  [class*="modalOverlay"] > [class*="modal"]
-) *::before,
-html body :where(
-  .admin_edit_modal_dialog,
-  .project-edit-modal-dialog,
-  .signal-admin-modal-dialog,
-  .re_admin_modal,
-  .meta-gold-modal-dialog,
-  [class*="modalBackdrop"] > [class*="modal"],
-  [class*="modalOverlay"] > [class*="modal"]
-) *::after {
-  box-sizing: border-box;
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="modal"],
+  [class*="dialog"]
+) :where(
+  button[aria-label*="close" i],
+  button[aria-label*="cancel" i],
+  button[class*="close" i],
+  button[class*="iconBtn" i],
+  .dm-close-btn,
+  .close_btn,
+  [class*="modalClose"]
+) {
+  position: relative !important;
+  z-index: 60 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 6px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 html body :where(
@@ -95,8 +229,36 @@ html body :where(
   .signal-admin-modal-dialog,
   .re_admin_modal,
   .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
   [class*="modalBackdrop"] > [class*="modal"],
-  [class*="modalOverlay"] > [class*="modal"]
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="modal"],
+  [class*="dialog"]
+) :where(
+  button[aria-label*="close" i],
+  button[aria-label*="cancel" i],
+  button[class*="close" i],
+  button[class*="iconBtn" i],
+  .dm-close-btn,
+  .close_btn,
+  [class*="modalClose"]
+):hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* 6. Form Fields & Elements */
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .meta-gold-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="modal"],
+  [class*="dialog"]
 ) :where(input, select, textarea) {
   position: relative !important;
   inset: auto !important;
@@ -104,6 +266,8 @@ html body :where(
   width: 100% !important;
   max-width: 100% !important;
   min-width: 0 !important;
+  box-sizing: border-box !important;
+  font-size: max(16px, 1em) !important; /* Prevents iOS Safari auto-zoom on focus */
 }
 
 @media (max-width: 560px) {
@@ -114,11 +278,13 @@ html body :where(
     .re_admin_modal,
     .meta-gold-modal-dialog,
     [class*="modalBackdrop"] > [class*="modal"],
-    [class*="modalOverlay"] > [class*="modal"]
+    [class*="modalOverlay"] > [class*="modal"],
+    [class*="modal"],
+    [class*="dialog"]
   ) {
     width: 100% !important;
     max-width: 100% !important;
-    padding: 16px 14px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 16px 14px calc(18px + env(safe-area-inset-bottom, 0px)) !important;
     border-radius: 14px !important;
   }
 
@@ -129,7 +295,9 @@ html body :where(
     .re_admin_modal,
     .meta-gold-modal-dialog,
     [class*="modalBackdrop"] > [class*="modal"],
-    [class*="modalOverlay"] > [class*="modal"]
+    [class*="modalOverlay"] > [class*="modal"],
+    [class*="modal"],
+    [class*="dialog"]
   ) :where(.admin_two_col, [style*="grid-template-columns: 1fr 1fr"]) {
     grid-template-columns: minmax(0, 1fr) !important;
   }
@@ -141,31 +309,18 @@ html body :where(
     .re_admin_modal,
     .meta-gold-modal-dialog,
     [class*="modalBackdrop"] > [class*="modal"],
-    [class*="modalOverlay"] > [class*="modal"]
+    [class*="modalOverlay"] > [class*="modal"],
+    [class*="modal"],
+    [class*="dialog"]
   ) [style*="grid-template-columns"] {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  html body :where(.admin_modal_actions, .re_admin_modal_actions) {
+  html body :where(.admin_modal_actions, .re_admin_modal_actions, [class*="modalActions"]) {
     flex-direction: column-reverse !important;
   }
 
-  html body :where(.admin_modal_actions, .re_admin_modal_actions) > * {
+  html body :where(.admin_modal_actions, .re_admin_modal_actions, [class*="modalActions"]) > * {
     width: 100% !important;
-  }
-}
-
-@media (max-height: 520px) and (orientation: landscape) {
-  html body :where(
-    .admin_edit_modal_overlay,
-    .project-edit-modal-overlay,
-    .signal-admin-modal,
-    .re_admin_modal_overlay,
-    .meta-gold-modal-overlay,
-    [class*="modalBackdrop"],
-    [class*="modalOverlay"]
-  ) {
-    align-items: flex-start !important;
-    overflow-y: auto !important;
   }
 }

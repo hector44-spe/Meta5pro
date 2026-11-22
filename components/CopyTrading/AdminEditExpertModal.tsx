@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   ChevronLeft,
@@ -27,6 +28,20 @@ export default function AdminEditExpertModal({
   onSaved,
   onRequestDelete,
 }: AdminEditExpertModalProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [isOpen]);
+
   const isEditing = Boolean(expert && expert.id);
 
   // Modal Step State: 1 = Details, 2 = Stats, 3 = Settings
@@ -210,20 +225,23 @@ export default function AdminEditExpertModal({
     }
   };
 
-  return (
+  const modalContent = (
     <div
       className="meta-gold-modal-overlay project-edit-modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
+        backgroundColor: "rgba(0, 0, 0, 0.78)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "flex-start",
         zIndex: 100005,
-        padding: "16px",
+        padding: "max(16px, env(safe-area-inset-top, 0px)) 16px max(32px, env(safe-area-inset-bottom, 0px))",
+        overflowY: "auto",
+        WebkitOverflowScrolling: "touch",
       }}
       onClick={onClose}
     >
@@ -235,25 +253,31 @@ export default function AdminEditExpertModal({
           backgroundColor: "#16181d",
           border: "1px solid rgba(255, 255, 255, 0.08)",
           borderRadius: "14px",
-          padding: "20px 20px 20px 20px",
-          maxHeight: "min(92vh, calc(100dvh - 24px))",
+          padding: "20px",
+          maxHeight: "none",
           height: "auto",
           display: "flex",
           flexDirection: "column",
           boxShadow: "0 24px 50px rgba(0, 0, 0, 0.8)",
           boxSizing: "border-box",
-          overflow: "hidden",
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ===================== MODAL HEADER ===================== */}
         <div
+          className="admin_modal_header modalHead"
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             marginBottom: "16px",
             flexShrink: 0,
+            position: "sticky",
+            top: 0,
+            zIndex: 20,
+            backgroundColor: "#16181d",
+            paddingBottom: "10px",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -261,20 +285,25 @@ export default function AdminEditExpertModal({
               <button
                 type="button"
                 onClick={() => setStep((s) => (s === 3 ? 2 : 1))}
+                aria-label="Previous step"
                 style={{
-                  background: "transparent",
-                  border: "none",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  borderRadius: "6px",
                   color: "#ffffff",
                   cursor: "pointer",
                   display: "flex",
                   alignItems: "center",
-                  padding: "2px",
+                  justifyContent: "center",
+                  width: "32px",
+                  height: "32px",
+                  padding: 0,
                 }}
               >
                 <ChevronLeft size={18} />
               </button>
             )}
-            <p style={{ margin: 0, fontSize: "14.5px", fontWeight: 600, color: "#ffffff" }}>
+            <p style={{ margin: 0, fontSize: "15px", fontWeight: 700, color: "#ffffff" }}>
               {step === 1 && "Expert Details"}
               {step === 2 && "Expert Stats"}
               {step === 3 && "Expert Settings"}{" "}
@@ -287,17 +316,24 @@ export default function AdminEditExpertModal({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close"
+            className="dm-close-btn close_btn"
             style={{
-              background: "transparent",
-              border: "none",
-              color: "rgba(255, 255, 255, 0.5)",
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.16)",
+              color: "#ffffff",
               cursor: "pointer",
-              padding: "4px",
+              padding: "6px",
+              borderRadius: "8px",
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
+              width: "36px",
+              height: "36px",
+              flexShrink: 0,
             }}
           >
-            <X size={16} />
+            <X size={18} color="#ffffff" />
           </button>
         </div>
 
@@ -1138,4 +1174,8 @@ export default function AdminEditExpertModal({
       `}</style>
     </div>
   );
+
+  return mounted && typeof document !== "undefined"
+    ? createPortal(modalContent, document.body)
+    : null;
 }

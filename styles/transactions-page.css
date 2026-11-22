@@ -466,11 +466,16 @@
 /* Modals & Drawers */
 .tp-drawer-backdrop {
   position: fixed;
-  inset: auto 0 auto 0;
-  top: var(--visual-viewport-offset-top, 0px);
-  height: var(--visual-viewport-height, 100dvh);
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 200;
   display: flex;
   justify-content: flex-end;
@@ -623,11 +628,16 @@
 /* Mobile Sidebar Drawer */
 .tp-mobile-drawer {
   position: fixed;
-  inset: auto 0 auto 0;
-  top: var(--visual-viewport-offset-top, 0px);
-  height: var(--visual-viewport-height, 100dvh);
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 250;
   display: flex;
   animation: tpFadeIn 0.2s ease-out;

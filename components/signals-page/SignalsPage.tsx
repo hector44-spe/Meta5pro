@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Eye,
   EyeOff,
@@ -922,11 +923,12 @@ export default function SignalPage() {
       </div>
 
       {/* Admin Edit / Add Signal Modal */}
-      {(editingSignal || isCreatingSignal) && (
-        <div
-          className="admin_edit_modal_overlay signal-admin-modal project-edit-modal-overlay"
-          onClick={() => !savingSignal && (setEditingSignal(null), setIsCreatingSignal(false))}
-        >
+      {(editingSignal || isCreatingSignal) && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="admin_edit_modal_overlay signal-admin-modal project-edit-modal-overlay"
+              onClick={() => !savingSignal && (setEditingSignal(null), setIsCreatingSignal(false))}
+            >
           <div
             className="admin_edit_modal_dialog signal-admin-modal-dialog project-edit-modal-dialog"
             role="dialog"
@@ -1010,8 +1012,10 @@ export default function SignalPage() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+    : null}
 
       {/* Signal Fresh Deposit Modal */}
       <SignalDepositModal

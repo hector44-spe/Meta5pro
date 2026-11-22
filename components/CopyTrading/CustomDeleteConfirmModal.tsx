@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AlertTriangle, Trash2, X, Loader2 } from "lucide-react";
 
 interface CustomDeleteConfirmModalProps {
@@ -18,25 +19,42 @@ export default function CustomDeleteConfirmModal({
   onConfirm,
   onCancel,
 }: CustomDeleteConfirmModalProps) {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = orig;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
+  const content = (
     <div
+      className="project-edit-modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        backdropFilter: "blur(6px)",
-        WebkitBackdropFilter: "blur(6px)",
+        backgroundColor: "rgba(0, 0, 0, 0.78)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        zIndex: 10001,
+        zIndex: 100005,
         padding: "16px",
       }}
       onClick={onCancel}
     >
       <div
+        className="project-edit-modal-dialog"
         style={{
           width: "100%",
           maxWidth: "420px",
@@ -69,15 +87,23 @@ export default function CustomDeleteConfirmModal({
           <button
             type="button"
             onClick={onCancel}
+            aria-label="Close"
+            className="dm-close-btn close_btn"
             style={{
-              background: "transparent",
-              border: "none",
-              color: "rgba(255, 255, 255, 0.5)",
+              background: "rgba(255, 255, 255, 0.08)",
+              border: "1px solid rgba(255, 255, 255, 0.16)",
+              color: "#ffffff",
               cursor: "pointer",
-              padding: "4px",
+              padding: "6px",
+              borderRadius: "8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "36px",
+              height: "36px",
             }}
           >
-            <X size={18} />
+            <X size={18} color="#ffffff" />
           </button>
         </div>
 
@@ -151,4 +177,8 @@ export default function CustomDeleteConfirmModal({
       </div>
     </div>
   );
+
+  return mounted && typeof document !== "undefined"
+    ? createPortal(content, document.body)
+    : null;
 }

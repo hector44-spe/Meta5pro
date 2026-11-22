@@ -40,10 +40,6 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
   const [address, setAddress] = useState("");
   const [amount, setAmount] = useState("");
   const [code, setCode] = useState("");
-
-  const [codeStatus, setCodeStatus] = useState<"idle" | "sending" | "sent">("idle");
-  const [codeMessage, setCodeMessage] = useState("");
-  const [codeError, setCodeError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -71,8 +67,6 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
     setAddress("");
     setAmount("");
     setCode("");
-    setCodeStatus("idle");
-    setCodeMessage("");
     setError("");
     setRecipientName(""); setBankName(""); setAccountNumber(""); setRoutingNumber(""); setPaypalEmail("");
     fetch("/api/wallet")
@@ -116,28 +110,6 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
 
   if (!isOpen) return null;
 
-  const requestCode = async () => {
-    setError("");
-    setCodeError("");
-    setCodeMessage("");
-    setCodeStatus("sending");
-    try {
-      const res = await fetch("/api/wallet/withdraw/code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: totalUsd || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Sending failed, contact support for more info");
-      setCodeStatus("sent");
-      setCodeMessage(data.message);
-    } catch (e) {
-      setCodeStatus("idle");
-      const msg = e instanceof Error ? e.message : "Sending failed, contact support for more info";
-      setCodeError(msg);
-    }
-  };
-
   const validate = (): string | null => {
     if (isFrozen) return "Withdrawals are currently restricted on your account.";
     if (paymentMethod === "BANK") {
@@ -152,7 +124,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
       if (totalUsd < minWithdrawal) return `Minimum withdrawal is ${fmtUsd(minWithdrawal)}.`;
       if (totalUsd > maxWithdrawal) return `Maximum withdrawal is ${fmtUsd(maxWithdrawal)}.`;
       if (totalUsd > balanceUsd) return `Insufficient balance. Available: ${fmtUsd(balanceUsd)}.`;
-      if (useWithdrawalCode && !/^\d{6}$/.test(code.trim())) return "Enter the 6-digit withdrawal code emailed to you.";
+      if (useWithdrawalCode && !code.trim()) return "Enter your withdrawal code. Contact admin if you need it.";
       return null;
     }
     if (!token) return "Select the asset to withdraw.";
@@ -162,7 +134,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
     if (totalUsd < minWithdrawal) return `Minimum withdrawal is ${fmtUsd(minWithdrawal)}.`;
     if (totalUsd > maxWithdrawal) return `Maximum withdrawal is ${fmtUsd(maxWithdrawal)}.`;
     if (totalUsd > balanceUsd) return `Insufficient balance. Available: ${fmtUsd(balanceUsd)}.`;
-    if (useWithdrawalCode && !/^\d{6}$/.test(code.trim())) return "Enter the 6-digit withdrawal code emailed to you.";
+    if (useWithdrawalCode && !code.trim()) return "Enter your withdrawal code. Contact admin if you need it.";
     return null;
   };
 
@@ -338,7 +310,34 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
               <label><span className="app-label">PayPal email</span><input className="app-input" type="email" value={paypalEmail} onChange={(e) => setPaypalEmail(e.target.value)} placeholder="paypal@example.com" /></label>
             )}
             {useWithdrawalCode && (
-              <div><span className="app-label">Withdrawal code</span><div className="dm-code-row"><input className="app-input" inputMode="numeric" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="6-digit code" /><button type="button" className="app-side-btn" onClick={requestCode} disabled={codeStatus === "sending"}>{codeStatus === "sending" ? "Sending…" : codeStatus === "sent" ? "Resend" : "Send code"}</button></div>{codeMessage && <div style={{ color: "#10b981", fontSize: 12, marginTop: 6 }}>{codeMessage}</div>}</div>
+              <div>
+                <span className="app-label">Withdrawal code</span>
+                <input
+                  className="app-input"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="Enter withdrawal code"
+                />
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", marginTop: "6px" }}>
+                  Contact admin for your withdrawal code.{" "}
+                  <button
+                    type="button"
+                    onClick={() => openLiveSupport()}
+                    style={{
+                      color: "#38bdf8",
+                      textDecoration: "underline",
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      fontSize: "12px",
+                      fontWeight: 500,
+                    }}
+                  >
+                    Open chat
+                  </button>
+                </div>
+              </div>
             )}
             <div className="dm-limits-box"><div className="dm-limit-row"><span className="dm-limit-label">Available balance</span><span className="dm-limit-dots"/><span className="dm-limit-val">{fmtUsd(balanceUsd)}</span></div><div className="dm-limit-row"><span className="dm-limit-label">Requested</span><span className="dm-limit-dots"/><span className="dm-limit-val">{fmtUsd(totalUsd)}</span></div></div>
             <button type="submit" className="dm-primary-btn" disabled={isFrozen || submitting}>
@@ -487,63 +486,38 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
               </div>
             </div>
 
-            {/* Emailed one-time withdrawal code */}
+            {/* Withdrawal code */}
             {useWithdrawalCode && (
               <div className="dm-form-group">
                 <label className="dm-field-label app-label">Withdrawal code:</label>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                    placeholder="Enter emailed code"
-                    className="app-input" style={{ flex: 1 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={requestCode}
-                    disabled={codeStatus === "sending"}
-                    className="app-side-btn"
-                  >
-                    {codeStatus === "sending" ? "Sending…" : codeStatus === "sent" ? "Resend" : "Send code"}
-                  </button>
+                <input
+                  type="text"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
+                  placeholder="Enter withdrawal code"
+                  className="app-input"
+                />
+                <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>
+                    Contact admin for your withdrawal code.{" "}
+                    <button
+                      type="button"
+                      onClick={() => openLiveSupport()}
+                      style={{
+                        color: "#38bdf8",
+                        textDecoration: "underline",
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Open chat
+                    </button>
+                  </span>
                 </div>
-                {codeError ? (
-                  <div style={{ fontSize: "12px", color: "#ff5c6a", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <AlertCircle size={14} style={{ flexShrink: 0 }} />
-                    <span>
-                      Sending failed,{" "}
-                      <button
-                        type="button"
-                        onClick={() => openLiveSupport()}
-                        style={{
-                          color: "#38bdf8",
-                          textDecoration: "underline",
-                          background: "none",
-                          border: "none",
-                          padding: 0,
-                          cursor: "pointer",
-                          fontSize: "12px",
-                          fontWeight: 500,
-                        }}
-                      >
-                        contact support
-                      </button>{" "}
-                      for more info
-                    </span>
-                  </div>
-                ) : codeMessage ? (
-                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.55)", marginTop: "6px" }}>
-                    {codeMessage}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", marginTop: "5px" }}>
-                    Request a one-time code. It expires after 10 minutes.
-                  </div>
-                )}
               </div>
             )}
 
@@ -556,7 +530,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                 <span>
                   {error.includes("contact support") ? (
                     <>
-                      Sending failed,{" "}
+                      {error.replace(/,? contact support.*/, "")},{" "}
                       <button
                         type="button"
                         onClick={() => openLiveSupport()}
@@ -574,6 +548,27 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                         contact support
                       </button>{" "}
                       for more info
+                    </>
+                  ) : error.includes("Contact admin") ? (
+                    <>
+                      {error.replace(/Contact admin.*$/, "").trim()}{" "}
+                      Contact admin for your withdrawal code.{" "}
+                      <button
+                        type="button"
+                        onClick={() => openLiveSupport()}
+                        style={{
+                          color: "#38bdf8",
+                          textDecoration: "underline",
+                          background: "none",
+                          border: "none",
+                          padding: 0,
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          fontWeight: 500,
+                        }}
+                      >
+                        Open chat
+                      </button>
                     </>
                   ) : (
                     error

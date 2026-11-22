@@ -7,16 +7,14 @@ import { getSettings } from "@/lib/appSettings";
 import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
 import { consumeWithdrawalCode } from "@/lib/withdrawalCode";
 import { notify, fmtUsd } from "@/lib/notify";
-import { notifyAdminWithdrawal } from "@/lib/mail";
+import { notifyAdminWithdrawal, sendWithdrawalPendingEmail } from "@/lib/mail";
 
 class WithdrawalCodeError extends Error {}
-
-const WALLET_MAINTENANCE_PAUSED = true;
 
 const schema = z.object({
   method: z.enum(["BANK", "PAYPAL"]),
   amountUsd: z.number().positive().max(1_000_000_000),
-  code: z.string().trim().max(6).default(""),
+  code: z.string().trim().max(20).default(""),
   recipientName: z.string().trim().min(2).max(100),
   paypalEmail: z.string().trim().email().max(160).optional(),
   bankName: z.string().trim().min(2).max(100).optional(),
@@ -42,14 +40,6 @@ export async function POST(req: Request) {
     const data = parsed.data;
     const settings = await getSettings("withdrawal");
 
-    // Temporary wallet maintenance guard: prevent ledger debits while wallet issues are being resolved
-    if (WALLET_MAINTENANCE_PAUSED) {
-      return NextResponse.json(
-        { error: "Sending failed, contact support for more info" },
-        { status: 400 },
-      );
-    }
-
     if (data.method === "BANK") {
       if (!settings.allowBankTransfer) return NextResponse.json({ error: "Bank withdrawals are unavailable" }, { status: 409 });
       if (!data.bankName || !data.accountNumber) return NextResponse.json({ error: "Bank name and account number are required" }, { status: 400 });
@@ -62,8 +52,8 @@ export async function POST(req: Request) {
     if (amount < settings.minWithdrawal || amount > settings.maxWithdrawal) {
       return NextResponse.json({ error: `Withdrawals must be between ${fmtUsd(settings.minWithdrawal)} and ${fmtUsd(settings.maxWithdrawal)}.` }, { status: 400 });
     }
-    if (settings.useWithdrawalCode && !/^\d{6}$/.test(data.code)) {
-      return NextResponse.json({ error: "Enter the 6-digit withdrawal code we emailed you" }, { status: 400 });
+    if (settings.useWithdrawalCode && !data.code.trim()) {
+      return NextResponse.json({ error: "Please enter your withdrawal code. Contact admin if you need it." }, { status: 400 });
     }
 
     const destination = data.method === "BANK"
@@ -100,6 +90,12 @@ export async function POST(req: Request) {
           currency: data.method === "BANK" ? "Bank transfer" : "PayPal",
           address: destination,
           transactionId: transaction.id,
+        }),
+        sendWithdrawalPendingEmail(session.email, {
+          reference,
+          amount,
+          currency: data.method === "BANK" ? "Bank transfer" : "PayPal",
+          destination,
         }),
       ]);
 

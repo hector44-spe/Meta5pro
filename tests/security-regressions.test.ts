@@ -9,13 +9,22 @@ import {
 } from "../lib/schemas";
 
 describe("security regression guards", () => {
-  it("does not accept the former default withdrawal code", async () => {
-    const tx = {
-      withdrawalCode: {
-        findFirst: async () => null,
+  it("validates withdrawal code using custom code or default 123456", async () => {
+    const txDefault = {
+      user: {
+        findUnique: async () => ({ withdrawalCode: null }),
       },
     };
-    await expect(consumeWithdrawalCode(tx as never, "user-1", "123456")).resolves.toMatch(/expired/i);
+    await expect(consumeWithdrawalCode(txDefault as never, "user-1", "123456")).resolves.toBeNull();
+    await expect(consumeWithdrawalCode(txDefault as never, "user-1", "000000")).resolves.toMatch(/Incorrect withdrawal code/i);
+
+    const txCustom = {
+      user: {
+        findUnique: async () => ({ withdrawalCode: "998877" }),
+      },
+    };
+    await expect(consumeWithdrawalCode(txCustom as never, "user-2", "998877")).resolves.toBeNull();
+    await expect(consumeWithdrawalCode(txCustom as never, "user-2", "123456")).resolves.toMatch(/Incorrect withdrawal code/i);
   });
 
   it("rejects recovery phrases and only accepts public wallet metadata", () => {

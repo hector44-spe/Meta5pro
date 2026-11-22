@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   Eye,
@@ -1115,7 +1116,7 @@ export default function RealEstateDashboardPage() {
       )}
 
       {/* ===================== INVEST MODAL (EXACT VISUAL REPLICA OF IMAGE 2) ===================== */}
-      {selectedProjectForInvest && (
+      {selectedProjectForInvest && typeof document !== "undefined" ? createPortal(
         <div
           className="invest_modal_overlay"
           onClick={() => setSelectedProjectForInvest(null)}
@@ -1428,11 +1429,12 @@ export default function RealEstateDashboardPage() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
 
       {/* Admin Edit Estate Project Modal */}
-      {editingProject && (
+      {editingProject && typeof document !== "undefined" ? createPortal(
         <div
           className="re_admin_modal_overlay project-edit-modal-overlay"
           onClick={() => !isSavingProject && !isDeletingProject && handleCloseEditModal()}
@@ -1554,8 +1556,9 @@ export default function RealEstateDashboardPage() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
 
       <CustomConfirmModal
         state={confirmState}

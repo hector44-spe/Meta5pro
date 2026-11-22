@@ -673,7 +673,7 @@ function WithdrawalSettingsView() {
       <div className="as-section-block">
         <h3 className="as-block-title">Withdrawal code</h3>
         <p className="as-block-sub">
-          Withdrawal codes are one-time codes emailed to the account owner and expire after 10 minutes.
+          The default withdrawal code is 123456. You can set a user's withdrawal code from your admin or manage tab.
         </p>
 
         <div className="as-toggle-card">

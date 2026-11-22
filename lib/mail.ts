@@ -307,22 +307,65 @@ export function sendWithdrawalCodeEmail(to: string, code: string, amountUsd: num
 
 export function sendTransactionStatusEmail(
   to: string,
-  t: { type: string; status: "APPROVED" | "REJECTED"; amount: number; currency: string },
+  t: { type: string; status: "APPROVED" | "REJECTED"; amount: number; currency: string; reason?: string },
 ) {
   const kind = t.type === "DEPOSIT" ? "deposit" : "withdrawal";
   const verb = t.status === "APPROVED" ? "approved" : "rejected";
+  const rows: [string, string][] = [
+    ["Amount", usd(t.amount)],
+    ["Asset", t.currency],
+    ["Status", verb.toUpperCase()],
+  ];
+  if (t.reason && t.status === "REJECTED") {
+    rows.push(["Reason", t.reason]);
+  }
+
+  const bodyText =
+    t.status === "APPROVED"
+      ? `Your ${kind} has been successfully approved and processed.`
+      : `Your ${kind} was not approved.${t.reason ? ` Reason: ${t.reason}.` : ""}${
+          kind === "withdrawal"
+            ? " The held funds have been returned to your available balance."
+            : ""
+        } Please contact live support if you have any questions.`;
+
   return sendMail(
     to,
     `Your ${kind} of ${usd(t.amount)} was ${verb}`,
+    layout(`${kind[0].toUpperCase()}${kind.slice(1)} ${verb}`, bodyText, rows),
+  );
+}
+
+/** Confirmation email sent to the user as soon as a withdrawal is requested. */
+export function sendWithdrawalPendingEmail(
+  to: string,
+  w: {
+    reference?: string;
+    amount: number;
+    currency: string;
+    destination?: string;
+    assetAmount?: number;
+    assetSymbol?: string;
+  },
+) {
+  const rows: [string, string][] = [
+    ["Amount", usd(w.amount)],
+    ["Asset", w.assetSymbol && w.assetAmount ? `${w.assetAmount} ${w.assetSymbol}` : w.currency],
+    ["Status", "Pending review"],
+  ];
+  if (w.destination) {
+    rows.push(["Destination", w.destination]);
+  }
+  if (w.reference) {
+    rows.push(["Reference", w.reference]);
+  }
+  return sendMail(
+    to,
+    `Withdrawal request submitted: ${usd(w.amount)}`,
     layout(
-      `${kind[0].toUpperCase()}${kind.slice(1)} ${verb}`,
-      t.status === "APPROVED"
-        ? `Your ${kind} has been approved.`
-        : `Your ${kind} was not approved.${kind === "withdrawal" ? " The held funds have been returned to your balance." : ""} Contact support if you have questions.`,
-      [
-        ["Amount", usd(t.amount)],
-        ["Asset", t.currency],
-      ],
+      "Withdrawal pending",
+      "We have received your withdrawal request. Our team is reviewing the transaction. The requested funds are currently on hold and will be released once approved. You will receive an update as soon as it is processed.",
+      rows,
     ),
   );
 }

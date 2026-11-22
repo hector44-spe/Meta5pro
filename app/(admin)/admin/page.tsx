@@ -43,6 +43,7 @@ import {
   MessageSquare,
   ScanFace,
   Snowflake,
+  Key,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -106,6 +107,7 @@ interface AdminUser {
   interestBalance: number;
   totalDeposited: number;
   totalWithdrawn: number;
+  withdrawalCode?: string | null;
 }
 
 const ADMIN_ASSET_OPTIONS = [
@@ -1267,6 +1269,40 @@ function UsersSection({
     }
   };
 
+  // Withdrawal code modal state
+  const [codeUser, setCodeUser] = useState<AdminUser | null>(null);
+  const [customWithdrawalCode, setCustomWithdrawalCode] = useState("");
+  const [codeBusy, setCodeBusy] = useState(false);
+  const [codeModalError, setCodeModalError] = useState("");
+
+  const openWithdrawalCodeModal = (u: AdminUser) => {
+    setCodeUser(u);
+    setCustomWithdrawalCode(u.withdrawalCode || "");
+    setCodeModalError("");
+  };
+
+  const submitWithdrawalCode = async (codeToSave: string | null) => {
+    if (!codeUser) return;
+    setCodeBusy(true);
+    setCodeModalError("");
+    try {
+      const res = await fetch(`/api/admin/users/${codeUser.id}/withdrawal-code`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ withdrawalCode: codeToSave }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update withdrawal code");
+      flash("ok", data.message || "Withdrawal code updated");
+      setCodeUser(null);
+      await onChanged();
+    } catch (err) {
+      setCodeModalError(err instanceof Error ? err.message : "Failed to update withdrawal code");
+    } finally {
+      setCodeBusy(false);
+    }
+  };
+
   return (
     <>
       <section className={styles.card}>
@@ -1373,6 +1409,9 @@ function UsersSection({
                       <div className={styles.rowActions}>
                         <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
                           <Bell size={14} /> Notify
+                        </button>
+                        <button type="button" className={styles.btnGhostSm} onClick={() => openWithdrawalCodeModal(u)} title="Set withdrawal code">
+                          <Key size={14} /> Code
                         </button>
                         <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)}>
                           <DollarSign size={14} /> Balance
@@ -1485,6 +1524,9 @@ function UsersSection({
                 <div className={styles.itemBottom} style={{ flexWrap: "wrap", gap: "6px" }}>
                   <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} style={{ height: "32px", fontSize: "12px" }}>
                     <Bell size={13} /> Notify
+                  </button>
+                  <button type="button" className={styles.btnGhostSm} onClick={() => openWithdrawalCodeModal(u)} style={{ height: "32px", fontSize: "12px" }}>
+                    <Key size={13} /> Code
                   </button>
                   <button type="button" className={styles.btnGhostSm} onClick={() => openAdjust(u)} style={{ height: "32px", fontSize: "12px" }}>
                     <DollarSign size={13} /> Balance
@@ -1717,6 +1759,74 @@ function UsersSection({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {codeUser && (
+        <div className={styles.modalBackdrop} onClick={() => !codeBusy && setCodeUser(null)}>
+          <div className={styles.modal} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHead}>
+              <h2>User withdrawal code</h2>
+              <button type="button" className={styles.iconBtn} onClick={() => setCodeUser(null)} aria-label="Close">
+                <X size={18} />
+              </button>
+            </div>
+            <dl className={styles.detailList}>
+              <dt>User</dt>
+              <dd>{codeUser.fullName ? `${codeUser.fullName} (${codeUser.email})` : codeUser.email}</dd>
+              <dt>Status</dt>
+              <dd>
+                {codeUser.withdrawalCode ? (
+                  <span style={{ color: "#38bdf8", fontWeight: 600 }}>Custom code set: {codeUser.withdrawalCode}</span>
+                ) : (
+                  <span style={{ color: "#94a3b8" }}>Using default code (123456)</span>
+                )}
+              </dd>
+            </dl>
+            <label className={styles.field}>
+              <span>Custom withdrawal code</span>
+              <input
+                className={styles.input}
+                value={customWithdrawalCode}
+                onChange={(e) => setCustomWithdrawalCode(e.target.value)}
+                placeholder="Leave blank for default (123456)"
+                maxLength={30}
+              />
+            </label>
+            <p className={styles.modalNote}>
+              If a custom code is set, this user must enter it to process withdrawals. If left blank, the system default code (<strong>123456</strong>) will apply.
+            </p>
+            {codeModalError && (
+              <div className={styles.errorText}>
+                <AlertCircle size={15} /> {codeModalError}
+              </div>
+            )}
+            <div className={styles.modalActions} style={{ display: "flex", gap: "8px" }}>
+              {codeUser.withdrawalCode && (
+                <button
+                  type="button"
+                  className={styles.btnDangerSm}
+                  style={{ marginRight: "auto" }}
+                  disabled={codeBusy}
+                  onClick={() => submitWithdrawalCode(null)}
+                >
+                  Reset to default
+                </button>
+              )}
+              <button type="button" className={styles.btnGhost} onClick={() => setCodeUser(null)} disabled={codeBusy}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.btnSuccess}
+                disabled={codeBusy}
+                onClick={() => submitWithdrawalCode(customWithdrawalCode.trim() || null)}
+              >
+                {codeBusy && <Loader2 size={15} className={styles.spin} />}
+                Save code
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -72,21 +72,39 @@ html body :where(
   .admin_edit_modal_dialog,
   .signal-admin-modal-dialog,
   .re_admin_modal,
+  .meta-gold-modal-dialog,
   [class*="modalBackdrop"] > [class*="modal"],
-  [class*="modalOverlay"] > [class*="modal"]
-) :where(button[aria-label="Close"], button[aria-label*="close" i]) {
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="modal"],
+  [class*="dialog"]
+) :where(
+  button[aria-label*="close" i],
+  button[aria-label*="cancel" i],
+  button[class*="close" i],
+  button[class*="iconBtn" i],
+  .dm-close-btn,
+  .close_btn,
+  [class*="modalClose"]
+) {
   position: relative !important;
-  z-index: 5 !important;
-  display: inline-grid !important;
-  place-items: center !important;
-  flex: 0 0 40px !important;
-  width: 40px !important;
-  min-width: 40px !important;
-  height: 40px !important;
-  min-height: 40px !important;
-  padding: 8px !important;
+  z-index: 60 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 36px !important;
+  width: 36px !important;
+  min-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 6px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
   opacity: 1 !important;
   visibility: visible !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
 }
 
 .custom-notification-bar-root { z-index: 100000 !important; }

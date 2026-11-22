@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   TrendingUp,
   Search,
@@ -682,13 +683,14 @@ export default function TradesSection({
       </section>
 
       {/* Edit / Add Trade Modal */}
-      {editTrade && (
-        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditTrade(null)}>
-          <div
-            className={`${styles.modal} project-edit-modal-dialog`}
-            style={{ width: "100%", maxWidth: "520px", boxSizing: "border-box", padding: "20px" }}
-            onClick={(e) => e.stopPropagation()}
-          >
+      {editTrade && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditTrade(null)}>
+              <div
+                className={`${styles.modal} project-edit-modal-dialog`}
+                style={{ width: "100%", maxWidth: "520px", boxSizing: "border-box", padding: "20px" }}
+                onClick={(e) => e.stopPropagation()}
+              >
             <div className={styles.modalHead}>
               <h2>{editTrade.id ? "Edit Position PnL & Status" : "Create New Trade Position"}</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setEditTrade(null)} aria-label="Close">
@@ -921,8 +923,10 @@ export default function TradesSection({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      )
+    : null}
 
       {/* Custom Confirmation Modal (No native confirm) */}
       <CustomConfirmModal

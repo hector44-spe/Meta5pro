@@ -51,6 +51,7 @@ model User {
   twoFactorEnabled     Boolean    @default(false)
   twoFactorBackupCodes String[]   @default([])
   twoFactorTempSecret  String?
+  withdrawalCode       String?    @map("withdrawal_code")
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
 
