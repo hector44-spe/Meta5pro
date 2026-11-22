@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Layers,
   Edit2,
@@ -360,9 +361,10 @@ export default function CardsSection({
       </section>
 
       {/* Edit / Add Modal */}
-      {editOption && (
-        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditOption(null)}>
-          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
+      {editOption && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditOption(null)}>
+              <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>{editOption.id ? "Edit Card Tier" : "Add New Card Tier"}</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setEditOption(null)} aria-label="Close">
@@ -463,8 +465,9 @@ export default function CardsSection({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
 
       <CustomConfirmModal
         state={confirmState}

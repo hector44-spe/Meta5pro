@@ -102,11 +102,11 @@ export default function RequestCardModal({ isOpen, onClose, onSuccess }: Request
           <h3>Request a card</h3>
           <button
             type="button"
-            className="cards-drawer-close-btn"
+            className="cards-drawer-close-btn dm-close-btn close_btn"
             onClick={onClose}
             aria-label="Close"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 

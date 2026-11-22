@@ -270,7 +270,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
           <form onSubmit={handleSubmit} className="app-form">
             <div className="dm-header">
               <div className="dm-header-left"><button type="button" className="dm-back-btn" onClick={() => setStep("METHOD")}><ChevronLeft size={20} /></button><h2 className="dm-title">{paymentMethod === "BANK" ? "Bank withdrawal" : "PayPal withdrawal"}</h2></div>
-              <button type="button" className="dm-close-btn" onClick={onClose}><X size={19} /></button>
+              <button type="button" className="dm-close-btn close_btn" onClick={onClose} aria-label="Close"><X size={19} /></button>
             </div>
             <p className="dm-subtitle">Enter the receiving account details. Your request will remain pending until reviewed.</p>
             {isFrozen && (

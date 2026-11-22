@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Edit2, Loader2, Users, Search } from "lucide-react";
+import { createPortal } from "react-dom";
+import { Edit2, Loader2, Users, Search, X } from "lucide-react";
 import styles from "../page.module.css";
 
 interface ReferralAdminUser {
@@ -215,21 +216,23 @@ export default function ReferralsSection() {
       )}
 
       {/* Edit Balance Modal */}
-      {isModalOpen && selectedUser && (
-        <div className={`${styles.modalOverlay} project-edit-modal-overlay`} onClick={() => setIsModalOpen(false)}>
-          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>
-                Edit Referral Balance for {selectedUser.username}
-              </h3>
-              <button
-                type="button"
-                className={styles.modalClose}
-                onClick={() => setIsModalOpen(false)}
-              >
-                ✕
-              </button>
-            </div>
+      {isModalOpen && selectedUser && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalOverlay} project-edit-modal-overlay`} onClick={() => setIsModalOpen(false)}>
+              <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
+                <div className={styles.modalHeader}>
+                  <h3 className={styles.modalTitle}>
+                    Edit Referral Balance for {selectedUser.username}
+                  </h3>
+                  <button
+                    type="button"
+                    className={`${styles.modalClose} dm-close-btn close_btn`}
+                    onClick={() => setIsModalOpen(false)}
+                    aria-label="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
             <form onSubmit={handleSaveBalance}>
               <div className={styles.modalBody}>
                 <div className={styles.formGroup}>
@@ -277,8 +280,9 @@ export default function ReferralsSection() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
     </div>
   );
 }

@@ -566,10 +566,11 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
               <h3>Add funds to card</h3>
               <button
                 type="button"
-                className="cards-drawer-close-btn"
+                className="cards-drawer-close-btn dm-close-btn close_btn"
                 onClick={() => setTopUpModalOpen(false)}
+                aria-label="Close"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
             <p style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)", marginBottom: "14px" }}>
@@ -610,10 +611,11 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
               <h3>Card Settings</h3>
               <button
                 type="button"
-                className="cards-drawer-close-btn"
+                className="cards-drawer-close-btn dm-close-btn close_btn"
                 onClick={() => setSettingsModalOpen(false)}
+                aria-label="Close"
               >
-                <X size={16} />
+                <X size={18} />
               </button>
             </div>
 

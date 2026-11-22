@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   Radio,
   Search,
@@ -680,9 +681,10 @@ export default function SignalsSection({
       </section>
 
       {/* Edit / Add Signal Package Modal */}
-      {editSignal && (
-        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditSignal(null)}>
-          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
+      {editSignal && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditSignal(null)}>
+              <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>{editSignal.id ? "Edit Signal Package" : "Add New Signal Package"}</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setEditSignal(null)} aria-label="Close">
@@ -738,13 +740,15 @@ export default function SignalsSection({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
 
       {/* Edit Purchase Strength Modal */}
-      {editingPurchase && (
-        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !savingStrength && setEditingPurchase(null)}>
-          <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
+      {editingPurchase && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !savingStrength && setEditingPurchase(null)}>
+              <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>Edit Investor Signal Strength</h2>
               <button
@@ -840,8 +844,9 @@ export default function SignalsSection({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
 
       <CustomConfirmModal
         state={confirmState}

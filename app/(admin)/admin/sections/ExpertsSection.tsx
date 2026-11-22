@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   Users,
   Search,
@@ -770,20 +771,19 @@ export default function ExpertsSection({
       )}
 
       {/* Edit / Add Modal */}
-      {editModal && (
-        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditModal(null)}>
-          <div
-            className={`${styles.modal} project-edit-modal-dialog`}
-            style={{
-              width: "100%",
-              maxWidth: "520px",
-              maxHeight: "min(92vh, calc(100dvh - 24px))",
-              overflowY: "auto",
-              boxSizing: "border-box",
-              padding: "20px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
+      {editModal && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditModal(null)}>
+              <div
+                className={`${styles.modal} project-edit-modal-dialog`}
+                style={{
+                  width: "100%",
+                  maxWidth: "520px",
+                  boxSizing: "border-box",
+                  padding: "20px",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
             <div className={styles.modalHead}>
               <h2>{editModal.id ? "Edit Expert" : "New Trading Expert"}</h2>
               <button type="button" className={styles.iconBtn} onClick={() => setEditModal(null)} aria-label="Close">
@@ -938,17 +938,19 @@ export default function ExpertsSection({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
 
       {/* Place one expert trade across every active copier account. */}
-      {copyTrade && (
-        <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setCopyTrade(null)}>
-          <div
-            className={`${styles.modal} project-edit-modal-dialog`}
-            style={{ width: "100%", maxWidth: "520px", maxHeight: "calc(100dvh - 24px)", overflowY: "auto", padding: "20px" }}
-            onClick={(event) => event.stopPropagation()}
-          >
+      {copyTrade && typeof document !== "undefined"
+        ? createPortal(
+            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setCopyTrade(null)}>
+              <div
+                className={`${styles.modal} project-edit-modal-dialog`}
+                style={{ width: "100%", maxWidth: "520px", boxSizing: "border-box", padding: "20px" }}
+                onClick={(event) => event.stopPropagation()}
+              >
             <div className={styles.modalHead}>
               <div>
                 <h2>Place Copied Trade</h2>
@@ -1034,8 +1036,9 @@ export default function ExpertsSection({
               </button>
             </div>
           </div>
-        </div>
-      )}
+        </div>,
+        document.body
+      ) : null}
 
       {/* Responsive Confirmation Dialog & Toast Bar */}
       <CustomConfirmModal
