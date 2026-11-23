@@ -792,26 +792,26 @@ export default function ExpertsSection({
             </div>
             <div style={{ display: "grid", gap: "14px", marginTop: "12px", width: "100%" }}>
               <div>
-                <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                   Expert Name
                 </label>
                 <input
                   type="text"
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                   value={editModal.name || ""}
                   onChange={(e) => setEditModal({ ...editModal, name: e.target.value })}
                   placeholder="e.g. Albania fx"
                 />
               </div>
               <div>
-                <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 6 }}>
+                <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                   Expert Image
                 </label>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                   <img
                     src={editModal.picture || "/assets/copy-trading/albania_support.png"}
                     alt="Expert preview"
-                    style={{ width: 58, height: 58, borderRadius: 10, objectFit: "cover", border: "1px solid var(--a-border)", flexShrink: 0 }}
+                    style={{ width: 58, height: 58, borderRadius: 10, objectFit: "cover", border: "1px solid rgba(255, 255, 255, 0.16)", flexShrink: 0 }}
                     onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = getExpertPictureFallback(editModal.id || editModal.ref || editModal.name || "expert"); }}
                   />
                   <label
@@ -833,23 +833,23 @@ export default function ExpertsSection({
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Username
                   </label>
                   <input
                     type="text"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editModal.username || ""}
                     onChange={(e) => setEditModal({ ...editModal, username: e.target.value })}
                     placeholder="e.g. Support"
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Badge
                   </label>
                   <select
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editModal.tickType || "gold"}
                     onChange={(e) => setEditModal({ ...editModal, tickType: e.target.value as any })}
                   >
@@ -861,46 +861,46 @@ export default function ExpertsSection({
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Win Rate (%)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editModal.winRate ?? 90}
                     onChange={(e) => setEditModal({ ...editModal, winRate: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Profit Share (%)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editModal.profitShare ?? 15}
                     onChange={(e) => setEditModal({ ...editModal, profitShare: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Min. Startup ($)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editModal.minimumStartUp ?? 1000}
                     onChange={(e) => setEditModal({ ...editModal, minimumStartUp: Number(e.target.value) })}
                   />
                 </div>
               </div>
               <div>
-                <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                   Bio / Strategy
                 </label>
                 <textarea
                   rows={2}
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", resize: "none", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", resize: "none", boxSizing: "border-box" }}
                   value={editModal.bio || ""}
                   onChange={(e) => setEditModal({ ...editModal, bio: e.target.value })}
                 />
@@ -963,63 +963,63 @@ export default function ExpertsSection({
 
             <div className="project-form-stack" style={{ display: "grid", gap: 14, marginTop: 16 }}>
               <div className="project-form-group">
-                <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Market symbol</label>
+                <label className={styles.faint} style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>Market symbol</label>
                 <input
                   value={copyTrade.symbol}
                   onChange={(event) => setCopyTrade({ ...copyTrade, symbol: event.target.value })}
                   placeholder="BTC"
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                 />
               </div>
               <div className="project-form-group">
-                <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Funding asset / result row</label>
+                <label className={styles.faint} style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>Funding asset / result row</label>
                 <input
                   value={copyTrade.fundingAsset}
                   onChange={(event) => setCopyTrade({ ...copyTrade, fundingAsset: event.target.value.toUpperCase() })}
                   placeholder="XRP"
-                  style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", textTransform: "uppercase" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", textTransform: "uppercase" }}
                 />
               </div>
               <div className="project-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12 }}>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Side</label>
+                  <label className={styles.faint} style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>Side</label>
                   <select
                     value={copyTrade.type}
                     onChange={(event) => setCopyTrade({ ...copyTrade, type: event.target.value as "BUY" | "SELL" })}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                   >
                     <option value="BUY">Buy</option>
                     <option value="SELL">Sell</option>
                   </select>
                 </div>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Notional per copier ($)</label>
+                  <label className={styles.faint} style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>Notional per copier ($)</label>
                   <input
                     type="number"
                     min="1"
                     value={copyTrade.amount}
                     onChange={(event) => setCopyTrade({ ...copyTrade, amount: Number(event.target.value) })}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                   />
                 </div>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Leverage</label>
+                  <label className={styles.faint} style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>Leverage</label>
                   <input
                     type="number"
                     min="1"
                     max="100"
                     value={copyTrade.leverage}
                     onChange={(event) => setCopyTrade({ ...copyTrade, leverage: Number(event.target.value) })}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                   />
                 </div>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: 12, display: "block", marginBottom: 5 }}>Starting P&amp;L ($)</label>
+                  <label className={styles.faint} style={{ fontSize: 13, color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>Starting P&amp;L ($)</label>
                   <input
                     type="number"
                     value={copyTrade.pnl}
                     onChange={(event) => setCopyTrade({ ...copyTrade, pnl: Number(event.target.value) })}
-                    style={{ width: "100%", padding: "10px 12px", borderRadius: 7, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                   />
                 </div>
               </div>

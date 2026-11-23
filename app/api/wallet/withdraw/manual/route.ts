@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Withdrawals must be between ${fmtUsd(settings.minWithdrawal)} and ${fmtUsd(settings.maxWithdrawal)}.` }, { status: 400 });
     }
     if (settings.useWithdrawalCode && !data.code.trim()) {
-      return NextResponse.json({ error: "Please enter your withdrawal code. Contact admin if you need it." }, { status: 400 });
+      return NextResponse.json({ error: "Please enter your withdrawal code. Contact support if you need it." }, { status: 400 });
     }
 
     const destination = data.method === "BANK"
