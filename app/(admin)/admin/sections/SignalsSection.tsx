@@ -693,36 +693,36 @@ export default function SignalsSection({
             </div>
             <div style={{ display: "grid", gap: "12px", marginTop: "12px" }}>
               <div>
-                <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                   Signal Name / Title
                 </label>
                 <input
                   type="text"
-                  style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                   value={editSignal.title || editSignal.name || ""}
                   onChange={(e) => setEditSignal({ ...editSignal, title: e.target.value, name: e.target.value })}
                   placeholder="e.g. VIP Gold Signals"
                 />
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Price ($)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editSignal.price ?? 2000}
                     onChange={(e) => setEditSignal({ ...editSignal, price: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Strength (%)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editSignal.strength ?? 50}
                     onChange={(e) => setEditSignal({ ...editSignal, strength: Number(e.target.value) })}
                   />

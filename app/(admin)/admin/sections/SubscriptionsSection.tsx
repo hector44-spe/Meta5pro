@@ -538,24 +538,24 @@ export default function SubscriptionsSection({
             <div style={{ display: "grid", gap: "12px", marginTop: "12px" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Plan Name
                   </label>
                   <input
                     type="text"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editPlan.name || ""}
                     onChange={(e) => setEditPlan({ ...editPlan, name: e.target.value })}
                     placeholder="e.g. Starter"
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Display Title
                   </label>
                   <input
                     type="text"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editPlan.title || ""}
                     onChange={(e) => setEditPlan({ ...editPlan, title: e.target.value })}
                     placeholder="e.g. Starter plan"
@@ -563,50 +563,50 @@ export default function SubscriptionsSection({
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Minimum ($)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editPlan.minimum ?? 1000}
                     onChange={(e) => setEditPlan({ ...editPlan, minimum: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Maximum ($)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editPlan.maximum ?? 20000}
                     onChange={(e) => setEditPlan({ ...editPlan, maximum: Number(e.target.value) })}
                   />
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Duration (Days)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editPlan.duration ?? 3}
                     onChange={(e) => setEditPlan({ ...editPlan, duration: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Target ROI (%)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editPlan.roi ?? 150}
                     onChange={(e) => setEditPlan({ ...editPlan, roi: Number(e.target.value) })}
                   />

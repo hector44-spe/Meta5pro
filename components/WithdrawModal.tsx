@@ -319,7 +319,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                   placeholder="Enter withdrawal code"
                 />
                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", marginTop: "6px" }}>
-                  Contact admin for your withdrawal code.{" "}
+                  Contact support for your withdrawal code.{" "}
                   <button
                     type="button"
                     onClick={() => openLiveSupport()}
@@ -499,7 +499,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                 />
                 <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.65)", marginTop: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
                   <span>
-                    Contact admin for your withdrawal code.{" "}
+                    Contact support for your withdrawal code.{" "}
                     <button
                       type="button"
                       onClick={() => openLiveSupport()}
@@ -549,10 +549,10 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
                       </button>{" "}
                       for more info
                     </>
-                  ) : error.includes("Contact admin") ? (
+                  ) : error.includes("Contact support") || error.includes("Contact admin") ? (
                     <>
-                      {error.replace(/Contact admin.*$/, "").trim()}{" "}
-                      Contact admin for your withdrawal code.{" "}
+                      {error.replace(/Contact (support|admin).*$/, "").trim()}{" "}
+                      Contact support for your withdrawal code.{" "}
                       <button
                         type="button"
                         onClick={() => openLiveSupport()}

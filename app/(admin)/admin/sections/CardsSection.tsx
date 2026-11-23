@@ -372,26 +372,26 @@ export default function CardsSection({
               </button>
             </div>
             <div style={{ display: "grid", gap: "12px", marginTop: "12px" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Tier Name
                   </label>
                   <input
                     type="text"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editOption.name || ""}
                     onChange={(e) => setEditOption({ ...editOption, name: e.target.value })}
                     placeholder="e.g. Regular"
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Display Title
                   </label>
                   <input
                     type="text"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editOption.title || ""}
                     onChange={(e) => setEditOption({ ...editOption, title: e.target.value })}
                     placeholder="e.g. Regular Card"
@@ -399,25 +399,25 @@ export default function CardsSection({
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Issuance Fee ($)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editOption.issuanceFee ?? 1000}
                     onChange={(e) => setEditOption({ ...editOption, issuanceFee: Number(e.target.value) })}
                   />
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Deposit Minimum ($)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editOption.depositTotalMinimum ?? ""}
                     onChange={(e) => setEditOption({ ...editOption, depositTotalMinimum: e.target.value ? Number(e.target.value) : null })}
                     placeholder="Optional (leave empty for none)"
@@ -425,13 +425,13 @@ export default function CardsSection({
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     KYC Required
                   </label>
                   <select
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editOption.kycRequired ? "true" : "false"}
                     onChange={(e) => setEditOption({ ...editOption, kycRequired: e.target.value === "true" })}
                   >
@@ -440,11 +440,11 @@ export default function CardsSection({
                   </select>
                 </div>
                 <div>
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Status
                   </label>
                   <select
-                    style={{ width: "100%", padding: "8px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff" }}
                     value={editOption.enabled !== false ? "true" : "false"}
                     onChange={(e) => setEditOption({ ...editOption, enabled: e.target.value === "true" })}
                   >
