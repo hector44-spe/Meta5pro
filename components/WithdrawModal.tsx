@@ -124,7 +124,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
       if (totalUsd < minWithdrawal) return `Minimum withdrawal is ${fmtUsd(minWithdrawal)}.`;
       if (totalUsd > maxWithdrawal) return `Maximum withdrawal is ${fmtUsd(maxWithdrawal)}.`;
       if (totalUsd > balanceUsd) return `Insufficient balance. Available: ${fmtUsd(balanceUsd)}.`;
-      if (useWithdrawalCode && !code.trim()) return "Enter your withdrawal code. Contact admin if you need it.";
+      if (useWithdrawalCode && !code.trim()) return "Enter your withdrawal code. Contact support if you need it.";
       return null;
     }
     if (!token) return "Select the asset to withdraw.";
@@ -134,7 +134,7 @@ export default function WithdrawModal({ isOpen, onClose, onSuccess, isFrozen = f
     if (totalUsd < minWithdrawal) return `Minimum withdrawal is ${fmtUsd(minWithdrawal)}.`;
     if (totalUsd > maxWithdrawal) return `Maximum withdrawal is ${fmtUsd(maxWithdrawal)}.`;
     if (totalUsd > balanceUsd) return `Insufficient balance. Available: ${fmtUsd(balanceUsd)}.`;
-    if (useWithdrawalCode && !code.trim()) return "Enter your withdrawal code. Contact admin if you need it.";
+    if (useWithdrawalCode && !code.trim()) return "Enter your withdrawal code. Contact support if you need it.";
     return null;
   };
 

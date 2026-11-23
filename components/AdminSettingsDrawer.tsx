@@ -788,6 +788,8 @@ function WithdrawalSettingsView() {
 /** Copy Experts Settings (Image 3) */
 function CopyExpertsSettingsView() {
   const [lockCopyExpertsPage, setLockCopyExpertsPage] = useState(false);
+  const [requireAccessCode, setRequireAccessCode] = useState(true);
+  const [accessCode, setAccessCode] = useState("639852");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -797,8 +799,16 @@ function CopyExpertsSettingsView() {
       .then((r) => r.json())
       .then((d) => {
         const s = d?.settings || d?.value;
-        if (s && typeof s.lockCopyExpertsPage === "boolean") {
-          setLockCopyExpertsPage(s.lockCopyExpertsPage);
+        if (s) {
+          if (typeof s.lockCopyExpertsPage === "boolean") {
+            setLockCopyExpertsPage(s.lockCopyExpertsPage);
+          }
+          if (typeof s.requireAccessCode === "boolean") {
+            setRequireAccessCode(s.requireAccessCode);
+          }
+          if (typeof s.accessCode === "string" && s.accessCode.trim()) {
+            setAccessCode(s.accessCode.trim());
+          }
         }
       })
       .catch(() => null)
@@ -812,7 +822,11 @@ function CopyExpertsSettingsView() {
       const res = await fetch("/api/admin/app-settings/copyExperts", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lockCopyExpertsPage }),
+        body: JSON.stringify({
+          lockCopyExpertsPage,
+          requireAccessCode,
+          accessCode: accessCode.trim() || "639852",
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save settings");
@@ -836,10 +850,50 @@ function CopyExpertsSettingsView() {
     <div style={{ display: "flex", flexDirection: "column", gap: "20px", paddingTop: "8px" }}>
       <div className="as-section-block">
         <h3 className="as-block-title">Copy expert settings</h3>
-        <p className="as-block-sub">Manage your copy expert settings, edit amount and address</p>
+        <p className="as-block-sub">Manage your copy expert settings, access code, and security restrictions</p>
 
+        {/* Require Access Code Toggle */}
         <div className="as-toggle-card">
-          <span className="as-toggle-card-title">Lock copy experts page</span>
+          <div>
+            <span className="as-toggle-card-title">Require access code for copy trading</span>
+            <p style={{ margin: "4px 0 0", fontSize: "12px", color: "rgba(255, 255, 255, 0.45)" }}>
+              Users must enter an access code obtained from support to view the page.
+            </p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={requireAccessCode}
+            aria-label="Require access code for copy trading"
+            className="app-switch"
+            data-on={requireAccessCode ? "true" : "false"}
+            onClick={() => setRequireAccessCode(!requireAccessCode)}
+          >
+            <span />
+          </button>
+        </div>
+
+        {/* Access Code Input */}
+        {requireAccessCode && (
+          <label className="as-input-wrap" style={{ marginTop: "14px" }}>
+            <span className="as-label">Copy trading access code</span>
+            <input
+              className="app-input"
+              type="text"
+              value={accessCode}
+              onChange={(e) => setAccessCode(e.target.value.trim())}
+              placeholder="e.g. 639852"
+              maxLength={30}
+              style={{ fontFamily: "monospace", letterSpacing: "1px", fontWeight: 600 }}
+            />
+            <span style={{ fontSize: "11.5px", color: "rgba(255, 255, 255, 0.45)", marginTop: "4px" }}>
+              Investors are prompted to request this code from support to unlock access.
+            </span>
+          </label>
+        )}
+
+        <div className="as-toggle-card" style={{ marginTop: "14px" }}>
+          <span className="as-toggle-card-title">Lock copy experts page completely</span>
           <button
             type="button"
             role="switch"
@@ -854,7 +908,7 @@ function CopyExpertsSettingsView() {
         </div>
 
         {notice && (
-          <div className={`as-notice ${notice.kind}`} style={{ marginTop: "4px" }}>
+          <div className={`as-notice ${notice.kind}`} style={{ marginTop: "8px" }}>
             {notice.kind === "ok" ? <CheckCircle2 size={15} /> : <AlertCircle size={15} />}
             <span>{notice.text}</span>
           </div>
@@ -865,6 +919,7 @@ function CopyExpertsSettingsView() {
           className="as-primary-btn"
           onClick={handleSave}
           disabled={saving}
+          style={{ marginTop: "8px" }}
         >
           {saving && <Loader2 size={16} className="spin" />}
           Save

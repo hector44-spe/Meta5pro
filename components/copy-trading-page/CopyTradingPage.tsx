@@ -18,6 +18,7 @@ import CustomDeleteConfirmModal from "@/components/CopyTrading/CustomDeleteConfi
 import CustomNotificationBar, { CustomNotificationState } from "@/components/UI/CustomNotificationBar";
 import type { CopyExpert } from "@/types/copy-trading";
 import { getExpertPictureFallback } from "@/lib/copy-expert-image";
+import CopyTradingGate from "./CopyTradingGate";
 import "@/styles/copy-trading.css";
 
 const EXPERT_VISUAL_CACHE_KEY = "mg5_copy_experts_visual_cache_v1";
@@ -226,6 +227,7 @@ export default function CopyTradingPage() {
   const [activeTab, setActiveTab] = useState<"top_experts" | "copying" | "how_it_works">("top_experts");
   const [experts, setExperts] = useState<CopyExpert[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAccessLocked, setIsAccessLocked] = useState(false);
   const [userId, setUserId] = useState<string>("user");
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -253,13 +255,19 @@ export default function CopyTradingPage() {
       const res = await fetch("/api/copy-trading/experts", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.experts)) {
-          setExperts(data.experts);
-          try {
-            const visualCache = data.experts.map((expert: CopyExpert) => ({ ...expert, subscriberList: [] }));
-            localStorage.setItem(EXPERT_VISUAL_CACHE_KEY, JSON.stringify(visualCache));
-          } catch {
-            /* storage unavailable */
+        if (data.locked) {
+          setIsAccessLocked(true);
+          setExperts([]);
+        } else {
+          setIsAccessLocked(false);
+          if (Array.isArray(data.experts)) {
+            setExperts(data.experts);
+            try {
+              const visualCache = data.experts.map((expert: CopyExpert) => ({ ...expert, subscriberList: [] }));
+              localStorage.setItem(EXPERT_VISUAL_CACHE_KEY, JSON.stringify(visualCache));
+            } catch {
+              /* storage unavailable */
+            }
           }
         }
         if (typeof data.isAdmin === "boolean") {
@@ -398,6 +406,19 @@ export default function CopyTradingPage() {
       setDeleteLoading(false);
     }
   };
+
+  if (isAccessLocked && !isAdmin) {
+    return (
+      <div className="copy_trading_page">
+        <CopyTradingGate
+          onUnlocked={() => {
+            setIsAccessLocked(false);
+            fetchExperts(false);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="copy_trading_page">

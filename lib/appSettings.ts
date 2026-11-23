@@ -67,9 +67,15 @@ export const SETTING_GROUPS = {
   },
   copyExperts: {
     schema: z.object({
-      lockCopyExpertsPage: z.boolean(),
+      lockCopyExpertsPage: z.boolean().default(false),
+      requireAccessCode: z.boolean().default(true),
+      accessCode: z.string().default("639852"),
     }),
-    defaults: { lockCopyExpertsPage: false },
+    defaults: {
+      lockCopyExpertsPage: false,
+      requireAccessCode: true,
+      accessCode: "639852",
+    },
   },
   mining: {
     schema: z.object({

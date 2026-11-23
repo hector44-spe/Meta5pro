@@ -510,6 +510,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         setActiveModal("cards");
       } else if (action === "connectWallet") {
         setActiveModal("connectWallet");
+      } else if (action === "settings" || action === "setting") {
+        setSettingsSubView("main");
+        setActiveModal("settings");
       }
     }
   }, [pathname, activeModal]);
@@ -2068,7 +2071,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               backgroundColor: "rgba(0, 0, 0, 0.7)",
               backdropFilter: "blur(6px)",
               display: "flex",
-              justifyContent: "flex-end",
+              justifyContent: "flex-start",
               zIndex: 9999,
             }}
             onClick={() => setActiveModal(null)}

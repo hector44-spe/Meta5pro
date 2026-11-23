@@ -700,11 +700,11 @@ export default function TradesSection({
             <div className="project-form-stack" style={{ display: "grid", gap: "14px", marginTop: "12px", width: "100%" }}>
               {!editTrade.id && (
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Select User
                   </label>
                   <select
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editTrade.userId || ""}
                     onChange={(e) => setEditTrade({ ...editTrade, userId: e.target.value })}
                   >
@@ -719,24 +719,24 @@ export default function TradesSection({
 
               <div className="project-form-grid project-form-grid--three" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Symbol
                   </label>
                   <input
                     type="text"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editTrade.symbol || ""}
                     disabled={!!editTrade.id}
                     onChange={(e) => setEditTrade({ ...editTrade, symbol: e.target.value })}
                   />
                 </div>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Funding asset / result row
                   </label>
                   <input
                     type="text"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box", textTransform: "uppercase" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box", textTransform: "uppercase" }}
                     value={editTrade.fundingAsset || editTrade.symbol || ""}
                     disabled={editTrade.status === "CLOSED"}
                     onChange={(e) => setEditTrade({ ...editTrade, fundingAsset: e.target.value.toUpperCase() })}
@@ -744,11 +744,11 @@ export default function TradesSection({
                   />
                 </div>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Type
                   </label>
                   <select
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editTrade.type || "BUY"}
                     disabled={!!editTrade.id}
                     onChange={(e) => setEditTrade({ ...editTrade, type: e.target.value })}
@@ -761,24 +761,24 @@ export default function TradesSection({
 
               <div className="project-form-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     Amount ($)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editTrade.amount ?? 1000}
                     disabled={!!editTrade.id}
                     onChange={(e) => setEditTrade({ ...editTrade, amount: Number(e.target.value) })}
                   />
                 </div>
                 <div className="project-form-group">
-                  <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                  <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                     PnL ($ Profit / Loss)
                   </label>
                   <input
                     type="number"
-                    style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                    style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                     value={editTrade.pnl ?? 0}
                     onChange={(e) => setEditTrade({ ...editTrade, pnl: Number(e.target.value) })}
                     placeholder="e.g. 250 or -50"
@@ -831,7 +831,7 @@ export default function TradesSection({
                 <div
                   style={{
                     padding: "10px 14px",
-                    borderRadius: 6,
+                    borderRadius: 8,
                     background: "rgba(71, 99, 240, 0.08)",
                     border: "1px solid rgba(71, 99, 240, 0.2)",
                     fontSize: "12px",
@@ -849,11 +849,11 @@ export default function TradesSection({
               )}
 
               <div className="project-form-group">
-                <label className={styles.faint} style={{ fontSize: "12px", display: "block", marginBottom: 4 }}>
+                <label className={styles.faint} style={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.65)", display: "block", marginBottom: 6, fontWeight: 500 }}>
                   Status
                 </label>
                 <select
-                  style={{ width: "100%", padding: "9px 12px", borderRadius: 6, border: "1px solid var(--a-border)", background: "var(--a-raised)", color: "#fff", boxSizing: "border-box" }}
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255, 255, 255, 0.16)", background: "#141721", color: "#fff", boxSizing: "border-box" }}
                   value={editTrade.status || "OPEN"}
                   onChange={(e) => setEditTrade({ ...editTrade, status: e.target.value })}
                 >

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { getSettings } from "@/lib/appSettings";
 import type { CopyExpert } from "@/types/copy-trading";
 import { normalizeExpertPicture, normalizeExpertPictures } from "@/lib/copy-expert-image";
 import { getCatalogExperts, saveCatalogExpert, setCatalogExpertSubscription } from "@/lib/relational-catalogs";
@@ -21,14 +23,38 @@ async function saveStoredExperts(experts: CopyExpert[]): Promise<void> {
 export async function GET() {
   try {
     const session = await getSession();
+    const isAdmin = session?.role === "ADMIN";
+
+    const settings = await getSettings("copyExperts");
+    const requireAccessCode = Boolean(settings?.requireAccessCode);
+
+    if (requireAccessCode && !isAdmin) {
+      const cookieStore = await cookies();
+      const isUnlocked = cookieStore.get("mg5_copy_access_unlocked")?.value === "1";
+      if (!isUnlocked) {
+        return NextResponse.json(
+          {
+            success: true,
+            locked: true,
+            requireAccessCode: true,
+            experts: [],
+            userId: session?.userId || "user_guest",
+            isAdmin: false,
+          },
+          { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } },
+        );
+      }
+    }
+
     const experts = await getStoredExperts();
 
     return NextResponse.json(
       {
         success: true,
+        locked: false,
         experts,
         userId: session?.userId || "user_guest",
-        isAdmin: session?.role === "ADMIN",
+        isAdmin,
       },
       { headers: { "Cache-Control": "no-store, no-cache, must-revalidate" } },
     );

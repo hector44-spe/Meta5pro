@@ -46,7 +46,10 @@ export async function GET() {
       allowBankTransfer: withdrawal.allowBankTransfer,
       allowPayPal: withdrawal.allowPayPal,
     },
-    copyExperts: { lockCopyExpertsPage: copyExperts.lockCopyExpertsPage },
+    copyExperts: {
+      lockCopyExpertsPage: copyExperts.lockCopyExpertsPage,
+      requireAccessCode: copyExperts.requireAccessCode,
+    },
     mining: { useMinerPictures: mining.useMinerPictures },
     referrals: { usePercentage: referrals.usePercentage, percentage: referrals.percentage },
     levels: levels.levels,

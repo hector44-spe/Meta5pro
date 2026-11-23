@@ -248,7 +248,182 @@ html body :where(
   border-color: rgba(255, 255, 255, 0.3) !important;
 }
 
-/* 6. Form Fields & Elements */
+/* Global admin fallback variables ensuring modals rendered in portals inherit proper borders and dark surfaces */
+:root {
+  --a-bg: #07090c;
+  --a-panel: #0e1116;
+  --a-card: #12161c;
+  --a-raised: #141721;
+  --a-border: rgba(255, 255, 255, 0.16);
+  --a-border-strong: rgba(255, 255, 255, 0.28);
+  --a-text: #f4f6fa;
+  --a-muted: rgba(244, 246, 250, 0.65);
+  --a-faint: rgba(244, 246, 250, 0.45);
+  --a-accent: #4763f0;
+}
+
+/* 6. Form Fields & Elements - Visible normal form group borders across all admin forms & modals (Matches Image 3) */
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="admin_modal"],
+  [class*="AdminModal"],
+  [class*="modal"],
+  [class*="dialog"]
+) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+  select,
+  textarea
+),
+html body :where(
+  .project-form-group,
+  .project-form-stack,
+  .project-form-grid,
+  .admin_form_group,
+  .re_admin_form_group,
+  .admin_input_row,
+  .admin_duration_row,
+  .re_admin_input_row,
+  .re_admin_duration_row,
+  [class*="formGroup"],
+  [class*="form_group"]
+) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+  select,
+  textarea
+),
+html body :where(.shell, [class*="shell"], main) :where(
+  .project-form-group input,
+  .project-form-group select,
+  .project-form-group textarea,
+  [class*="input"]:not([class*="searchBox"] input):not([class*="assetPickerSearch"] input),
+  [class*="select"]
+) {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  background: #141721 !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+  padding: 10px 14px !important;
+  min-height: 42px !important;
+  font-size: 14px !important;
+  line-height: 1.4 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease !important;
+}
+
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="admin_modal"],
+  [class*="AdminModal"],
+  [class*="modal"],
+  [class*="dialog"]
+) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):focus,
+  select:focus,
+  textarea:focus
+),
+html body :where(
+  .project-form-group,
+  .project-form-stack,
+  .project-form-grid,
+  .admin_form_group,
+  .re_admin_form_group,
+  .admin_input_row,
+  .admin_duration_row,
+  .re_admin_input_row,
+  .re_admin_duration_row,
+  [class*="formGroup"],
+  [class*="form_group"]
+) :where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):focus,
+  select:focus,
+  textarea:focus
+),
+html body :where(.shell, [class*="shell"], main) :where(
+  .project-form-group input:focus,
+  .project-form-group select:focus,
+  .project-form-group textarea:focus,
+  [class*="input"]:focus,
+  [class*="select"]:focus
+) {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 1px #3b82f6 !important;
+  background: #171b26 !important;
+}
+
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="admin_modal"],
+  [class*="AdminModal"],
+  [class*="modal"],
+  [class*="dialog"]
+) select,
+html body :where(
+  .project-form-group,
+  .project-form-stack,
+  .project-form-grid,
+  .admin_form_group,
+  .re_admin_form_group,
+  .admin_input_row,
+  .admin_duration_row,
+  .re_admin_input_row,
+  .re_admin_duration_row
+) select,
+html body :where(.shell, [class*="shell"], main) select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding-right: 36px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.6' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  cursor: pointer !important;
+}
+
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
+  .shell
+) select option {
+  background: #141721 !important;
+  color: #ffffff !important;
+}
+
 html body :where(
   .admin_edit_modal_dialog,
   .project-edit-modal-dialog,
@@ -256,18 +431,9 @@ html body :where(
   .re_admin_modal,
   .meta-gold-modal-dialog,
   [class*="modalBackdrop"] > [class*="modal"],
-  [class*="modalOverlay"] > [class*="modal"],
-  [class*="modal"],
-  [class*="dialog"]
-) :where(input, select, textarea) {
-  position: relative !important;
-  inset: auto !important;
-  transform: none !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  box-sizing: border-box !important;
-  font-size: max(16px, 1em) !important; /* Prevents iOS Safari auto-zoom on focus */
+  [class*="modalOverlay"] > [class*="modal"]
+) textarea {
+  min-height: 80px !important;
 }
 
 @media (max-width: 560px) {
