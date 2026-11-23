@@ -95,7 +95,7 @@ export async function POST(req: Request) {
       });
 
       const reference = transaction.id.slice(0, 8).toUpperCase();
-      await Promise.allSettled([
+      const mailResults = await Promise.allSettled([
         notify(
           session.userId,
           "withdrawal",
@@ -118,6 +118,11 @@ export async function POST(req: Request) {
           assetSymbol: symbol,
         }),
       ]);
+      mailResults.forEach((r, idx) => {
+        if (r.status === "rejected") {
+          console.error(`[withdraw] Task ${idx} failed:`, r.reason);
+        }
+      });
 
       return NextResponse.json({
         success: true,

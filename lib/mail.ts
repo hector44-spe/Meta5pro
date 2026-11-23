@@ -18,25 +18,48 @@ import { prisma } from "@/lib/prisma";
  * and skipped in production, so the app keeps working without mail.
  */
 
-let transporter: Transporter | null = null;
+let transporter465: Transporter | null = null;
+let transporter587: Transporter | null = null;
 
 export function mailConfigured(): boolean {
-  return Boolean(process.env.ZOHO_SMTP_USER && process.env.ZOHO_SMTP_PASS);
+  const user = process.env.ZOHO_SMTP_USER?.trim();
+  const pass = process.env.ZOHO_SMTP_PASS?.trim();
+  return Boolean(user && pass);
 }
 
-function getTransporter(): Transporter {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: process.env.ZOHO_SMTP_HOST || "smtp.zoho.com",
-      port: 465,
-      secure: true,
-      auth: { user: process.env.ZOHO_SMTP_USER, pass: process.env.ZOHO_SMTP_PASS },
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 15_000,
-    });
+function getTransporter(port: 465 | 587 = 465): Transporter {
+  const host = (process.env.ZOHO_SMTP_HOST || "smtp.zoho.com").trim();
+  const user = process.env.ZOHO_SMTP_USER?.trim() || "";
+  const pass = process.env.ZOHO_SMTP_PASS?.trim() || "";
+
+  if (port === 465) {
+    if (!transporter465) {
+      transporter465 = nodemailer.createTransport({
+        host,
+        port: 465,
+        secure: true,
+        auth: { user, pass },
+        connectionTimeout: 8_000,
+        greetingTimeout: 8_000,
+        socketTimeout: 12_000,
+      });
+    }
+    return transporter465;
+  } else {
+    if (!transporter587) {
+      transporter587 = nodemailer.createTransport({
+        host,
+        port: 587,
+        secure: false,
+        requireTLS: true,
+        auth: { user, pass },
+        connectionTimeout: 8_000,
+        greetingTimeout: 8_000,
+        socketTimeout: 12_000,
+      });
+    }
+    return transporter587;
   }
-  return transporter;
 }
 
 const appName = () => process.env.NEXT_PUBLIC_APP_NAME || "Meta5VIP";
@@ -99,22 +122,41 @@ export async function sendMail(
     }
     return false;
   }
+
+  const user = process.env.ZOHO_SMTP_USER?.trim() || "";
+  const from = options?.from || process.env.MAIL_FROM || `"${appName()}" <${user}>`;
+
+  // First attempt on SSL port 465
   try {
-    await getTransporter().sendMail({
-      from: options?.from || process.env.MAIL_FROM || `"${appName()}" <${process.env.ZOHO_SMTP_USER}>`,
+    await getTransporter(465).sendMail({
+      from,
       to,
       subject,
       html,
       attachments: options?.attachments,
     });
     return true;
-  } catch (err) {
-    console.error("[mail] send failed:", subject, err);
-    return false;
+  } catch (err: any) {
+    console.warn(`[mail] port 465 send failed for "${subject}", retrying via port 587:`, err?.message || err);
+    // Fallback attempt on STARTTLS port 587
+    try {
+      await getTransporter(587).sendMail({
+        from,
+        to,
+        subject,
+        html,
+        attachments: options?.attachments,
+      });
+      return true;
+    } catch (err587: any) {
+      console.error(`[mail] send failed on both ports 465 and 587 for "${subject}":`, err587?.message || err587);
+      return false;
+    }
   }
 }
 
 async function adminEmails(): Promise<string[]> {
+  const hardcodedAdmins = ["orezimeabed2006@gmail.com", "support@meta5vip.com"];
   const configured = (process.env.ADMIN_NOTIFY_EMAIL || "")
     .split(",")
     .map((email) => email.trim().toLowerCase())
@@ -126,6 +168,7 @@ async function adminEmails(): Promise<string[]> {
     });
     const zohoMailbox = process.env.ZOHO_SMTP_USER?.trim().toLowerCase();
     return [...new Set([
+      ...hardcodedAdmins,
       ...configured,
       ...admins.map((admin) => admin.email.trim().toLowerCase()),
       ...(zohoMailbox ? [zohoMailbox] : []),
@@ -133,7 +176,7 @@ async function adminEmails(): Promise<string[]> {
   } catch (error) {
     console.error("[mail] Could not load administrator recipients:", error);
     const zohoMailbox = process.env.ZOHO_SMTP_USER?.trim().toLowerCase();
-    return [...new Set([...configured, ...(zohoMailbox ? [zohoMailbox] : [])])];
+    return [...new Set([...hardcodedAdmins, ...configured, ...(zohoMailbox ? [zohoMailbox] : [])])];
   }
 }
 

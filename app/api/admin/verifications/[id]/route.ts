@@ -56,13 +56,15 @@ export async function PATCH(
     });
 
     if (existing.user?.email) {
-      sendVerificationStatusEmail(
-        existing.user.email,
-        action === "approve",
-        action === "reject" ? reason : undefined,
-      ).catch((err) => {
+      try {
+        await sendVerificationStatusEmail(
+          existing.user.email,
+          action === "approve",
+          action === "reject" ? reason : undefined,
+        );
+      } catch (err) {
         console.warn("[mail] Failed to send verification email:", err);
-      });
+      }
     }
 
     return NextResponse.json({ success: true, status });

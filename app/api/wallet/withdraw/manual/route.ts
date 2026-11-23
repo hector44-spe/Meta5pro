@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       });
 
       const reference = transaction.id.slice(0, 8).toUpperCase();
-      await Promise.allSettled([
+      const mailResults = await Promise.allSettled([
         notify(session.userId, "withdrawal", "Withdrawal requested", `Your ${data.method === "BANK" ? "bank transfer" : "PayPal"} withdrawal of ${fmtUsd(amount)} is pending review. Reference ${reference}.`),
         notifyAdminWithdrawal({
           userEmail: session.email,
@@ -98,6 +98,11 @@ export async function POST(req: Request) {
           destination,
         }),
       ]);
+      mailResults.forEach((r, idx) => {
+        if (r.status === "rejected") {
+          console.error(`[withdraw-manual] Task ${idx} failed:`, r.reason);
+        }
+      });
 
       return NextResponse.json({ success: true, message: "Withdrawal request submitted for review", reference, transaction, newBalance });
     } catch (error) {
