@@ -102,6 +102,7 @@ export default function DepositModal({
   const [activeAddress, setActiveAddress] = useState<string>("");
   const [activeMemo, setActiveMemo] = useState<string>("");
   const [activeQrCode, setActiveQrCode] = useState<string>("");
+  const [dynamicQrUrl, setDynamicQrUrl] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [memoCopied, setMemoCopied] = useState(false);
 
@@ -263,6 +264,35 @@ export default function DepositModal({
       }
     }
   }, [selectedToken, selectedNetwork, addresses]);
+
+  // Guarantee a valid, scannable QR code even if uploaded image is missing or unreachable
+  useEffect(() => {
+    let cancelled = false;
+    if (activeAddress) {
+      if (activeQrCode && !activeQrCode.startsWith("/api/upload")) {
+        setDynamicQrUrl(activeQrCode);
+      } else {
+        import("qrcode")
+          .then(({ default: QRCode }) => {
+            QRCode.toDataURL(activeAddress, { width: 280, margin: 1 })
+              .then((url) => {
+                if (!cancelled) setDynamicQrUrl(url);
+              })
+              .catch(() => {
+                if (!cancelled && activeQrCode) setDynamicQrUrl(activeQrCode);
+              });
+          })
+          .catch(() => {
+            if (!cancelled && activeQrCode) setDynamicQrUrl(activeQrCode);
+          });
+      }
+    } else {
+      setDynamicQrUrl("");
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [activeAddress, activeQrCode]);
 
   if (!isOpen) return null;
 
@@ -740,12 +770,21 @@ export default function DepositModal({
 
                   {activeAddress ? (
                     <div>
-                      {activeQrCode && (
+                      {(dynamicQrUrl || activeQrCode) && (
                         <div style={{ textAlign: "center", marginBottom: "12px" }}>
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={activeQrCode}
+                            src={dynamicQrUrl || activeQrCode}
                             alt="Deposit QR"
+                            onError={async () => {
+                              if (activeAddress) {
+                                try {
+                                  const QRCode = (await import("qrcode")).default;
+                                  const fallback = await QRCode.toDataURL(activeAddress, { width: 280, margin: 1 });
+                                  setDynamicQrUrl(fallback);
+                                } catch {}
+                              }
+                            }}
                             style={{
                               width: "130px",
                               height: "130px",

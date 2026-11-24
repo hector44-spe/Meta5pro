@@ -318,20 +318,44 @@ export default function DepositAddressSection({
   const handleQrUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      flash("error", "QR code image must be under 2MB.");
+      return;
+    }
     setUploadingQr(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
-      setQrCodeUrl(data.url);
-      flash("ok", "QR code uploaded successfully.");
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setQrCodeUrl(reader.result);
+          flash("ok", "QR code loaded successfully.");
+          setUploadingQr(false);
+        }
+      };
+      reader.onerror = () => {
+        flash("error", "Failed to read image file.");
+        setUploadingQr(false);
+      };
+      reader.readAsDataURL(file);
     } catch (err: any) {
-      flash("error", err.message || "Failed to upload QR code");
+      flash("error", err.message || "Failed to load QR code");
+      setUploadingQr(false);
+    }
+  };
+
+  const handleGenerateQr = async () => {
+    if (!addressInput.trim()) {
+      flash("error", "Enter a deposit address first to generate its QR code.");
+      return;
+    }
+    setUploadingQr(true);
+    try {
+      const QRCode = (await import("qrcode")).default;
+      const dataUrl = await QRCode.toDataURL(addressInput.trim(), { width: 300, margin: 1 });
+      setQrCodeUrl(dataUrl);
+      flash("ok", "QR code generated from address.");
+    } catch {
+      flash("error", "Failed to generate QR code.");
     } finally {
       setUploadingQr(false);
     }
@@ -673,21 +697,72 @@ export default function DepositAddressSection({
                       <Loader2 size={18} className="spin" /> Uploading QR code...
                     </div>
                   ) : qrCodeUrl ? (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }} onClick={(e) => e.stopPropagation()}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={qrCodeUrl} alt="QR Code" className="dep_qr_preview" />
-                      <button
-                        type="button"
-                        className="dep_qr_remove"
-                        onClick={() => setQrCodeUrl(null)}
-                      >
-                        Remove QR Code
-                      </button>
+                      <img
+                        src={qrCodeUrl}
+                        alt="QR Code"
+                        className="dep_qr_preview"
+                        onError={async () => {
+                          if (addressInput.trim()) {
+                            try {
+                              const QRCode = (await import("qrcode")).default;
+                              const fallback = await QRCode.toDataURL(addressInput.trim(), { width: 300, margin: 1 });
+                              setQrCodeUrl(fallback);
+                            } catch {}
+                          }
+                        }}
+                      />
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+                        <button
+                          type="button"
+                          className="dep_qr_generate"
+                          style={{
+                            background: "rgba(59, 130, 246, 0.15)",
+                            border: "1px solid rgba(59, 130, 246, 0.3)",
+                            color: "#60a5fa",
+                            borderRadius: "6px",
+                            padding: "4px 10px",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                          }}
+                          onClick={handleGenerateQr}
+                        >
+                          Regenerate from Address
+                        </button>
+                        <button
+                          type="button"
+                          className="dep_qr_remove"
+                          onClick={() => setQrCodeUrl(null)}
+                        >
+                          Remove QR Code
+                        </button>
+                      </div>
                     </div>
                   ) : (
-                    <p className="dep_qr_text">
-                      Tap here to add or change QR code. Leave empty to save address without QR code.
-                    </p>
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }} onClick={(e) => e.stopPropagation()}>
+                      <p className="dep_qr_text" onClick={() => fileInputRef.current?.click()}>
+                        Tap here to upload a custom QR code image, or click below to generate one automatically.
+                      </p>
+                      {addressInput.trim() && (
+                        <button
+                          type="button"
+                          style={{
+                            background: "rgba(59, 130, 246, 0.15)",
+                            border: "1px solid rgba(59, 130, 246, 0.3)",
+                            color: "#60a5fa",
+                            borderRadius: "6px",
+                            padding: "6px 14px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                          onClick={handleGenerateQr}
+                        >
+                          Generate QR Code from Address
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
