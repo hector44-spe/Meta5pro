@@ -110,10 +110,13 @@ export async function POST(req: Request) {
     // Email delivery must never roll back or invalidate an already-created account.
     // Both helpers contain their own error handling; allSettled also keeps the
     // registration response successful if either notification channel is unavailable.
-    await Promise.allSettled([
+    const regResults = await Promise.allSettled([
       notify(user.id, "account", "Welcome to Meta5VIP", "Your account is ready. Make a deposit to get started."),
       sendWelcomeEmail(user.email, firstName),
     ]);
+    if (regResults[1].status === "rejected") {
+      console.error("[register] sendWelcomeEmail failed:", regResults[1].reason);
+    }
 
     // Sign session token including tokenVersion
     const token = signToken({

@@ -274,10 +274,30 @@ export function sendWelcomeEmail(to: string, firstName: string) {
       </td></tr>`
     : "";
 
-  const logoFile = path.join(process.cwd(), "public", "images", "logo-gold.png");
-  const hasLocalLogo = fs.existsSync(logoFile);
+  const logoUrl = appUrl() ? `${appUrl()}/images/logo-gold.png` : "";
+  let hasLocalLogo = false;
+  let attachments: MailAttachment[] = [];
+  try {
+    const logoFile = path.join(process.cwd(), "public", "images", "logo-gold.png");
+    if (fs.existsSync(logoFile)) {
+      hasLocalLogo = true;
+      attachments = [
+        {
+          filename: "logo-gold.png",
+          content: fs.readFileSync(logoFile),
+          cid: "metagold-logo",
+          contentType: "image/png",
+        },
+      ];
+    }
+  } catch {
+    hasLocalLogo = false;
+  }
+
   const logoHtml = hasLocalLogo
     ? `<img src="cid:metagold-logo" alt="${safeAppName}" width="44" height="52" style="display:block;width:44px;height:52px;max-width:44px;border:0;outline:none;text-decoration:none" />`
+    : logoUrl
+    ? `<img src="${escapeHtml(logoUrl)}" alt="${safeAppName}" width="44" height="52" style="display:block;width:44px;height:52px;max-width:44px;border:0;outline:none;text-decoration:none" />`
     : `<div style="font-size:26px;font-weight:800;color:#f59e0b;letter-spacing:1px">${safeAppName}</div>`;
 
   const html = `<!doctype html>
@@ -319,19 +339,9 @@ export function sendWelcomeEmail(to: string, firstName: string) {
   </body>
 </html>`;
 
-  const attachments: MailAttachment[] = hasLocalLogo
-    ? [
-        {
-          filename: "logo-gold.png",
-          path: logoFile,
-          cid: "metagold-logo",
-          contentType: "image/png",
-        },
-      ]
-    : [];
-
   const senderName = process.env.MAIL_SENDER_NAME || currentAppName;
-  const from = `"${senderName}" <${process.env.ZOHO_SMTP_USER || "support@meta5vip.com"}>`;
+  const user = (process.env.ZOHO_SMTP_USER || "support@meta5vip.com").trim();
+  const from = `"${senderName}" <${user}>`;
 
   return sendMail(to, `Welcome to ${currentAppName}`, html, { attachments, from });
 }
