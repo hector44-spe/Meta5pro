@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Lock, ShieldCheck, Loader2, MessageSquare, AlertCircle, ArrowRight } from "lucide-react";
+import { Lock, Loader2, MessageSquare, AlertCircle, ArrowRight } from "lucide-react";
 
 interface CopyTradingGateProps {
   onUnlocked: () => void;
@@ -10,6 +10,7 @@ interface CopyTradingGateProps {
 export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
   const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -57,7 +58,6 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
       } else if (w.$zoho?.salesiq?.floatwindow?.visible) {
         w.$zoho.salesiq.floatwindow.visible("show");
       } else {
-        // Fallback: look for Zoho launcher button or support link
         const zohoBtn = document.querySelector("#zsiq_float, .zsiq_float_chat, [id*='zsiq']") as HTMLElement | null;
         if (zohoBtn) zohoBtn.click();
       }
@@ -70,8 +70,8 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        minHeight: "calc(100vh - 180px)",
-        padding: "24px 16px",
+        minHeight: "calc(100dvh - 160px)",
+        padding: "20px 14px",
         boxSizing: "border-box",
         width: "100%",
       }}
@@ -79,12 +79,12 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
       <div
         style={{
           width: "100%",
-          maxWidth: "460px",
+          maxWidth: "420px",
           background: "#16181d",
           border: "1px solid rgba(255, 255, 255, 0.08)",
           borderRadius: "18px",
-          padding: "36px 28px",
-          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.55)",
+          padding: "32px 20px",
+          boxShadow: "0 24px 60px rgba(0, 0, 0, 0.6)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -94,14 +94,14 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
           overflow: "hidden",
         }}
       >
-        {/* Subtle accent glow at top */}
+        {/* Top accent glow line */}
         <div
           style={{
             position: "absolute",
             top: 0,
             left: "50%",
             transform: "translateX(-50%)",
-            width: "220px",
+            width: "200px",
             height: "2px",
             background: "linear-gradient(90deg, transparent, #4763f0, transparent)",
           }}
@@ -110,8 +110,8 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
         {/* Security Badge Icon */}
         <div
           style={{
-            width: "68px",
-            height: "68px",
+            width: "60px",
+            height: "60px",
             borderRadius: "50%",
             background: "rgba(71, 99, 240, 0.12)",
             border: "1px solid rgba(71, 99, 240, 0.28)",
@@ -119,21 +119,22 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
             alignItems: "center",
             justifyContent: "center",
             color: "#4763f0",
-            marginBottom: "20px",
-            boxShadow: "0 8px 24px rgba(71, 99, 240, 0.18)",
+            marginBottom: "18px",
+            boxShadow: "0 8px 24px rgba(71, 99, 240, 0.16)",
           }}
         >
-          <Lock size={30} strokeWidth={2.2} />
+          <Lock size={26} strokeWidth={2.2} />
         </div>
 
         {/* Header Titles */}
         <h2
           style={{
-            fontSize: "20px",
+            fontSize: "19px",
             fontWeight: 700,
             color: "#ffffff",
             margin: "0 0 10px 0",
             letterSpacing: "-0.2px",
+            lineHeight: "1.3",
           }}
         >
           Copy Trading Access Required
@@ -141,10 +142,10 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
 
         <p
           style={{
-            fontSize: "13.5px",
+            fontSize: "13px",
             color: "rgba(255, 255, 255, 0.65)",
-            lineHeight: "1.55",
-            margin: "0 0 24px 0",
+            lineHeight: "1.5",
+            margin: "0 0 22px 0",
           }}
         >
           This section is reserved for verified investors. All users are required to obtain an access code from live support to unlock the copy trading page.
@@ -152,15 +153,15 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
 
         {/* Access Code Form */}
         <form onSubmit={handleSubmit} style={{ width: "100%", display: "flex", flexDirection: "column", gap: "14px" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px", textAlign: "left", width: "100%" }}>
             <label
               htmlFor="copy-access-code-input"
               style={{
-                fontSize: "12px",
+                fontSize: "11.5px",
                 fontWeight: 600,
                 color: "rgba(255, 255, 255, 0.75)",
                 textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                letterSpacing: "0.6px",
               }}
             >
               Enter Access Code
@@ -173,24 +174,39 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
                 setCode(e.target.value);
                 if (error) setError(null);
               }}
-              placeholder="e.g. 639852"
-              autoFocus
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              inputMode="numeric"
               maxLength={20}
               style={{
                 width: "100%",
-                padding: "13px 16px",
-                background: "#111317",
-                border: error ? "1px solid #ff4757" : "1px solid rgba(255, 255, 255, 0.12)",
+                height: "50px",
+                padding: "0 16px",
+                background: "#12151c",
+                border: error
+                  ? "1px solid #ff4757"
+                  : isFocused
+                  ? "1px solid #4763f0"
+                  : "1px solid rgba(255, 255, 255, 0.14)",
+                boxShadow: error
+                  ? "0 0 0 3px rgba(255, 71, 87, 0.18), inset 0 2px 4px rgba(0, 0, 0, 0.3)"
+                  : isFocused
+                  ? "0 0 0 3px rgba(71, 99, 240, 0.22), inset 0 2px 4px rgba(0, 0, 0, 0.3)"
+                  : "inset 0 2px 4px rgba(0, 0, 0, 0.25)",
                 borderRadius: "10px",
                 color: "#ffffff",
-                fontSize: "16px",
+                fontSize: "18px",
                 fontWeight: 600,
-                letterSpacing: "2px",
+                letterSpacing: "4px",
                 textAlign: "center",
                 outline: "none",
-                fontFamily: "monospace",
+                fontFamily: "inherit",
                 boxSizing: "border-box",
-                transition: "border-color 0.15s ease",
+                transition: "border-color 0.18s ease, box-shadow 0.18s ease",
               }}
             />
           </div>
@@ -209,6 +225,7 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
                 fontSize: "12.5px",
                 textAlign: "left",
                 lineHeight: "1.4",
+                boxSizing: "border-box",
               }}
             >
               <AlertCircle size={15} style={{ flexShrink: 0, marginTop: "2px" }} />
@@ -221,7 +238,8 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
             disabled={submitting || !code.trim()}
             style={{
               width: "100%",
-              padding: "13px 18px",
+              height: "48px",
+              padding: "0 18px",
               background: "#4763f0",
               color: "#ffffff",
               border: "none",
@@ -235,7 +253,8 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
               justifyContent: "center",
               gap: "8px",
               transition: "all 0.15s ease",
-              marginTop: "4px",
+              boxSizing: "border-box",
+              boxShadow: "0 4px 14px rgba(71, 99, 240, 0.3)",
             }}
           >
             {submitting ? (
@@ -263,32 +282,42 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
             flexDirection: "column",
             alignItems: "center",
             gap: "10px",
+            boxSizing: "border-box",
           }}
         >
-          <span style={{ fontSize: "12.5px", color: "rgba(255, 255, 255, 0.5)" }}>
+          <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)" }}>
             Don&apos;t have an access code?
           </span>
           <button
             type="button"
             onClick={handleOpenSupport}
             style={{
-              background: "rgba(255, 255, 255, 0.05)",
+              width: "100%",
+              background: "rgba(255, 255, 255, 0.04)",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: "8px",
+              borderRadius: "10px",
               color: "#ffffff",
-              padding: "8px 14px",
-              fontSize: "12.5px",
+              padding: "11px 14px",
+              fontSize: "13px",
               fontWeight: 500,
-              display: "inline-flex",
+              display: "flex",
               alignItems: "center",
-              gap: "7px",
+              justifyContent: "center",
+              gap: "8px",
               cursor: "pointer",
-              transition: "background 0.15s ease",
+              transition: "background 0.15s ease, border-color 0.15s ease",
+              boxSizing: "border-box",
             }}
-            onMouseOver={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.09)")}
-            onMouseOut={(e) => (e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)")}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(71, 99, 240, 0.4)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+            }}
           >
-            <MessageSquare size={14} color="#4763f0" />
+            <MessageSquare size={15} color="#4763f0" />
             <span>Request code from 24/7 Live Support</span>
           </button>
         </div>
