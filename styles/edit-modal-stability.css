@@ -16,7 +16,7 @@ html body :where(
   [class*="modalBackdrop"],
   [class*="modalOverlay"],
   [class*="backdrop"]
-) {
+):not(.as-backdrop):not(.cards-drawer-overlay):not(.settings-drawer-overlay):not([class*="drawer"]):not([class*="Drawer"]) {
   position: fixed !important;
   inset: 0 !important;
   top: 0 !important;
@@ -52,7 +52,7 @@ html body :where(
     [class*="modalBackdrop"],
     [class*="modalOverlay"],
     [class*="backdrop"]
-  ) {
+  ):not(.as-backdrop):not(.cards-drawer-overlay):not(.settings-drawer-overlay):not([class*="drawer"]):not([class*="Drawer"]) {
     justify-content: center !important;
   }
 }
@@ -69,7 +69,7 @@ html body :where(
   [class*="modalBackdrop"],
   [class*="modalOverlay"],
   [class*="backdrop"]
-) > :where(
+):not(.as-backdrop):not(.cards-drawer-overlay):not(.settings-drawer-overlay):not([class*="drawer"]):not([class*="Drawer"]) > :where(
   .admin_edit_modal_dialog,
   .project-edit-modal-dialog,
   .signal-admin-modal-dialog,
@@ -79,7 +79,7 @@ html body :where(
   .request-card-modal-dialog,
   [class*="modal"],
   [class*="dialog"]
-) {
+):not(.as-panel):not(.settings-drawer-panel):not(.cards-drawer-panel):not([class*="drawer"]):not([class*="Drawer"]) {
   position: relative !important;
   inset: auto !important;
   transform: none !important;
@@ -318,7 +318,7 @@ html body :where(
   select,
   textarea
 ),
-html body :where(.shell, [class*="shell"], main) :where(
+html body :where(.shell, [class*="shell"]) :where(
   .project-form-group input,
   .project-form-group select,
   .project-form-group textarea,
@@ -381,7 +381,7 @@ html body :where(
   select:focus,
   textarea:focus
 ),
-html body :where(.shell, [class*="shell"], main) :where(
+html body :where(.shell, [class*="shell"]) :where(
   .project-form-group input:focus,
   .project-form-group select:focus,
   .project-form-group textarea:focus,
@@ -419,7 +419,7 @@ html body :where(
   .re_admin_input_row,
   .re_admin_duration_row
 ) select,
-html body :where(.shell, [class*="shell"], main) select {
+html body :where(.shell, [class*="shell"]) select {
   appearance: none !important;
   -webkit-appearance: none !important;
   padding-right: 36px !important;
@@ -427,6 +427,12 @@ html body :where(.shell, [class*="shell"], main) select {
   background-repeat: no-repeat !important;
   background-position: right 14px center !important;
   cursor: pointer !important;
+}
+
+/* Ensure transaction and assets filters do not have duplicate custom arrows */
+.tp-select,
+.assets-select {
+  background-image: none !important;
 }
 
 html body :where(
@@ -466,7 +472,7 @@ html body :where(
     [class*="modalOverlay"] > [class*="modal"],
     [class*="modal"],
     [class*="dialog"]
-  ) {
+  ):not(.as-panel):not(.settings-drawer-panel):not(.cards-drawer-panel):not([class*="drawer"]):not([class*="Drawer"]) {
     width: 100% !important;
     max-width: 100% !important;
     padding: 16px 14px calc(18px + env(safe-area-inset-bottom, 0px)) !important;
@@ -483,7 +489,7 @@ html body :where(
     [class*="modalOverlay"] > [class*="modal"],
     [class*="modal"],
     [class*="dialog"]
-  ) :where(.admin_two_col, [style*="grid-template-columns: 1fr 1fr"]) {
+  ):not(.as-panel):not(.settings-drawer-panel):not(.cards-drawer-panel):not([class*="drawer"]):not([class*="Drawer"]) :where(.admin_two_col, [style*="grid-template-columns: 1fr 1fr"]) {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
@@ -497,7 +503,7 @@ html body :where(
     [class*="modalOverlay"] > [class*="modal"],
     [class*="modal"],
     [class*="dialog"]
-  ) [style*="grid-template-columns"] {
+  ):not(.as-panel):not(.settings-drawer-panel):not(.cards-drawer-panel):not([class*="drawer"]):not([class*="Drawer"]) [style*="grid-template-columns"] {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 

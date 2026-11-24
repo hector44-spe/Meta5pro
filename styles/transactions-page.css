@@ -315,8 +315,9 @@
 }
 
 .tp-select {
-  background: transparent;
-  border: none;
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
   outline: none;
   color: #ffffff;
   font-size: 14px;

@@ -2062,6 +2062,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
         {activeModal === "settings" && !isAdmin && (
           <div
+            className="settings-drawer-overlay"
             style={{
               position: "fixed",
               top: 0,
@@ -2071,7 +2072,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               backgroundColor: "rgba(0, 0, 0, 0.7)",
               backdropFilter: "blur(6px)",
               display: "flex",
-              justifyContent: "flex-start",
+              justifyContent: "flex-end",
               zIndex: 9999,
             }}
             onClick={() => setActiveModal(null)}

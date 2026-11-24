@@ -274,7 +274,7 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
         {/* Live Support Trigger Box */}
         <div
           style={{
-            marginTop: "22px",
+            marginTop: "20px",
             paddingTop: "18px",
             borderTop: "1px solid rgba(255, 255, 255, 0.07)",
             width: "100%",
@@ -285,7 +285,7 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
             boxSizing: "border-box",
           }}
         >
-          <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)" }}>
+          <span style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.5)", fontWeight: 400 }}>
             Don&apos;t have an access code?
           </span>
           <button
@@ -293,32 +293,37 @@ export default function CopyTradingGate({ onUnlocked }: CopyTradingGateProps) {
             onClick={handleOpenSupport}
             style={{
               width: "100%",
-              background: "rgba(255, 255, 255, 0.04)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              height: "46px",
+              background: "rgba(71, 99, 240, 0.08)",
+              border: "1px solid rgba(71, 99, 240, 0.26)",
               borderRadius: "10px",
               color: "#ffffff",
-              padding: "11px 14px",
-              fontSize: "13px",
+              padding: "0 clamp(10px, 3vw, 16px)",
+              fontSize: "clamp(12px, 3.2vw, 13px)",
               fontWeight: 500,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "8px",
               cursor: "pointer",
-              transition: "background 0.15s ease, border-color 0.15s ease",
+              transition: "all 0.18s ease",
               boxSizing: "border-box",
+              whiteSpace: "nowrap",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-              e.currentTarget.style.borderColor = "rgba(71, 99, 240, 0.4)";
+              e.currentTarget.style.background = "rgba(71, 99, 240, 0.16)";
+              e.currentTarget.style.borderColor = "rgba(71, 99, 240, 0.5)";
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
-              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.1)";
+              e.currentTarget.style.background = "rgba(71, 99, 240, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(71, 99, 240, 0.26)";
             }}
           >
-            <MessageSquare size={15} color="#4763f0" />
-            <span>Request code from 24/7 Live Support</span>
+            <MessageSquare size={16} color="#4763f0" style={{ flexShrink: 0 }} />
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+              Request code from 24/7 Live Support
+            </span>
           </button>
         </div>
       </div>
