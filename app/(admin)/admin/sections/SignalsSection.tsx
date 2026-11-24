@@ -683,7 +683,18 @@ export default function SignalsSection({
       {/* Edit / Add Signal Package Modal */}
       {editSignal && typeof document !== "undefined"
         ? createPortal(
-            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditSignal(null)}>
+            <div
+              className={`${styles.modalBackdrop} project-edit-modal-overlay`}
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !submitting) {
+                  if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+                    document.activeElement.blur();
+                    return;
+                  }
+                  setEditSignal(null);
+                }
+              }}
+            >
               <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>{editSignal.id ? "Edit Signal Package" : "Add New Signal Package"}</h2>
@@ -747,7 +758,18 @@ export default function SignalsSection({
       {/* Edit Purchase Strength Modal */}
       {editingPurchase && typeof document !== "undefined"
         ? createPortal(
-            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !savingStrength && setEditingPurchase(null)}>
+            <div
+              className={`${styles.modalBackdrop} project-edit-modal-overlay`}
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !savingStrength) {
+                  if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+                    document.activeElement.blur();
+                    return;
+                  }
+                  setEditingPurchase(null);
+                }
+              }}
+            >
               <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>Edit Investor Signal Strength</h2>

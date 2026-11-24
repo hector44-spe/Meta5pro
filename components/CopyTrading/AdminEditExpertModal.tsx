@@ -123,7 +123,7 @@ export default function AdminEditExpertModal({
       setAutoGenerateTrades(true);
     }
     setError(null);
-  }, [expert, isOpen]);
+  }, [expert?.id, isOpen]);
 
   if (!isOpen) return null;
 
@@ -243,7 +243,16 @@ export default function AdminEditExpertModal({
         overflowY: "auto",
         WebkitOverflowScrolling: "touch",
       }}
-      onClick={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !saving) {
+          // If the mobile keyboard is open or an input is focused, blur it first instead of discarding form
+          if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+            document.activeElement.blur();
+            return;
+          }
+          onClose();
+        }
+      }}
     >
       <div
         className="meta-gold-modal-dialog project-edit-modal-dialog"

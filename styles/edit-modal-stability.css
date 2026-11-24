@@ -142,7 +142,23 @@ html body :where(
   }
 }
 
-/* 4. Sticky Modal Header: Always visible at the top of the dialog card */
+/* 4. Sticky Modal Header: Always visible, 100% solid/opaque at the top of the dialog card */
+html body :where(
+  .admin_edit_modal_dialog,
+  .project-edit-modal-dialog,
+  .signal-admin-modal-dialog,
+  .re_admin_modal,
+  .meta-gold-modal-dialog,
+  .dm-card,
+  .request-card-modal-dialog,
+  [class*="modalBackdrop"] > [class*="modal"],
+  [class*="modalOverlay"] > [class*="modal"],
+  [class*="modal"],
+  [class*="dialog"]
+) {
+  padding-top: 0 !important;
+}
+
 html body :where(
   .admin_edit_modal_dialog,
   .project-edit-modal-dialog,
@@ -166,17 +182,20 @@ html body :where(
   [class*="modal-head"]
 ) {
   position: sticky !important;
-  top: -1px !important;
+  top: 0 !important;
   z-index: 50 !important;
-  background: inherit !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
+  background: #0e1116 !important;
+  background-color: #0e1116 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
   width: 100% !important;
   margin-top: 0 !important;
+  margin-bottom: 12px !important;
+  padding-top: 18px !important;
   padding-bottom: 12px !important;
+  border-top-left-radius: 14px !important;
+  border-top-right-radius: 14px !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 

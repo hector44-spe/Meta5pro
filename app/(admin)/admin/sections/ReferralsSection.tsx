@@ -218,7 +218,18 @@ export default function ReferralsSection() {
       {/* Edit Balance Modal */}
       {isModalOpen && selectedUser && typeof document !== "undefined"
         ? createPortal(
-            <div className={`${styles.modalOverlay} project-edit-modal-overlay`} onClick={() => setIsModalOpen(false)}>
+            <div
+              className={`${styles.modalOverlay} project-edit-modal-overlay`}
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+                    document.activeElement.blur();
+                    return;
+                  }
+                  setIsModalOpen(false);
+                }
+              }}
+            >
               <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
                 <div className={styles.modalHeader}>
                   <h3 className={styles.modalTitle}>

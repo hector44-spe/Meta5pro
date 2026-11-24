@@ -12,7 +12,7 @@ html body :where(
   [class*="modalBackdrop"] > [class*="modal"],
   [class*="modalOverlay"] > [class*="modal"]
 ) {
-  padding: clamp(18px, 3vw, 24px) !important;
+  padding: 0 clamp(18px, 3vw, 24px) clamp(18px, 3vw, 24px) !important;
   gap: 18px !important;
 }
 
@@ -177,6 +177,6 @@ body:has(.dashboard-page-container) {
 
 @media (max-width: 420px) {
   html body :where(.project-edit-modal-dialog, [class*="modalBackdrop"] > [class*="modal"], [class*="modalOverlay"] > [class*="modal"]) {
-    padding: 16px 14px calc(18px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 0 14px calc(18px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }

@@ -309,14 +309,18 @@ export default function CopyTradingPage() {
       /* invalid or unavailable cache */
     }
     fetchExperts(hadVisualCache);
-    const refresh = () => fetchExperts(true);
+    const refresh = () => {
+      if (!isEditModalOpen && !deletingExpert) {
+        fetchExperts(true);
+      }
+    };
     const timer = window.setInterval(refresh, 60_000);
     window.addEventListener("focus", refresh);
     return () => {
       window.clearInterval(timer);
       window.removeEventListener("focus", refresh);
     };
-  }, []);
+  }, [isEditModalOpen, deletingExpert]);
 
   const filteredExperts = useMemo(() => {
     if (!searchQuery.trim()) return experts;

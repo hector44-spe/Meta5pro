@@ -363,7 +363,18 @@ export default function CardsSection({
       {/* Edit / Add Modal */}
       {editOption && typeof document !== "undefined"
         ? createPortal(
-            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditOption(null)}>
+            <div
+              className={`${styles.modalBackdrop} project-edit-modal-overlay`}
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !submitting) {
+                  if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+                    document.activeElement.blur();
+                    return;
+                  }
+                  setEditOption(null);
+                }
+              }}
+            >
               <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>{editOption.id ? "Edit Card Tier" : "Add New Card Tier"}</h2>

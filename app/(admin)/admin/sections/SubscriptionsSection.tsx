@@ -527,7 +527,18 @@ export default function SubscriptionsSection({
       {/* Edit / Add Modal */}
       {editPlan && typeof document !== "undefined"
         ? createPortal(
-            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditPlan(null)}>
+            <div
+              className={`${styles.modalBackdrop} project-edit-modal-overlay`}
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !submitting) {
+                  if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+                    document.activeElement.blur();
+                    return;
+                  }
+                  setEditPlan(null);
+                }
+              }}
+            >
               <div className={`${styles.modal} project-edit-modal-dialog`} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHead}>
               <h2>{editPlan.id ? "Edit Subscription Plan" : "Add Subscription Plan"}</h2>

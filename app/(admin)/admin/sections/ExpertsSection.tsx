@@ -773,7 +773,18 @@ export default function ExpertsSection({
       {/* Edit / Add Modal */}
       {editModal && typeof document !== "undefined"
         ? createPortal(
-            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setEditModal(null)}>
+            <div
+              className={`${styles.modalBackdrop} project-edit-modal-overlay`}
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !submitting) {
+                  if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+                    document.activeElement.blur();
+                    return;
+                  }
+                  setEditModal(null);
+                }
+              }}
+            >
               <div
                 className={`${styles.modal} project-edit-modal-dialog`}
                 style={{
@@ -945,7 +956,18 @@ export default function ExpertsSection({
       {/* Place one expert trade across every active copier account. */}
       {copyTrade && typeof document !== "undefined"
         ? createPortal(
-            <div className={`${styles.modalBackdrop} project-edit-modal-overlay`} onClick={() => !submitting && setCopyTrade(null)}>
+            <div
+              className={`${styles.modalBackdrop} project-edit-modal-overlay`}
+              onClick={(e) => {
+                if (e.target === e.currentTarget && !submitting) {
+                  if (typeof document !== "undefined" && document.activeElement instanceof HTMLElement && document.activeElement.matches("input, textarea, select")) {
+                    document.activeElement.blur();
+                    return;
+                  }
+                  setCopyTrade(null);
+                }
+              }}
+            >
               <div
                 className={`${styles.modal} project-edit-modal-dialog`}
                 style={{ width: "100%", maxWidth: "520px", boxSizing: "border-box", padding: "20px" }}
