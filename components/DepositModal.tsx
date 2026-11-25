@@ -429,11 +429,13 @@ export default function DepositModal({
           title: signal?.title,
         });
       } else if (context === "card") {
-        const res = await fetch("/api/cards/request", {
+        const res = await fetch("/api/cards", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            cardType: card?.name || "Regular",
+            action: "request",
+            cardType: card?.title || card?.name || "Regular",
+            cardOptionId: (card as any)?.id,
             currency: selectedToken?.symbol || "USDT",
             network: selectedNetwork,
             txHash: txHash.trim() || undefined,
@@ -446,7 +448,7 @@ export default function DepositModal({
         if (!res.ok) throw new Error(data.error || "Card request deposit failed");
 
         setReceipt({
-          reference: data.card?.ref || `CRD-${Date.now().toString().slice(-6)}`,
+          reference: data.card?.ref || data.newCard?.ref || `CRD-${Date.now().toString().slice(-6)}`,
           units: numAmount,
           symbol: selectedToken?.symbol || "USDT",
           network: selectedNetwork,

@@ -9,11 +9,13 @@ import { encryptSecret } from "@/lib/secret-box";
 
 export const dynamic = "force-dynamic";
 
+import { CardOption, DEFAULT_CARD_OPTIONS } from "@/lib/cards";
+
 export interface UserCard {
   id: string;
   ref: string;
   userId: string;
-  type: "Regular" | "Virtual" | "Physical";
+  type: string;
   cardNumber: string;
   last4: string;
   expiryDate: string;
@@ -106,15 +108,25 @@ export async function GET() {
           : undefined,
     }));
 
+    const optionsSetting = await prisma.appSetting.findUnique({
+      where: { key: "card_options" },
+    });
+    let cardOptions: CardOption[] = DEFAULT_CARD_OPTIONS;
+    if (optionsSetting && Array.isArray(optionsSetting.value) && optionsSetting.value.length > 0) {
+      cardOptions = optionsSetting.value as unknown as CardOption[];
+    }
+
     return NextResponse.json({
       success: true,
       cards,
+      cardOptions,
     });
   } catch (error) {
     console.error("Fetch cards error:", error);
     return NextResponse.json({
       success: true,
       cards: [],
+      cardOptions: DEFAULT_CARD_OPTIONS,
     });
   }
 }
@@ -134,18 +146,42 @@ export async function POST(req: Request) {
       if (!parsed.success) {
         return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid card request" }, { status: 400 });
       }
-      const { cardType: type, cardPin, currency, txHash, receiptUrl, cryptoAddress } = parsed.data;
+      const { cardType: type, cardOptionId, cardPin, currency, txHash, receiptUrl, cryptoAddress, amount } = parsed.data;
       if (!txHash && !receiptUrl) {
         return NextResponse.json({ error: "A transaction hash or uploaded payment proof is required" }, { status: 400 });
       }
 
+      // Fetch active card options to resolve matching fee and details
+      const optionsSetting = await prisma.appSetting.findUnique({
+        where: { key: "card_options" },
+      });
+      let cardOptions: CardOption[] = DEFAULT_CARD_OPTIONS;
+      if (optionsSetting && Array.isArray(optionsSetting.value) && optionsSetting.value.length > 0) {
+        cardOptions = optionsSetting.value as unknown as CardOption[];
+      }
+
+      const matchedOption = cardOptions.find(
+        (o) =>
+          (cardOptionId && o.id === cardOptionId) ||
+          o.name.toLowerCase() === type.toLowerCase() ||
+          o.title.toLowerCase() === type.toLowerCase()
+      );
+
+      const finalCardType = matchedOption ? matchedOption.title || matchedOption.name : type;
+
       // Check if user already has this card type
       const existing = await prisma.card.findFirst({
-        where: { userId: session.userId, type: { equals: type, mode: "insensitive" } },
+        where: {
+          userId: session.userId,
+          OR: [
+            { type: { equals: type, mode: "insensitive" } },
+            { type: { equals: finalCardType, mode: "insensitive" } },
+          ],
+        },
       });
       if (existing) {
         return NextResponse.json(
-          { error: `You already have a ${type} card.` },
+          { error: `You already have a ${finalCardType} card.` },
           { status: 400 },
         );
       }
@@ -155,9 +191,13 @@ export async function POST(req: Request) {
       const masked = `${rawNumber.slice(0, 4)} **** **** ${last4}`;
       const ref = `CRD-${Date.now().toString().slice(-6)}-${crypto.randomInt(100, 1000)}`;
       const cvv = generateCVV();
-      const pinHash = await hashPassword(cardPin);
+      const pinHash = cardPin ? await hashPassword(cardPin) : null;
       const cardSettings = await getSettings("cards");
-      const issuanceFee = cardSettings.issuanceFee;
+      const issuanceFee = matchedOption
+        ? matchedOption.issuanceFee
+        : typeof amount === "number" && amount > 0
+          ? amount
+          : cardSettings.issuanceFee;
 
       // The card and its exact payment record are created together and linked by an immutable reference.
       const card = await atomic(async (tx) => {
@@ -165,7 +205,7 @@ export async function POST(req: Request) {
           data: {
             userId: session.userId,
             ref,
-            type,
+            type: finalCardType,
             cardNumber: masked,
             last4,
             expiryDate: generateExpiry(),
@@ -196,7 +236,7 @@ export async function POST(req: Request) {
         id: card.id,
         ref: card.ref,
         userId: card.userId,
-        type: card.type as "Regular" | "Virtual" | "Physical",
+        type: card.type,
         cardNumber: card.cardNumber,
         last4: card.last4,
         expiryDate: card.expiryDate,
@@ -222,6 +262,7 @@ export async function POST(req: Request) {
           cvv: "***",
         })),
         newCard,
+        cardOptions,
       });
     }
 

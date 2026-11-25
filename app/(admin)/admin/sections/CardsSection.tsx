@@ -16,7 +16,7 @@ import {
   DollarSign,
 } from "lucide-react";
 import styles from "../page.module.css";
-import { CardOption } from "@/app/api/admin/cards/route";
+import { CardOption } from "@/lib/cards";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
 
 const usd = (n: number) =>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, X, CreditCard, Plus, Eye, EyeOff, Settings, ShieldCheck, Truck, Clock, CheckCircle } from "lucide-react";
-import RequestCardModal from "./RequestCardModal";
+import RequestCardModal, { CardTypeOption } from "./RequestCardModal";
 import "@/styles/cards.css";
 
 export interface UserCard {
@@ -49,6 +49,7 @@ function MastercardLogo() {
 
 export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
   const [cards, setCards] = useState<UserCard[]>([]);
+  const [cardOptions, setCardOptions] = useState<CardTypeOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [showRequestModal, setShowRequestModal] = useState(false);
@@ -63,10 +64,19 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
   const fetchCards = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/cards");
+      const res = await fetch("/api/cards", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+        },
+      });
       const data = await res.json();
       if (data.cards) {
         setCards(data.cards);
+      }
+      if (data.cardOptions && Array.isArray(data.cardOptions)) {
+        setCardOptions(data.cardOptions);
       }
     } catch (err) {
       console.error("Error loading cards:", err);
@@ -337,7 +347,7 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
                       <span>Payment Verification Pending</span>
                     </div>
                     <p style={{ margin: 0, fontSize: "12px", color: "rgba(255, 255, 255, 0.7)", lineHeight: 1.45 }}>
-                      Your card issuance fee ($1,000.00) is awaiting administrator confirmation. All card credentials (full card number, CVV, expiry, and PIN) remain securely locked until payment is verified.
+                      Your card issuance fee (${Number(currentCard.issuanceFee || 1000).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}) is awaiting administrator confirmation. All card credentials (full card number, CVV, expiry, and PIN) remain securely locked until payment is verified.
                     </p>
                   </div>
                 )}
@@ -547,6 +557,7 @@ export default function CardsDrawer({ isOpen, onClose }: CardsDrawerProps) {
       <RequestCardModal
         isOpen={showRequestModal}
         onClose={() => setShowRequestModal(false)}
+        cardOptions={cardOptions}
         onSuccess={() => {
           fetchCards();
           showToast("You requested a card successfully!");

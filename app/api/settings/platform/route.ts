@@ -2,12 +2,14 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSettings } from "@/lib/appSettings";
 import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { DEFAULT_CARD_OPTIONS } from "@/lib/cards";
 
 /** Signed-in investor settings, including enabled payment instructions. */
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const [general, deposit, withdrawal, copyExperts, mining, referrals, cards, levels] = await Promise.all([
+  const [general, deposit, withdrawal, copyExperts, mining, referrals, cards, levels, optionsSetting] = await Promise.all([
     getSettings("general"),
     getSettings("deposit"),
     getSettings("withdrawal"),
@@ -16,7 +18,13 @@ export async function GET() {
     getSettings("referrals"),
     getSettings("cards"),
     getSettings("levels"),
+    prisma.appSetting.findUnique({ where: { key: "card_options" } }),
   ]);
+
+  let cardOptions = DEFAULT_CARD_OPTIONS;
+  if (optionsSetting && Array.isArray(optionsSetting.value) && optionsSetting.value.length > 0) {
+    cardOptions = optionsSetting.value as any;
+  }
 
   return NextResponse.json({
     success: true,
@@ -27,6 +35,7 @@ export async function GET() {
       kycRequired: cards.kycRequired,
       issuanceFee: cards.issuanceFee,
       minDepositTotal: cards.minDepositTotal,
+      options: cardOptions,
     },
     deposit: {
       minDeposit: deposit.minDeposit,

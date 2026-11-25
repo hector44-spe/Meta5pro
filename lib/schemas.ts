@@ -24,12 +24,15 @@ export const realEstateInvestmentSchema = z.object({
 
 export const cardRequestSchema = z.object({
   action: z.literal("request").optional(),
-  cardType: z.enum(["Regular", "Virtual", "Physical"]),
-  cardPin: z.string().regex(/^\d{4,6}$/, "PIN must contain 4 to 6 digits"),
-  txHash: z.string().trim().min(16).max(120).optional(),
-  receiptUrl: z.string().trim().max(200).optional(),
+  cardType: z.string().trim().min(1).max(100),
+  cardOptionId: z.string().trim().max(100).optional(),
+  cardPin: z.string().regex(/^\d{4,6}$/, "PIN must contain 4 to 6 digits").optional(),
+  txHash: z.string().trim().min(8).max(120).optional(),
+  receiptUrl: z.string().trim().max(500).optional(),
   currency: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,10}$/).optional(),
   cryptoAddress: z.string().trim().max(160).optional(),
+  network: z.string().trim().max(60).optional(),
+  amount: z.number().positive().optional(),
 }).strict();
 
 export const cardTopupSchema = z.object({

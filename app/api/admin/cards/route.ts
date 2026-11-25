@@ -6,45 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import { atomic, settlePending } from "@/lib/ledger";
 
-export interface CardOption {
-  id: string;
-  name: "Regular" | "Virtual" | "Physical" | string;
-  title: string;
-  kycRequired: boolean;
-  issuanceFee: number;
-  depositTotalMinimum: number | null;
-  enabled: boolean;
-}
-
-const DEFAULT_CARD_OPTIONS: CardOption[] = [
-  {
-    id: "opt_regular",
-    name: "Regular",
-    title: "Regular Card",
-    kycRequired: false,
-    issuanceFee: 1000,
-    depositTotalMinimum: null,
-    enabled: true,
-  },
-  {
-    id: "opt_virtual",
-    name: "Virtual",
-    title: "Virtual Card",
-    kycRequired: true,
-    issuanceFee: 1000,
-    depositTotalMinimum: 10000,
-    enabled: true,
-  },
-  {
-    id: "opt_physical",
-    name: "Physical",
-    title: "Physical Card",
-    kycRequired: true,
-    issuanceFee: 1000,
-    depositTotalMinimum: 50000,
-    enabled: true,
-  },
-];
+import { CardOption, DEFAULT_CARD_OPTIONS } from "@/lib/cards";
 
 export async function GET() {
   try {
@@ -195,6 +157,25 @@ export async function POST(req: Request) {
         create: { key: "card_options", value: updatedOptions as any },
       });
 
+      // Keep legacy general cards.issuanceFee in sync with base card tier
+      try {
+        const baseFee = updatedOptions.find((o) => o.name.toLowerCase() === "regular")?.issuanceFee ?? updatedOptions[0]?.issuanceFee;
+        if (typeof baseFee === "number") {
+          const legacyCardsSetting = await prisma.appSetting.findUnique({ where: { key: "cards" } });
+          if (legacyCardsSetting && typeof legacyCardsSetting.value === "object" && legacyCardsSetting.value !== null) {
+            await prisma.appSetting.update({
+              where: { key: "cards" },
+              data: {
+                value: {
+                  ...(legacyCardsSetting.value as any),
+                  issuanceFee: baseFee,
+                },
+              },
+            });
+          }
+        }
+      } catch {}
+
       return NextResponse.json({ success: true, cardOptions: updatedOptions });
     }
 
@@ -212,6 +193,25 @@ export async function POST(req: Request) {
         update: { value: updatedOptions as any },
         create: { key: "card_options", value: updatedOptions as any },
       });
+
+      // Keep legacy general cards.issuanceFee in sync with base card tier
+      try {
+        const baseFee = updatedOptions.find((o) => o.name.toLowerCase() === "regular")?.issuanceFee ?? updatedOptions[0]?.issuanceFee;
+        if (typeof baseFee === "number") {
+          const legacyCardsSetting = await prisma.appSetting.findUnique({ where: { key: "cards" } });
+          if (legacyCardsSetting && typeof legacyCardsSetting.value === "object" && legacyCardsSetting.value !== null) {
+            await prisma.appSetting.update({
+              where: { key: "cards" },
+              data: {
+                value: {
+                  ...(legacyCardsSetting.value as any),
+                  issuanceFee: baseFee,
+                },
+              },
+            });
+          }
+        }
+      } catch {}
 
       return NextResponse.json({ success: true, cardOptions: updatedOptions });
     }
