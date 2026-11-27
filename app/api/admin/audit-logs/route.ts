@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getSession, isAuthorizedAdminEmail } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export function categorizeAction(action: string): {
+function categorizeAction(action: string): {
   category: "credit" | "debit" | "asset" | "status" | "verification" | "settings" | "notification" | "system";
   label: string;
 } {
