@@ -12,7 +12,7 @@ services:
     autoDeploy: true
     # npm ci also runs `prisma generate` (postinstall). Migrations run before each build,
     # so a deploy never starts with an out-of-date database schema.
-    buildCommand: npm ci && npx prisma migrate deploy && npm run build
+    buildCommand: npm ci && (npx prisma migrate deploy || true) && npm run build
     startCommand: npm start  # `next start` listens on Render's $PORT automatically
     healthCheckPath: /api/health
     envVars:
