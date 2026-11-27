@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { getSession, isAuthorizedAdminEmail } from "@/lib/auth";
-import { sendWelcomeEmail } from "@/lib/mail";
+import { sendWelcomeEmail, getLastMailError } from "@/lib/mail";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
@@ -29,9 +29,10 @@ export async function POST(
     const sent = await sendWelcomeEmail(user.email, firstName);
 
     if (!sent) {
+      const detail = getLastMailError();
       return NextResponse.json({
         success: false,
-        error: "Email delivery failed or timed out. Check your SMTP / API settings.",
+        error: detail || "Email delivery failed or timed out. Check your SMTP / API settings.",
       }, { status: 502 });
     }
 

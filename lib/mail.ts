@@ -206,6 +206,12 @@ export interface SendMailOptions {
   from?: string;
 }
 
+let lastMailError: string = "";
+
+export function getLastMailError(): string {
+  return lastMailError;
+}
+
 /** Sends an email. Never throws: failures are logged so they can't break the request that triggered them. */
 export async function sendMail(
   to: string | string[],
@@ -213,7 +219,9 @@ export async function sendMail(
   html: string,
   options?: SendMailOptions,
 ): Promise<boolean> {
+  lastMailError = "";
   if (!mailConfigured()) {
+    lastMailError = "No mail provider configured (ZOHO_SMTP or RESEND_API_KEY required).";
     if (process.env.NODE_ENV !== "production") {
       console.info(`[mail:dev] To: ${Array.isArray(to) ? to.join(", ") : to} | Subject: ${subject}\n${html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`);
     } else {
@@ -240,6 +248,7 @@ export async function sendMail(
   const user = process.env.ZOHO_SMTP_USER?.trim() || "";
   const pass = process.env.ZOHO_SMTP_PASS?.trim() || "";
   if (!user || !pass) {
+    lastMailError = "Zoho SMTP credentials not set and HTTPS mail API (RESEND_API_KEY) not provided.";
     console.warn("[mail] Zoho SMTP not configured and HTTP mail API failed or not provided; email skipped:", subject);
     return false;
   }
@@ -269,7 +278,9 @@ export async function sendMail(
       });
       return true;
     } catch (err587: any) {
-      console.error(`[mail] send failed on both ports 465 and 587 for "${subject}":`, err587?.message || err587);
+      const msg = err587?.message || String(err587);
+      lastMailError = `SMTP ports 465 & 587 timed out (${msg}). Render Free blocks outbound SMTP ports 465/587. Upgrade Render instance to Starter or set RESEND_API_KEY.`;
+      console.error(`[mail] send failed on both ports 465 and 587 for "${subject}":`, lastMailError);
       return false;
     }
   }
