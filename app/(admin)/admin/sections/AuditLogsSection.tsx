@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import styles from "../page.module.css";
+import cStyles from "./AuditLogsSection.module.css";
 
 interface AuditLogItem {
   id: string;
@@ -200,30 +201,19 @@ export default function AuditLogsSection({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+    <div className={cStyles.container}>
       {/* Top Banner with Admin Switcher */}
-      <section className={styles.card} style={{ padding: "20px 24px" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <div
-              style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "10px",
-                backgroundColor: "rgba(71, 99, 240, 0.16)",
-                color: "var(--a-accent)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
+      <section className={cStyles.bannerCard}>
+        <div className={cStyles.bannerHeader}>
+          <div className={cStyles.bannerInfo}>
+            <div className={cStyles.bannerIcon}>
               <ShieldCheck size={24} />
             </div>
             <div>
-              <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--a-text)" }}>
+              <div className={cStyles.bannerTitle}>
                 Audit Log — Account Specific
               </div>
-              <div style={{ fontSize: "13px", color: "var(--a-muted)", marginTop: "2px" }}>
+              <div className={cStyles.bannerSub}>
                 Tracking actions executed by{" "}
                 <span style={{ color: "#38bdf8", fontWeight: 700 }}>
                   {selectedAdmin === "all" ? "All Admin Accounts" : selectedAdmin}
@@ -257,33 +247,23 @@ export default function AuditLogsSection({
         </div>
 
         {/* Admin Account Switcher Tabs */}
-        <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--a-border)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "12px", color: "var(--a-muted)", fontWeight: 600, marginRight: "4px" }}>
+        <div className={cStyles.adminSwitcherWrap}>
+          <span className={cStyles.adminSwitcherLabel}>
             View Admin:
           </span>
           <button
             type="button"
             onClick={() => handleAdminSwitch("support@meta5vip.com")}
-            className={selectedAdmin === "support@meta5vip.com" ? styles.btnPrimarySm : styles.btnGhostSm}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              borderRadius: "6px",
-              padding: "5px 12px",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
+            className={`${cStyles.adminPill} ${
+              selectedAdmin === "support@meta5vip.com" ? cStyles.adminPillActive : cStyles.adminPillInactive
+            }`}
           >
             <User size={13} />
             <span>support@meta5vip.com</span>
             <span
-              style={{
-                backgroundColor: selectedAdmin === "support@meta5vip.com" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)",
-                padding: "1px 6px",
-                borderRadius: "10px",
-                fontSize: "11px",
-              }}
+              className={`${cStyles.badgeCount} ${
+                selectedAdmin === "support@meta5vip.com" ? cStyles.badgeCountActive : cStyles.badgeCountInactive
+              }`}
             >
               {adminAccounts.find((a) => a.email === "support@meta5vip.com")?.count ?? 20}
             </span>
@@ -292,26 +272,16 @@ export default function AuditLogsSection({
           <button
             type="button"
             onClick={() => handleAdminSwitch("orezimeabed2006@gmail.com")}
-            className={selectedAdmin === "orezimeabed2006@gmail.com" ? styles.btnPrimarySm : styles.btnGhostSm}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              borderRadius: "6px",
-              padding: "5px 12px",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
+            className={`${cStyles.adminPill} ${
+              selectedAdmin === "orezimeabed2006@gmail.com" ? cStyles.adminPillActive : cStyles.adminPillInactive
+            }`}
           >
             <User size={13} />
             <span>orezimeabed2006@gmail.com</span>
             <span
-              style={{
-                backgroundColor: selectedAdmin === "orezimeabed2006@gmail.com" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)",
-                padding: "1px 6px",
-                borderRadius: "10px",
-                fontSize: "11px",
-              }}
+              className={`${cStyles.badgeCount} ${
+                selectedAdmin === "orezimeabed2006@gmail.com" ? cStyles.badgeCountActive : cStyles.badgeCountInactive
+              }`}
             >
               {adminAccounts.find((a) => a.email === "orezimeabed2006@gmail.com")?.count ?? 1}
             </span>
@@ -320,16 +290,9 @@ export default function AuditLogsSection({
           <button
             type="button"
             onClick={() => handleAdminSwitch("all")}
-            className={selectedAdmin === "all" ? styles.btnPrimarySm : styles.btnGhostSm}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              borderRadius: "6px",
-              padding: "5px 12px",
-              fontSize: "12px",
-              fontWeight: 600,
-            }}
+            className={`${cStyles.adminPill} ${
+              selectedAdmin === "all" ? cStyles.adminPillActive : cStyles.adminPillInactive
+            }`}
           >
             <Users size={13} />
             <span>All Admins</span>
@@ -337,44 +300,35 @@ export default function AuditLogsSection({
         </div>
 
         {/* Quick KPI stats */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
-            gap: "12px",
-            marginTop: "16px",
-            paddingTop: "14px",
-            borderTop: "1px solid var(--a-border)",
-          }}
-        >
-          <div style={{ background: "rgba(255,255,255,0.02)", padding: "12px 14px", borderRadius: "8px", border: "1px solid var(--a-border)" }}>
-            <div style={{ fontSize: "11px", color: "var(--a-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Total Actions</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "4px", color: "#ffffff" }}>{stats.total}</div>
+        <div className={cStyles.statsGrid}>
+          <div className={cStyles.statCard}>
+            <div className={cStyles.statTitle}>Total Actions</div>
+            <div className={cStyles.statValue} style={{ color: "#ffffff" }}>{stats.total}</div>
           </div>
-          <div style={{ background: "rgba(255,255,255,0.02)", padding: "12px 14px", borderRadius: "8px", border: "1px solid var(--a-border)" }}>
-            <div style={{ fontSize: "11px", color: "var(--a-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Credits & Assets</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "4px", color: "#10b981" }}>{stats.credits}</div>
+          <div className={cStyles.statCard}>
+            <div className={cStyles.statTitle}>Credits & Assets</div>
+            <div className={cStyles.statValue} style={{ color: "#10b981" }}>{stats.credits}</div>
           </div>
-          <div style={{ background: "rgba(255,255,255,0.02)", padding: "12px 14px", borderRadius: "8px", border: "1px solid var(--a-border)" }}>
-            <div style={{ fontSize: "11px", color: "var(--a-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Debits & Returns</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "4px", color: "#ff4d5e" }}>{stats.debits}</div>
+          <div className={cStyles.statCard}>
+            <div className={cStyles.statTitle}>Debits & Returns</div>
+            <div className={cStyles.statValue} style={{ color: "#ff4d5e" }}>{stats.debits}</div>
           </div>
-          <div style={{ background: "rgba(255,255,255,0.02)", padding: "12px 14px", borderRadius: "8px", border: "1px solid var(--a-border)" }}>
-            <div style={{ fontSize: "11px", color: "var(--a-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Settings & Rules</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "4px", color: "#f5a524" }}>{stats.settings}</div>
+          <div className={cStyles.statCard}>
+            <div className={cStyles.statTitle}>Settings & Rules</div>
+            <div className={cStyles.statValue} style={{ color: "#f5a524" }}>{stats.settings}</div>
           </div>
-          <div style={{ background: "rgba(255,255,255,0.02)", padding: "12px 14px", borderRadius: "8px", border: "1px solid var(--a-border)" }}>
-            <div style={{ fontSize: "11px", color: "var(--a-muted)", textTransform: "uppercase", letterSpacing: "0.5px" }}>KYC & Status</div>
-            <div style={{ fontSize: "20px", fontWeight: 700, marginTop: "4px", color: "#38bdf8" }}>{stats.verifs}</div>
+          <div className={cStyles.statCard}>
+            <div className={cStyles.statTitle}>KYC & Status</div>
+            <div className={cStyles.statValue} style={{ color: "#38bdf8" }}>{stats.verifs}</div>
           </div>
         </div>
       </section>
 
-      {/* Main Table Card */}
-      <section className={styles.card}>
+      {/* Main Table & Mobile Cards Card */}
+      <section className={cStyles.tableCard}>
         {/* Filters bar */}
-        <div className={styles.filters} style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
-          <label className={styles.searchBox} style={{ flex: "1 1 280px" }}>
+        <div className={cStyles.filterBar}>
+          <label className={cStyles.searchBoxWrap}>
             <Search size={16} />
             <input
               type="text"
@@ -384,22 +338,12 @@ export default function AuditLogsSection({
             />
           </label>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div className={cStyles.filterSelectWrap}>
             <Filter size={15} style={{ color: "var(--a-muted)" }} />
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className={styles.searchBox}
-              style={{
-                background: "var(--a-panel)",
-                color: "var(--a-text)",
-                border: "1px solid var(--a-border)",
-                borderRadius: "8px",
-                padding: "8px 12px",
-                fontSize: "13px",
-                outline: "none",
-                cursor: "pointer",
-              }}
+              className={cStyles.selectDropdown}
             >
               <option value="ALL">All Categories</option>
               <option value="CREDIT">Balance Credits</option>
@@ -413,9 +357,9 @@ export default function AuditLogsSection({
           </div>
         </div>
 
-        {/* Table content */}
+        {/* Content State */}
         {loading && logs.length === 0 ? (
-          <div className={styles.tableWrap} style={{ minHeight: "240px", padding: "20px" }}>
+          <div style={{ minHeight: "240px", padding: "20px", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "180px", color: "var(--a-muted)" }}>
               <RefreshCw size={24} className={styles.spin} />
               <span style={{ marginLeft: "10px" }}>Loading audit records for {selectedAdmin}...</span>
@@ -432,140 +376,255 @@ export default function AuditLogsSection({
             </div>
           </div>
         ) : (
-          <div className={styles.tableWrap} style={{ minHeight: "320px" }}>
-            <table className={styles.table} style={{ minWidth: "960px" }}>
-              <thead>
-                <tr>
-                  <th style={{ minWidth: "160px" }}>Timestamp</th>
-                  <th style={{ minWidth: "170px" }}>Action</th>
-                  {selectedAdmin === "all" && <th style={{ minWidth: "160px" }}>Admin</th>}
-                  <th style={{ minWidth: "200px" }}>Target User / Scope</th>
-                  <th style={{ minWidth: "320px" }}>Details & Note</th>
-                  <th style={{ minWidth: "110px", textAlign: "right" }}>IP Address</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLogs.map((log) => {
-                  const time = formatTimestamp(log.createdAt);
-                  return (
-                    <tr key={log.id}>
-                      {/* Timestamp */}
-                      <td>
-                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                          <span style={{ fontWeight: 600, color: "var(--a-text)", fontSize: "13px" }}>
-                            {time.formatted}
-                          </span>
-                          <span style={{ fontSize: "11px", color: "var(--a-muted)" }}>{time.relative}</span>
-                        </div>
-                      </td>
-
-                      {/* Action Badge */}
-                      <td>{renderBadge(log)}</td>
-
-                      {/* Admin Account (when viewing all) */}
-                      {selectedAdmin === "all" && (
+          <>
+            {/* 1. Desktop Table View (>= 768px) */}
+            <div className={cStyles.desktopTableWrap}>
+              <table className={styles.table} style={{ minWidth: "960px", width: "100%" }}>
+                <thead>
+                  <tr>
+                    <th style={{ minWidth: "160px" }}>Timestamp</th>
+                    <th style={{ minWidth: "170px" }}>Action</th>
+                    {selectedAdmin === "all" && <th style={{ minWidth: "160px" }}>Admin</th>}
+                    <th style={{ minWidth: "200px" }}>Target User / Scope</th>
+                    <th style={{ minWidth: "320px" }}>Details & Note</th>
+                    <th style={{ minWidth: "110px", textAlign: "right" }}>IP Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredLogs.map((log) => {
+                    const time = formatTimestamp(log.createdAt);
+                    return (
+                      <tr key={log.id}>
+                        {/* Timestamp */}
                         <td>
-                          <span style={{ fontSize: "12px", fontWeight: 600, color: "#38bdf8" }}>
-                            {log.adminEmail}
-                          </span>
+                          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                            <span style={{ fontWeight: 600, color: "var(--a-text)", fontSize: "13px" }}>
+                              {time.formatted}
+                            </span>
+                            <span style={{ fontSize: "11px", color: "var(--a-muted)" }}>{time.relative}</span>
+                          </div>
                         </td>
-                      )}
 
-                      {/* Target User / Target Scope */}
-                      <td>
-                        {log.targetUser ? (
-                          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                            <div
+                        {/* Action Badge */}
+                        <td>{renderBadge(log)}</td>
+
+                        {/* Admin Account (when viewing all) */}
+                        {selectedAdmin === "all" && (
+                          <td>
+                            <span style={{ fontSize: "12px", fontWeight: 600, color: "#38bdf8" }}>
+                              {log.adminEmail}
+                            </span>
+                          </td>
+                        )}
+
+                        {/* Target User / Target Scope */}
+                        <td>
+                          {log.targetUser ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                              <div
+                                style={{
+                                  width: "28px",
+                                  height: "28px",
+                                  borderRadius: "50%",
+                                  backgroundColor: "rgba(255, 255, 255, 0.08)",
+                                  color: "var(--a-text)",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  fontSize: "11px",
+                                  fontWeight: 700,
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {(log.targetUser.email[0] || "U").toUpperCase()}
+                              </div>
+                              <div style={{ minWidth: 0, overflow: "hidden" }}>
+                                <div
+                                  style={{
+                                    fontWeight: 600,
+                                    fontSize: "13px",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {log.targetUser.fullName || log.targetUser.username || "Investor"}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    color: "var(--a-muted)",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {log.targetUser.email}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <span
                               style={{
-                                width: "28px",
-                                height: "28px",
-                                borderRadius: "50%",
-                                backgroundColor: "rgba(255, 255, 255, 0.08)",
-                                color: "var(--a-text)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: "11px",
-                                fontWeight: 700,
-                                flexShrink: 0,
+                                fontSize: "12px",
+                                color: "var(--a-faint)",
+                                fontStyle: "italic",
                               }}
                             >
-                              {(log.targetUser.email[0] || "U").toUpperCase()}
-                            </div>
-                            <div style={{ minWidth: 0, overflow: "hidden" }}>
-                              <div
-                                style={{
-                                  fontWeight: 600,
-                                  fontSize: "13px",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {log.targetUser.fullName || log.targetUser.username || "Investor"}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: "12px",
-                                  color: "var(--a-muted)",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {log.targetUser.email}
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <span
+                              Platform / System Wide
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Details & Notes */}
+                        <td>
+                          <div
                             style={{
-                              fontSize: "12px",
-                              color: "var(--a-faint)",
-                              fontStyle: "italic",
+                              fontSize: "13px",
+                              lineHeight: "1.45",
+                              color: "var(--a-text)",
+                              wordBreak: "break-word",
                             }}
                           >
-                            Platform / System Wide
-                          </span>
-                        )}
-                      </td>
+                            {log.details}
+                          </div>
+                        </td>
 
-                      {/* Details & Notes */}
-                      <td>
+                        {/* IP Address */}
+                        <td style={{ textAlign: "right" }}>
+                          <span
+                            style={{
+                              fontFamily: "monospace",
+                              fontSize: "12px",
+                              color: "var(--a-muted)",
+                              backgroundColor: "rgba(255,255,255,0.04)",
+                              padding: "2px 6px",
+                              borderRadius: "4px",
+                              border: "1px solid var(--a-border)",
+                            }}
+                          >
+                            {log.ipAddress}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* 2. Mobile Card View (< 768px) */}
+            <div className={cStyles.mobileListWrap}>
+              {filteredLogs.map((log) => {
+                const time = formatTimestamp(log.createdAt);
+                return (
+                  <div key={log.id} className={cStyles.mobileCard}>
+                    {/* Header: Action badge & Timestamp */}
+                    <div className={cStyles.mobileCardHeader}>
+                      <div>{renderBadge(log)}</div>
+                      <div className={cStyles.mobileCardTime}>
+                        <div style={{ fontWeight: 600, color: "var(--a-text)" }}>{time.formatted}</div>
+                        <div style={{ color: "var(--a-muted)", fontSize: "10px" }}>{time.relative}</div>
+                      </div>
+                    </div>
+
+                    {/* Target User or System Scope */}
+                    {log.targetUser ? (
+                      <div className={cStyles.mobileCardUser}>
                         <div
                           style={{
-                            fontSize: "13px",
-                            lineHeight: "1.45",
+                            width: "28px",
+                            height: "28px",
+                            borderRadius: "50%",
+                            backgroundColor: "rgba(255, 255, 255, 0.08)",
                             color: "var(--a-text)",
-                            wordBreak: "break-word",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            flexShrink: 0,
                           }}
                         >
-                          {log.details}
+                          {(log.targetUser.email[0] || "U").toUpperCase()}
                         </div>
-                      </td>
+                        <div style={{ minWidth: 0, overflow: "hidden", flex: 1 }}>
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              fontSize: "13px",
+                              color: "var(--a-text)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {log.targetUser.fullName || log.targetUser.username || "Investor"}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "11px",
+                              color: "var(--a-muted)",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {log.targetUser.email}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          color: "var(--a-faint)",
+                          fontStyle: "italic",
+                          padding: "4px 8px",
+                          background: "rgba(255,255,255,0.02)",
+                          borderRadius: "4px",
+                          display: "inline-block",
+                        }}
+                      >
+                        Platform / System Wide
+                      </div>
+                    )}
 
-                      {/* IP Address */}
-                      <td style={{ textAlign: "right" }}>
-                        <span
-                          style={{
-                            fontFamily: "monospace",
-                            fontSize: "12px",
-                            color: "var(--a-muted)",
-                            backgroundColor: "rgba(255,255,255,0.04)",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                            border: "1px solid var(--a-border)",
-                          }}
-                        >
-                          {log.ipAddress}
+                    {/* Details box */}
+                    <div className={cStyles.mobileCardDetails}>
+                      {log.details}
+                    </div>
+
+                    {/* Footer: Admin & IP */}
+                    <div className={cStyles.mobileCardFooter}>
+                      {selectedAdmin === "all" ? (
+                        <span style={{ fontSize: "11px", fontWeight: 600, color: "#38bdf8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "160px" }}>
+                          {log.adminEmail}
                         </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      ) : (
+                        <span style={{ fontSize: "11px", color: "var(--a-muted)" }}>
+                          Admin: <strong style={{ color: "#38bdf8" }}>{log.adminEmail.split("@")[0]}</strong>
+                        </span>
+                      )}
+                      <span
+                        style={{
+                          fontFamily: "monospace",
+                          fontSize: "11px",
+                          color: "var(--a-muted)",
+                          backgroundColor: "rgba(255,255,255,0.04)",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                          border: "1px solid var(--a-border)",
+                        }}
+                      >
+                        {log.ipAddress}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </section>
     </div>
