@@ -22,9 +22,108 @@ let transporter465: Transporter | null = null;
 let transporter587: Transporter | null = null;
 
 export function mailConfigured(): boolean {
+  if (process.env.RESEND_API_KEY?.trim()) return true;
+  if (process.env.BREVO_API_KEY?.trim()) return true;
   const user = process.env.ZOHO_SMTP_USER?.trim();
   const pass = process.env.ZOHO_SMTP_PASS?.trim();
   return Boolean(user && pass);
+}
+
+async function sendViaResend(
+  to: string | string[],
+  subject: string,
+  html: string,
+  from?: string,
+  attachments?: MailAttachment[],
+): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) return false;
+
+  const toList = Array.isArray(to) ? to : [to];
+  const senderUser = process.env.ZOHO_SMTP_USER?.trim() || "support@meta5vip.com";
+  const defaultSender = `"${appName()}" <${senderUser}>`;
+  const senderFrom = from || process.env.MAIL_FROM || defaultSender;
+
+  const payload: Record<string, any> = {
+    from: senderFrom,
+    to: toList,
+    subject,
+    html,
+  };
+
+  if (attachments && attachments.length > 0) {
+    payload.attachments = attachments.map((att) => ({
+      filename: att.filename,
+      content: att.content
+        ? Buffer.isBuffer(att.content)
+          ? att.content.toString("base64")
+          : Buffer.from(att.content).toString("base64")
+        : undefined,
+      path: att.path,
+    }));
+  }
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`[mail:resend] API error ${res.status}: ${errText}`);
+      return false;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    console.info(`[mail:resend] Email dispatched successfully to ${toList.join(", ")} (id: ${data?.id})`);
+    return true;
+  } catch (err: any) {
+    console.error("[mail:resend] Network error:", err?.message || err);
+    return false;
+  }
+}
+
+async function sendViaBrevo(
+  to: string | string[],
+  subject: string,
+  html: string,
+  _from?: string,
+): Promise<boolean> {
+  const apiKey = process.env.BREVO_API_KEY?.trim();
+  if (!apiKey) return false;
+  const toList = (Array.isArray(to) ? to : [to]).map((email) => ({ email }));
+  const senderEmail = process.env.ZOHO_SMTP_USER?.trim() || "support@meta5vip.com";
+  const senderName = appName();
+
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: toList,
+        subject,
+        htmlContent: html,
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      console.error(`[mail:brevo] API error ${res.status}: ${errText}`);
+      return false;
+    }
+    return true;
+  } catch (err: any) {
+    console.error("[mail:brevo] Network error:", err?.message || err);
+    return false;
+  }
 }
 
 function getTransporter(port: 465 | 587 = 465): Transporter {
@@ -118,12 +217,33 @@ export async function sendMail(
     if (process.env.NODE_ENV !== "production") {
       console.info(`[mail:dev] To: ${Array.isArray(to) ? to.join(", ") : to} | Subject: ${subject}\n${html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()}`);
     } else {
-      console.warn("[mail] ZOHO_SMTP_USER / ZOHO_SMTP_PASS not set; email skipped:", subject);
+      console.warn("[mail] Neither RESEND_API_KEY, BREVO_API_KEY, nor Zoho SMTP configured; email skipped:", subject);
     }
     return false;
   }
 
+  // 1. Primary HTTPS provider: Resend (Render Free compatible over HTTPS port 443)
+  if (process.env.RESEND_API_KEY?.trim()) {
+    const ok = await sendViaResend(to, subject, html, options?.from, options?.attachments);
+    if (ok) return true;
+    console.warn(`[mail] Resend dispatch failed for "${subject}", checking secondary transports...`);
+  }
+
+  // 2. Secondary HTTPS provider: Brevo (Render Free compatible over HTTPS port 443)
+  if (process.env.BREVO_API_KEY?.trim()) {
+    const ok = await sendViaBrevo(to, subject, html, options?.from);
+    if (ok) return true;
+    console.warn(`[mail] Brevo dispatch failed for "${subject}", checking SMTP...`);
+  }
+
+  // 3. SMTP provider (Zoho Mail - works when outbound SMTP ports 465/587 are open, e.g. on Render Starter plan)
   const user = process.env.ZOHO_SMTP_USER?.trim() || "";
+  const pass = process.env.ZOHO_SMTP_PASS?.trim() || "";
+  if (!user || !pass) {
+    console.warn("[mail] Zoho SMTP not configured and HTTP mail API failed or not provided; email skipped:", subject);
+    return false;
+  }
+
   const from = options?.from || process.env.MAIL_FROM || `"${appName()}" <${user}>`;
 
   // First attempt on SSL port 465

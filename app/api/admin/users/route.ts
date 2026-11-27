@@ -12,7 +12,7 @@ export async function GET() {
       return NextResponse.json({ error: "Forbidden: Super Admin access required" }, { status: 403 });
     }
 
-    const [rows, deposits, withdrawals, assetBalances, priceSnapshot] = await Promise.all([
+    const [rows, deposits, withdrawals, assetBalances, priceSnapshot, approvedVerifications] = await Promise.all([
       prisma.user.findMany({
         orderBy: { createdAt: "desc" },
         select: {
@@ -32,7 +32,13 @@ export async function GET() {
       }),
       prisma.assetBalance.findMany({ select: { userId: true, symbol: true, amount: true } }),
       getPrices(),
+      prisma.verificationSubmission.findMany({
+        where: { status: "APPROVED" },
+        select: { userId: true },
+      }),
     ]);
+
+    const verifiedUserIds = new Set(approvedVerifications.map((v) => v.userId));
 
     const key = (userId: string, symbol: string) => `${userId}:${symbol.toUpperCase()}`;
     const externalUnits = new Map<string, number>();
@@ -79,6 +85,7 @@ export async function GET() {
       const portfolioBalance = Math.max(0, mainBalance + holdingsValue - externalBook);
       return {
         ...u,
+        isVerified: verifiedUserIds.has(u.id),
         mainBalance,
         portfolioBalance: Math.round(portfolioBalance * 100) / 100,
         holdingsValue: Math.round(holdingsValue * 100) / 100,

@@ -30,16 +30,24 @@ export async function GET() {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
-    const latestVerification = await prisma.verificationSubmission.findFirst({
-      where: { userId: session.userId },
-      orderBy: { createdAt: "desc" },
-      select: { status: true },
-    });
+    const [latestVerification, approvedVerification] = await Promise.all([
+      prisma.verificationSubmission.findFirst({
+        where: { userId: session.userId },
+        orderBy: { createdAt: "desc" },
+        select: { status: true },
+      }),
+      prisma.verificationSubmission.findFirst({
+        where: { userId: session.userId, status: "APPROVED" },
+        select: { id: true },
+      }),
+    ]);
+
+    const isVerified = Boolean(approvedVerification) || latestVerification?.status === "APPROVED";
 
     const userSafe = {
       ...user,
-      verificationStatus: latestVerification?.status ?? "UNVERIFIED",
-      isVerified: latestVerification?.status === "APPROVED",
+      verificationStatus: isVerified ? "APPROVED" : (latestVerification?.status ?? "UNVERIFIED"),
+      isVerified,
       wallet: user.wallet
         ? {
             ...user.wallet,

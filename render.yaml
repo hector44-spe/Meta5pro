@@ -34,6 +34,8 @@ services:
         sync: false
       - key: NEXT_PUBLIC_APP_NAME
         value: Meta Gold 5
+      - key: RESEND_API_KEY
+        sync: false
       - key: ZOHO_SMTP_USER
         sync: false
       - key: ZOHO_SMTP_PASS

@@ -44,6 +44,7 @@ import {
   ScanFace,
   Snowflake,
   Key,
+  Mail,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -108,6 +109,7 @@ interface AdminUser {
   totalDeposited: number;
   totalWithdrawn: number;
   withdrawalCode?: string | null;
+  isVerified?: boolean;
 }
 
 const ADMIN_ASSET_OPTIONS = [
@@ -1303,6 +1305,45 @@ function UsersSection({
     }
   };
 
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [welcomeBusyId, setWelcomeBusyId] = useState<string | null>(null);
+
+  const toggleVerifyUser = async (u: AdminUser) => {
+    const next = !u.isVerified;
+    setVerifyingId(u.id);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/verify`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verified: next }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update verification status");
+      flash("ok", next ? `User ${u.fullName || u.email} is now verified.` : `Verification revoked for ${u.fullName || u.email}.`);
+      await onChanged();
+    } catch (err: any) {
+      flash("error", err?.message || "Failed to update verification");
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
+  const resendWelcomeEmail = async (u: AdminUser) => {
+    setWelcomeBusyId(u.id);
+    try {
+      const res = await fetch(`/api/admin/users/${u.id}/welcome-email`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send welcome email");
+      flash("ok", data.message || `Welcome email sent to ${u.email}`);
+    } catch (err: any) {
+      flash("error", err?.message || "Failed to send welcome email");
+    } finally {
+      setWelcomeBusyId(null);
+    }
+  };
+
   return (
     <>
       <section className={styles.card}>
@@ -1336,7 +1377,7 @@ function UsersSection({
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
-                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
+                  <th style={{ minWidth: "260px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1377,7 +1418,7 @@ function UsersSection({
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
-                  <th style={{ minWidth: "180px", textAlign: "right" }}>Actions</th>
+                  <th style={{ minWidth: "260px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1387,13 +1428,48 @@ function UsersSection({
                       <div className={styles.userCell}>
                         <div className={styles.userAvatar}>{(u.email[0] || "U").toUpperCase()}</div>
                         <div style={{ minWidth: 0, overflow: "hidden" }}>
-                          <div style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.fullName || u.username}</div>
+                          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {u.fullName || u.username}
+                            </span>
+                            {u.isVerified && (
+                              <span
+                                title="Verified Account"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: 15,
+                                  height: 15,
+                                  borderRadius: "50%",
+                                  backgroundColor: "#01b28b",
+                                  color: "#ffffff",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <CheckCircle2 size={12} strokeWidth={2.5} />
+                              </span>
+                            )}
+                          </div>
                           <div className={styles.faint} style={{ fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</div>
                         </div>
                       </div>
                     </td>
                     <td>{u.role === "ADMIN" ? <span className={`${styles.pill} ${styles.pillBlue}`}>Admin</span> : "Investor"}</td>
-                    <td><StatusPill status={u.status} /></td>
+                    <td>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <StatusPill status={u.status} />
+                        {u.isVerified ? (
+                          <span style={{ fontSize: "11px", color: "#01b28b", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                            <CheckCircle2 size={11} strokeWidth={2.5} /> Verified
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: "11px", color: "var(--a-muted)", fontWeight: 500 }}>
+                            Unverified
+                          </span>
+                        )}
+                      </div>
+                    </td>
                     <td className={`${styles.right} ${styles.mono} ${styles.strong}`}>
                       <div>{usd(u.portfolioBalance ?? u.mainBalance)}</div>
                       {Number(u.portfolioBalance ?? 0) !== Number(u.mainBalance ?? 0) && (
@@ -1407,6 +1483,25 @@ function UsersSection({
                     <td className={styles.muted}>{new Date(u.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
                     <td style={{ textAlign: "right" }}>
                       <div className={styles.rowActions}>
+                        <button
+                          type="button"
+                          className={u.isVerified ? styles.btnSuccessSm : styles.btnGhostSm}
+                          onClick={() => toggleVerifyUser(u)}
+                          disabled={verifyingId === u.id}
+                          title={u.isVerified ? "Revoke account verification" : "Approve account verification"}
+                          style={u.isVerified ? { backgroundColor: "rgba(1, 178, 139, 0.15)", color: "#01b28b", borderColor: "rgba(1, 178, 139, 0.3)" } : {}}
+                        >
+                          <CheckCircle2 size={14} /> {verifyingId === u.id ? "Saving..." : u.isVerified ? "Verified" : "Verify"}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnGhostSm}
+                          onClick={() => resendWelcomeEmail(u)}
+                          disabled={welcomeBusyId === u.id}
+                          title={`Resend welcome email to ${u.email}`}
+                        >
+                          <Mail size={14} /> {welcomeBusyId === u.id ? "Sending..." : "Welcome"}
+                        </button>
                         <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
                           <Bell size={14} /> Notify
                         </button>

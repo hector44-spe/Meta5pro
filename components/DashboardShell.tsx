@@ -39,6 +39,8 @@ import {
   Menu,
   SquarePlus,
   SquareMinus,
+  Check,
+  CheckCircle2,
 } from "lucide-react";
 import "@/styles/dashboard.css";
 import DepositModal from "@/components/DepositModal";
@@ -101,6 +103,41 @@ interface DashboardContextType {
   refreshNotifications: () => void;
   isFrozen: boolean;
   userStatus: string;
+  isVerified: boolean;
+  refreshUser: () => void;
+}
+
+export function VerifiedBadge({ size = 15 }: { size?: number }) {
+  return (
+    <span
+      title="Verified Account"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: "50%",
+        backgroundColor: "#01b28b",
+        color: "#ffffff",
+        flexShrink: 0,
+        boxShadow: "0 0 6px rgba(1, 178, 139, 0.4)",
+      }}
+    >
+      <svg
+        width={Math.round(size * 0.65)}
+        height={Math.round(size * 0.65)}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+    </span>
+  );
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -224,6 +261,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [realBalance, setRealBalance] = useState<number>(0);
   const [userRefCode, setUserRefCode] = useState<string>("vip-trader");
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
 
   // Sync authenticated trader profile to Zoho SalesIQ
   useEffect(() => {
@@ -390,6 +428,9 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       ]);
       if (res.ok) {
         const data = await res.json();
+        if (data.user?.isVerified !== undefined) {
+          setIsVerified(Boolean(data.user.isVerified));
+        }
         if (data.user?.wallet?.mainBalance !== undefined) {
           setRealBalance(Number(data.user.wallet.mainBalance));
         }
@@ -574,6 +615,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     refreshNotifications: fetchNotifications,
     isFrozen,
     userStatus,
+    isVerified,
+    refreshUser: fetchBalance,
   };
 
   return (
@@ -592,8 +635,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             >
               <div className="user-avatar">{initials}</div>
               <div className="user-meta">
-                <p>{displayName}</p>
-                <p>Real account</p>
+                <p style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span>{displayName}</span>
+                  {isVerified && <VerifiedBadge size={14} />}
+                </p>
+                <p>{isVerified ? "Verified Account" : "Real account"}</p>
               </div>
             </div>
             <div className="dashboard-mobile-menu-buttons">
@@ -1504,24 +1550,49 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                     fontWeight: 600,
                     color: "#fff",
                     lineHeight: 1.2,
-                  }}
-                >
-                  {displayName}
-                </div>
-                <div
-                  style={{
-                    display: "inline-flex",
+                    display: "flex",
                     alignItems: "center",
-                    gap: "4px",
-                    fontSize: "11px",
-                    color: "#01b28b",
-                    fontWeight: 500,
-                    marginTop: "2px",
+                    gap: "5px",
                   }}
                 >
-                  <span>Verify your account</span>
-                  <ChevronRight size={11} strokeWidth={2} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {displayName}
+                  </span>
+                  {isVerified && <VerifiedBadge size={14} />}
                 </div>
+                {isVerified ? (
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontSize: "11px",
+                      color: "#01b28b",
+                      fontWeight: 600,
+                      marginTop: "2px",
+                    }}
+                  >
+                    <Check size={11} strokeWidth={3} />
+                    <span>Verified</span>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontSize: "11px",
+                      color: "#01b28b",
+                      fontWeight: 500,
+                      marginTop: "2px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => setActiveModal("verify")}
+                  >
+                    <span>Verify your account</span>
+                    <ChevronRight size={11} strokeWidth={2} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1833,18 +1904,38 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                             <span className="uad-avatar-diamond" />
                           </div>
                           <div className="uad-user-info">
-                            <p className="uad-username">{displayName || "user"}</p>
-                            <button
-                              type="button"
-                              className="uad-verify-link"
-                              onClick={() => {
-                                setProfileDropdownOpen(false);
-                                setActiveModal("verify");
-                              }}
-                            >
-                              <span>Verify your account</span>
-                              <ChevronRight size={12} strokeWidth={2} />
-                            </button>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <p className="uad-username" style={{ margin: 0 }}>{displayName || "user"}</p>
+                              {isVerified && <VerifiedBadge size={16} />}
+                            </div>
+                            {isVerified ? (
+                              <div
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  fontSize: "11px",
+                                  color: "#01b28b",
+                                  fontWeight: 600,
+                                  marginTop: "3px",
+                                }}
+                              >
+                                <Check size={12} strokeWidth={3} />
+                                <span>Verified</span>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                className="uad-verify-link"
+                                onClick={() => {
+                                  setProfileDropdownOpen(false);
+                                  setActiveModal("verify");
+                                }}
+                              >
+                                <span>Verify your account</span>
+                                <ChevronRight size={12} strokeWidth={2} />
+                              </button>
+                            )}
                           </div>
                         </div>
 
@@ -2180,9 +2271,13 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                           fontWeight: 600,
                           color: "#ffffff",
                           lineHeight: "1.2",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
                         }}
                       >
-                        {displayName}
+                        <span>{displayName}</span>
+                        {isVerified && <VerifiedBadge size={15} />}
                       </div>
                       <div
                         style={{
@@ -2668,8 +2763,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         {/* Verification Modal */}
         {activeModal === "verify" && (
           <VerificationModal
-            onClose={() => setActiveModal(null)}
-            onSubmitted={(message) => setToastNotification({ type: "success", message })}
+            onClose={() => {
+              setActiveModal(null);
+              fetchBalance();
+            }}
+            onSubmitted={(message) => {
+              setToastNotification({ type: "success", message });
+              fetchBalance();
+            }}
           />
         )}
 
