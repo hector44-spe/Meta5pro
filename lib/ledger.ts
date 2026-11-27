@@ -149,6 +149,21 @@ export async function settlePending(
   return res.count === 1;
 }
 
-export function audit(tx: Tx, userId: string, action: string, ip: string, details: string, targetUserId?: string) {
-  return tx.activityLog.create({ data: { userId, targetUserId, action, ipAddress: ip, details } });
+export function audit(
+  client: Tx | typeof prisma,
+  userId: string,
+  action: string,
+  ip?: string | null,
+  details?: string | null,
+  targetUserId?: string | null,
+) {
+  return (client as any).activityLog.create({
+    data: {
+      userId,
+      targetUserId: targetUserId || null,
+      action,
+      ipAddress: ip || null,
+      details: details || null,
+    },
+  });
 }

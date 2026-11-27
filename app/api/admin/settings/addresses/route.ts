@@ -3,7 +3,8 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, clientIp } from "@/lib/auth";
+import { audit } from "@/lib/ledger";
 
 export interface FullAddressItem {
   id: string;
@@ -127,6 +128,13 @@ export async function POST(req: Request) {
         update: { value: { enabled: !!useSameAddress } },
         create: { key: "use_same_address_for_signals", value: { enabled: !!useSameAddress } },
       });
+      await audit(
+        prisma,
+        session.userId,
+        "ADMIN_SETTINGS_ADDRESS_TOGGLED",
+        clientIp(req),
+        `Admin ${session.email} set useSameAddressForSignals to ${!!useSameAddress}`,
+      );
       return NextResponse.json({ success: true, useSameAddressForSignals: !!useSameAddress });
     }
 
@@ -231,6 +239,14 @@ export async function POST(req: Request) {
           });
         }
 
+        await audit(
+          prisma,
+          session.userId,
+          "ADMIN_SETTINGS_ADDRESS_SAVED",
+          clientIp(req),
+          `Admin ${session.email} saved deposit address for ${symbol.toUpperCase()} (${network || "Default"}): ${address.trim()}`,
+        );
+
         return NextResponse.json({ success: true, item: { ...savedAddr, qrCode } });
       }
     }
@@ -263,6 +279,15 @@ export async function POST(req: Request) {
           });
         }
       }
+
+      await audit(
+        prisma,
+        session.userId,
+        "ADMIN_SETTINGS_ADDRESS_DELETED",
+        clientIp(req),
+        `Admin ${session.email} deleted deposit address ${addressId}`,
+      );
+
       return NextResponse.json({ success: true });
     }
 

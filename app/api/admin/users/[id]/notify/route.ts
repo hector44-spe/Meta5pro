@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, clientIp } from "@/lib/auth";
 import { notify } from "@/lib/notify";
+import { audit } from "@/lib/ledger";
 import { z } from "zod";
 
 const notifySchema = z.object({
@@ -41,6 +42,15 @@ export async function POST(
 
     const { title, body, kind } = parsed.data;
     await notify(userId, kind, title, body);
+
+    await audit(
+      prisma,
+      session.userId,
+      "ADMIN_NOTIFICATION_SENT",
+      clientIp(req),
+      `Admin ${session.email} sent notification "${title}" (${kind}) to ${user.email}`,
+      userId,
+    );
 
     return NextResponse.json({
       success: true,

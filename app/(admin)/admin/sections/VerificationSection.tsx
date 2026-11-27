@@ -115,38 +115,90 @@ export default function VerificationSection({
           <option value="REJECTED">Rejected</option>
         </select>
       </div>
+      <div className={styles.tableHeader}>
+        <span>User / Investor</span>
+        <span>Document &amp; Status</span>
+        <span style={{ textAlign: "right" }}>Files &amp; Actions</span>
+      </div>
       <div className={styles.list}>
-        {loading ? <div className={styles.empty}><Loader2 className={styles.spin} size={22} /> Loading submissions…</div> : filtered.length === 0 ? <div className={styles.empty}>No verification submissions found.</div> : filtered.map((row) => (
-          <article className={styles.card} key={row.id}>
-            <div className={styles.identity}>
-              <strong>{row.userName || "Investor"}</strong>
-              <span>{row.userEmail}</span>
-              <span>Submitted {new Date(row.createdAt).toLocaleString()}</span>
-            </div>
-            <div className={styles.document}>
-              <strong>{documentLabel(row.documentType)}</strong>
-              <span className={`${styles.pill} ${row.status === "APPROVED" ? styles.approved : row.status === "REJECTED" ? styles.rejected : styles.pending}`}>{row.status.toLowerCase()}</span>
-              {row.rejectionReason ? <span>Reason: {row.rejectionReason}</span> : null}
-            </div>
-            <div>
-              <div className={styles.files}>
-                <a className={styles.file} href={`/api/verification/${row.id}/file/front`} target="_blank" rel="noreferrer"><ExternalLink size={14} /> Front</a>
-                {row.hasBack ? <a className={styles.file} href={`/api/verification/${row.id}/file/back`} target="_blank" rel="noreferrer"><ExternalLink size={14} /> Back</a> : null}
+        {loading ? (
+          <div className={styles.empty}>
+            <Loader2 className={styles.spin} size={22} /> Loading submissions…
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className={styles.empty}>No verification submissions found.</div>
+        ) : (
+          filtered.map((row) => (
+            <article className={styles.card} key={row.id}>
+              <div className={styles.identity}>
+                <div className={styles.userAvatar}>
+                  {(row.userName?.[0] || row.userEmail?.[0] || "U").toUpperCase()}
+                </div>
+                <div className={styles.identityMeta}>
+                  <strong title={row.userName || "Investor"}>{row.userName || "Investor"}</strong>
+                  <span className={styles.userEmail} title={row.userEmail}>{row.userEmail}</span>
+                  <span className={styles.subDate}>Submitted {new Date(row.createdAt).toLocaleString()}</span>
+                </div>
               </div>
-              {row.status === "PENDING" ? <div className={styles.actions} style={{ marginTop: 9 }}>
-                <button type="button" className={styles.approve} onClick={() => review(row.id, "approve")} disabled={busyId === row.id}><CheckCircle2 size={14} /> Approve</button>
-                <button type="button" className={styles.reject} onClick={() => { setRejectingId(row.id); setReason(""); }} disabled={busyId === row.id}><XCircle size={14} /> Reject</button>
-              </div> : null}
-            </div>
-            {rejectingId === row.id ? <div className={styles.review}>
-              <textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Explain why the documents were rejected…" maxLength={500} autoFocus />
-              <div className={styles.reviewActions}>
-                <button type="button" className={styles.file} onClick={() => { setRejectingId(null); setReason(""); }}>Cancel</button>
-                <button type="button" className={styles.reject} onClick={() => review(row.id, "reject")} disabled={busyId === row.id || reason.trim().length < 3}>{busyId === row.id ? <Loader2 size={14} className={styles.spin} /> : <XCircle size={14} />} Confirm rejection</button>
+              <div className={styles.document}>
+                <strong className={styles.docType}>{documentLabel(row.documentType)}</strong>
+                <div className={styles.docMeta}>
+                  <span
+                    className={`${styles.pill} ${
+                      row.status === "APPROVED"
+                        ? styles.approved
+                        : row.status === "REJECTED"
+                        ? styles.rejected
+                        : styles.pending
+                    }`}
+                  >
+                    {row.status === "APPROVED" ? "Approved" : row.status === "REJECTED" ? "Rejected" : "Pending"}
+                  </span>
+                </div>
+                {row.rejectionReason ? <span className={styles.rejectReason}>Reason: {row.rejectionReason}</span> : null}
               </div>
-            </div> : null}
-          </article>
-        ))}
+              <div className={styles.cardRight}>
+                <div className={styles.files}>
+                  <a className={styles.file} href={`/api/verification/${row.id}/file/front`} target="_blank" rel="noreferrer">
+                    <ExternalLink size={13} /> Front
+                  </a>
+                  {row.hasBack ? (
+                    <a className={styles.file} href={`/api/verification/${row.id}/file/back`} target="_blank" rel="noreferrer">
+                      <ExternalLink size={13} /> Back
+                    </a>
+                  ) : null}
+                </div>
+                {row.status === "PENDING" ? (
+                  <div className={styles.actions} style={{ marginTop: 6 }}>
+                    <button type="button" className={styles.approve} onClick={() => review(row.id, "approve")} disabled={busyId === row.id}>
+                      {busyId === row.id ? <Loader2 size={13} className={styles.spin} /> : <CheckCircle2 size={13} />} Approve
+                    </button>
+                    <button type="button" className={styles.reject} onClick={() => { setRejectingId(row.id); setReason(""); }} disabled={busyId === row.id}>
+                      <XCircle size={13} /> Reject
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+              {rejectingId === row.id ? (
+                <div className={styles.review}>
+                  <textarea
+                    value={reason}
+                    onChange={(event) => setReason(event.target.value)}
+                    placeholder="Explain why the documents were rejected…"
+                    maxLength={500}
+                    autoFocus
+                  />
+                  <div className={styles.reviewActions}>
+                    <button type="button" className={styles.file} onClick={() => { setRejectingId(null); setReason(""); }}>Cancel</button>
+                    <button type="button" className={styles.reject} onClick={() => review(row.id, "reject")} disabled={busyId === row.id || reason.trim().length < 3}>
+                      {busyId === row.id ? <Loader2 size={14} className={styles.spin} /> : <XCircle size={14} />} Confirm rejection
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </article>
+          ))
+        )}
       </div>
     </div>
   );

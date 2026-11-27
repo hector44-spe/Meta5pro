@@ -1,10 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { getSession, isAuthorizedAdminEmail } from "@/lib/auth";
+import { getSession, isAuthorizedAdminEmail, clientIp } from "@/lib/auth";
 import { sendVerificationStatusEmail } from "@/lib/mail";
 import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/ledger";
 
 export async function PATCH(
   request: Request,
@@ -52,6 +53,14 @@ export async function PATCH(
           ? "Your identity documents have been approved and your account is now verified."
           : `Your identity verification was rejected: ${reason}. You can upload new documents from account verification.`,
         tx,
+      );
+      await audit(
+        tx,
+        session.userId,
+        action === "approve" ? "ADMIN_KYC_APPROVED" : "ADMIN_KYC_REJECTED",
+        clientIp(request),
+        `Admin ${session.email} ${action}d verification submission for ${existing.user?.email || existing.userId}${reason ? `. Reason: ${reason}` : ""}`,
+        existing.userId,
       );
     });
 

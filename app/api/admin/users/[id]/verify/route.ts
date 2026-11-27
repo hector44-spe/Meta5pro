@@ -1,9 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { getSession, isAuthorizedAdminEmail } from "@/lib/auth";
+import { getSession, isAuthorizedAdminEmail, clientIp } from "@/lib/auth";
 import { notify } from "@/lib/notify";
 import { prisma } from "@/lib/prisma";
+import { audit } from "@/lib/ledger";
 
 export async function PATCH(
   request: Request,
@@ -66,6 +67,15 @@ export async function PATCH(
         "Your account has been officially verified by administration.",
       );
 
+      await audit(
+        prisma,
+        session.userId,
+        "ADMIN_USER_VERIFIED",
+        clientIp(request),
+        `Admin ${session.email} approved account verification for ${user.fullName || user.email} (${user.id})`,
+        targetUserId,
+      );
+
       return NextResponse.json({ success: true, isVerified: true, message: "Account marked as verified." });
     } else {
       // Un-verify user
@@ -78,6 +88,15 @@ export async function PATCH(
           reviewedAt: new Date(),
         },
       });
+
+      await audit(
+        prisma,
+        session.userId,
+        "ADMIN_USER_UNVERIFIED",
+        clientIp(request),
+        `Admin ${session.email} revoked account verification for ${user.fullName || user.email} (${user.id})`,
+        targetUserId,
+      );
 
       return NextResponse.json({ success: true, isVerified: false, message: "Account verification removed." });
     }

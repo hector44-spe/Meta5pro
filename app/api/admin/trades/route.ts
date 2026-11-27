@@ -3,11 +3,11 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, clientIp } from "@/lib/auth";
 import { closePositionAndSettle } from "@/lib/trade-settlement";
 import { getTradeConfig, setTradeConfig, deleteTradeConfig } from "@/lib/trade-config";
 import { adminTradeActionSchema } from "@/lib/schemas";
-import { atomic, debitMain, insertTransaction, money, InsufficientFundsError } from "@/lib/ledger";
+import { atomic, debitMain, insertTransaction, money, InsufficientFundsError, audit } from "@/lib/ledger";
 import { getVerifiedPrice } from "@/lib/prices";
 import { getCatalogExperts } from "@/lib/relational-catalogs";
 
@@ -208,6 +208,13 @@ export async function POST(req: Request) {
         fundingAssetOverride: fundingAsset,
         closedByAdmin: true,
       });
+      await audit(
+        prisma,
+        session.userId,
+        "ADMIN_TRADE_CLOSED",
+        clientIp(req),
+        `Admin ${session.email} closed trade position ${positionId} with PnL $${overridePnlVal ?? "market"}`,
+      );
       return NextResponse.json(res);
     }
 
@@ -241,6 +248,14 @@ export async function POST(req: Request) {
           where: { id: positionId },
           data: { pnl, ...(fundingAsset ? { fundingAsset } : {}) },
         });
+        await audit(
+          prisma,
+          session.userId,
+          "ADMIN_TRADE_PNL_UPDATED",
+          clientIp(req),
+          `Admin ${session.email} updated PnL to $${pnl.toFixed(2)} on position ${positionId}`,
+          current.userId,
+        );
         return NextResponse.json({ success: true, position: updated, message: `Profit updated to $${pnl.toFixed(2)}` });
       }
 
@@ -251,6 +266,14 @@ export async function POST(req: Request) {
           ...(fundingAsset ? { fundingAsset } : {}),
         },
       });
+      await audit(
+        prisma,
+        session.userId,
+        "ADMIN_TRADE_UPDATED",
+        clientIp(req),
+        `Admin ${session.email} updated position ${positionId} (${status || "no status change"})`,
+        current.userId,
+      );
       return NextResponse.json({ success: true, position: updated });
     }
 
@@ -275,6 +298,14 @@ export async function POST(req: Request) {
           status: "APPROVED",
           txHash: `ADMIN_ORD_${position.id.slice(0, 8).toUpperCase()}`,
         });
+        await audit(
+          tx,
+          session.userId,
+          "ADMIN_TRADE_CREATED",
+          clientIp(req),
+          `Admin ${session.email} opened ${type} position of $${amount} on ${symbol} (margin $${requiredMargin})`,
+          userId,
+        );
         return position;
       });
       return NextResponse.json({ success: true, position: created });
@@ -291,6 +322,13 @@ export async function POST(req: Request) {
       await prisma.position.delete({
         where: { id: positionId },
       });
+      await audit(
+        prisma,
+        session.userId,
+        "ADMIN_TRADE_DELETED",
+        clientIp(req),
+        `Admin ${session.email} deleted closed position ${positionId}`,
+      );
       return NextResponse.json({ success: true });
     }
 

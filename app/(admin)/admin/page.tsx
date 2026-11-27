@@ -46,6 +46,7 @@ import {
   Snowflake,
   Key,
   Mail,
+  ClipboardList,
 } from "lucide-react";
 import styles from "./page.module.css";
 import CustomConfirmModal, { CustomConfirmState } from "@/components/UI/CustomConfirmModal";
@@ -62,6 +63,7 @@ import SubscriptionsSection from "./sections/SubscriptionsSection";
 import DepositAddressSection from "./sections/DepositAddressSection";
 import SupportSection from "./sections/SupportSection";
 import VerificationSection from "./sections/VerificationSection";
+import AuditLogsSection from "./sections/AuditLogsSection";
 import assetsData from "@/data/assetsData.json";
 
 /* ------------------------------------------------------------------ */
@@ -137,7 +139,8 @@ type Section =
   | "addresses"
   | "verifications"
   | "support"
-  | "transactions";
+  | "transactions"
+  | "audit-logs";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -205,6 +208,7 @@ function AdminContent() {
       "verifications",
       "support",
       "transactions",
+      "audit-logs",
     ],
     []
   );
@@ -370,6 +374,7 @@ function AdminContent() {
     { id: "addresses", label: "Deposit addresses", icon: <Wallet size={18} /> },
     { id: "verifications", label: "Verification", icon: <ScanFace size={18} />, count: pendingVerifications },
     { id: "support", label: "Live support", icon: <MessageSquare size={18} /> },
+    { id: "audit-logs", label: "Audit logs", icon: <ClipboardList size={18} /> },
   ];
 
   const titles: Record<Section, [string, string]> = {
@@ -390,6 +395,7 @@ function AdminContent() {
     verifications: ["Identity Verification", "Review investor identity documents"],
     support: ["Live Support", "View and reply to customer conversations"],
     transactions: ["Transactions", "Platform transaction logs"],
+    "audit-logs": ["Audit Logs", "Complete audit trail of all actions performed by this admin account"],
   };
 
   return (
@@ -539,6 +545,8 @@ function AdminContent() {
           {section === "verifications" && <VerificationSection flash={flash} onCountChange={setPendingVerifications} />}
 
           {section === "support" && <SupportSection flash={flash} />}
+
+          {section === "audit-logs" && <AuditLogsSection flash={flash} />}
         </div>
       </main>
 

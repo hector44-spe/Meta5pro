@@ -1,8 +1,9 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+import { getSession, clientIp } from "@/lib/auth";
 import { notify } from "@/lib/notify";
+import { audit } from "@/lib/ledger";
 import { z } from "zod";
 
 const statusSchema = z.object({
@@ -66,6 +67,15 @@ export async function PATCH(
         "Your account is active. All trading and account features are fully accessible."
       );
     }
+
+    await audit(
+      prisma,
+      session.userId,
+      `ADMIN_USER_${status}`,
+      clientIp(req),
+      `Admin ${session.email} changed account status of ${user.fullName || user.username || user.email} to ${status}`,
+      userId,
+    );
 
     return NextResponse.json({
       success: true,
