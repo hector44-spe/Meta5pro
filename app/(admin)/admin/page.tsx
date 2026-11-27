@@ -20,6 +20,7 @@ import {
   Save,
   Copy,
   CheckCircle2,
+  XCircle,
   AlertCircle,
   Clock,
   ShieldCheck,
@@ -1442,7 +1443,7 @@ function UsersSection({
                                   width: 15,
                                   height: 15,
                                   borderRadius: "50%",
-                                  backgroundColor: "#01b28b",
+                                  backgroundColor: "#10b981",
                                   color: "#ffffff",
                                   flexShrink: 0,
                                 }}
@@ -1460,12 +1461,12 @@ function UsersSection({
                       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <StatusPill status={u.status} />
                         {u.isVerified ? (
-                          <span style={{ fontSize: "11px", color: "#01b28b", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                          <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
                             <CheckCircle2 size={11} strokeWidth={2.5} /> Verified
                           </span>
                         ) : (
-                          <span style={{ fontSize: "11px", color: "var(--a-muted)", fontWeight: 500 }}>
-                            Unverified
+                          <span style={{ fontSize: "11px", color: "#ef4444", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                            <XCircle size={11} strokeWidth={2.5} /> Unverified
                           </span>
                         )}
                       </div>
@@ -1489,7 +1490,7 @@ function UsersSection({
                           onClick={() => toggleVerifyUser(u)}
                           disabled={verifyingId === u.id}
                           title={u.isVerified ? "Revoke account verification" : "Approve account verification"}
-                          style={u.isVerified ? { backgroundColor: "rgba(1, 178, 139, 0.15)", color: "#01b28b", borderColor: "rgba(1, 178, 139, 0.3)" } : {}}
+                          style={u.isVerified ? { backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.3)" } : {}}
                         >
                           <CheckCircle2 size={14} /> {verifyingId === u.id ? "Saving..." : u.isVerified ? "Verified" : "Verify"}
                         </button>
@@ -1593,6 +1594,15 @@ function UsersSection({
                   <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                     {u.role === "ADMIN" && <span className={`${styles.pill} ${styles.pillBlue}`}>Admin</span>}
                     <StatusPill status={u.status} />
+                    {u.isVerified ? (
+                      <span style={{ fontSize: "11px", color: "#10b981", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                        <CheckCircle2 size={11} strokeWidth={2.5} /> Verified
+                      </span>
+                    ) : (
+                      <span style={{ fontSize: "11px", color: "#ef4444", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                        <XCircle size={11} strokeWidth={2.5} /> Unverified
+                      </span>
+                    )}
                   </div>
                 </div>
                 <div className={styles.itemMetaGrid}>
