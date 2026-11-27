@@ -13,9 +13,10 @@ import {
   Bell,
   Coins,
   Key,
-  Calendar,
   Layers,
   Filter,
+  User,
+  Users,
 } from "lucide-react";
 import styles from "../page.module.css";
 
@@ -27,6 +28,7 @@ interface AuditLogItem {
   details: string;
   ipAddress: string;
   createdAt: string;
+  adminEmail: string;
   targetUserId?: string | null;
   targetUser?: {
     id: string;
@@ -36,38 +38,55 @@ interface AuditLogItem {
   } | null;
 }
 
+interface AdminAccountItem {
+  id: string;
+  email: string;
+  fullName: string;
+  count: number;
+}
+
 export default function AuditLogsSection({
   flash,
 }: {
   flash: (kind: "ok" | "error", text: string) => void;
 }) {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
-  const [adminEmail, setAdminEmail] = useState<string>("");
+  const [adminAccounts, setAdminAccounts] = useState<AdminAccountItem[]>([]);
+  // Default strictly to support@meta5vip.com (the second admin account)
+  const [selectedAdmin, setSelectedAdmin] = useState<string>("support@meta5vip.com");
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
 
   const fetchLogs = useCallback(
-    async (silent = false) => {
+    async (targetAdmin = selectedAdmin, silent = false) => {
       if (!silent) setLoading(true);
       try {
-        const res = await fetch("/api/admin/audit-logs", { cache: "no-store" });
+        const query = new URLSearchParams({
+          admin: targetAdmin,
+        });
+        const res = await fetch(`/api/admin/audit-logs?${query.toString()}`, { cache: "no-store" });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to load audit logs");
         setLogs(data.logs || []);
-        if (data.adminEmail) setAdminEmail(data.adminEmail);
+        if (data.adminAccounts) setAdminAccounts(data.adminAccounts);
       } catch (err: any) {
         if (!silent) flash("error", err?.message || "Could not retrieve audit logs");
       } finally {
         setLoading(false);
       }
     },
-    [flash]
+    [selectedAdmin, flash]
   );
 
   useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+    fetchLogs(selectedAdmin);
+  }, [selectedAdmin, fetchLogs]);
+
+  const handleAdminSwitch = (adminEmail: string) => {
+    setSelectedAdmin(adminEmail);
+    fetchLogs(adminEmail);
+  };
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -81,6 +100,7 @@ export default function AuditLogsSection({
         log.actionLabel,
         log.details,
         log.ipAddress,
+        log.adminEmail,
         log.targetUser?.email,
         log.targetUser?.fullName,
         log.targetUser?.username,
@@ -181,7 +201,7 @@ export default function AuditLogsSection({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-      {/* Top Banner / Account Scope Notice */}
+      {/* Top Banner with Admin Switcher */}
       <section className={styles.card} style={{ padding: "20px 24px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
@@ -204,7 +224,20 @@ export default function AuditLogsSection({
                 Audit Log — Account Specific
               </div>
               <div style={{ fontSize: "13px", color: "var(--a-muted)", marginTop: "2px" }}>
-                Tracking actions executed by <strong>{adminEmail || "support@meta5vip.com"}</strong>
+                Tracking actions executed by{" "}
+                <span style={{ color: "#38bdf8", fontWeight: 700 }}>
+                  {selectedAdmin === "all" ? "All Admin Accounts" : selectedAdmin}
+                </span>
+                {selectedAdmin === "support@meta5vip.com" && (
+                  <span style={{ marginLeft: "6px", fontSize: "11px", color: "#10b981", fontWeight: 600 }}>
+                    (Second / Production Admin)
+                  </span>
+                )}
+                {selectedAdmin === "orezimeabed2006@gmail.com" && (
+                  <span style={{ marginLeft: "6px", fontSize: "11px", color: "#f5a524", fontWeight: 600 }}>
+                    (Developer Test Account)
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -213,7 +246,7 @@ export default function AuditLogsSection({
             <button
               type="button"
               className={styles.btnGhost}
-              onClick={() => fetchLogs(false)}
+              onClick={() => fetchLogs(selectedAdmin, false)}
               disabled={loading}
               title="Refresh audit trail"
             >
@@ -223,14 +256,94 @@ export default function AuditLogsSection({
           </div>
         </div>
 
+        {/* Admin Account Switcher Tabs */}
+        <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--a-border)", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <span style={{ fontSize: "12px", color: "var(--a-muted)", fontWeight: 600, marginRight: "4px" }}>
+            View Admin:
+          </span>
+          <button
+            type="button"
+            onClick={() => handleAdminSwitch("support@meta5vip.com")}
+            className={selectedAdmin === "support@meta5vip.com" ? styles.btnPrimarySm : styles.btnGhostSm}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              borderRadius: "6px",
+              padding: "5px 12px",
+              fontSize: "12px",
+              fontWeight: 600,
+            }}
+          >
+            <User size={13} />
+            <span>support@meta5vip.com</span>
+            <span
+              style={{
+                backgroundColor: selectedAdmin === "support@meta5vip.com" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)",
+                padding: "1px 6px",
+                borderRadius: "10px",
+                fontSize: "11px",
+              }}
+            >
+              {adminAccounts.find((a) => a.email === "support@meta5vip.com")?.count ?? 20}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleAdminSwitch("orezimeabed2006@gmail.com")}
+            className={selectedAdmin === "orezimeabed2006@gmail.com" ? styles.btnPrimarySm : styles.btnGhostSm}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              borderRadius: "6px",
+              padding: "5px 12px",
+              fontSize: "12px",
+              fontWeight: 600,
+            }}
+          >
+            <User size={13} />
+            <span>orezimeabed2006@gmail.com</span>
+            <span
+              style={{
+                backgroundColor: selectedAdmin === "orezimeabed2006@gmail.com" ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.08)",
+                padding: "1px 6px",
+                borderRadius: "10px",
+                fontSize: "11px",
+              }}
+            >
+              {adminAccounts.find((a) => a.email === "orezimeabed2006@gmail.com")?.count ?? 1}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleAdminSwitch("all")}
+            className={selectedAdmin === "all" ? styles.btnPrimarySm : styles.btnGhostSm}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              borderRadius: "6px",
+              padding: "5px 12px",
+              fontSize: "12px",
+              fontWeight: 600,
+            }}
+          >
+            <Users size={13} />
+            <span>All Admins</span>
+          </button>
+        </div>
+
         {/* Quick KPI stats */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
             gap: "12px",
-            marginTop: "20px",
-            paddingTop: "16px",
+            marginTop: "16px",
+            paddingTop: "14px",
             borderTop: "1px solid var(--a-border)",
           }}
         >
@@ -305,7 +418,7 @@ export default function AuditLogsSection({
           <div className={styles.tableWrap} style={{ minHeight: "240px", padding: "20px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "180px", color: "var(--a-muted)" }}>
               <RefreshCw size={24} className={styles.spin} />
-              <span style={{ marginLeft: "10px" }}>Loading audit records...</span>
+              <span style={{ marginLeft: "10px" }}>Loading audit records for {selectedAdmin}...</span>
             </div>
           </div>
         ) : filteredLogs.length === 0 ? (
@@ -314,8 +427,8 @@ export default function AuditLogsSection({
             <div style={{ fontSize: "15px", fontWeight: 600, color: "var(--a-text)" }}>No matching audit actions found</div>
             <div style={{ fontSize: "13px", marginTop: "4px" }}>
               {search || categoryFilter !== "ALL"
-                ? "Try adjusting your search query or filter."
-                : "No actions have been recorded yet for this admin account."}
+                ? "Try adjusting your search query or category filter."
+                : `No actions have been recorded yet for ${selectedAdmin}.`}
             </div>
           </div>
         ) : (
@@ -325,6 +438,7 @@ export default function AuditLogsSection({
                 <tr>
                   <th style={{ minWidth: "160px" }}>Timestamp</th>
                   <th style={{ minWidth: "170px" }}>Action</th>
+                  {selectedAdmin === "all" && <th style={{ minWidth: "160px" }}>Admin</th>}
                   <th style={{ minWidth: "200px" }}>Target User / Scope</th>
                   <th style={{ minWidth: "320px" }}>Details & Note</th>
                   <th style={{ minWidth: "110px", textAlign: "right" }}>IP Address</th>
@@ -347,6 +461,15 @@ export default function AuditLogsSection({
 
                       {/* Action Badge */}
                       <td>{renderBadge(log)}</td>
+
+                      {/* Admin Account (when viewing all) */}
+                      {selectedAdmin === "all" && (
+                        <td>
+                          <span style={{ fontSize: "12px", fontWeight: 600, color: "#38bdf8" }}>
+                            {log.adminEmail}
+                          </span>
+                        </td>
+                      )}
 
                       {/* Target User / Target Scope */}
                       <td>

@@ -50,11 +50,40 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const search = (searchParams.get("q") || "").trim().toLowerCase();
     const categoryFilter = (searchParams.get("category") || "ALL").toUpperCase();
+    
+    // Default specifically to the operational admin account "support@meta5vip.com"
+    const requestedAdmin = (searchParams.get("admin") || "support@meta5vip.com").trim().toLowerCase();
 
-    // Query exclusively for the currently authenticated admin account
+    // Fetch all admin accounts to power the admin account switcher
+    const adminUsers = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true, email: true, fullName: true, username: true },
+    });
+
+    const adminCounts = await prisma.activityLog.groupBy({
+      by: ["userId"],
+      _count: true,
+    });
+    const countMap = new Map(adminCounts.map((c) => [c.userId, c._count]));
+
+    // Query logs based on requested admin filter
+    let whereClause: any = {};
+    if (requestedAdmin === "all") {
+      whereClause = {
+        user: { role: "ADMIN" },
+      };
+    } else {
+      whereClause = {
+        user: { email: requestedAdmin },
+      };
+    }
+
     const rawLogs = await prisma.activityLog.findMany({
-      where: {
-        userId: session.userId,
+      where: whereClause,
+      include: {
+        user: {
+          select: { email: true, fullName: true, username: true },
+        },
       },
       orderBy: { createdAt: "desc" },
       take: 500,
@@ -83,6 +112,7 @@ export async function GET(request: Request) {
         ipAddress: log.ipAddress || "—",
         createdAt: log.createdAt.toISOString(),
         targetUserId: log.targetUserId,
+        adminEmail: log.user?.email || "Unknown Admin",
         targetUser: targetUser
           ? {
               id: targetUser.id,
@@ -106,6 +136,7 @@ export async function GET(request: Request) {
           l.actionLabel,
           l.details,
           l.ipAddress,
+          l.adminEmail,
           l.targetUser?.email,
           l.targetUser?.fullName,
           l.targetUser?.username,
@@ -119,8 +150,13 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      adminEmail: session.email,
-      adminId: session.userId,
+      selectedAdmin: requestedAdmin,
+      adminAccounts: adminUsers.map((a) => ({
+        id: a.id,
+        email: a.email,
+        fullName: a.fullName || a.username || "Admin",
+        count: countMap.get(a.id) || 0,
+      })),
       totalCount: logs.length,
       logs,
     });
