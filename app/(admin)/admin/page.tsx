@@ -1307,7 +1307,6 @@ function UsersSection({
   };
 
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
-  const [welcomeBusyId, setWelcomeBusyId] = useState<string | null>(null);
 
   const toggleVerifyUser = async (u: AdminUser) => {
     const next = !u.isVerified;
@@ -1326,22 +1325,6 @@ function UsersSection({
       flash("error", err?.message || "Failed to update verification");
     } finally {
       setVerifyingId(null);
-    }
-  };
-
-  const resendWelcomeEmail = async (u: AdminUser) => {
-    setWelcomeBusyId(u.id);
-    try {
-      const res = await fetch(`/api/admin/users/${u.id}/welcome-email`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send welcome email");
-      flash("ok", data.message || `Welcome email sent to ${u.email}`);
-    } catch (err: any) {
-      flash("error", err?.message || "Failed to send welcome email");
-    } finally {
-      setWelcomeBusyId(null);
     }
   };
 
@@ -1378,7 +1361,7 @@ function UsersSection({
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
-                  <th style={{ minWidth: "260px", textAlign: "right" }}>Actions</th>
+                  <th style={{ minWidth: "200px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1419,7 +1402,7 @@ function UsersSection({
                   <th className={styles.right} style={{ minWidth: "115px" }}>Deposited</th>
                   <th className={styles.right} style={{ minWidth: "115px" }}>Withdrawn</th>
                   <th style={{ minWidth: "115px" }}>Joined</th>
-                  <th style={{ minWidth: "260px", textAlign: "right" }}>Actions</th>
+                  <th style={{ minWidth: "200px", textAlign: "right" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1493,15 +1476,6 @@ function UsersSection({
                           style={u.isVerified ? { backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.3)" } : {}}
                         >
                           <CheckCircle2 size={14} /> {verifyingId === u.id ? "Saving..." : u.isVerified ? "Verified" : "Verify"}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.btnGhostSm}
-                          onClick={() => resendWelcomeEmail(u)}
-                          disabled={welcomeBusyId === u.id}
-                          title={`Resend welcome email to ${u.email}`}
-                        >
-                          <Mail size={14} /> {welcomeBusyId === u.id ? "Sending..." : "Welcome"}
                         </button>
                         <button type="button" className={styles.btnGhostSm} onClick={() => openNotify(u)} title="Send notification">
                           <Bell size={14} /> Notify
