@@ -233,69 +233,166 @@
   padding: 14px 18px;
   border-bottom: 1px solid var(--a-border, rgba(255, 255, 255, 0.12));
   background: rgba(255, 255, 255, 0.01);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-@media (max-width: 640px) {
+.searchBoxWrap {
+  flex: 1 1 300px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  background: var(--a-panel, #0e1116);
+  border: 1px solid var(--a-border, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 14px;
+  color: var(--a-text, #f4f6fa);
+  box-sizing: border-box;
+  position: relative;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.searchBoxWrap:focus-within {
+  border-color: var(--a-accent, #4763f0);
+  box-shadow: 0 0 0 3px rgba(71, 99, 240, 0.18);
+}
+
+.searchIcon {
+  color: var(--a-muted, rgba(244, 246, 250, 0.65));
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--a-text, #f4f6fa);
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.searchInput::placeholder {
+  color: var(--a-muted, rgba(244, 246, 250, 0.5));
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.searchClearBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: var(--a-muted, rgba(244, 246, 250, 0.65));
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+  padding: 0;
+}
+
+.searchClearBtn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.filterSelectWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-width: 200px;
+  height: 42px;
+  box-sizing: border-box;
+}
+
+.filterIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--a-muted, rgba(244, 246, 250, 0.65));
+  pointer-events: none;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.selectDropdown {
+  width: 100%;
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  background: var(--a-panel, #0e1116)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-opacity='0.55' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  color: var(--a-text, #f4f6fa);
+  border: 1px solid var(--a-border, rgba(255, 255, 255, 0.16));
+  border-radius: 8px;
+  padding: 0 34px 0 34px;
+  font-size: 13.5px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.selectDropdown:focus {
+  border-color: var(--a-accent, #4763f0);
+  box-shadow: 0 0 0 3px rgba(71, 99, 240, 0.18);
+}
+
+.selectDropdown option {
+  background: #12161c;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
   .filterBar {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
     padding: 12px;
+    width: 100%;
   }
-}
 
-.searchBoxWrap {
-  flex: 1 1 260px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: var(--a-panel, #0e1116);
-  border: 1px solid var(--a-border, rgba(255, 255, 255, 0.16));
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  color: var(--a-text, #f4f6fa);
-  box-sizing: border-box;
-}
+  .searchBoxWrap {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
+  }
 
-.searchBoxWrap input {
-  background: transparent;
-  border: none;
-  color: inherit;
-  font-size: 13px;
-  width: 100%;
-  outline: none;
-}
+  .searchInput {
+    font-size: 16px; /* Prevents auto-zoom on iOS Safari */
+  }
 
-.filterSelectWrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-@media (max-width: 640px) {
   .filterSelectWrap {
-    width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+    height: 44px;
+    min-height: 44px;
   }
-}
 
-.selectDropdown {
-  background: var(--a-panel, #0e1116);
-  color: var(--a-text, #f4f6fa);
-  border: 1px solid var(--a-border, rgba(255, 255, 255, 0.16));
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  outline: none;
-  cursor: pointer;
-  min-width: 170px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 640px) {
   .selectDropdown {
-    width: 100%;
-    flex: 1;
+    width: 100% !important;
+    height: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+    font-size: 14px;
   }
 }
 

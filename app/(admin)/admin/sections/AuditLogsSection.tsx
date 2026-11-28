@@ -17,6 +17,7 @@ import {
   Filter,
   User,
   Users,
+  X,
 } from "lucide-react";
 import styles from "../page.module.css";
 import cStyles from "./AuditLogsSection.module.css";
@@ -329,21 +330,34 @@ export default function AuditLogsSection({
         {/* Filters bar */}
         <div className={cStyles.filterBar}>
           <label className={cStyles.searchBoxWrap}>
-            <Search size={16} />
+            <Search size={16} className={cStyles.searchIcon} />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search action, user email, note, or IP..."
+              className={cStyles.searchInput}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className={cStyles.searchClearBtn}
+                title="Clear search"
+                aria-label="Clear search"
+              >
+                <X size={14} />
+              </button>
+            )}
           </label>
 
           <div className={cStyles.filterSelectWrap}>
-            <Filter size={15} style={{ color: "var(--a-muted)" }} />
+            <Filter size={15} className={cStyles.filterIcon} />
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
               className={cStyles.selectDropdown}
+              aria-label="Filter by category"
             >
               <option value="ALL">All Categories</option>
               <option value="CREDIT">Balance Credits</option>
